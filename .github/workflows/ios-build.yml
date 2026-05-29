@@ -42,6 +42,13 @@ jobs:
           chmod +x scripts/patch-ios-info-plist.sh
           bash scripts/patch-ios-info-plist.sh
 
+      - name: Discover Xcode scheme
+        id: scheme
+        run: |
+          SCHEME=$(xcodebuild -workspace ios/App/App.xcworkspace -list | grep -A 1 "Schemes:" | tail -1 | sed 's/^ *//')
+          echo "scheme=$SCHEME" >> $GITHUB_OUTPUT
+          echo "Found scheme: $SCHEME"
+
       - name: Decode Distribution Certificate
         env:
           IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
@@ -142,7 +149,7 @@ jobs:
         run: |
           xcodebuild \
             -workspace ios/App/App.xcworkspace \
-            -scheme App \
+            -scheme "${{ steps.scheme.outputs.scheme }}" \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
@@ -199,3 +206,4 @@ jobs:
           echo "## iOS Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "App: Disc Golf Go" >> $GITHUB_STEP_SUMMARY
           echo "Run: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "Scheme: ${{ steps.scheme.outputs.scheme }}" >> $GITHUB_STEP_SUMMARY
