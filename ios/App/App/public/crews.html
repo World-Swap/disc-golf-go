@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Crews — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+    <style>        .header-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; flex: 1; }
+        main { padding: 1.25rem; max-width: 480px; margin: 0 auto; }
+
+        /* Intro summary card — top of crews landing */
+        .crew-intro-card {
+            background: var(--surface);
+            border: 1px solid rgba(60,168,60,0.18);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.1rem 1.2rem;
+            margin-bottom: 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .crew-intro-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+        }
+        .crew-intro-title {
+            font-size: 0.95rem; font-weight: 800; color: var(--text);
+            margin-bottom: 0.35rem; letter-spacing: -0.01em;
+        }
+        .crew-intro-body {
+            font-size: 0.82rem; color: var(--text2); line-height: 1.55;
+        }
+
+        /* My Crew banner (shown when in a crew) */
+        .my-crew-banner {
+            background: var(--surface);
+            border: 1px solid rgba(60,168,60,0.25);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1rem 1.1rem;
+            display: flex; align-items: center; gap: 0.9rem;
+            margin-bottom: 1.25rem;
+            text-decoration: none;
+            color: var(--text);
+            position: relative;
+            overflow: hidden;
+        }
+        .my-crew-banner::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+        }
+        .my-crew-banner:active { opacity: 0.85; }
+        .crew-badge-icon {
+            width: 46px; height: 46px; border-radius: 14px;
+            background: var(--surface2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; flex-shrink: 0;
+        }
+        .my-crew-info { flex: 1; min-width: 0; }
+        .my-crew-name { font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .my-crew-meta { font-size: 0.8rem; color: var(--text3); margin-top: 0.15rem; }
+        .my-crew-arrow { color: var(--text3); font-size: 1.1rem; flex-shrink: 0; }
+
+        /* No Crew CTA */
+        .no-crew-cta {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.5rem 1.25rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+        .no-crew-icon { font-size: 2.5rem; margin-bottom: 0.6rem; display: block; }
+        .no-crew-cta h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem; }
+        .no-crew-cta p { font-size: 0.85rem; color: var(--text2); line-height: 1.5; margin-bottom: 1rem; }
+        .cta-btn-row { display: flex; gap: 0.6rem; }
+        .btn {
+            flex: 1; padding: 0.7rem 1rem; border-radius: 12px; border: none;
+            font-family: inherit; font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; text-decoration: none; display: inline-flex;
+            align-items: center; justify-content: center; gap: 0.35rem;
+            transition: opacity var(--transition), transform var(--transition);
+        }
+        .btn:active { opacity: 0.8; transform: scale(0.97); }
+        .btn-primary { background: var(--green); color: #111; }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+
+        /* Search bar */
+        .search-row {
+            display: flex; gap: 0.6rem; margin-bottom: 1rem; align-items: center;
+        }
+        .search-input {
+            flex: 1; padding: 0.65rem 1rem; border-radius: 12px;
+            border: 1px solid var(--border2); background: var(--surface);
+            font-family: inherit; font-size: 0.88rem; color: var(--text);
+            outline: none;
+        }
+        .search-input:focus { border-color: var(--green); }
+        .search-input::placeholder { color: var(--text3); }
+
+        /* Section label */
+        .section-label {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--text3); margin-bottom: 0.6rem;
+        }
+
+        /* Crew list cards */
+        .crew-list { display: flex; flex-direction: column; gap: 0.7rem; }
+        .crew-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 1rem 1.1rem;
+            box-shadow: var(--shadow-card);
+            display: flex; align-items: center; gap: 0.9rem;
+        }
+        .crew-card-icon {
+            width: 44px; height: 44px; border-radius: 12px; background: var(--surface2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; flex-shrink: 0;
+        }
+        .crew-card-
+        .crew-card-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .crew-card-meta { font-size: 0.8rem; color: var(--text3); }
+        .crew-card-meta span { margin-right: 0.6rem; }
+        .btn-sm {
+            padding: 0.5rem 0.9rem; border-radius: 10px; border: none;
+            font-family: inherit; font-size: 0.8rem; font-weight: 700;
+            cursor: pointer; white-space: nowrap;
+            transition: opacity var(--transition), transform var(--transition);
+        }
+        .btn-sm:active { opacity: 0.8; transform: scale(0.96); }
+        .btn-sm-outline {
+            background: var(--surface2); color: var(--text); border: 1px solid var(--border2);
+        }
+        .btn-sm-green { background: var(--green); color: #111; }
+        .btn-sm-disabled { background: var(--surface2); color: var(--text3); cursor: default; }
+
+        /* Empty / loading states */
+        .empty-state {
+            text-align: center; padding: 2.5rem 1rem; color: var(--text3);
+        }
+        .empty-state-icon { font-size: 2.5rem; display: block; margin-bottom: 0.6rem; }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 1rem);
+            left: 50%; transform: translateX(-50%); z-index: 9999;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--border2); border-radius: 12px;
+            padding: 0.65rem 1.25rem; font-size: 0.88rem; font-weight: 600;
+            box-shadow: var(--shadow-lg); pointer-events: none;
+            opacity: 0; transition: opacity 0.2s;
+            white-space: nowrap; max-width: 90vw;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { border-color: var(--red); color: var(--red); }
+
+        .tab-item.active { color: var(--green); }
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+            background-size: 200% 100%; animation: shimmer 1.4s infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <a href="/" class="header-logo">
+            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            Disc Golf <span class="go">Go</span>
+        </a>
+        <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+            <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Intro summary -->
+        <div class="crew-intro-card">
+            <div class="crew-intro-title">Crew Wars — Play Together</div>
+            <div class="crew-intro-body">Crews are groups of disc golfers who battle together. Join or create a crew, then compete in Crew Wars against other crews to earn XP and gold.</div>
+        </div>
+
+        <!-- My Crew / No Crew section -->
+        <div id="myCrewSection"></div>
+
+        <!-- Browse Section -->
+        <div class="section-label" style="margin-top:0.25rem">Browse Crews</div>
+        <div class="search-row">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search by crew name or course…">
+        </div>
+        <div id="crewList" class="crew-list">
+            <div class="crew-card">
+                <div class="crew-card-icon skeleton" style="width:44px;height:44px;border-radius:12px;"></div>
+                <div class="crew-card-body">
+                    <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;"></div>
+                    <div class="skeleton" style="height:12px;width:40%;"></div>
+                </div>
+            </div>
+            <div class="crew-card">
+                <div class="crew-card-icon skeleton" style="width:44px;height:44px;border-radius:12px;"></div>
+                <div class="crew-card-body">
+                    <div class="skeleton" style="height:14px;width:55%;margin-bottom:6px;"></div>
+                    <div class="skeleton" style="height:12px;width:35%;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-tab-bar">
+    <a class="tab-item active" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+    <!-- Notification popup -->
+    <div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+    <div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div id="notifPopupTitle" style="font-size:1rem;font-weight:700;line-height:1.3;padding-right:8px;"></div>
+            <button id="notifPopupClose" style="background:none;border:none;cursor:pointer;color:var(--text3,#78787a);font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
+        </div>
+        <div id="notifPopupMsg" style="font-size:0.88rem;color:var(--text2,#c4c4bc);line-height:1.55;margin-bottom:16px;"></div>
+        <button id="notifPopupDismissBtn" style="width:100%;padding:10px;background:var(--green,#7ed957);border:none;border-radius:10px;font-size:0.9rem;font-weight:700;color:#111;cursor:pointer;">Got it</button>
+    </div>
+    <div id="toast"></div>
+
+    <script>
+    (function() {
+        // Theme
+        var t = localStorage.getItem('dggo_theme');
+        if (!t) { t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+        document.documentElement.setAttribute('data-theme', t);
+
+        var token = localStorage.getItem('dggo_token');
+        var playerId = localStorage.getItem('dggo_player_id');
+
+        // ── Theme toggle ──────────────────────────────────────────────
+        var themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                var next = isDark ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('dggo_theme', next);
+                themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+            });
+            var saved = localStorage.getItem('dggo_theme');
+            if (saved === 'dark') themeToggle.textContent = '🌙';
+            else if (saved === 'light') themeToggle.textContent = '☀️';
+            else themeToggle.textContent = window.matchMedia('(prefers-color-scheme: dark)').matches ? '🌙' : '☀️';
+        }
+        if (!token) { window.location.href = '/login'; return; }
+        var authHeaders = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+        var myCrewId = null;
+
+        function toast(msg, isErr) {
+            var el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = isErr ? 'error show' : 'show';
+            setTimeout(function() { el.className = ''; }, 2800);
+        }
+
+        function crewInitial(name) {
+            return name ? name.charAt(0).toUpperCase() : '👥';
+        }
+
+        function crewIcon(crew) {
+            if (crew.logo_url) {
+                return '<img src="' + escHtml(crew.logo_url) + '" alt="Logo" style="width:44px;height:44px;border-radius:12px;object-fit:cover;" onerror="this.style.display=\'none\'"">';
+            }
+            return crewInitial(crew.name);
+        }
+
+        // ── Load my crew status ──────────────────────────────────────
+        function loadMyCrewStatus() {
+            if (!playerId) return renderNoCrew();
+            fetch('/api/players/' + playerId + '/crew', { headers: authHeaders })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.crew && d.crew.id) {
+                        myCrewId = d.crew.id;
+                        renderMyCrewBanner(d.crew);
+                    } else {
+                        renderNoCrew();
+                    }
+                    loadCrews();
+                })
+                .catch(function() { renderNoCrew(); loadCrews(); });
+        }
+
+        function renderMyCrewBanner(crew) {
+            var section = document.getElementById('myCrewSection');
+            section.innerHTML = '<a href="/crew/me" class="my-crew-banner">' +
+                '<div class="crew-badge-icon">' + crewIcon(crew) + '</div>' +
+                '<div class="my-crew-info">' +
+                    '<div class="my-crew-name">' + escHtml(crew.name) + '</div>' +
+                    '<div class="my-crew-meta">' +
+                        (crew.role === 'boss' ? '👑 Boss · ' : crew.role === 'captain' ? '⚡ Captain · ' : '') +
+                        crew.member_count + ' member' + (crew.member_count !== 1 ? 's' : '') +
+                        (crew.home_course_name ? ' · ' + escHtml(crew.home_course_name) : '') +
+                    '</div>' +
+                '</div>' +
+                '<span class="my-crew-arrow">›</span>' +
+                '</a>';
+        }
+
+        function renderNoCrew() {
+            var section = document.getElementById('myCrewSection');
+            section.innerHTML = '<div class="no-crew-cta">' +
+                '<span class="no-crew-icon">👥</span>' +
+                '<h2>No Crew Yet</h2>' +
+                '<p>Form your crew, pick a home course, and rise together. Crew Wars coming soon.</p>' +
+                '<div class="cta-btn-row">' +
+                    '<a href="/crew/create" class="btn btn-primary">🏰 Create (500🪙)</a>' +
+                    '<button class="btn btn-secondary" onclick="document.getElementById(\'searchInput\').focus()">Browse Crews</button>' +
+                '</div>' +
+                '</div>';
+        }
+
+        // ── Load crews list ──────────────────────────────────────────
+        var searchTimeout = null;
+        function loadCrews(search) {
+            var url = '/api/crews' + (search ? '?search=' + encodeURIComponent(search) : '');
+            fetch(url, { headers: authHeaders })
+                .then(function(r) { return r.json(); })
+                .then(function(d) { renderCrewList(d.crews || []); })
+                .catch(function() { renderCrewList([]); });
+        }
+
+        function renderCrewList(crews) {
+            var list = document.getElementById('crewList');
+            // Filter out crew user is already in
+            var visible = crews.filter(function(c) { return c.id !== myCrewId; });
+            if (!visible.length) {
+                list.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🔍</span><span>No crews found</span></div>';
+                return;
+            }
+            list.innerHTML = visible.map(function(c) {
+                return '<div class="crew-card">' +
+                    '<div class="crew-card-icon">' + crewIcon(c) + '</div>' +
+                    '<div class="crew-card-body">' +
+                        '<div class="crew-card-name">' + escHtml(c.name) + '</div>' +
+                        '<div class="crew-card-meta">' +
+                            '<span>' + c.member_count + ' member' + (c.member_count !== 1 ? 's' : '') + '</span>' +
+                            (c.home_course_name ? '<span>📍 ' + escHtml(c.home_course_name) + '</span>' : '') +
+                            '<span>Boss: ' + escHtml(c.boss_name) + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    (myCrewId
+                        ? '<button class="btn-sm btn-sm-disabled" disabled>In a Crew</button>'
+                        : '<button class="btn-sm btn-sm-outline" onclick="requestJoin(' + c.id + ', this)">Request</button>'
+                    ) +
+                    '</div>';
+            }).join('');
+        }
+
+        // ── Request to join ──────────────────────────────────────────
+        window.requestJoin = function(crewId, btn) {
+            btn.disabled = true;
+            btn.textContent = '…';
+            fetch('/api/crews/' + crewId + '/join-request', {
+                method: 'POST', headers: authHeaders
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) {
+                    btn.textContent = 'Requested ✓';
+                    btn.className = 'btn-sm btn-sm-disabled';
+                    toast('Request sent!');
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Request';
+                    toast(d.error || 'Failed to send request', true);
+                }
+            }).catch(function() {
+                btn.disabled = false;
+                btn.textContent = 'Request';
+                toast('Network error', true);
+            });
+        };
+
+        // ── Search ───────────────────────────────────────────────────
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            var val = e.target.value.trim();
+            searchTimeout = setTimeout(function() { loadCrews(val || null); }, 320);
+        });
+
+        // ── Notifications ────────────────────────────────────────────
+        function initNotifications() {
+            var headers = { 'Authorization': 'Bearer ' + token };
+            var currentNotifId = null;
+            function dismiss() {
+                document.getElementById('notifPopup').style.display = 'none';
+                document.getElementById('notifPopupOverlay').style.display = 'none';
+                if (!currentNotifId) return;
+                fetch('/api/notifications/' + currentNotifId + '/dismiss', { method: 'POST', headers: headers }).catch(function(){});
+            }
+            document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+            document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+            document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+            fetch('/api/notifications/active', { headers: headers })
+                .then(function(r){ return r.json(); })
+                .then(function(d) {
+                    if (!d.notification) return;
+                    currentNotifId = d.notification.id;
+                    document.getElementById('notifPopupTitle').textContent = d.notification.title;
+                    document.getElementById('notifPopupMsg').textContent = d.notification.message;
+                    document.getElementById('notifPopup').style.display = 'block';
+                    document.getElementById('notifPopupOverlay').style.display = 'flex';
+                }).catch(function(){});
+        }
+
+        function escHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        loadMyCrewStatus();
+        initNotifications();
+    })();
+    </script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

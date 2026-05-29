@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Course Detail — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>        /* ── PAGE CONTENT ── */
+        .page-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem 2rem;
+        }
+
+        /* ── BREADCRUMB ── */
+        .breadcrumb {
+            font-size: 0.78rem;
+            color: var(--text3);
+            margin-bottom: 1.1rem;
+            display: flex; align-items: center; gap: 0.3rem;
+        }
+        .breadcrumb a {
+            color: var(--text3); text-decoration: none;
+            transition: color var(--transition);
+        }
+        .breadcrumb a:hover { color: var(--green); }
+
+        /* ── LOADING / ERROR ── */
+        .loading-state {
+            text-align: center;
+            padding: 5rem 1rem;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 1rem;
+            color: var(--text3);
+        }
+        .error-view {
+            text-align: center;
+            padding: 4rem 1rem;
+        }
+        .error-view .error-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+        .error-view h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .error-view p { color: var(--text3); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+        /* ── HERO SECTION ── */
+        .course-hero {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.5rem;
+            margin-bottom: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Green shimmer at top */
+        .course-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright), var(--green));
+            opacity: 0.9;
+        }
+
+        .course-hero h1 {
+            font-size: 1.55rem; font-weight: 700;
+            letter-spacing: -0.03em; line-height: 1.15;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+        .course-location {
+            font-size: 0.85rem;
+            color: var(--text3);
+            display: flex; align-items: center; gap: 0.35rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Quick stats row */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
+        }
+        .stat-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.8rem 0.6rem;
+            text-align: center;
+        }
+        .stat-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.25rem; font-weight: 700;
+            color: var(--green); line-height: 1;
+            margin-bottom: 0.2rem;
+        }
+        .stat-label {
+            font-size: 0.68rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--text3);
+        }
+
+        /* ── SECTION CARDS ── */
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .section-title {
+            font-size: 0.68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--text3);
+            margin-bottom: 0.9rem;
+        }
+
+        /* ── BADGES ── */
+        .badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            border-radius: 100px; padding: 0.35rem 0.75rem;
+            font-size: 0.78rem; font-weight: 600;
+        }
+        .badge-terrain {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            color: var(--text2);
+        }
+        .badge-beginner {
+            background: rgba(60,168,60,0.1);
+            border: 1px solid rgba(60,168,60,0.2);
+            color: #2e8b2e;
+        }
+        .badge-intermediate {
+            background: rgba(224,165,0,0.1);
+            border: 1px solid rgba(224,165,0,0.2);
+            color: #9a6e00;
+        }
+        .badge-advanced {
+            background: rgba(232,96,32,0.1);
+            border: 1px solid rgba(232,96,32,0.2);
+            color: #c04800;
+        }
+        .badge-pro {
+            background: rgba(224,32,32,0.1);
+            border: 1px solid rgba(224,32,32,0.2);
+            color: #b01c1c;
+        }
+        [data-theme="dark"] .badge-beginner  { color: #7ed957; background: rgba(76,223,60,0.12); border-color: rgba(76,223,60,0.2); }
+        [data-theme="dark"] .badge-intermediate { color: #ffd050; background: rgba(255,208,80,0.12); border-color: rgba(255,208,80,0.2); }
+        [data-theme="dark"] .badge-advanced  { color: #ff8c42; background: rgba(255,140,66,0.12); border-color: rgba(255,140,66,0.2); }
+        [data-theme="dark"] .badge-pro       { color: #fc8181; background: rgba(252,129,129,0.12); border-color: rgba(252,129,129,0.2); }
+
+        /* ── RATINGS GRID ── */
+        .ratings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        .rating-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.85rem 1rem;
+            display: flex; flex-direction: column; gap: 0.25rem;
+        }
+        .rating-source {
+            font-size: 0.68rem; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--text3);
+        }
+        .rating-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--gold); line-height: 1;
+        }
+        .rating-stars { font-size: 0.8rem; color: var(--gold); letter-spacing: -0.05em; }
+
+        /* ── AMENITY CHIPS ── */
+        .amenities-grid { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+        .amenity-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 8px; padding: 0.35rem 0.65rem;
+            font-size: 0.78rem; color: var(--text2);
+        }
+
+        /* ── INFO ROWS ── */
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .info-key { font-size: 0.82rem; color: var(--text3); }
+        .info-val {
+            font-size: 0.88rem; font-weight: 600;
+            text-align: right; max-width: 60%;
+            color: var(--text);
+        }
+
+        /* ── NOTABLE FEATURES ── */
+        .notable-text {
+            font-size: 0.88rem; color: var(--text2);
+            line-height: 1.65;
+            border-left: 3px solid var(--green-glow);
+            padding-left: 0.9rem;
+        }
+        [data-theme="dark"] .notable-text { border-left-color: rgba(76,223,60,0.2); }
+
+        /* ── COMMUNITY STATS ── */
+        .community-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
+        }
+        .community-stat {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.9rem;
+            text-align: center;
+        }
+        .community-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.6rem; font-weight: 700;
+            color: var(--green); line-height: 1;
+            margin-bottom: 0.2rem;
+        }
+        .community-label { font-size: 0.72rem; color: var(--text3); }
+
+        /* ── FEES BADGE ── */
+        .fees-free { color: var(--green); font-weight: 600; }
+        .fees-paid { color: var(--orange); font-weight: 600; }
+
+        /* ── CTA SECTION ── */
+        .cta-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .cta-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;
+        }
+
+        .btn-primary {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.4rem;
+            background: var(--green);
+            color: #fff;
+            border: none; border-radius: 14px;
+            padding: 0.9rem 1.25rem;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            cursor: pointer;
+            transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+            box-shadow: 0 4px 16px rgba(60,168,60,0.3);
+            text-decoration: none;
+            text-align: center;
+        }
+        [data-theme="dark"] .btn-primary { box-shadow: 0 4px 20px rgba(76,223,60,0.22); }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:active { transform: scale(0.98); }
+
+        .btn-outline {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.4rem;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 14px; padding: 0.9rem 1.25rem;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 0.9rem; font-weight: 600;
+            color: var(--text2); cursor: pointer;
+            text-decoration: none;
+            transition: border-color var(--transition), color var(--transition), background var(--transition);
+            text-align: center;
+        }
+        .btn-outline:hover { border-color: var(--green); color: var(--green); background: var(--green-glow); }
+
+        /* ── BOTTOM TAB BAR ── */
+        @media (max-width: 400px) {
+            .quick-stats { grid-template-columns: repeat(3, 1fr); }
+            .cta-row { grid-template-columns: 1fr; }
+            .ratings-grid { grid-template-columns: 1fr; }
+        }
+    
+/* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.22s;
+}
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.contact-footer .cf-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.contact-footer .cf-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    transition: all 0.22s;
+}
+.contact-footer .cf-socials a:hover {
+    border-color: var(--green);
+    background: var(--surface);
+    color: var(--green);
+}
+.contact-footer .cf-socials svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.contact-footer .cf-site {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header class="top-header">
+        <a href="/" class="header-logo">
+            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            Disc Golf <span class="go">Go</span>
+        </a>
+        <div>
+            <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-content">
+
+            <!-- Error state -->
+            <div id="state-error" style="display:none;">
+                <div class="error-view">
+                    <div class="error-icon">🗺️</div>
+                    <h2>Course not found</h2>
+                    <p>This course may have moved or been removed.</p>
+                    <a href="/checkin" class="btn-primary" style="display:inline-flex;max-width:200px;margin:0 auto;">Find Courses</a>
+                </div>
+            </div>
+
+            <!-- Course detail -->
+            <div id="state-course" style="display:none;">
+
+                <div class="breadcrumb">
+                    <a href="/checkin">Check In</a>
+                    <span>›</span>
+                    <span id="breadcrumb-name">Course</span>
+                </div>
+
+                <!-- Hero card -->
+                <div class="course-hero">
+                    <h1 id="course-name">Loading…</h1>
+                    <div class="course-location">
+                        <span>📍</span>
+                        <span id="course-location"></span>
+                    </div>
+                    <div class="quick-stats">
+                        <div class="stat-item">
+                            <div class="stat-val" id="stat-holes">—</div>
+                            <div class="stat-label">Holes</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="stat-par">—</div>
+                            <div class="stat-label">Par</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="stat-length">—</div>
+                            <div class="stat-label">Length</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terrain & Difficulty -->
+                <div class="section-card" id="card-terrain" style="display:none;">
+                    <div class="section-title">Course Character</div>
+                    <div class="badge-row" id="terrain-badges"></div>
+                </div>
+
+                <!-- Ratings -->
+                <div class="section-card" id="card-ratings" style="display:none;">
+                    <div class="section-title">Ratings</div>
+                    <div class="ratings-grid" id="ratings-grid"></div>
+                </div>
+
+                <!-- Course Details -->
+                <div class="section-card">
+                    <div class="section-title">Details</div>
+                    <div id="details-rows"></div>
+                </div>
+
+                <!-- Amenities -->
+                <div class="section-card" id="card-amenities" style="display:none;">
+                    <div class="section-title">Amenities</div>
+                    <div class="amenities-grid" id="amenities-list"></div>
+                </div>
+
+                <!-- Notable Features -->
+                <div class="section-card" id="card-notable" style="display:none;">
+                    <div class="section-title">What Makes It Special</div>
+                    <p class="notable-text" id="notable-text"></p>
+                </div>
+
+                <!-- Community Stats -->
+                <div class="section-card" id="card-community" style="display:none;">
+                    <div class="section-title">Community</div>
+                    <div class="community-grid">
+                        <div class="community-stat">
+                            <div class="community-val" id="stat-checkins">0</div>
+                            <div class="community-label">Total Check-ins</div>
+                        </div>
+                        <div class="community-stat">
+                            <div class="community-val" id="stat-visitors">0</div>
+                            <div class="community-label">Unique Visitors</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTAs -->
+                <div class="cta-section">
+                    <div class="cta-row">
+                        <a href="/checkin" class="btn-primary" id="cta-checkin">📍 Check In</a>
+                        <a href="/scorecard" class="btn-outline">🥏 Play a Round</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    
+<!-- Contact mini-footer -->
+<div class="contact-footer">
+    <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+    <div class="cf-socials">
+        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+
+        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+    </div>
+    <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+</div>
+<footer class="page-footer">
+    <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
+</footer>
+
+    <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+    <nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+    <script>
+    // ── DARK MODE ────────────────────────────────────────────────
+    (function() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+    })();
+    document.getElementById('themeToggle').addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        this.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('dggo_theme')) {
+            var next = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        }
+    });
+
+    // ── COURSE DETAIL LOGIC ─────────────────────────────────────
+    const pathParts = window.location.pathname.split('/');
+    const courseId = pathParts[pathParts.length - 1];
+
+    const AMENITY_ICONS = {
+        restrooms: '🚻 Restrooms',
+        water: '💧 Water',
+        parking: '🅿️ Parking',
+        pro_shop: '🛍️ Pro Shop',
+        camping: '⛺ Camping',
+        food: '🍔 Food',
+        rental: '🥏 Disc Rental',
+        lighting: '💡 Lighting',
+        benches: '🪑 Benches',
+    };
+
+    const TERRAIN_ICONS = {
+        wooded: '🌲 Wooded',
+        open: '🌾 Open',
+        mixed: '🌳 Mixed',
+        hilly: '⛰️ Hilly',
+        flat: '➖ Flat',
+    };
+
+    function renderStars(rating) {
+        if (!rating) return '';
+        const full = Math.floor(rating);
+        const half = rating - full >= 0.5 ? 1 : 0;
+        const empty = 5 - full - half;
+        return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+    }
+
+    function show(id) { document.getElementById(id).style.display = ''; }
+    function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+    async function loadCourse() {
+        if (!courseId || isNaN(parseInt(courseId))) {
+            show('state-error');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/courses/' + courseId);
+            if (!res.ok) { show('state-error'); return; }
+            const c = await res.json();
+            renderCourse(c);
+        } catch (err) {
+            show('state-error');
+        }
+    }
+
+    function renderCourse(c) {
+        document.getElementById('breadcrumb-name').textContent = c.name;
+        document.title = c.name + ' — Disc Golf Go';
+
+        document.getElementById('course-name').textContent = c.name;
+        document.getElementById('course-location').textContent = c.city + ', ' + c.state;
+
+        // Quick stats
+        document.getElementById('stat-holes').textContent = c.holes || c.hole_count || '—';
+        document.getElementById('stat-par').textContent = c.par || '—';
+        const lengthFt = c.course_length_ft;
+        document.getElementById('stat-length').textContent = lengthFt
+            ? (lengthFt >= 5280 ? (lengthFt / 5280).toFixed(1) + ' mi' : lengthFt.toLocaleString() + ' ft')
+            : '—';
+
+        // Terrain & Difficulty
+        const terrainBadges = document.getElementById('terrain-badges');
+        if (c.terrain || c.difficulty) {
+            terrainBadges.innerHTML = '';
+            if (c.terrain) {
+                const t = document.createElement('span');
+                t.className = 'badge badge-terrain';
+                t.textContent = TERRAIN_ICONS[c.terrain] || c.terrain;
+                terrainBadges.appendChild(t);
+            }
+            if (c.difficulty) {
+                const d = document.createElement('span');
+                d.className = 'badge badge-' + c.difficulty;
+                d.textContent = c.difficulty.charAt(0).toUpperCase() + c.difficulty.slice(1);
+                terrainBadges.appendChild(d);
+            }
+            show('card-terrain');
+        }
+
+        // Ratings
+        const ratingsGrid = document.getElementById('ratings-grid');
+        ratingsGrid.innerHTML = '';
+        let hasRatings = false;
+        if (c.pdga_rating) {
+            hasRatings = true;
+            ratingsGrid.innerHTML +=
+                '<div class="rating-item">' +
+                '<div class="rating-source">PDGA Rating</div>' +
+                '<div class="rating-val">' + parseFloat(c.pdga_rating).toFixed(1) + '</div>' +
+                '<div class="rating-stars">' + renderStars(parseFloat(c.pdga_rating)) + '</div>' +
+                '</div>';
+        }
+        if (c.dgcoursereview_rating) {
+            hasRatings = true;
+            ratingsGrid.innerHTML +=
+                '<div class="rating-item">' +
+                '<div class="rating-source">DGCourseReview</div>' +
+                '<div class="rating-val">' + parseFloat(c.dgcoursereview_rating).toFixed(1) + '</div>' +
+                '<div class="rating-stars">' + renderStars(parseFloat(c.dgcoursereview_rating)) + '</div>' +
+                '</div>';
+        }
+        if (hasRatings) show('card-ratings');
+
+        // Details rows
+        const detailsEl = document.getElementById('details-rows');
+        detailsEl.innerHTML = '';
+        const details = [];
+
+        if (c.fees) {
+            const isFree = c.fees.toLowerCase() === 'free';
+            details.push({
+                key: 'Fees',
+                val: '<span class="' + (isFree ? 'fees-free' : 'fees-paid') + '">' +
+                    (isFree ? '✓ Free' : '💲 ' + c.fees) + '</span>'
+            });
+        }
+        if (c.elevation_change_ft) {
+            details.push({ key: 'Elevation Change', val: c.elevation_change_ft + ' ft' });
+        }
+        if (c.year_established) {
+            details.push({ key: 'Est.', val: c.year_established.toString() });
+        }
+        if (c.designer) {
+            details.push({ key: 'Designed by', val: c.designer });
+        }
+        if (c.pdga_course_id) {
+            details.push({
+                key: 'PDGA Course',
+                val: '<a href="https://www.pdga.com/course-directory/course/' + c.pdga_course_id + '" target="_blank" rel="noopener" style="color:var(--green);text-decoration:none;">#' + c.pdga_course_id + ' ↗</a>'
+            });
+        }
+        if (c.lat && c.lng) {
+            details.push({
+                key: 'GPS',
+                val: '<a href="https://maps.google.com/?q=' + c.lat + ',' + c.lng + '" target="_blank" rel="noopener" style="color:var(--green);text-decoration:none;">' + parseFloat(c.lat).toFixed(4) + ', ' + parseFloat(c.lng).toFixed(4) + ' ↗</a>'
+            });
+        }
+
+        for (const d of details) {
+            detailsEl.innerHTML +=
+                '<div class="info-row">' +
+                '<span class="info-key">' + d.key + '</span>' +
+                '<span class="info-val">' + d.val + '</span>' +
+                '</div>';
+        }
+        if (details.length === 0) {
+            detailsEl.innerHTML = '<p style="color:var(--text3);font-size:0.85rem;">No additional details available.</p>';
+        }
+
+        // Amenities
+        const amenities = c.amenities;
+        if (amenities && Array.isArray(amenities) && amenities.length > 0) {
+            const amenEl = document.getElementById('amenities-list');
+            amenEl.innerHTML = '';
+            for (const a of amenities) {
+                const chip = document.createElement('span');
+                chip.className = 'amenity-chip';
+                chip.textContent = AMENITY_ICONS[a] || a;
+                amenEl.appendChild(chip);
+            }
+            show('card-amenities');
+        }
+
+        // Notable features
+        if (c.notable_features) {
+            document.getElementById('notable-text').textContent = c.notable_features;
+            show('card-notable');
+        }
+
+        // Community stats
+        if (c.total_checkins > 0 || c.unique_visitors > 0) {
+            document.getElementById('stat-checkins').textContent = (c.total_checkins || 0).toLocaleString();
+            document.getElementById('stat-visitors').textContent = (c.unique_visitors || 0).toLocaleString();
+            show('card-community');
+        }
+
+        show('state-course');
+    }
+
+    loadCourse();
+    </script>
+</body>
+</html>

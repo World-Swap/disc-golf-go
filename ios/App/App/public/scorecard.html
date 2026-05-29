@@ -1,0 +1,3249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Scorecard — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <!-- Leaflet for walk map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <style>        h1,h2,h3,h4 { font-family: 'Space Grotesk', system-ui, sans-serif; }
+
+        .page-wrap { max-width: 820px; margin: 0 auto; padding: 0 1.25rem 2rem; }
+
+        /* Loading */
+        .loading-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+        /* SETUP SCREEN */
+        #setup-screen { display: none; }
+        .screen-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.35rem; }
+        .screen-sub { color: var(--text3); font-size: 0.95rem; margin-bottom: 2rem; }
+
+        .course-search-wrap { position: relative; margin-bottom: 1.25rem; }
+        .course-search {
+            width: 100%; background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 12px; padding: 0.9rem 1.1rem 0.9rem 2.8rem; color: var(--text);
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 1rem; outline: none; transition: border-color 0.2s; cursor: pointer;
+        }
+        .course-search:focus { border-color: rgba(60,168,60,0.45); cursor: text; }
+        .course-search::placeholder { color: var(--text3); }
+        .course-search-icon {
+            position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+            font-size: 1rem; pointer-events: none; opacity: 0.5;
+        }
+        .course-dropdown {
+            position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50;
+            background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+            max-height: 340px; overflow-y: auto; display: none;
+            box-shadow: var(--shadow-lg);
+            -webkit-overflow-scrolling: touch;
+        }
+        .course-dropdown.open { display: block; }
+        .course-group-header {
+            padding: 0.45rem 1.1rem 0.3rem;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--green); opacity: 0.7; border-bottom: 1px solid var(--border);
+            background: var(--green-glow); position: sticky; top: 0;
+        }
+        .course-item {
+            padding: 0.75rem 1.1rem; cursor: pointer; transition: background 0.15s;
+            border-bottom: 1px solid var(--border);
+        }
+        .course-item:last-child { border-bottom: none; }
+        .course-item:hover, .course-item:active { background: var(--green-glow); }
+        .course-name { font-weight: 600; font-size: 0.95rem; }
+        .course-loc { font-size: 0.8rem; color: var(--text3); margin-top: 1px; }
+        .course-no-results { padding: 1rem 1.1rem; color: var(--text3); font-size: 0.9rem; text-align: center; }
+
+        .holes-picker { display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .holes-opt {
+            flex: 1; min-width: calc(33% - 0.5rem); padding: 0.85rem; background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s;
+            font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600;
+        }
+        .holes-opt.selected { background: var(--green-glow); border-color: var(--green); color: var(--green); }
+        .holes-opt:hover { border-color: rgba(60,168,60,0.4); }
+        .holes-opt .hole-num { font-size: 1.4rem; font-family: 'Space Mono', monospace; }
+        .holes-opt .hole-label { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+        .holes-picker--disabled { pointer-events: none; opacity: 0.45; }
+        .holes-placeholder {
+            flex: 1; padding: 0.85rem; text-align: center; font-size: 0.85rem;
+            color: var(--text3); border: 2px dashed var(--border2); border-radius: 12px;
+            font-style: italic;
+        }
+
+        /* Mode toggle: radio-style Holes Count vs Layout */
+        .setup-mode-toggle { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .mode-tab {
+            flex: 1; padding: 0.6rem 0.5rem; border: 2px solid var(--border);
+            border-radius: 10px; background: var(--surface); cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; font-weight: 600;
+            color: var(--text3); transition: all 0.2s; text-align: center;
+        }
+        .mode-tab--active { border-color: var(--green); background: var(--green-glow); color: var(--green); }
+        .mode-tab:active { background: var(--surface2); }
+
+        /* Sections locked when the other mode is active */
+        .layout-section--disabled { opacity: 0.4; pointer-events: none; }
+        #holes-section.holes-section--disabled { opacity: 0.4; pointer-events: none; }
+
+        /* Layout picker */
+        #layout-picker-section { display: none; margin-bottom: 1.5rem; }
+        .layout-picker-label { font-size: 0.85rem; color: var(--text3); margin-bottom: 0.6rem; }
+        .layout-picker-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .layout-opt {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+            background: var(--surface); border: 2px solid var(--border);
+            border-radius: 12px; cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .layout-opt:hover { border-color: rgba(60,168,60,0.3); }
+        .layout-opt.selected { background: var(--green-glow); border-color: var(--green); }
+        .layout-opt-name { flex: 1; font-weight: 600; font-size: 0.95rem; }
+        .layout-opt-meta { font-size: 0.75rem; color: var(--text3); }
+        .layout-opt-check {
+            width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--border2);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: all 0.2s; font-size: 0.8rem;
+        }
+        .layout-opt.selected .layout-opt-check { background: var(--green); border-color: var(--green); color: #fff; }
+
+        /* Player picker */
+        #player-picker-section { display: none; margin-bottom: 1.5rem; }
+        .player-picker-label {
+            font-size: 0.85rem; color: var(--text3); margin-bottom: 0.6rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .player-picker-label .count-badge {
+            background: var(--green-glow); color: var(--green); font-size: 0.7rem; font-weight: 700;
+            padding: 0.15rem 0.5rem; border-radius: 99px;
+        }
+        .player-picker-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .player-pick-card {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.9rem;
+            background: var(--surface); border: 2px solid var(--border);
+            border-radius: 12px; cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .player-pick-card:hover { border-color: rgba(60,168,60,0.3); }
+        .player-pick-card.selected { background: var(--green-glow); border-color: var(--green); }
+        .player-pick-avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--green-glow);
+            display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+            color: var(--green); font-weight: 700; overflow: hidden;
+        }
+        .player-pick-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .player-pick-info { flex: 1; min-width: 0; }
+        .player-pick-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-pick-meta { font-size: 0.75rem; color: var(--text3); }
+        .player-pick-check {
+            width: 24px; height: 24px; border-radius: 8px; border: 2px solid var(--border2);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: all 0.2s; font-size: 0.85rem;
+        }
+        .player-pick-card.selected .player-pick-check {
+            background: var(--green); border-color: var(--green); color: #fff;
+        }
+        .player-picker-empty {
+            padding: 0.75rem 1rem; text-align: center; font-size: 0.85rem; color: var(--text3);
+            border: 1px dashed var(--border2); border-radius: 12px; font-style: italic;
+        }
+        .player-picker-loading { text-align: center; padding: 0.75rem; font-size: 0.85rem; color: var(--text3); }
+
+        /* Add Players button */
+        .btn-add-players-round {
+            display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.6rem;
+            padding: 0.4rem 0.8rem; background: var(--green-glow); border: 1px solid rgba(60,168,60,0.25);
+            border-radius: 8px; color: var(--green); font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; font-family: 'Space Grotesk', system-ui, sans-serif;
+        }
+        .btn-add-players-round:hover { background: rgba(60,168,60,0.22); border-color: rgba(60,168,60,0.4); }
+
+        /* Add Players modal */
+        .add-players-modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;
+            padding: 1.5rem;
+        }
+        [data-theme="dark"] .add-players-modal { background: rgba(0,0,0,0.7); }
+        .add-players-modal.open { display: flex; }
+        .add-players-modal-box {
+            background: var(--surface); border: 1px solid var(--border2); border-radius: 16px;
+            padding: 1.25rem; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto;
+        }
+        .add-players-modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .add-players-modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+        .add-players-modal-actions button {
+            flex: 1; padding: 0.7rem; border-radius: 10px; font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; border: none;
+        }
+        .btn-modal-cancel { background: var(--surface2); color: var(--text); }
+        .btn-modal-confirm { background: var(--green); color: #fff; }
+        .btn-modal-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-start {
+            width: 100%; padding: 1rem; background: var(--green);
+            color: #fff; border: none; border-radius: 12px; font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-start:hover { opacity: 0.88; }
+        .btn-start:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ROUND SCREEN */
+        #round-screen { display: none; }
+
+        .round-header {
+            background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius-card);
+            padding: 1rem 1.25rem; margin-bottom: 1rem;
+            box-shadow: var(--shadow-card);
+        }
+        .round-course { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .round-meta { font-size: 0.8rem; color: var(--text3); }
+        .round-stats { display: flex; gap: 1.25rem; margin-top: 0.75rem; }
+        .stat { text-align: center; }
+        .stat-val { font-size: 1.3rem; font-weight: 700; font-family: 'Space Mono', monospace; }
+        .stat-val.under { color: var(--green); }
+        .stat-val.over { color: #fc8181; }
+        .stat-val.even { color: var(--text); }
+        .stat-label { font-size: 0.7rem; color: var(--text3); margin-top: 1px; }
+
+        /* Hole card */
+        .hole-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.25rem 1.25rem 1rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.25s;
+            box-shadow: var(--shadow-card);
+        }
+        .hole-card.ace   { border-color: rgba(255,107,107,0.55); }
+        .hole-card.eagle { border-color: rgba(255,215,0,0.5); }
+        .hole-card.birdie { border-color: rgba(76,223,60,0.55); }
+        .hole-card.bogey  { border-color: rgba(255,169,77,0.4); }
+        .hole-card.double { border-color: rgba(240,82,82,0.45); }
+
+        .hole-heading {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
+        }
+        .hole-num-badge {
+            font-family: 'Space Mono', monospace; font-size: 1.05rem; font-weight: 700;
+            color: var(--green); background: var(--green-glow);
+            border: 1px solid rgba(60,168,60,0.25); border-radius: 8px;
+            padding: 0.3rem 0.75rem; letter-spacing: 0.03em;
+        }
+        .hole-meta-chips { display: flex; gap: 0.5rem; align-items: center; }
+        .hole-meta-chip {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 0.3rem 0.65rem; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 8px; min-width: 52px;
+            cursor: pointer; user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .hole-meta-chip.tappable:active { background: var(--green-glow); border-color: rgba(60,168,60,0.35); }
+        .hole-meta-chip-label { font-size: 0.6rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
+        .hole-meta-chip-value { font-size: 1.05rem; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--text); margin-top: 1px; }
+        .hole-meta-chip-value.dim { color: var(--text3); }
+
+        /* Player score rows */
+        .players-list { display: flex; flex-direction: column; gap: 0.6rem; }
+        .player-score-row {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0.85rem; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+        .player-score-row.host { border-color: rgba(60,168,60,0.2); }
+        .player-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--green-glow);
+            border: 2px solid rgba(60,168,60,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700;
+            color: var(--green); flex-shrink: 0; overflow: hidden;
+        }
+        .player-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .player-name { flex: 1; font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-name .you-badge { font-size: 0.65rem; color: var(--green); font-weight: 600; margin-left: 0.35rem; opacity: 0.8; }
+
+        /* Score controls */
+        .score-controls { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+        .score-btn {
+            width: 48px; height: 48px; border: none; border-radius: 12px;
+            font-size: 1.4rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+            transition: background 0.1s, transform 0.07s;
+        }
+        .score-btn.minus { background: rgba(240,82,82,0.1); color: #fc8181; border: 1px solid rgba(240,82,82,0.2); }
+        .score-btn.minus:active { background: rgba(240,82,82,0.22); transform: scale(0.9); }
+        .score-btn.plus { background: rgba(60,168,60,0.1); color: var(--green); border: 1px solid rgba(60,168,60,0.2); }
+        .score-btn.plus:active { background: rgba(60,168,60,0.22); transform: scale(0.9); }
+        .score-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .score-display-wrap { display: flex; flex-direction: column; align-items: center; min-width: 44px; }
+        .score-num { font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; line-height: 1; }
+        .score-num.unset { color: var(--text3); }
+        .score-num.under { color: var(--green); }
+        .score-num.over  { color: #fc8181; }
+        .score-num.even  { color: var(--text); }
+        .vspar-badge { font-size: 0.65rem; font-weight: 700; margin-top: 2px; border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+        .vspar-badge.birdie  { background: rgba(76,223,60,0.15); color: var(--green); }
+        .vspar-badge.eagle   { background: rgba(255,215,0,0.12); color: #ffd700; }
+        .vspar-badge.ace     { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .vspar-badge.bogey   { background: rgba(255,169,77,0.12); color: #ffa94d; }
+        .vspar-badge.double  { background: rgba(240,82,82,0.12); color: #fc8181; }
+        .vspar-badge.par     { background: rgba(104,211,145,0.1); color: var(--par); }
+        .vspar-badge.hidden  { visibility: hidden; }
+
+        /* Navigation */
+        .hole-nav { display: flex; gap: 0.65rem; margin-top: 0.5rem; align-items: stretch; }
+        .nav-btn {
+            flex: 1; padding: 0.9rem 1rem; border: none; border-radius: 14px;
+            font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1.05rem; font-weight: 700;
+            cursor: pointer; transition: opacity 0.15s, transform 0.07s;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-btn:active { transform: scale(0.97); }
+        .nav-btn.back { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); flex: 0.6; }
+        .nav-btn.back:hover { background: var(--surface); }
+        .nav-btn.next { background: var(--green); color: #fff; }
+        .nav-btn.next:hover { opacity: 0.88; }
+        .nav-btn.finish { background: linear-gradient(135deg, var(--green), #22c55e); color: white; }
+        .nav-btn.finish:hover { opacity: 0.88; }
+        .nav-btn.abandon { flex: 0.5; background: transparent; border: 1px solid rgba(252,129,129,0.2); color: #fc8181; font-size: 0.85rem; }
+        .nav-btn.abandon:hover { border-color: rgba(252,129,129,0.4); }
+
+        /* Progress dots */
+        .hole-progress { display: flex; justify-content: center; gap: 5px; margin-bottom: 1rem; flex-wrap: wrap; }
+        .progress-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--border2);
+            transition: background 0.2s, transform 0.15s; cursor: pointer;
+        }
+        .progress-dot.active { background: var(--green); transform: scale(1.4); }
+        .progress-dot.scored-birdie { background: var(--green); }
+        .progress-dot.scored-eagle  { background: #ffd700; }
+        .progress-dot.scored-ace    { background: #ff6b6b; }
+        .progress-dot.scored-par    { background: var(--par); }
+        .progress-dot.scored-bogey  { background: #ffa94d; }
+        .progress-dot.scored-double { background: #fc8181; }
+
+        /* FINISH SCREEN */
+        #finish-screen { display: none; text-align: center; padding: 3rem 1rem; }
+        .finish-icon { font-size: 4rem; margin-bottom: 1rem; animation: bounceIn 0.5s ease; }
+        @keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .finish-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .finish-score { font-size: 1.1rem; color: var(--text2); margin-bottom: 1.25rem; }
+        .xp-banner {
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem;
+            background: var(--green-glow); border: 1px solid rgba(60,168,60,0.3); border-radius: 30px;
+            margin-bottom: 1.25rem; font-family: 'Space Mono', monospace; font-weight: 700; color: var(--green);
+        }
+
+        /* Item drop banner */
+        .item-drop-banner {
+            display: none; align-items: center; gap: 0.75rem;
+            background: linear-gradient(135deg, rgba(120,60,220,0.15), rgba(80,40,160,0.08));
+            border: 1px solid rgba(160,80,255,0.35); border-radius: 14px;
+            padding: 0.85rem 1.1rem; margin: 0.4rem 0 0.9rem; text-align: left;
+            animation: itemDropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .item-drop-banner.show { display: flex; }
+        @keyframes itemDropIn { from { transform: scale(0.6) translateY(-10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .drop-icon { font-size: 2.2rem; flex-shrink: 0; }
+        .drop-info { flex: 1; }
+        .drop-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(160,80,255,0.9); font-weight: 700; margin-bottom: 0.1rem; }
+        .drop-name { font-size: 0.95rem; font-weight: 700; }
+        .drop-desc { font-size: 0.78rem; color: var(--text2); margin-top: 0.1rem; }
+        .drop-rarity { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 4px; flex-shrink: 0; align-self: flex-start; }
+        .drop-rarity.rarity-common { background: rgba(150,150,150,0.15); color: #aaa; border: 1px solid rgba(150,150,150,0.25); }
+        .drop-rarity.rarity-uncommon { background: rgba(76,223,60,0.1); color: #7ed957; border: 1px solid rgba(76,223,60,0.2); }
+        .drop-rarity.rarity-rare { background: rgba(30,144,255,0.12); color: #1e90ff; border: 1px solid rgba(30,144,255,0.25); }
+        .drop-rarity.rarity-epic { background: rgba(160,80,255,0.12); color: #a050ff; border: 1px solid rgba(160,80,255,0.3); }
+        .drop-rarity.rarity-legendary { background: rgba(255,165,0,0.12); color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
+
+        /* Breakdown grid */
+        .breakdown-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; margin-bottom: 1.25rem; text-align: center; }
+        .breakdown-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.7rem 0.4rem; box-shadow: var(--shadow-card); }
+        .breakdown-val { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; }
+        .breakdown-lbl { font-size: 0.68rem; color: var(--text3); margin-top: 2px; }
+        .breakdown-cell.ace-cell .breakdown-val { color: var(--ace); }
+        .breakdown-cell.birdie-cell .breakdown-val { color: var(--birdie); }
+        .breakdown-cell.par-cell .breakdown-val { color: var(--par); }
+        .breakdown-cell.bogey-cell .breakdown-val { color: var(--bogey); }
+        .breakdown-cell.double-cell .breakdown-val { color: #fc8181; }
+        .breakdown-cell.eagle-cell .breakdown-val { color: var(--eagle); }
+
+        /* Best/worst hole */
+        .hole-highlights { display: flex; gap: 0.6rem; margin-bottom: 1.25rem; }
+        .hole-highlight { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; text-align: center; box-shadow: var(--shadow-card); }
+        .hole-highlight-label { font-size: 0.68rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.35rem; }
+        .hole-highlight-score { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; }
+        .hole-highlight-info { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+
+        /* Multiplayer summary */
+        .mp-summary { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1rem; margin-bottom: 1.25rem; text-align: left; box-shadow: var(--shadow-card); }
+        .mp-summary-title { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; text-align: center; }
+        .mp-player-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+        .mp-player-row:last-child { border-bottom: none; }
+        .mp-rank { font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700; min-width: 28px; text-align: center; color: var(--text3); }
+        .mp-rank.first { color: #ffd700; }
+        .mp-rank.second { color: #c0c0c0; }
+        .mp-rank.third { color: #cd7f32; }
+        .mp-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--green-glow); border: 1px solid rgba(60,168,60,0.25); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--green); flex-shrink: 0; overflow: hidden; }
+        .mp-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .mp-name { flex: 1; font-size: 0.9rem; font-weight: 600; }
+        .mp-score-total { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+        .mp-vspar { font-size: 0.8rem; color: var(--text2); }
+        .mp-vspar.under { color: var(--green); }
+        .mp-vspar.over  { color: #fc8181; }
+        .mp-xp-gold { font-size: 0.72rem; color: var(--text3); margin-top: 1px; }
+
+        .btn-view-challenges {
+            display: block; width: 100%; padding: 1rem; background: var(--surface);
+            border: 1px solid var(--border2); border-radius: 12px; color: var(--text);
+            text-decoration: none; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600; font-size: 0.95rem;
+            margin-bottom: 0.75rem; transition: border-color 0.2s; cursor: pointer;
+        }
+        .btn-view-challenges:hover { border-color: rgba(60,168,60,0.35); }
+        .btn-new-round {
+            display: block; width: 100%; padding: 1rem; background: var(--green);
+            color: #fff; border: none; border-radius: 12px;
+            font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; text-decoration: none; text-align: center; transition: opacity 0.2s;
+        }
+        .btn-new-round:hover { opacity: 0.88; }
+
+        .rank-nudge {
+            display: none; align-items: center; justify-content: space-between; gap: 0.75rem;
+            padding: 0.85rem 1.1rem;
+            background: var(--surface); border: 1px solid rgba(224,165,0,0.3); border-radius: 12px;
+            text-decoration: none; color: var(--text);
+            margin-bottom: 0.75rem; transition: border-color 0.2s;
+        }
+        .rank-nudge:hover { border-color: rgba(224,165,0,0.5); }
+        .rank-nudge-left { display: flex; align-items: center; gap: 0.6rem; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 0.9rem; }
+        .rank-nudge-arrow { font-size: 0.8rem; color: var(--text3); }
+
+        /* Distance stats strip */
+        .dist-stats-strip {
+            display: none; gap: 0; margin: 0 0 1rem;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+        .dist-stats-strip.show { display: grid; grid-template-columns: repeat(2,1fr); }
+        .dist-stat-item { padding: 0.75rem 0.5rem; text-align: center; border-right: 1px solid var(--border); }
+        .dist-stat-item:last-child { border-right: none; }
+        .dist-stat-val { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--green); line-height: 1; }
+        .dist-stat-lbl { font-size: 0.67rem; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Distance achievement card */
+        .dist-achievement-card {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--green-glow); border: 1px solid rgba(60,168,60,0.35); border-radius: 14px;
+            padding: 0.85rem 1.1rem; margin-bottom: 0.6rem; text-align: left;
+            animation: achieveIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes achieveIn { from { transform: scale(0.7) translateY(-8px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .dist-ach-icon { font-size: 2rem; flex-shrink: 0; }
+        .dist-ach-info { flex: 1; }
+        .dist-ach-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--green); font-weight: 700; margin-bottom: 0.1rem; }
+        .dist-ach-name { font-size: 0.95rem; font-weight: 700; }
+        .dist-ach-desc { font-size: 0.78rem; color: var(--text2); margin-top: 0.1rem; }
+        .dist-ach-reward { font-size: 0.78rem; color: var(--gold); font-weight: 600; margin-top: 0.2rem; }
+        #dist-achievements-wrap { margin-bottom: 0.25rem; }
+
+        /* Personal records strip */
+        .personal-records-wrap { margin-bottom: 1rem; }
+        .personal-record-card {
+            display: flex; align-items: center; gap: 0.65rem;
+            background: linear-gradient(135deg, rgba(76,223,60,0.12), rgba(46,204,64,0.06));
+            border: 1px solid rgba(76,223,60,0.3); border-radius: 12px;
+            padding: 0.75rem 1rem; margin-bottom: 0.5rem; text-align: left;
+            animation: prCardIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        }
+        @keyframes prCardIn { from { opacity:0; transform:translateY(8px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+        .personal-record-card.ace-card {
+            background: linear-gradient(135deg, rgba(255,107,107,0.18), rgba(255,50,50,0.08));
+            border-color: rgba(255,107,107,0.45);
+        }
+        .personal-record-card.challenge-card {
+            background: linear-gradient(135deg, rgba(255,200,0,0.12), rgba(224,165,0,0.06));
+            border-color: rgba(255,200,0,0.35);
+        }
+        .pr-icon { font-size: 1.6rem; flex-shrink: 0; }
+        .pr-msg { font-size: 0.92rem; font-weight: 700; color: var(--text); flex: 1; }
+        .pr-msg.green { color: var(--green); }
+        .pr-msg.ace { color: #ff6b6b; }
+        .pr-msg.gold { color: var(--gold); }
+
+        /* Share card — canvas preview */
+        .share-card {
+            background: var(--surface); border: 1px solid var(--border2); border-radius: 16px;
+            padding: 1.2rem; margin-bottom: 1rem; text-align: center;
+        }
+        .share-card-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 0.6rem; font-weight: 600; }
+        /* Legacy text elements kept for fallback */
+        .share-card-score { font-family: 'Space Mono', monospace; font-size: 2.2rem; font-weight: 700; line-height: 1; }
+        .share-card-score.under { color: var(--green); }
+        .share-card-score.over  { color: #fc8181; }
+        .share-card-score.even  { color: var(--text); }
+        .share-card-course { font-size: 0.85rem; color: var(--text2); margin-top: 0.3rem; }
+        .share-card-chips { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.65rem; }
+        .share-chip { font-size: 0.76rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 100px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+        .share-chip.green { background: rgba(76,223,60,0.1); border-color: rgba(76,223,60,0.3); color: var(--green); }
+        /* Canvas preview wrapper */
+        .share-canvas-wrap {
+            width: 100%; max-width: 320px; margin: 0 auto 0.85rem;
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+        }
+        #share-canvas {
+            width: 100%; height: auto; display: block;
+        }
+        .share-card-generating {
+            display: flex; align-items: center; justify-content: center;
+            height: 80px; color: var(--text3); font-size: 0.85rem; gap: 0.4rem;
+        }
+        .share-btn-row {
+            display: flex; gap: 0.6rem; margin-top: 0.6rem;
+        }
+        .btn-share-round {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            flex: 1; padding: 0.7rem 1rem; background: var(--surface2);
+            border: 1px solid var(--border2); border-radius: 10px; color: var(--text2);
+            font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: border-color 0.2s, color 0.2s; text-decoration: none;
+        }
+        .btn-share-round:hover { border-color: rgba(76,223,60,0.4); color: var(--green); }
+        .btn-share-round.primary {
+            background: linear-gradient(135deg, #3ca83c, #2d8a20);
+            border-color: transparent; color: #fff;
+        }
+        .btn-share-round.primary:hover { opacity: 0.9; color: #fff; border-color: transparent; }
+
+        /* Challenges CTA */
+        .challenges-cta {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: linear-gradient(135deg, rgba(255,200,0,0.12), rgba(255,165,0,0.06));
+            border: 1px solid rgba(255,200,0,0.3); border-radius: 12px;
+            padding: 0.85rem 1.1rem; margin-bottom: 0.75rem; text-decoration: none;
+            color: var(--text); transition: border-color 0.2s;
+        }
+        .challenges-cta:hover { border-color: rgba(255,200,0,0.55); }
+        .challenges-cta-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .challenges-cta-text { flex: 1; }
+        .challenges-cta-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gold); font-weight: 700; margin-bottom: 0.1rem; }
+        .challenges-cta-desc { font-size: 0.9rem; font-weight: 700; }
+        .challenges-cta-arrow { font-size: 1rem; color: var(--gold); }
+
+        .toast {
+            position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 1rem); left: 50%; transform: translateX(-50%) translateY(80px);
+            background: var(--surface); border: 1px solid var(--border2); border-radius: 10px;
+            padding: 0.75rem 1.25rem; font-size: 0.9rem; z-index: 200;
+            transition: transform 0.3s, opacity 0.3s; pointer-events: none;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            max-width: min(360px, calc(100vw - 2rem)); overflow: hidden; text-overflow: ellipsis;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* Mobile tweaks */
+        @media (max-width: 480px) {
+            .score-btn { width: 52px; height: 52px; font-size: 1.5rem; }
+            .score-num { font-size: 1.6rem; }
+            .hole-card { padding: 1rem 0.9rem 0.85rem; }
+        }
+
+        /* ── WALK MAP MODAL (v2) ─────────────────────────────────── */
+        #walk-map-modal {
+            display: none; position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.92);
+            flex-direction: column; align-items: stretch;
+        }
+        #walk-map-modal.open { display: flex; }
+        .walk-map-inner { display: flex; flex-direction: column; height: 100%; max-width: 640px; margin: 0 auto; width: 100%; background: var(--bg); overflow: hidden; }
+
+        /* Header */
+        .walk-map-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--bg2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .walk-map-title { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--text); }
+        .walk-map-title span { color: var(--green); }
+        .walk-map-close { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-size: 1.3rem; line-height: 1; width: 2rem; height: 2rem; border-radius: 7px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .walk-map-close:hover { background: var(--surface); }
+
+        /* Map area — fills remaining space */
+        #walk-map-leaflet { flex: 1; min-height: 0; background: #1a1a2e; }
+        .walk-map-no-data { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: var(--text3); font-size: 0.95rem; padding: 2rem; text-align: center; }
+        .walk-map-no-data .no-data-icon { font-size: 2.5rem; }
+
+        /* Bottom panel — scrollable stats below the map */
+        .walk-map-bottom { flex-shrink: 0; background: var(--bg2); border-top: 1px solid var(--border); overflow-y: auto; max-height: 48vh; }
+
+        /* Top stat row */
+        .walk-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border); }
+        .walk-stat { padding: 0.75rem 0.5rem; text-align: center; border-right: 1px solid var(--border); }
+        .walk-stat:last-child { border-right: none; }
+        .walk-stat-icon { font-size: 1rem; line-height: 1; margin-bottom: 2px; }
+        .walk-stat-val { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--green); line-height: 1; }
+        .walk-stat-label { font-size: 0.67rem; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Course + comparison banner */
+        .walk-course-banner { padding: 0.5rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+        .walk-course-name { font-size: 0.82rem; color: var(--text2); font-weight: 500; }
+        .walk-best-badge { font-size: 0.75rem; color: var(--green); font-weight: 600; white-space: nowrap; }
+
+        /* Per-hole list */
+        .walk-holes-title { padding: 0.6rem 1rem 0.3rem; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
+        .walk-hole-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 1rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s; }
+        .walk-hole-row:hover { background: var(--surface2); }
+        .walk-hole-row:last-child { border-bottom: none; }
+        .walk-hole-num { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--text3); min-width: 1.8rem; }
+        .walk-hole-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+        .walk-hole-score-badge { font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: 700; min-width: 2rem; text-align: center; padding: 1px 5px; border-radius: 5px; }
+        .badge-ace    { background: #ff6b6b22; color: #ff6b6b; border: 1px solid #ff6b6b55; }
+        .badge-eagle  { background: #a78bfa22; color: #a78bfa; border: 1px solid #a78bfa55; }
+        .badge-birdie { background: #7ed95722; color: #7ed957; border: 1px solid #7ed95755; }
+        .badge-par    { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+        .badge-bogey  { background: #fb923c22; color: #fb923c; border: 1px solid #fb923c55; }
+        .badge-double { background: #fc818122; color: #fc8181; border: 1px solid #fc818155; }
+        .walk-hole-par { font-size: 0.75rem; color: var(--text3); flex: 1; }
+        .walk-hole-dist { font-size: 0.75rem; color: var(--text2); font-family: 'Space Mono', monospace; margin-left: auto; white-space: nowrap; }
+        .walk-hole-time { font-size: 0.72rem; color: var(--text3); min-width: 2.5rem; text-align: right; }
+
+        /* Hole detail popup on the map */
+        .leaflet-popup-content-wrapper { background: var(--bg2); border: 1px solid var(--border2); border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .leaflet-popup-tip { background: var(--bg2); }
+        .leaflet-popup-content { margin: 0.6rem 0.8rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; color: var(--text); }
+        .hole-popup-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; }
+        .hole-popup-row { display: flex; gap: 0.5rem; align-items: center; font-size: 0.8rem; color: var(--text2); }
+
+        /* Map tile dark filter */
+        .leaflet-tile { filter: brightness(0.7) saturate(0.55) hue-rotate(180deg); }
+
+        /* Animated path draw-in (CSS animation on polyline element) */
+        @keyframes pathDrawIn { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+        .walk-path-animated { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pathDrawIn 1.4s ease-out forwards; pathLength: 1; }
+    
+/* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a { color: var(--text3); text-decoration: none; transition: color 0.22s; }
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.contact-footer .cf-socials { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.contact-footer .cf-socials a { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface2); transition: all 0.22s; }
+.contact-footer .cf-socials a:hover { border-color: var(--green); background: var(--surface); color: var(--green); }
+.contact-footer .cf-socials svg { width: 14px; height: 14px; fill: currentColor; }
+.contact-footer .cf-site { font-size: 0.72rem; opacity: 0.75; }
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+<!-- TOP HEADER -->
+<header class="top-header">
+    <a href="/" class="header-logo">
+        <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+        Disc Golf <span class="go">Go</span>
+    </a>
+    <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+        <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+    </div>
+</header>
+
+<script>
+// Dark mode toggle (theme already set by blocking <head> script)
+(function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+})();
+document.getElementById('themeToggle').addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('dggo_theme', next);
+    this.textContent = next === 'dark' ? '☀️' : '🌙';
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    if (!localStorage.getItem('dggo_theme')) {
+        var next = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+});
+</script>
+
+<div class="content">
+
+    <div class="page-wrap">
+        <!-- Setup: pick course + holes -->
+        <div id="setup-screen">
+            <h1 class="screen-title" id="setup-title">New Round</h1>
+            <p class="screen-sub">Pick your course and start logging holes</p>
+
+            <!-- Admin preview mode banner (hidden by default, shown via JS) -->
+            <div id="preview-mode-banner" style="display:none; align-items:flex-start; gap:0.75rem; padding:0.85rem 1.1rem; background:linear-gradient(135deg,rgba(76,223,60,0.12),rgba(46,204,64,0.05)); border:1px solid rgba(76,223,60,0.4); border-radius:12px; margin-bottom:1.25rem; font-size:0.88rem; color:rgba(180,255,150,0.95); line-height:1.4;">
+                <span style="font-size:1.3rem; flex-shrink:0; margin-top:1px;">🎯</span>
+                <div>
+                    <strong style="color:#7ed957;">Admin Preview Mode</strong><br>
+                    GPS check-in bypassed. Rounds are abandoned on completion — no XP, gold, or leaderboard impact. For QA only.
+                </div>
+            </div>
+
+            <div id="checkin-info-banner" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:linear-gradient(135deg,rgba(255,165,0,0.1),rgba(255,200,0,0.05)); border:1px solid rgba(255,165,0,0.3); border-radius:12px; margin-bottom:1.25rem; font-size:0.88rem; color:rgba(255,220,150,0.95);">
+                <span style="font-size:1.1rem; flex-shrink:0;">📍</span>
+                <span style="flex:1;">Check in before starting — tap to use GPS at the course</span>
+                <a href="/checkin" id="btn-checkin-link" style="flex-shrink:0; padding:0.45rem 0.9rem; background:#7ed957; color:#111; border:none; border-radius:8px; font-size:0.82rem; font-weight:700; text-decoration:none; font-family:inherit; white-space:nowrap;">📍 Check In</a>
+            </div>
+
+            <div class="course-search-wrap">
+                <span class="course-search-icon">🔍</span>
+                <input type="text" class="course-search" id="course-search" placeholder="Tap to browse or search courses..." autocomplete="off" readonly>
+                <div class="course-dropdown" id="course-dropdown"></div>
+            </div>
+            <div id="selected-course-display" style="display:none; padding:0.75rem 1rem; background:rgba(46,204,64,0.1); border:1px solid rgba(76,223,60,0.3); border-radius:10px; margin-bottom:1.25rem; font-size:0.9rem;">
+                <strong id="sel-name"></strong> — <span id="sel-loc" style="color:var(--muted)"></span>
+            </div>
+
+            <!-- Mode toggle: pick one or the other, never both -->
+            <div class="setup-mode-toggle" id="setup-mode-toggle" style="display:none; margin-bottom:1rem;">
+                <button class="mode-tab mode-tab--active" id="mode-holes-btn" onclick="setSetupMode('holes_count')">
+                    <span class="mode-tab-label">🎯 Holes Count</span>
+                </button>
+                <button class="mode-tab" id="mode-layout-btn" onclick="setSetupMode('layout')">
+                    <span class="mode-tab-label">🗺️ Layout</span>
+                </button>
+            </div>
+
+            <!-- Holes section — disabled when Layout mode is active -->
+            <div id="holes-section">
+                <p class="holes-section-label">Holes</p>
+                <div class="holes-picker holes-picker--disabled" id="holes-picker">
+                    <div class="holes-placeholder">Select a course first</div>
+                </div>
+            </div>
+
+            <!-- Layout picker: shown only when course has multiple layouts, disabled in Holes mode -->
+            <div id="layout-picker-section" class="layout-section--disabled">
+                <p class="layout-picker-label">🗺️ Course Layout</p>
+                <div class="layout-picker-list" id="layout-picker-list"></div>
+            </div>
+
+            <!-- Player picker: shows other checked-in players at selected course -->
+            <div id="player-picker-section">
+                <div class="player-picker-label">
+                    <span>👥 Players at this course</span>
+                    <span class="count-badge" id="player-count-badge" style="display:none">0</span>
+                </div>
+                <div class="player-picker-list" id="player-picker-list">
+                    <div class="player-picker-loading">Checking for other players...</div>
+                </div>
+            </div>
+
+            <button class="btn-start" id="btn-start" disabled>Start Round</button>
+        </div>
+
+        <!-- Active round — hole-by-hole view -->
+        <div id="round-screen">
+            <!-- Round summary header -->
+            <div class="round-header">
+                <div class="round-course" id="rc-name">Loading...</div>
+                <div class="round-meta" id="rc-meta"></div>
+                <div class="round-stats">
+                    <div class="stat">
+                        <div class="stat-val" id="stat-holes">0</div>
+                        <div class="stat-label">Holes</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-val" id="stat-score">—</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-val" id="stat-vpar">—</div>
+                        <div class="stat-label">vs Par</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-val" id="stat-birdies" style="color:var(--birdie)">0</div>
+                        <div class="stat-label">Birdies</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add players button (visible when round is active) -->
+            <button class="btn-add-players-round" id="btn-add-players-round" style="display:none" onclick="openAddPlayersModal()">
+                👥 Add Players
+            </button>
+
+            <!-- Progress dots -->
+            <div class="hole-progress" id="hole-progress"></div>
+
+            <!-- Current hole card -->
+            <div class="hole-card" id="hole-card">
+                <!-- rendered by renderHoleView() -->
+            </div>
+
+            <!-- Navigation buttons -->
+            <div class="hole-nav" id="hole-nav">
+                <!-- rendered by renderHoleNav() -->
+            </div>
+        </div>
+
+        <!-- Finish screen -->
+        <div id="finish-screen">
+            <div class="finish-icon">🥏</div>
+            <h2 class="finish-title" id="finish-title">Round Complete!</h2>
+            <p class="finish-score" id="finish-score"></p>
+            <!-- Preview mode: shown instead of XP/gold banners -->
+            <div id="preview-finish-banner" style="display:none; padding:0.6rem 1rem; background:rgba(76,223,60,0.1); border:1px solid rgba(76,223,60,0.3); border-radius:10px; margin:0.4rem 0 0.5rem; font-size:0.88rem; color:#7ed957; text-align:center;">🎯 Preview Mode — Round discarded, no XP or gold awarded</div>
+            <div class="xp-banner" id="xp-banner" style="display:none">
+                ⭐ <span id="xp-amount"></span> XP earned
+            </div>
+            <div id="gold-banner" style="display:none;background:linear-gradient(135deg,rgba(255,200,0,0.12),rgba(255,165,0,0.06));border:1px solid rgba(255,200,0,0.25);border-radius:10px;padding:0.5rem 1rem;margin:0.4rem 0 0.5rem;font-size:1rem;font-weight:700;color:#ffd700;text-align:center;"></div>
+
+            <!-- Item drop reward -->
+            <div class="item-drop-banner" id="item-drop-banner">
+                <div class="drop-icon" id="drop-icon">📦</div>
+                <div class="drop-info">
+                    <div class="drop-label">🎁 Item Drop!</div>
+                    <div class="drop-name" id="drop-name"></div>
+                    <div class="drop-desc" id="drop-desc"></div>
+                </div>
+                <div class="drop-rarity" id="drop-rarity"></div>
+            </div>
+
+            <!-- Multiplayer group summary (hidden for solo) -->
+            <div class="mp-summary" id="mp-summary" style="display:none">
+                <div class="mp-summary-title">🏅 Group Scorecard</div>
+                <div id="mp-player-list"></div>
+            </div>
+
+            <!-- Hole breakdown -->
+            <div class="breakdown-grid" id="breakdown-grid" style="display:none">
+                <div class="breakdown-cell ace-cell"><div class="breakdown-val" id="bd-aces">0</div><div class="breakdown-lbl">Aces 🎯</div></div>
+                <div class="breakdown-cell eagle-cell"><div class="breakdown-val" id="bd-eagles">0</div><div class="breakdown-lbl">Eagles 🦅</div></div>
+                <div class="breakdown-cell birdie-cell"><div class="breakdown-val" id="bd-birdies">0</div><div class="breakdown-lbl">Birdies 🐦</div></div>
+                <div class="breakdown-cell par-cell"><div class="breakdown-val" id="bd-pars">0</div><div class="breakdown-lbl">Pars ✅</div></div>
+                <div class="breakdown-cell bogey-cell"><div class="breakdown-val" id="bd-bogeys">0</div><div class="breakdown-lbl">Bogeys</div></div>
+                <div class="breakdown-cell double-cell"><div class="breakdown-val" id="bd-doubles">0</div><div class="breakdown-lbl">Double+</div></div>
+            </div>
+
+            <!-- Best/worst hole -->
+            <div class="hole-highlights" id="hole-highlights" style="display:none">
+                <div class="hole-highlight">
+                    <div class="hole-highlight-label">🏆 Best Hole</div>
+                    <div class="hole-highlight-score" id="best-hole-score" style="color:var(--green)">—</div>
+                    <div class="hole-highlight-info" id="best-hole-info"></div>
+                </div>
+                <div class="hole-highlight">
+                    <div class="hole-highlight-label">😬 Hardest Hole</div>
+                    <div class="hole-highlight-score" id="worst-hole-score" style="color:#fc8181">—</div>
+                    <div class="hole-highlight-info" id="worst-hole-info"></div>
+                </div>
+            </div>
+
+            <!-- Distance stats strip -->
+            <div class="dist-stats-strip" id="dist-stats-strip">
+                <div class="dist-stat-item">
+                    <div class="dist-stat-val" id="dist-walked">—</div>
+                    <div class="dist-stat-lbl">🚶 Distance Walked</div>
+                </div>
+                <div class="dist-stat-item">
+                    <div class="dist-stat-val" id="round-duration">—</div>
+                    <div class="dist-stat-lbl">⏱️ Round Time</div>
+                </div>
+            </div>
+
+            <!-- New distance achievement unlocks -->
+            <div id="dist-achievements-wrap"></div>
+
+            <!-- Personal records section (populated by JS) -->
+            <div class="personal-records-wrap" id="personal-records-wrap" style="display:none"></div>
+
+            <!-- Share card (canvas-based image) -->
+            <div class="share-card" id="share-card" style="display:none">
+                <div class="share-card-title">📊 Share Your Round</div>
+                <div class="share-canvas-wrap" id="share-canvas-wrap">
+                    <div class="share-card-generating" id="share-card-generating">⏳ Generating card…</div>
+                    <canvas id="share-canvas" width="1080" height="1080" style="display:none"></canvas>
+                </div>
+                <!-- Hidden legacy elements preserved for shareRound() text fallback -->
+                <div id="share-score" style="display:none"></div>
+                <div id="share-course" style="display:none"></div>
+                <div id="share-chips" style="display:none"></div>
+                <div class="share-btn-row">
+                    <button class="btn-share-round primary" id="btn-share-image" onclick="shareRoundImage()" style="display:none">📤 Share</button>
+                    <button class="btn-share-round" id="btn-download-image" onclick="downloadRoundImage()" style="display:none">⬇️ Save Image</button>
+                    <button class="btn-share-round" id="btn-share-text" onclick="shareRound()">📤 Share Round</button>
+                </div>
+            </div>
+
+            <a href="/leaderboard" class="rank-nudge" id="rank-nudge">
+                <div class="rank-nudge-left"><span>🏆</span><span id="rank-nudge-text">View Leaderboard</span></div>
+                <div class="rank-nudge-arrow">See rankings →</div>
+            </a>
+            <button class="btn-view-challenges" id="btn-view-walk-map" onclick="showWalkMapModal(activeRound && activeRound.id, window._lastFinishData)" style="cursor:pointer;border:none;width:100%;text-align:center;">🗺️ View Walk Map</button>
+            <!-- Challenges CTA — dynamically swapped to alert if unclaimed challenges exist -->
+            <a href="/challenges" class="challenges-cta" id="challenges-cta" style="display:none">
+                <div class="challenges-cta-icon">⚡</div>
+                <div class="challenges-cta-text">
+                    <div class="challenges-cta-label">Quests</div>
+                    <div class="challenges-cta-desc" id="challenges-cta-desc">View Quest Progress</div>
+                </div>
+                <div class="challenges-cta-arrow">→</div>
+            </a>
+            <a href="/challenges" class="btn-view-challenges" id="btn-view-challenges-plain">View Quest Progress →</a>
+            <a href="/scorecard" class="btn-new-round">Start Another Round</a>
+        </div>
+    </div>
+</div>
+
+<!-- Walk Map Modal (v2) -->
+<div id="walk-map-modal" role="dialog" aria-modal="true" aria-label="Walk Path Map">
+    <div class="walk-map-inner">
+        <div class="walk-map-header">
+            <div class="walk-map-title">🗺️ Your <span>Walk Path</span></div>
+            <button class="walk-map-close" id="walk-map-close-btn" aria-label="Close map">✕</button>
+        </div>
+        <!-- Map fills this area — injected by JS -->
+        <div id="walk-map-content" style="flex:1;min-height:0;display:flex;flex-direction:column;"></div>
+        <!-- Bottom scrollable panel -->
+        <div class="walk-map-bottom" id="walk-map-bottom" style="display:none;">
+            <!-- 3-stat summary row -->
+            <div class="walk-stat-row">
+                <div class="walk-stat">
+                    <div class="walk-stat-icon">🚶</div>
+                    <div class="walk-stat-val" id="wms-distance">—</div>
+                    <div class="walk-stat-label">Distance</div>
+                </div>
+                <div class="walk-stat">
+                    <div class="walk-stat-icon">🏌️</div>
+                    <div class="walk-stat-val" id="wms-score">—</div>
+                    <div class="walk-stat-label">Score vs Par</div>
+                </div>
+                <div class="walk-stat">
+                    <div class="walk-stat-icon">⏱️</div>
+                    <div class="walk-stat-val" id="wms-time">—</div>
+                    <div class="walk-stat-label">Round Time</div>
+                </div>
+            </div>
+            <!-- Course name + best comparison -->
+            <div class="walk-course-banner" id="wms-course-banner" style="display:none;">
+                <span class="walk-course-name" id="wms-course-name"></span>
+                <span class="walk-best-badge" id="wms-best-badge" style="display:none;"></span>
+            </div>
+            <!-- Per-hole breakdown list -->
+            <div id="wms-holes-list"></div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('dggo_token');
+let myPlayerId = parseInt(localStorage.getItem('dggo_player_id') || '0');
+let activeRound = null;
+let holes = [];            // host's hole scores [{hole_number, par, score}]
+let selectedCourseId = null;
+let selectedLayoutId = null;  // resolved layout for the round being started
+let selectedHoles = 9;
+let setupMode = 'holes_count'; // 'holes_count' or 'layout' — radio-style toggle
+let allCourses = [];
+let currentHole = 1;       // 1-indexed, which hole is displayed
+
+// ── Preview Mode (admin bypass of GPS gate) ─────────────────────────────────
+// Activated by ?preview=1 in URL + dgg_admin_token in localStorage.
+// Rounds are abandoned on completion — no XP/gold/leaderboard impact.
+const _urlParams = new URLSearchParams(window.location.search);
+const isPreviewMode = _urlParams.get('preview') === '1' && !!localStorage.getItem('dgg_admin_token');
+const _adminToken = isPreviewMode ? localStorage.getItem('dgg_admin_token') : null;
+let hasCheckedIn = false; // tracks GPS check-in status (bypassed in preview mode)
+
+// Per-hole par before saved (keyed by hole number)
+const holePars = {};
+
+// Co-players state (for multiplayer rounds)
+// [{player_id, display_name, avatar_url, is_host}]
+let coPlayers = [];
+// co-player scores keyed by player_id, then hole_number
+const coPlayerHoles = {}; // { [playerId]: { [holeNum]: {par, score} } }
+
+// Selected co-player IDs for the setup flow (pre-round)
+const selectedCoPlayerIds = new Set();
+// Available players at the course (from /api/checkins/at-course)
+let availablePlayersAtCourse = [];
+
+// ── Adaptive GPS Tracking (battery optimization) ──────────────────────────────
+// Motion-triggered: pause GPS when stationary >30s; resume on movement
+// Battery-aware: double interval when battery <20%
+// Batch upload: buffer up to 20 points, flush on size or 15s timer
+
+let gpsWatchId = null;
+let gpsTrackingRoundId = null;
+let lastGpsSaveTime = 0;
+let gpsIntervalMs = 5000; // adaptive — 5s normal, 10s low battery
+
+// Motion detection: accelerometer magnitude variance over sliding window
+let motionBuffer = []; // [{ t, ax, ay, az }]
+const MOTION_WINDOW_MS = 30000; // 30s window for stationary check
+const MOTION_STATIONARY_THRESHOLD = 0.3; // m/s² — below this = stationary
+const MOTION_BUFFER_CAP = 60; // max samples in window
+let stationarySince = null; // timestamp when motion dropped below threshold
+let motionListenerActive = false;
+
+let gpsBuffer = []; // [{ lat, lng, recorded_at }]
+let batchTimer = null;
+const BATCH_SIZE = 20;
+const BATCH_FLUSH_MS = 15000; // force flush every 15s even if buffer not full
+
+// ── Battery check ────────────────────────────────────────────────────────────
+function getBatteryLevel() {
+  if (navigator.getBattery) {
+    navigator.getBattery().then(b => { if (b.level < 0.2) activateLowPowerMode(); });
+  }
+}
+function activateLowPowerMode() {
+  gpsIntervalMs = 10000; // halve GPS frequency when battery < 20%
+}
+
+function requestMotionPermission() {
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(perm => {
+      if (perm === 'granted') startMotionListener();
+    }).catch(() => {});
+  } else {
+    startMotionListener(); // no permission needed (Android/Chrome)
+  }
+}
+
+function startMotionListener() {
+  if (motionListenerActive) return;
+  motionListenerActive = true;
+  const ax_id = null, ay_id = null, az_id = null;
+  let lastAccel = null;
+
+  function onMotion(e) {
+    const acc = e.accelerationIncludingGravity || e.accel;
+    if (!acc || acc.x == null) return;
+    const now = Date.now();
+    const ax = acc.x || 0, ay = acc.y || 0, az = acc.z || 0;
+
+    // Compute magnitude variation (shaking vs stationary)
+    const mag = Math.sqrt(ax * ax + ay * ay + az * az);
+    motionBuffer.push({ t: now, mag });
+
+    // Expire samples older than MOTION_WINDOW_MS
+    const cutoff = now - MOTION_WINDOW_MS;
+    while (motionBuffer.length && motionBuffer[0].t < cutoff) motionBuffer.shift();
+
+    // Calculate standard deviation of magnitude in window
+    if (motionBuffer.length < 3) return;
+    const mags = motionBuffer.map(b => b.mag);
+    const mean = mags.reduce((a, b) => a + b, 0) / mags.length;
+    const variance = mags.reduce((s, m) => s + (m - mean) ** 2, 0) / mags.length;
+    const stdDev = Math.sqrt(variance);
+
+    if (stdDev < MOTION_STATIONARY_THRESHOLD) {
+      if (!stationarySince) stationarySince = now;
+      // Stationary for >30s → pause GPS
+      if (now - stationarySince > 30000 && gpsWatchId !== null) {
+        pauseGps();
+      }
+    } else {
+      stationarySince = null;
+      // Motion resumed — resume GPS if it was paused
+      if (gpsWatchId === null && gpsTrackingRoundId !== null) resumeGps();
+    }
+  }
+
+  window.addEventListener('devicemotion', onMotion, { passive: true });
+}
+
+// Pause GPS (stop watchPosition, keep batching)
+function pauseGps() {
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+}
+
+// Resume GPS (re-register watchPosition)
+function resumeGps() {
+  if (!navigator.geolocation || !gpsTrackingRoundId) return;
+  gpsWatchId = navigator.geolocation.watchPosition(
+    onGpsPosition,
+    (err) => { /* silent — GPS will retry via motion */ },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+  );
+}
+
+function onGpsPosition(pos) {
+  const now = Date.now();
+  if (now - lastGpsSaveTime < gpsIntervalMs) return;
+  lastGpsSaveTime = now;
+
+  gpsBuffer.push({
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+    recorded_at: new Date().toISOString()
+  });
+
+  if (gpsBuffer.length >= BATCH_SIZE) flushBuffer();
+}
+
+function flushBuffer() {
+  if (!gpsBuffer.length || !gpsTrackingRoundId) return;
+  const batch = gpsBuffer.splice(0);
+  clearTimeout(batchTimer);
+  batchTimer = null;
+
+  fetch(`/api/rounds/${gpsTrackingRoundId}/track-batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ points: batch }),
+  }).catch(() => {
+    // Offline — re-buffer for retry
+    gpsBuffer.unshift(...batch);
+  });
+}
+
+function startGpsTracking(roundId) {
+  if (!navigator.geolocation) return;
+  gpsTrackingRoundId = roundId;
+  lastGpsSaveTime = 0;
+  gpsIntervalMs = 5000;
+  gpsBuffer = [];
+  stationarySince = null;
+  motionBuffer = [];
+
+  getBatteryLevel();
+  requestMotionPermission();
+
+  // Register GPS watcher
+  gpsWatchId = navigator.geolocation.watchPosition(
+    onGpsPosition,
+    (err) => { console.warn('GPS tracking error:', err.code); },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+  );
+
+  // Periodic flush timer (every 15s or when buffer fills)
+  batchTimer = setInterval(flushBuffer, BATCH_FLUSH_MS);
+}
+
+function stopGpsTracking() {
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  clearTimeout(batchTimer);
+  batchTimer = null;
+  flushBuffer(); // flush remaining buffer
+  gpsTrackingRoundId = null;
+  motionListenerActive = false;
+  window.removeEventListener('devicemotion', () => {}, { passive: true });
+}
+
+function haversineMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function formatDistance(meters) {
+    if (meters < 1000) return Math.round(meters) + ' m';
+    return (meters / 1000).toFixed(2) + ' km';
+}
+function calcPathDistance(points) {
+    let total = 0;
+    for (let i = 1; i < points.length; i++) {
+        total += haversineMeters(
+            parseFloat(points[i-1].lat), parseFloat(points[i-1].lng),
+            parseFloat(points[i].lat), parseFloat(points[i].lng)
+        );
+    }
+    return total;
+}
+
+// ── Walk Map Modal v2 ────────────────────────────────────────────────────────
+let walkMapInstance = null;
+document.getElementById('walk-map-close-btn').addEventListener('click', () => {
+    document.getElementById('walk-map-modal').classList.remove('open');
+    if (walkMapInstance) { walkMapInstance.remove(); walkMapInstance = null; }
+});
+
+// Hole color palette — distinct colors per hole (cycles for long rounds)
+const HOLE_COLORS = [
+    '#7ed957','#38bdf8','#fb923c','#a78bfa','#f472b6',
+    '#facc15','#34d399','#60a5fa','#ff6b6b','#fbbf24',
+    '#4ade80','#e879f9','#22d3ee','#f87171','#a3e635',
+    '#818cf8','#fb7185','#86efac','#7dd3fc','#c4b5fd',
+];
+
+// Score label helper
+function vsParLabel(vp) {
+    if (vp <= -2) return 'Eagle';
+    if (vp === -1) return 'Birdie';
+    if (vp === 0)  return 'Par';
+    if (vp === 1)  return 'Bogey';
+    return '+' + vp;
+}
+
+// Score badge CSS class
+function scoreBadgeClass(vp, par) {
+    if (par >= 2 && vp <= -(par-1)) return 'badge-ace';   // hole-in-one equivalent
+    if (vp <= -2) return 'badge-eagle';
+    if (vp === -1) return 'badge-birdie';
+    if (vp === 0)  return 'badge-par';
+    if (vp === 1)  return 'badge-bogey';
+    return 'badge-double';
+}
+
+// Format seconds as Xm or Xh Xm
+function fmtSecs(s) {
+    if (!s) return '—';
+    const m = Math.round(s / 60);
+    if (m < 60) return m + 'm';
+    return Math.floor(m/60) + 'h ' + (m%60) + 'm';
+}
+
+// Format meters as m or km
+function fmtM(m) {
+    if (!m) return '—';
+    return m < 1000 ? m + ' m' : (m/1000).toFixed(2) + ' km';
+}
+
+async function showWalkMapModal(roundId, finishData) {
+    const modal = document.getElementById('walk-map-modal');
+    modal.classList.add('open');
+    const contentEl = document.getElementById('walk-map-content');
+    const bottomEl = document.getElementById('walk-map-bottom');
+    bottomEl.style.display = 'none';
+    contentEl.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--text3);font-size:0.95rem;min-height:200px;">Loading map…</div>';
+    if (walkMapInstance) { walkMapInstance.remove(); walkMapInstance = null; }
+
+    try {
+        const res = await fetch(`/api/rounds/${roundId}/path`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!res.ok || !data.path) throw new Error('No path data');
+
+        const { path, holes, round, course_comparison, best_comparison } = data;
+
+        // ── Populate stat row ──────────────────────────────────────────────────
+        const diff = (finishData && finishData.score_vs_par != null) ? finishData.score_vs_par :
+            (round.score_vs_par != null ? round.score_vs_par : null);
+        const diffStr = diff === null ? '—' : diff === 0 ? 'E' : diff > 0 ? '+' + diff : '' + diff;
+        document.getElementById('wms-score').textContent = diffStr;
+
+        // Round time
+        let roundSecs = null;
+        if (round.started_at && round.completed_at) {
+            roundSecs = Math.round((new Date(round.completed_at) - new Date(round.started_at)) / 1000);
+        }
+        document.getElementById('wms-time').textContent = roundSecs ? fmtSecs(roundSecs) : '—';
+
+        // Total distance from path
+        if (path.length >= 2) {
+            document.getElementById('wms-distance').textContent = formatDistance(calcPathDistance(path));
+        } else {
+            document.getElementById('wms-distance').textContent = '—';
+        }
+
+        // ── Course banner + comparison ─────────────────────────────────────────
+        const courseBannerEl = document.getElementById('wms-course-banner');
+        const courseNameEl = document.getElementById('wms-course-name');
+        const bestBadgeEl = document.getElementById('wms-best-badge');
+        if (round.course_name) {
+            courseNameEl.textContent = `📍 ${round.course_name}${round.city ? ', ' + round.city : ''}${round.state ? ', ' + round.state : ''}`;
+            courseBannerEl.style.display = 'flex';
+        }
+        if (best_comparison) {
+            bestBadgeEl.textContent = best_comparison.message;
+            bestBadgeEl.style.display = 'inline';
+        }
+
+        // ── No GPS path ────────────────────────────────────────────────────────
+        if (path.length < 2) {
+            contentEl.innerHTML = `<div class="walk-map-no-data"><div class="no-data-icon">📍</div><div>No GPS path recorded for this round.</div><div style="font-size:0.8rem;margin-top:0.25rem;">Enable location access next round to see your walk path.</div></div>`;
+            bottomEl.style.display = 'block';
+            document.getElementById('wms-holes-list').innerHTML = '';
+            return;
+        }
+
+        // ── Build map ──────────────────────────────────────────────────────────
+        contentEl.innerHTML = '<div id="walk-map-leaflet"></div>';
+        document.getElementById('walk-map-leaflet').style.cssText = 'flex:1;min-height:0;height:100%;';
+
+        walkMapInstance = L.map('walk-map-leaflet', {
+            zoomControl: true,
+            attributionControl: false,
+            tap: false,
+        });
+
+        // Dark Stadia tiles for a cleaner look; fallback to OSM
+        L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            attribution: '© <a href="https://stadiamaps.com/">Stadia Maps</a>',
+        }).addTo(walkMapInstance);
+
+        const allLatLngs = path.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
+
+        // Draw each hole segment in its own color
+        const holePolylines = [];
+        if (holes && holes.length > 0) {
+            holes.forEach((h, i) => {
+                if (!h.path_segment || h.path_segment.length < 2) return;
+                const color = HOLE_COLORS[i % HOLE_COLORS.length];
+                const pts = h.path_segment.map(p => [p.lat, p.lng]);
+                const pl = L.polyline(pts, {
+                    color,
+                    weight: 5,
+                    opacity: 0.9,
+                    lineJoin: 'round',
+                    lineCap: 'round',
+                }).addTo(walkMapInstance);
+
+                // Highlight standout holes — ace/birdie get a glow effect
+                if (h.vs_par <= -1) {
+                    L.polyline(pts, { color, weight: 10, opacity: 0.25, lineJoin: 'round' }).addTo(walkMapInstance);
+                }
+
+                // Tap on segment → popup with hole stats
+                const vp = h.vs_par;
+                const scoreLabel = vp <= -2 ? '🦅 Eagle' : vp === -1 ? '🐦 Birdie' : vp === 0 ? '✅ Par' : vp === 1 ? '😬 Bogey' : '😤 Double+';
+                pl.bindPopup(`
+                    <div class="hole-popup-title">Hole ${h.hole_number}</div>
+                    <div class="hole-popup-row">${scoreLabel} &nbsp;•&nbsp; Score: <b>${h.score}</b> / Par ${h.par}</div>
+                    ${h.distance_m ? `<div class="hole-popup-row">🚶 ${fmtM(h.distance_m)}</div>` : ''}
+                    ${h.duration_seconds ? `<div class="hole-popup-row">⏱️ ~${fmtSecs(h.duration_seconds)}</div>` : ''}
+                `, { className: 'walk-hole-popup' });
+
+                holePolylines.push({ polyline: pl, hole: h, color });
+
+                // Hole start marker (small circle with hole number)
+                const mkHoleIcon = (num, col, isAce) => L.divIcon({
+                    html: `<div style="background:${col};color:#fff;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.8);box-shadow:0 2px 8px rgba(0,0,0,0.6);${isAce?'box-shadow:0 0 12px '+col+',0 2px 8px rgba(0,0,0,0.6);':''}">${num}</div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                    className: '',
+                });
+                L.marker(pts[0], { icon: mkHoleIcon(h.hole_number, color, h.vs_par <= -2), title: `Hole ${h.hole_number}` })
+                    .bindPopup(`<div class="hole-popup-title">Hole ${h.hole_number} — Tee</div><div class="hole-popup-row">Par ${h.par}</div>`)
+                    .addTo(walkMapInstance);
+            });
+        } else {
+            // No per-hole segments — draw single green path
+            L.polyline(allLatLngs, { color: '#7ed957', weight: 5, opacity: 0.9, lineJoin: 'round' }).addTo(walkMapInstance);
+        }
+
+        // Start / Finish markers
+        const mkEndIcon = (emoji, shadow) => L.divIcon({
+            html: `<div style="font-size:1.5rem;line-height:1;text-shadow:${shadow};">${emoji}</div>`,
+            iconSize: [28, 28], iconAnchor: [14, 14], className: '',
+        });
+        L.marker(allLatLngs[0], { icon: mkEndIcon('🟢', '0 2px 8px rgba(0,0,0,0.8)'), title: 'Start' }).addTo(walkMapInstance);
+        L.marker(allLatLngs[allLatLngs.length-1], { icon: mkEndIcon('🏁', '0 2px 8px rgba(0,0,0,0.8)'), title: 'Finish' }).addTo(walkMapInstance);
+
+        // Ace/birdie star markers on their path endpoints
+        if (holes) {
+            holes.forEach((h, i) => {
+                if (h.vs_par >= 0 || !h.path_segment || h.path_segment.length === 0) return;
+                const lastPt = h.path_segment[h.path_segment.length - 1];
+                const emoji = h.vs_par === -1 ? '🐦' : '🦅';
+                L.marker([lastPt.lat, lastPt.lng], {
+                    icon: L.divIcon({ html: `<div style="font-size:1.4rem;text-shadow:0 2px 6px rgba(0,0,0,0.9);">${emoji}</div>`, iconSize:[24,24], iconAnchor:[12,12], className:'' }),
+                    title: `Hole ${h.hole_number} ${vsParLabel(h.vs_par)}`,
+                    zIndexOffset: 100,
+                }).addTo(walkMapInstance);
+            });
+        }
+
+        // Fit bounds
+        const bounds = L.latLngBounds(allLatLngs);
+        walkMapInstance.fitBounds(bounds, { padding: [28, 28] });
+        setTimeout(() => { if (walkMapInstance) walkMapInstance.invalidateSize(); }, 150);
+
+        // ── Per-hole list ──────────────────────────────────────────────────────
+        const holesList = document.getElementById('wms-holes-list');
+        if (holes && holes.length > 0) {
+            let longestHoleDist = 0;
+            let shortestHoleDist = Infinity;
+            let longestHoleNum = null;
+            let shortestHoleNum = null;
+
+            holes.forEach(h => {
+                if (h.distance_m > 0 && h.distance_m > longestHoleDist) { longestHoleDist = h.distance_m; longestHoleNum = h.hole_number; }
+                if (h.distance_m > 0 && h.distance_m < shortestHoleDist) { shortestHoleDist = h.distance_m; shortestHoleNum = h.hole_number; }
+            });
+
+            const rows = holes.map((h, i) => {
+                const color = HOLE_COLORS[i % HOLE_COLORS.length];
+                const vp = h.vs_par;
+                const badgeClass = scoreBadgeClass(vp, h.par);
+                const scoreDisp = vp === 0 ? 'E' : vp > 0 ? '+' + vp : '' + vp;
+                const distBadge = h.hole_number === longestHoleNum ? ' 🏃' : h.hole_number === shortestHoleNum ? ' 🐢' : '';
+                return `<div class="walk-hole-row" onclick="walkHighlightHole(${i})">
+                    <span class="walk-hole-num">H${h.hole_number}</span>
+                    <span class="walk-hole-swatch" style="background:${color}"></span>
+                    <span class="walk-hole-score-badge ${badgeClass}">${scoreDisp}</span>
+                    <span class="walk-hole-par">Par ${h.par}</span>
+                    <span class="walk-hole-dist">${h.distance_m ? fmtM(h.distance_m) + distBadge : ''}</span>
+                    <span class="walk-hole-time">${h.duration_seconds ? fmtSecs(h.duration_seconds) : ''}</span>
+                </div>`;
+            }).join('');
+
+            holesList.innerHTML = `<div class="walk-holes-title">Hole by Hole</div>${rows}`;
+        } else {
+            holesList.innerHTML = '';
+        }
+
+        bottomEl.style.display = 'block';
+
+    } catch (err) {
+        contentEl.innerHTML = `<div class="walk-map-no-data"><div class="no-data-icon">📍</div><div>No GPS path recorded for this round.</div><div style="font-size:0.8rem;margin-top:0.25rem;">Enable location access next round to see your walk path.</div></div>`;
+        document.getElementById('walk-map-bottom').style.display = 'block';
+    }
+}
+
+// Highlight a hole on the map and scroll the hole row into view when tapped from list
+const _walkHolePolyCache = [];
+function walkHighlightHole(index) {
+    // Pan map to the first point of the hole's path segment
+    if (!walkMapInstance) return;
+    const holesListEl = document.getElementById('wms-holes-list');
+    const rows = holesListEl ? holesListEl.querySelectorAll('.walk-hole-row') : [];
+    rows.forEach((r, i) => r.style.background = i === index ? 'var(--surface2)' : '');
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+if (!token) { window.location.href = '/login'; }
+
+// ── Preview mode: guard — must have admin token too
+if (_urlParams.get('preview') === '1' && !isPreviewMode) {
+    // Has preview param but no admin token — redirect to login
+    window.location.href = '/login';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+    // Preview mode: show banner, skip active round check (start fresh)
+    if (isPreviewMode) {
+        document.getElementById('preview-mode-banner').style.display = 'flex';
+        document.getElementById('checkin-info-banner').style.display = 'none';
+        document.getElementById('setup-title').textContent = 'Preview Scorecard';
+        document.getElementById('btn-start').textContent = 'Launch Preview Round';
+        await loadCourses();
+        show('setup-screen');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/rounds/active', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        const data = await res.json();
+        if (data.round) {
+            activeRound = data.round;
+            holes = data.holes || [];
+            // Prefer layout holes from active round response; fall back to legacy hole_details
+            if (data.layout_holes && data.layout_holes.length > 0) {
+                courseHoleDetails = data.layout_holes.map(h => ({
+                    hole: h.hole_number,
+                    par: h.par,
+                    distance_ft: h.distance_ft || null,
+                    notes: h.notes || null,
+                }));
+            }
+            await Promise.all([
+                // Only fetch legacy hole_details if layout holes weren't available
+                courseHoleDetails.length === 0 ? loadCourseHoleDetails(activeRound.course_id) : Promise.resolve(),
+                loadCoPlayers(activeRound.id),
+            ]);
+            showRoundScreen();
+            startGpsTracking(activeRound.id);
+        } else {
+            await loadCourses();
+            show('setup-screen');
+        }
+    } catch (e) {
+        console.error(e);
+        await loadCourses();
+        show('setup-screen');
+    }
+}
+
+async function loadCourses() {
+    try {
+        const res = await fetch('/api/courses');
+        const data = await res.json();
+        allCourses = Array.isArray(data) ? data : (data.courses || []);
+    } catch(e) {}
+}
+
+// Load co-players for a round (for multiplayer; silent if not available)
+async function loadCoPlayers(roundId) {
+    try {
+        const res = await fetch(`/api/rounds/${roundId}/players`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.players || data.players.length <= 1) return; // solo round
+        // Separate host from co-players; host scores are in `holes[]`
+        coPlayers = data.players;
+        // Load co-player holes
+        for (const p of data.players) {
+            if (p.is_host) continue;
+            coPlayerHoles[p.player_id] = {};
+            for (const h of (p.holes || [])) {
+                coPlayerHoles[p.player_id][h.hole_number] = h;
+            }
+        }
+    } catch(e) {}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function showToast(msg, duration = 2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Score utils ────────────────────────────────────────────────────────────
+function getScoreClass(score, par) {
+    const diff = score - par;
+    if (score === 1) return 'ace';
+    if (diff <= -2) return 'eagle';
+    if (diff === -1) return 'birdie';
+    if (diff === 0) return 'par';
+    if (diff === 1) return 'bogey';
+    return 'double';
+}
+function getVsParLabel(score, par) {
+    const diff = score - par;
+    if (score === 1) return '🎯 ACE';
+    if (diff <= -3) return `${diff}`;
+    if (diff <= -2) return '🦅';
+    if (diff === -1) return '-1';
+    if (diff === 0) return 'E';
+    return `+${diff}`;
+}
+function getVsParBadgeClass(score, par) {
+    const diff = score - par;
+    if (score === 1) return 'ace';
+    if (diff <= -2) return 'eagle';
+    if (diff === -1) return 'birdie';
+    if (diff === 0) return 'par';
+    if (diff === 1) return 'bogey';
+    return 'double';
+}
+function numericClass(score, par) {
+    const diff = score - par;
+    if (diff < 0) return 'under';
+    if (diff > 0) return 'over';
+    return 'even';
+}
+
+// ── Course search / browse ─────────────────────────────────────────────────
+const courseSearch = document.getElementById('course-search');
+const courseDropdown = document.getElementById('course-dropdown');
+
+const STATE_NAMES = {
+    AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',
+    CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',
+    IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',
+    ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',
+    MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',
+    NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',
+    OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',
+    SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',
+    WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'
+};
+
+function renderCourseList(courses) {
+    if (!courses || courses.length === 0) {
+        courseDropdown.innerHTML = '<div class="course-no-results">No courses found</div>';
+        courseDropdown.classList.add('open'); return;
+    }
+    const sorted = [...courses].sort((a, b) => {
+        const sa = (a.state||'').toUpperCase(); const sb = (b.state||'').toUpperCase();
+        if (sa !== sb) return sa.localeCompare(sb);
+        return (a.name||'').localeCompare(b.name||'');
+    });
+    const groups = {};
+    for (const c of sorted) {
+        const st = (c.state||'').toUpperCase() || 'OTHER';
+        if (!groups[st]) groups[st] = [];
+        groups[st].push(c);
+    }
+    let html = '';
+    for (const st of Object.keys(groups).sort()) {
+        const label = STATE_NAMES[st] || st;
+        html += `<div class="course-group-header">${label} (${groups[st].length})</div>`;
+        for (const c of groups[st]) {
+            const loc = [c.city, c.state].filter(Boolean).join(', ');
+            const courseHoles = parseInt(c.holes) || 18;
+            html += `<div class="course-item" data-id="${c.id}" data-name="${escAttr(c.name)}" data-loc="${escAttr(loc)}" data-holes="${courseHoles}">
+                <div class="course-name">${esc(c.name)}</div>
+                <div class="course-loc">${esc(loc)}</div>
+            </div>`;
+        }
+    }
+    courseDropdown.innerHTML = html;
+    courseDropdown.classList.add('open');
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s) { return String(s||'').replace(/"/g,'&quot;'); }
+
+courseSearch.addEventListener('focus', () => {
+    courseSearch.removeAttribute('readonly');
+    if (!courseSearch.value.trim()) renderCourseList(allCourses);
+});
+courseSearch.addEventListener('input', () => {
+    const q = courseSearch.value.trim().toLowerCase();
+    if (!q) { renderCourseList(allCourses); return; }
+    renderCourseList(allCourses.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        (c.city||'').toLowerCase().includes(q) ||
+        (c.state||'').toLowerCase().includes(q)
+    ));
+});
+
+let selectedCourseName = '';
+let selectedCourseLoc = '';
+// hasCheckedIn declared above (preview mode section)
+// Per-hole data from course API: [{ hole, par, distance_ft, notes }] or []
+// Populated from layout holes (preferred) or legacy hole_details JSONB (fallback).
+let courseHoleDetails = [];
+
+// ── Layout picker ──────────────────────────────────────────────────────────
+// Fetches course layouts and shows the picker when the course has >1 layout.
+// Auto-selects the single/default layout silently otherwise.
+async function fetchLayouts(courseId) {
+    const section = document.getElementById('layout-picker-section');
+    const list = document.getElementById('layout-picker-list');
+    const modeToggle = document.getElementById('setup-mode-toggle');
+    selectedLayoutId = null;
+    courseHoleDetails = []; // will be populated from layout holes below
+
+    try {
+        const res = await fetch(`/api/courses/${courseId}/layouts`);
+        if (!res.ok) { section.style.display = 'none'; modeToggle.style.display = 'none'; return; }
+        const layouts = await res.json();
+        if (!Array.isArray(layouts) || layouts.length === 0) {
+            section.style.display = 'none';
+            modeToggle.style.display = 'none';
+            return;
+        }
+
+        // Default or first layout — always use as starting selection
+        const defaultLayout = layouts.find(l => l.is_default) || layouts[0];
+        selectedLayoutId = defaultLayout.id;
+
+        // If only one layout exists, select silently — no picker needed
+        if (layouts.length === 1) {
+            section.style.display = 'none';
+            modeToggle.style.display = 'none';
+            await loadLayoutHoles(selectedLayoutId);
+            return;
+        }
+
+        // Multiple layouts — show mode toggle + layout picker
+        modeToggle.style.display = 'flex';
+        setSetupMode('holes_count'); // start in holes_count mode (layout locked)
+        section.style.display = 'block';
+        renderLayoutPicker(list, layouts, selectedLayoutId);
+        await loadLayoutHoles(selectedLayoutId);
+    } catch(_) {
+        section.style.display = 'none';
+        modeToggle.style.display = 'none';
+    }
+}
+
+function renderLayoutPicker(container, layouts, activeId) {
+    container.innerHTML = layouts.map(l => {
+        const holeMeta = l.hole_count ? `${l.hole_count} holes` : '';
+        const defBadge = l.is_default ? ' · Default' : '';
+        const meta = holeMeta + defBadge;
+        const sel = l.id === activeId ? ' selected' : '';
+        return `<div class="layout-opt${sel}" data-lid="${l.id}" data-hole-count="${l.hole_count || ''}">
+            <div class="layout-opt-name">${esc(l.name)}</div>
+            ${meta ? `<div class="layout-opt-meta">${esc(meta)}</div>` : ''}
+            <div class="layout-opt-check">${sel ? '✓' : ''}</div>
+        </div>`;
+    }).join('');
+
+    container.querySelectorAll('.layout-opt').forEach(opt => {
+        opt.addEventListener('click', async () => {
+            const lid = parseInt(opt.dataset.lid);
+            if (lid === selectedLayoutId && setupMode === 'layout') return;
+            selectedLayoutId = lid;
+            container.querySelectorAll('.layout-opt').forEach(o => {
+                const isSel = parseInt(o.dataset.lid) === lid;
+                o.classList.toggle('selected', isSel);
+                o.querySelector('.layout-opt-check').textContent = isSel ? '✓' : '';
+            });
+            // Auto-select the holes option that matches the layout's hole count
+            const layoutHoleCount = parseInt(opt.dataset.holeCount) || null;
+            if (layoutHoleCount) {
+                const picker = document.getElementById('holes-picker');
+                const matchBtn = picker.querySelector(`[data-holes="${layoutHoleCount}"]`);
+                if (matchBtn) {
+                    picker.querySelectorAll('.holes-opt').forEach(o => o.classList.remove('selected'));
+                    matchBtn.classList.add('selected');
+                    selectedHoles = layoutHoleCount;
+                }
+            }
+            // Switch to layout mode (locks holes picker)
+            setSetupMode('layout');
+            await loadLayoutHoles(lid);
+        });
+    });
+}
+
+// Fetches holes for a layout and populates courseHoleDetails in a compatible format.
+// Falls back gracefully if the layout has no holes defined yet.
+async function loadLayoutHoles(layoutId) {
+    if (!layoutId) return;
+    try {
+        const res = await fetch(`/api/layouts/${layoutId}/holes`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.holes && data.holes.length > 0) {
+            // Normalize to courseHoleDetails format: { hole, par, distance_ft, notes }
+            courseHoleDetails = data.holes.map(h => ({
+                hole: h.hole_number,
+                par: h.par,
+                distance_ft: h.distance_ft || null,
+                notes: h.notes || null,
+            }));
+        }
+        // No holes defined yet → leave courseHoleDetails as-is (legacy JSONB fallback below)
+    } catch(_) {}
+}
+
+courseDropdown.addEventListener('click', async e => {
+    const item = e.target.closest('.course-item');
+    if (!item) return;
+    selectedCourseId = parseInt(item.dataset.id);
+    selectedCourseName = item.dataset.name;
+    selectedCourseLoc = item.dataset.loc || '';
+    const courseHoles = parseInt(item.dataset.holes) || 18;
+    courseSearch.value = item.dataset.name;
+    courseSearch.setAttribute('readonly', '');
+    courseDropdown.classList.remove('open');
+    const display = document.getElementById('selected-course-display');
+    document.getElementById('sel-name').textContent = item.dataset.name;
+    document.getElementById('sel-loc').textContent = item.dataset.loc;
+    display.style.display = 'block';
+    renderHoleOptions(courseHoles);
+    // Fetch layouts (sets courseHoleDetails from layout holes if available)
+    await fetchLayouts(selectedCourseId);
+    // Fallback: if no layout holes were loaded, try legacy hole_details JSONB
+    if (courseHoleDetails.length === 0) {
+        try {
+            const dr = await fetch(`/api/courses/${selectedCourseId}`);
+            if (dr.ok) {
+                const dd = await dr.json();
+                if (dd.hole_details && Array.isArray(dd.hole_details)) {
+                    courseHoleDetails = dd.hole_details;
+                }
+            }
+        } catch(_) {}
+    }
+    await checkCheckinStatus(selectedCourseId, item.dataset.name);
+    // Fetch other players checked in at this course for multiplayer selection
+    fetchCheckedInPlayers(selectedCourseId);
+});
+
+async function checkCheckinStatus(courseId, courseName) {
+    const btnStart = document.getElementById('btn-start');
+    const infoBanner = document.getElementById('checkin-info-banner');
+
+    // Preview mode: skip GPS check-in entirely
+    if (isPreviewMode) {
+        hasCheckedIn = true;
+        if (btnStart) btnStart.disabled = false;
+        if (infoBanner) infoBanner.style.display = 'none';
+        return;
+    }
+
+    if (btnStart) btnStart.disabled = true;
+    try {
+        const res = await fetch('/api/checkins/status?course_id=' + courseId, { headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        if (data.checked_in) {
+            hasCheckedIn = true;
+            if (btnStart) btnStart.disabled = false;
+            if (infoBanner) infoBanner.style.display = 'none';
+        } else {
+            hasCheckedIn = false;
+            if (btnStart) btnStart.disabled = true;
+            if (infoBanner) infoBanner.style.display = 'flex';
+        }
+    } catch (e) {
+        hasCheckedIn = false;
+        if (btnStart) btnStart.disabled = true;
+        if (infoBanner) infoBanner.style.display = 'flex';
+    }
+}
+
+
+document.addEventListener('click', e => {
+    if (!courseSearch.contains(e.target) && !courseDropdown.contains(e.target)) {
+        courseDropdown.classList.remove('open');
+        if (!selectedCourseId) { courseSearch.value = ''; courseSearch.setAttribute('readonly', ''); }
+    }
+});
+courseDropdown.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+
+// ── Player picker (multiplayer setup) ──────────────────────────────────────
+// Fetches other players checked in at the selected course and renders selectable cards.
+async function fetchCheckedInPlayers(courseId) {
+    const section = document.getElementById('player-picker-section');
+    const list = document.getElementById('player-picker-list');
+    const badge = document.getElementById('player-count-badge');
+    selectedCoPlayerIds.clear();
+    availablePlayersAtCourse = [];
+
+    // Skip in preview mode — preview rounds are solo
+    if (isPreviewMode) { section.style.display = 'none'; return; }
+
+    section.style.display = 'block';
+    list.innerHTML = '<div class="player-picker-loading">Checking for other players...</div>';
+    badge.style.display = 'none';
+
+    try {
+        const res = await fetch(`/api/checkins/at-course?course_id=${courseId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) { section.style.display = 'none'; return; }
+        const data = await res.json();
+        availablePlayersAtCourse = data.players || [];
+
+        if (availablePlayersAtCourse.length === 0) {
+            list.innerHTML = '<div class="player-picker-empty">No other players checked in here right now</div>';
+            badge.style.display = 'none';
+            return;
+        }
+
+        badge.textContent = availablePlayersAtCourse.length;
+        badge.style.display = 'inline';
+        renderPlayerCards(list, availablePlayersAtCourse, 'setup');
+    } catch (e) {
+        section.style.display = 'none';
+    }
+}
+
+// Renders player selection cards into a container.
+// mode: 'setup' (pre-round, uses selectedCoPlayerIds) or 'modal' (mid-round, uses modalSelectedIds)
+let modalSelectedIds = new Set();
+function renderPlayerCards(container, players, mode) {
+    const selectedSet = mode === 'setup' ? selectedCoPlayerIds : modalSelectedIds;
+    container.innerHTML = players.map(p => {
+        const initials = (p.display_name || '?').charAt(0).toUpperCase();
+        const avatarHtml = p.avatar_url
+            ? `<img src="${esc(p.avatar_url)}" alt="${esc(p.display_name)}"">`
+            : initials;
+        const levelText = p.level ? `Lvl ${p.level}` : '';
+        const xpText = p.xp ? `${Number(p.xp).toLocaleString()} XP` : '';
+        const meta = [levelText, xpText].filter(Boolean).join(' · ');
+        const sel = selectedSet.has(p.id) ? ' selected' : '';
+        return `<div class="player-pick-card${sel}" data-pid="${p.id}" data-mode="${mode}">
+            <div class="player-pick-avatar">${avatarHtml}</div>
+            <div class="player-pick-info">
+                <div class="player-pick-name">${esc(p.display_name || 'Player ' + p.id)}</div>
+                ${meta ? `<div class="player-pick-meta">${esc(meta)}</div>` : ''}
+            </div>
+            <div class="player-pick-check">${sel ? '✓' : ''}</div>
+        </div>`;
+    }).join('');
+
+    container.querySelectorAll('.player-pick-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const pid = parseInt(card.dataset.pid);
+            const m = card.dataset.mode;
+            const set = m === 'setup' ? selectedCoPlayerIds : modalSelectedIds;
+            if (set.has(pid)) {
+                set.delete(pid);
+                card.classList.remove('selected');
+                card.querySelector('.player-pick-check').textContent = '';
+            } else {
+                set.add(pid);
+                card.classList.add('selected');
+                card.querySelector('.player-pick-check').textContent = '✓';
+            }
+            // Update confirm button state for modal
+            if (m === 'modal') {
+                document.getElementById('btn-modal-add').disabled = modalSelectedIds.size === 0;
+            }
+        });
+    });
+}
+
+// ── Mid-round Add Players modal ────────────────────────────────────────────
+function openAddPlayersModal() {
+    if (!activeRound) return;
+    const modal = document.getElementById('add-players-modal');
+    const list = document.getElementById('modal-player-list');
+    modalSelectedIds.clear();
+    modal.classList.add('open');
+    list.innerHTML = '<div class="player-picker-loading">Searching for players...</div>';
+    document.getElementById('btn-modal-add').disabled = true;
+
+    fetch(`/api/checkins/at-course?course_id=${activeRound.course_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('Server error');
+        return r.json();
+    })
+    .then(data => {
+        const players = (data.players || []);
+        // Filter out players already in the round
+        const existingIds = new Set(coPlayers.map(p => p.player_id));
+        const newPlayers = players.filter(p => !existingIds.has(p.id));
+        if (newPlayers.length === 0) {
+            list.innerHTML = '<div class="player-picker-empty">No other players checked in at this course right now</div>';
+            return;
+        }
+        renderPlayerCards(list, newPlayers, 'modal');
+    })
+    .catch(() => {
+        list.innerHTML = '<div class="player-picker-empty">Could not load players — try again</div>';
+    });
+}
+
+function closeAddPlayersModal() {
+    document.getElementById('add-players-modal').classList.remove('open');
+    modalSelectedIds.clear();
+}
+
+async function confirmAddPlayers() {
+    if (!activeRound || modalSelectedIds.size === 0) return;
+    const btn = document.getElementById('btn-modal-add');
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    try {
+        const res = await fetch(`/api/rounds/${activeRound.id}/add-players`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ player_ids: [...modalSelectedIds] }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Failed to add players');
+            btn.textContent = 'Add Selected';
+            btn.disabled = false;
+            return;
+        }
+        showToast(`Added ${data.added} player${data.added !== 1 ? 's' : ''} to round!`);
+        closeAddPlayersModal();
+        // Reload co-players to refresh the scorecard
+        await loadCoPlayers(activeRound.id);
+        renderHoleView();
+    } catch (e) {
+        showToast('Failed to add players');
+        btn.textContent = 'Add Selected';
+        btn.disabled = false;
+    }
+}
+
+// Close modal on backdrop click
+document.getElementById('add-players-modal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('add-players-modal')) closeAddPlayersModal();
+});
+
+// ── Setup mode toggle (Holes Count vs Layout — radio-style) ────────────────
+function setSetupMode(mode) {
+    setupMode = mode;
+    const holesBtn = document.getElementById('mode-holes-btn');
+    const layoutBtn = document.getElementById('mode-layout-btn');
+    if (holesBtn) holesBtn.classList.toggle('mode-tab--active', mode === 'holes_count');
+    if (layoutBtn) layoutBtn.classList.toggle('mode-tab--active', mode === 'layout');
+    const holesSection = document.getElementById('holes-section');
+    const layoutSection = document.getElementById('layout-picker-section');
+    if (holesSection) holesSection.classList.toggle('holes-section--disabled', mode === 'layout');
+    if (layoutSection) layoutSection.classList.toggle('layout-section--disabled', mode === 'holes_count');
+}
+
+// ── Holes picker ───────────────────────────────────────────────────────────
+function renderHoleOptions(courseTotal) {
+    const picker = document.getElementById('holes-picker');
+    picker.classList.remove('holes-picker--disabled');
+    if (setupMode === 'layout') picker.classList.add('holes-picker--disabled');
+    const options = [];
+    for (let h = 9; h < courseTotal; h += 9) options.push({ holes: h, isFull: false });
+    options.push({ holes: courseTotal, isFull: true });
+    const seen = new Set();
+    const deduped = options.filter(o => { if (seen.has(o.holes)) return false; seen.add(o.holes); return true; });
+    function label(o) {
+        if (o.isFull) { if (o.holes === 9) return 'Front 9'; if (o.holes === 18) return 'Full Round'; return 'Full Course'; }
+        if (o.holes === 9) return 'Front 9'; if (o.holes === 18) return '18 Holes'; return `${o.holes} Holes`;
+    }
+    picker.innerHTML = deduped.map((o, i) =>
+        `<div class="holes-opt${i === 0 ? ' selected' : ''}" data-holes="${o.holes}">
+            <div class="hole-num">${o.holes}</div>
+            <div class="hole-label">${label(o)}</div>
+        </div>`
+    ).join('');
+    selectedHoles = deduped[0].holes;
+    picker.querySelectorAll('.holes-opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+            if (setupMode === 'layout') setSetupMode('holes_count');
+            picker.querySelectorAll('.holes-opt').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            selectedHoles = parseInt(opt.dataset.holes);
+        });
+    });
+}
+
+// ── Start round ────────────────────────────────────────────────────────────
+document.getElementById('btn-start').addEventListener('click', async () => {
+    if (!selectedCourseId) return;
+    if (!hasCheckedIn && !isPreviewMode) { showToast('You must check in at this course first!', 3500); return; }
+    try {
+        const endpoint = isPreviewMode ? '/api/admin/rounds/preview-start' : '/api/rounds/start';
+        const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+        if (isPreviewMode) headers['x-admin-token'] = _adminToken;
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                course_id: selectedCourseId,
+                holes_count: selectedHoles,
+                layout_id: selectedLayoutId || undefined,
+                co_player_ids: [...selectedCoPlayerIds],
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            if (data.requires_checkin) { showToast('GPS check-in required! Check in at the course first.', 4000); return; }
+            showToast('Error: ' + (data.error || 'Failed to start round')); return;
+        }
+        activeRound = data.round;
+        // Use layout holes from start response if richer than what we already have
+        if (data.layout_holes && data.layout_holes.length > 0) {
+            courseHoleDetails = data.layout_holes.map(h => ({
+                hole: h.hole_number,
+                par: h.par,
+                distance_ft: h.distance_ft || null,
+                notes: h.notes || null,
+            }));
+        }
+        if (!activeRound.course_name && selectedCourseName) {
+            activeRound.course_name = selectedCourseName;
+            if (selectedCourseLoc) {
+                const locParts = selectedCourseLoc.split(', ');
+                activeRound.city = locParts[0] || '';
+                activeRound.state = locParts[1] || '';
+            }
+        }
+        holes = []; coPlayers = []; Object.keys(coPlayerHoles).forEach(k => delete coPlayerHoles[k]);
+        selectedCoPlayerIds.clear();
+        currentHole = 1;
+        hide('setup-screen');
+        showRoundScreen();
+        startGpsTracking(activeRound.id);
+    } catch(e) { showToast('Failed to start round'); }
+});
+
+// ── Round screen — hole-by-hole ────────────────────────────────────────────
+async function loadCourseHoleDetails(courseId) {
+    if (!courseId) return;
+    try {
+        const dr = await fetch(`/api/courses/${courseId}`);
+        if (dr.ok) {
+            const dd = await dr.json();
+            if (dd.hole_details && Array.isArray(dd.hole_details)) {
+                courseHoleDetails = dd.hole_details;
+            }
+        }
+    } catch(_) {}
+}
+
+function showRoundScreen() {
+    show('round-screen');
+    const course = activeRound.course_name || 'Unknown Course';
+    const loc = [activeRound.city, activeRound.state].filter(Boolean).join(', ');
+    const layoutName = activeRound.layout_name && activeRound.layout_name !== 'Default' ? activeRound.layout_name : null;
+    document.getElementById('rc-name').textContent = (isPreviewMode ? '🎯 PREVIEW — ' : '') + course;
+    const metaParts = [];
+    if (loc) metaParts.push(loc);
+    if (layoutName) metaParts.push(layoutName);
+    metaParts.push(`${activeRound.holes_count} holes`);
+    if (isPreviewMode) {
+        metaParts.push('Admin Preview — no XP/gold');
+    } else {
+        metaParts.push(`Started ${new Date(activeRound.started_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`);
+    }
+    document.getElementById('rc-meta').textContent = metaParts.join(' · ');
+    // Show "Add Players" button if this is the host's round and not preview mode
+    const addBtn = document.getElementById('btn-add-players-round');
+    if (addBtn) addBtn.style.display = isPreviewMode ? 'none' : 'inline-flex';
+    // Start on first unscored hole, or hole 1 if all scored
+    const scoredNums = new Set(holes.map(h => h.hole_number));
+    let start = 1;
+    for (let i = 1; i <= activeRound.holes_count; i++) {
+        if (!scoredNums.has(i)) { start = i; break; }
+    }
+    currentHole = start;
+    renderHoleView();
+    updateStats();
+}
+
+// Get per-hole distance in feet (null if unavailable)
+function getHoleDistance(holeNum) {
+    const hd = courseHoleDetails.find(h => h.hole === holeNum);
+    return (hd && hd.distance_ft) ? hd.distance_ft : null;
+}
+
+// Get the display label for a hole — uses label field if present, falls back to sequential number
+function getHoleLabel(holeNum) {
+    const hd = courseHoleDetails.find(h => h.hole === holeNum);
+    if (hd && hd.label && String(hd.label).trim() !== '') return String(hd.label).trim();
+    return String(holeNum);
+}
+
+// Get hole notes (from layout holes; null if none)
+function getHoleNotes(holeNum) {
+    const hd = courseHoleDetails.find(h => h.hole === holeNum);
+    return (hd && hd.notes && String(hd.notes).trim()) ? String(hd.notes).trim() : null;
+}
+
+// Compute per-hole par — prefer saved score par, then hole_details, then holePars tap, then course average
+function getHolePar(holeNum) {
+    const saved = holes.find(h => h.hole_number === holeNum);
+    if (saved) return saved.par;
+    if (holePars[holeNum]) return holePars[holeNum];
+    // Use per-hole data from course API if available
+    const hd = courseHoleDetails.find(h => h.hole === holeNum);
+    if (hd && hd.par) return hd.par;
+    // Fallback: course-level par divided evenly, rounded to nearest (3/4/5)
+    if (activeRound.par && activeRound.holes_count) {
+        const avg = activeRound.par / activeRound.holes_count;
+        return avg <= 3.3 ? 3 : avg <= 4.3 ? 4 : 5;
+    }
+    return 3; // absolute default
+}
+
+function renderProgressDots() {
+    const total = activeRound.holes_count;
+    const progressEl = document.getElementById('hole-progress');
+    let html = '';
+    for (let i = 1; i <= total; i++) {
+        const holeData = holes.find(h => h.hole_number === i);
+        let dotClass = 'progress-dot';
+        if (i === currentHole) dotClass += ' active';
+        else if (holeData) dotClass += ' scored-' + getScoreClass(holeData.score, holeData.par);
+        html += `<div class="${dotClass}" data-hole="${i}" title="Hole ${getHoleLabel(i)}"></div>`;
+    }
+    progressEl.innerHTML = html;
+    progressEl.querySelectorAll('.progress-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            currentHole = parseInt(dot.dataset.hole);
+            renderHoleView();
+        });
+    });
+}
+
+function renderHoleView() {
+    const total = activeRound.holes_count;
+    const holeNum = currentHole;
+    const holeData = holes.find(h => h.hole_number === holeNum);
+    const par = getHolePar(holeNum);
+
+    // Card border class based on score
+    const card = document.getElementById('hole-card');
+    card.className = 'hole-card' + (holeData ? ' ' + getScoreClass(holeData.score, holeData.par) : '');
+
+    // Build player list: host first, then co-players
+    const isMultiplayer = coPlayers.length > 1;
+    const players = isMultiplayer ? coPlayers : [{ player_id: myPlayerId, display_name: localStorage.getItem('dggo_player_name') || 'You', is_host: true }];
+
+    let playersHtml = '';
+    for (const p of players) {
+        const isMe = p.player_id === myPlayerId || (!myPlayerId && p.is_host);
+        let ph, score, scoreClass, vsParLabel, vsParBadge, numClass;
+        if (p.is_host) {
+            ph = holes.find(h => h.hole_number === holeNum);
+        } else {
+            ph = coPlayerHoles[p.player_id] && coPlayerHoles[p.player_id][holeNum];
+        }
+        const scored = !!(ph && ph.score);
+        score = scored ? ph.score : null;
+        numClass = scored ? numericClass(score, par) : 'unset';
+        vsParLabel = scored ? getVsParLabel(score, par) : '';
+        vsParBadge = scored ? getVsParBadgeClass(score, par) : 'hidden';
+
+        // Avatar
+        const initial = (p.display_name||'?')[0].toUpperCase();
+        const avatarHtml = p.avatar_url
+            ? `<img src="${escAttr(p.avatar_url)}" alt=""">`
+            : initial;
+
+        // Only host (or solo) gets score buttons in this UI — co-player scores are sent with host save
+        // For multiplayer, all players can be scored by the host via player_scores[]
+        const canScore = p.is_host || isMultiplayer; // host scores all players
+
+        playersHtml += `
+        <div class="player-score-row ${isMe ? 'host' : ''}">
+            <div class="player-avatar">${avatarHtml}</div>
+            <div class="player-name">${esc(p.display_name || 'Player')}${isMe ? '<span class="you-badge">YOU</span>' : ''}</div>
+            <div class="score-controls">
+                <button class="score-btn minus" data-hole="${holeNum}" data-player="${p.player_id}" data-ishost="${p.is_host ? '1' : '0'}"
+                    ${(scored && score <= 1) ? 'disabled' : ''} aria-label="Decrease">−</button>
+                <div class="score-display-wrap">
+                    <div class="score-num ${numClass}">${scored ? score : '—'}</div>
+                    <div class="vspar-badge ${vsParBadge}">${scored ? vsParLabel : '·'}</div>
+                </div>
+                <button class="score-btn plus" data-hole="${holeNum}" data-player="${p.player_id}" data-ishost="${p.is_host ? '1' : '0'}"
+                    aria-label="Increase">+</button>
+            </div>
+        </div>`;
+    }
+
+    const distFt = getHoleDistance(holeNum);
+    const distDisplay = distFt ? `${distFt} ft` : '—';
+    const distDim = distFt ? '' : ' dim';
+    const holeLabel = getHoleLabel(holeNum);
+    const holeNotes = getHoleNotes(holeNum);
+    card.innerHTML = `
+        <div class="hole-heading">
+            <div class="hole-num-badge">Hole ${esc(holeLabel)} <span style="font-weight:400;opacity:0.6;font-size:0.85em;">of ${total}</span></div>
+            <div class="hole-meta-chips">
+                <div class="hole-meta-chip tappable" id="par-chip-${holeNum}" title="Tap to cycle par (3→4→5)">
+                    <span class="hole-meta-chip-label">Par</span>
+                    <span class="hole-meta-chip-value">${par}</span>
+                </div>
+                <div class="hole-meta-chip">
+                    <span class="hole-meta-chip-label">Dist</span>
+                    <span class="hole-meta-chip-value${distDim}">${distDisplay}</span>
+                </div>
+            </div>
+        </div>
+        ${holeNotes ? `<div style="font-size:0.78rem;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.65rem;margin-bottom:0.75rem;line-height:1.4;">📌 ${esc(holeNotes)}</div>` : ''}
+        <div class="players-list" id="players-list-${holeNum}">
+            ${playersHtml}
+        </div>`;
+
+    // Par tap-to-cycle
+    const parChip = card.querySelector(`#par-chip-${holeNum}`);
+    if (parChip) {
+        parChip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cyclePar(holeNum);
+        });
+    }
+
+    // Score buttons
+    card.querySelectorAll('.score-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const hNum = parseInt(btn.dataset.hole);
+            const isHost = btn.dataset.ishost === '1';
+            const playerId = parseInt(btn.dataset.player);
+            const dir = btn.classList.contains('minus') ? -1 : 1;
+            adjustScore(hNum, dir, isHost, playerId);
+        });
+    });
+
+    renderProgressDots();
+    renderHoleNav();
+}
+
+function renderHoleNav() {
+    const total = activeRound.holes_count;
+    const nav = document.getElementById('hole-nav');
+    const isFirst = currentHole === 1;
+    const isLast = currentHole === total;
+    const allScored = holes.length >= activeRound.holes_count; // require all holes scored to match backend exact count check
+
+    nav.innerHTML = `
+        ${!isFirst ? `<button class="nav-btn back" id="nav-back">← Back</button>` : ''}
+        ${isLast
+            ? `<button class="nav-btn finish" id="nav-finish" ${!allScored ? 'disabled' : ''}>Finish Round 🏁</button>`
+            : `<button class="nav-btn next" id="nav-next">Next Hole →</button>`
+        }
+        <button class="nav-btn abandon" id="nav-abandon">✕</button>
+    `;
+
+    const backBtn = nav.querySelector('#nav-back');
+    if (backBtn) backBtn.addEventListener('click', () => { currentHole--; renderHoleView(); });
+
+    const nextBtn = nav.querySelector('#nav-next');
+    if (nextBtn) nextBtn.addEventListener('click', () => { currentHole++; renderHoleView(); });
+
+    const finishBtn = nav.querySelector('#nav-finish');
+    if (finishBtn) finishBtn.addEventListener('click', completeRound);
+
+    const abandonBtn = nav.querySelector('#nav-abandon');
+    if (abandonBtn) abandonBtn.addEventListener('click', abandonRound);
+}
+
+// ── Par cycling ────────────────────────────────────────────────────────────
+function cyclePar(holeNum) {
+    const holeData = holes.find(h => h.hole_number === holeNum);
+    const currentPar = getHolePar(holeNum);
+    const parCycle = { 3: 4, 4: 5, 5: 3 };
+    const newPar = parCycle[currentPar] || 3;
+    if (holeData) {
+        const relScore = holeData.score - holeData.par;
+        const newAbsScore = Math.max(1, newPar + relScore);
+        saveHole(holeNum, newPar, newAbsScore);
+    } else {
+        holePars[holeNum] = newPar;
+        renderHoleView();
+    }
+}
+
+// ── Score adjustment ───────────────────────────────────────────────────────
+function adjustScore(holeNum, dir, isHost, playerId) {
+    const par = getHolePar(holeNum);
+    if (isHost || !coPlayers.length) {
+        const holeData = holes.find(h => h.hole_number === holeNum);
+        const newScore = holeData ? Math.max(1, holeData.score + dir) : (dir === -1 ? 2 : 3);
+        saveHole(holeNum, par, newScore);
+    } else {
+        // Co-player score adjustment
+        const existing = coPlayerHoles[playerId] && coPlayerHoles[playerId][holeNum];
+        const newScore = existing ? Math.max(1, existing.score + dir) : (dir === -1 ? 2 : 3);
+        saveCoPlayerScore(holeNum, par, playerId, newScore);
+    }
+}
+
+async function saveHole(holeNum, par, score, extraPlayerScores) {
+    try {
+        const body = { hole_number: holeNum, par, score };
+        if (extraPlayerScores && extraPlayerScores.length) {
+            body.player_scores = extraPlayerScores;
+        }
+        const res = await fetch(`/api/rounds/${activeRound.id}/hole`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast('Error: ' + data.error); return; }
+
+        const idx = holes.findIndex(h => h.hole_number === holeNum);
+        const newHole = { hole_number: holeNum, par, score };
+        if (idx >= 0) holes[idx] = newHole; else holes.push(newHole);
+        delete holePars[holeNum];
+
+        const diff = score - par;
+        const labels = { [-3]: '🦅 Double Eagle!', [-2]: '🦅 Eagle!', [-1]: '🐦 Birdie!', 0: '✅ Par', 1: '+1 Bogey', 2: '+2 Double Bogey' };
+        if (score === 1) showToast('🎯 ACE! Incredible!', 4000);
+        else if (idx < 0) showToast(labels[diff] || `Hole ${getHoleLabel(holeNum)} logged`);
+
+        renderHoleView();
+        updateStats();
+    } catch(e) { showToast('Failed to save hole'); }
+}
+
+// Save a co-player's score locally (UI optimistic) then persist with the host's next save
+// For simplicity: immediately POST with just this co-player score
+async function saveCoPlayerScore(holeNum, par, playerId, score) {
+    try {
+        const res = await fetch(`/api/rounds/${activeRound.id}/hole`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ hole_number: holeNum, par, ...(holes.find(h=>h.hole_number===holeNum)?.score != null ? { score: holes.find(h=>h.hole_number===holeNum).score } : {}), player_scores: [{ player_id: playerId, score, par }] }),
+        });
+        if (!res.ok) { showToast('Failed to save co-player score'); return; }
+        if (!coPlayerHoles[playerId]) coPlayerHoles[playerId] = {};
+        coPlayerHoles[playerId][holeNum] = { par, score };
+        renderHoleView();
+    } catch(e) { showToast('Failed to save co-player score'); }
+}
+
+function updateStats() {
+    const logged = holes.length;
+    document.getElementById('stat-holes').textContent = logged + '/' + activeRound.holes_count;
+    if (logged === 0) {
+        document.getElementById('stat-score').textContent = '—';
+        document.getElementById('stat-vpar').textContent = 'E';
+        document.getElementById('stat-birdies').textContent = '0';
+    } else {
+        const totalScore = holes.reduce((s, h) => s + h.score, 0);
+        const totalPar = holes.reduce((s, h) => s + h.par, 0);
+        const diff = totalScore - totalPar;
+        const birdies = holes.filter(h => h.score < h.par).length;
+        document.getElementById('stat-score').textContent = totalScore;
+        const vparEl = document.getElementById('stat-vpar');
+        vparEl.textContent = diff === 0 ? 'E' : diff > 0 ? '+'+diff : diff;
+        vparEl.className = 'stat-val ' + (diff < 0 ? 'under' : diff > 0 ? 'over' : 'even');
+        document.getElementById('stat-birdies').textContent = birdies;
+    }
+}
+
+// ── Swipe support (nice-to-have) ───────────────────────────────────────────
+let touchStartX = 0;
+document.getElementById('hole-card').addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+document.getElementById('hole-card').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) < 60) return;
+    if (dx < 0 && currentHole < activeRound?.holes_count) { currentHole++; renderHoleView(); }
+    else if (dx > 0 && currentHole > 1) { currentHole--; renderHoleView(); }
+}, { passive: true });
+
+// ── Complete round ─────────────────────────────────────────────────────────
+async function completeRound() {
+    if (holes.length < 1) return;
+    const finishBtn = document.getElementById('nav-finish');
+    if (finishBtn) { finishBtn.disabled = true; finishBtn.textContent = 'Finishing...'; }
+    try {
+        const endpoint = isPreviewMode
+            ? `/api/admin/rounds/${activeRound.id}/preview-complete`
+            : `/api/rounds/${activeRound.id}/complete`;
+        const headers = { Authorization: `Bearer ${token}` };
+        if (isPreviewMode) headers['x-admin-token'] = _adminToken;
+        const res = await fetch(endpoint, { method: 'POST', headers });
+        const data = await res.json();
+        if (!res.ok) {
+            if (data.expected) { showToast(`Complete all ${data.expected} holes before finishing (${data.logged} logged)`, 4000); }
+            else { showToast('Error: ' + (data.error || 'Failed to complete round')); }
+            if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = 'Finish Round 🏁'; }
+            return;
+        }
+        stopGpsTracking();
+        hide('round-screen');
+        showFinishScreen(data);
+    } catch(e) { showToast('Failed to complete round'); if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = 'Finish Round 🏁'; } }
+}
+
+// ── Abandon ────────────────────────────────────────────────────────────────
+async function abandonRound() {
+    if (!confirm('Abandon this round? Progress will be lost.')) return;
+    try {
+        const res = await fetch('/api/rounds/abandon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) { showToast('Failed to abandon round'); return; }
+        stopGpsTracking();
+        activeRound = null; holes = []; coPlayers = []; Object.keys(coPlayerHoles).forEach(k => delete coPlayerHoles[k]);
+        hide('round-screen');
+        await loadCourses();
+        show('setup-screen');
+        showToast('Round abandoned');
+    } catch(e) { showToast('Failed to abandon round'); }
+}
+
+// ── Finish screen ──────────────────────────────────────────────────────────
+function showFinishScreen(data) {
+    window._lastFinishData = data;
+    const diff = data.score_vs_par;
+    let emoji = '🥏';
+    if (diff < -5) emoji = '🐐';
+    else if (diff < -2) emoji = '🦅';
+    else if (diff < 0) emoji = '🐦';
+    else if (diff === 0) emoji = '✅';
+
+    document.querySelector('.finish-icon').textContent = isPreviewMode ? '🎯' : emoji;
+    document.getElementById('finish-title').textContent = isPreviewMode ? 'Preview Complete!' : 'Round Complete!';
+    const diffStr = diff === 0 ? 'Even par' : diff > 0 ? `+${diff} over par` : `${diff} under par`;
+    document.getElementById('finish-score').textContent = `${data.holes_logged} holes · ${data.total_score} strokes · ${diffStr}`;
+
+    // Preview mode: show note instead of XP/gold
+    const previewFinishBanner = document.getElementById('preview-finish-banner');
+    if (data.is_preview || isPreviewMode) {
+        if (previewFinishBanner) previewFinishBanner.style.display = 'block';
+        document.getElementById('xp-banner').style.display = 'none';
+        const goldBanner = document.getElementById('gold-banner');
+        if (goldBanner) goldBanner.style.display = 'none';
+    } else {
+        if (previewFinishBanner) previewFinishBanner.style.display = 'none';
+        if (data.xp_granted) {
+            const total = data.xp_granted + (data.milestone_xp || 0);
+            document.getElementById('xp-amount').textContent = '+' + total;
+            document.getElementById('xp-banner').style.display = 'flex';
+        }
+        const goldBanner = document.getElementById('gold-banner');
+        if (goldBanner && data.gold_earned > 0) { goldBanner.textContent = '+' + data.gold_earned.toLocaleString() + ' 💰 Gold'; goldBanner.style.display = 'block'; }
+        else if (goldBanner) { goldBanner.style.display = 'none'; }
+    }
+
+    const dropBanner = document.getElementById('item-drop-banner');
+    if (dropBanner && data.item_drop) {
+        document.getElementById('drop-icon').textContent = data.item_drop.icon || '📦';
+        document.getElementById('drop-name').textContent = data.item_drop.name;
+        document.getElementById('drop-desc').textContent = data.item_drop.description || '';
+        const rarityEl = document.getElementById('drop-rarity');
+        rarityEl.textContent = data.item_drop.rarity;
+        rarityEl.className = 'drop-rarity rarity-' + data.item_drop.rarity;
+        dropBanner.classList.add('show');
+    } else if (dropBanner) { dropBanner.classList.remove('show'); }
+
+    // Multiplayer summary
+    if (coPlayers.length > 1) {
+        const mpWrap = document.getElementById('mp-summary');
+        const mpList = document.getElementById('mp-player-list');
+        // Build score totals per player
+        const playerTotals = coPlayers.map(p => {
+            let total = 0; let totalPar = 0;
+            if (p.is_host) {
+                holes.forEach(h => { total += h.score; totalPar += h.par; });
+            } else {
+                const ph = coPlayerHoles[p.player_id] || {};
+                Object.values(ph).forEach(h => { total += h.score; totalPar += h.par; });
+            }
+            return { ...p, total, totalPar, vsPar: total - totalPar };
+        }).sort((a,b) => a.vsPar - b.vsPar);
+
+        const rankSymbols = ['🥇','🥈','🥉'];
+        mpList.innerHTML = playerTotals.map((p, i) => {
+            const isMe = p.player_id === myPlayerId;
+            const initial = (p.display_name||'?')[0].toUpperCase();
+            const avatarHtml = p.avatar_url ? `<img src="${escAttr(p.avatar_url)}" alt=""">` : initial;
+            const vpStr = p.vsPar === 0 ? 'E' : p.vsPar > 0 ? `+${p.vsPar}` : `${p.vsPar}`;
+            const vpClass = p.vsPar < 0 ? 'under' : p.vsPar > 0 ? 'over' : '';
+            const rankClass = i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : '';
+            return `<div class="mp-player-row">
+                <div class="mp-rank ${rankClass}">${rankSymbols[i] || (i+1)}</div>
+                <div class="mp-avatar">${avatarHtml}</div>
+                <div class="mp-name">${esc(p.display_name||'Player')}${isMe ? ' <span style="font-size:0.65rem;color:var(--green);opacity:0.8">YOU</span>' : ''}</div>
+                <div>
+                    <div class="mp-score-total">${p.total || '—'}</div>
+                    <div class="mp-vspar ${vpClass}">${vpStr}</div>
+                </div>
+            </div>`;
+        }).join('');
+        mpWrap.style.display = 'block';
+    }
+
+    if (data.breakdown) {
+        const bd = data.breakdown;
+        document.getElementById('bd-aces').textContent = bd.aces || 0;
+        document.getElementById('bd-eagles').textContent = bd.eagles || 0;
+        document.getElementById('bd-birdies').textContent = bd.birdies || 0;
+        document.getElementById('bd-pars').textContent = bd.pars || 0;
+        document.getElementById('bd-bogeys').textContent = bd.bogeys || 0;
+        document.getElementById('bd-doubles').textContent = bd.doubles_plus || 0;
+        document.getElementById('breakdown-grid').style.display = 'grid';
+    }
+
+    if (data.best_hole || data.worst_hole) {
+        if (data.best_hole) {
+            const bh = data.best_hole; const bvp = bh.vs_par;
+            const bLabel = bvp === 0 ? 'Par' : bvp < 0 ? bvp + ' under par' : '+' + bvp;
+            const bhLabel = getHoleLabel(bh.hole_number);
+            document.getElementById('best-hole-score').textContent = bh.score;
+            document.getElementById('best-hole-info').textContent = `Hole ${bhLabel} · Par ${bh.par} · ${bLabel}`;
+        }
+        if (data.worst_hole) {
+            const wh = data.worst_hole; const wvp = wh.vs_par;
+            const wLabel = wvp === 0 ? 'Par' : wvp > 0 ? '+' + wvp + ' over par' : wvp + ' under par';
+            const whLabel = getHoleLabel(wh.hole_number);
+            document.getElementById('worst-hole-score').textContent = wh.score;
+            document.getElementById('worst-hole-info').textContent = `Hole ${whLabel} · Par ${wh.par} · ${wLabel}`;
+        }
+        document.getElementById('hole-highlights').style.display = 'flex';
+    }
+
+    const distStrip = document.getElementById('dist-stats-strip');
+    if (data.round_duration_seconds != null) {
+        const totalSec = data.round_duration_seconds;
+        const hours = Math.floor(totalSec / 3600); const mins = Math.floor((totalSec % 3600) / 60);
+        document.getElementById('round-duration').textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    }
+    if (data.distance_analytics && data.distance_analytics.pointCount >= 2) {
+        const da = data.distance_analytics;
+        document.getElementById('dist-walked').textContent = da.totalDistanceM < 1000 ? Math.round(da.totalDistanceM) + ' m' : (da.totalDistanceM / 1000).toFixed(2) + ' km';
+        distStrip.classList.add('show');
+    } else if (data.round_duration_seconds != null) {
+        distStrip.classList.add('show');
+    } else {
+        distStrip.classList.remove('show');
+    }
+
+    const achWrap = document.getElementById('dist-achievements-wrap');
+    achWrap.innerHTML = '';
+    if (data.new_distance_achievements && data.new_distance_achievements.length > 0) {
+        data.new_distance_achievements.forEach(ach => {
+            const card = document.createElement('div');
+            card.className = 'dist-achievement-card';
+            card.innerHTML = `<div class="dist-ach-icon">${ach.icon}</div><div class="dist-ach-info"><div class="dist-ach-label">🏅 Achievement Unlocked!</div><div class="dist-ach-name">${esc(ach.name)}</div><div class="dist-ach-desc">${esc(ach.description)}</div><div class="dist-ach-reward">+${ach.xp_reward} XP · +${ach.gold_reward} 💰 Gold</div></div>`;
+            achWrap.appendChild(card);
+        });
+    }
+
+    // ── Personal records section ──────────────────────────────────────────────
+    const prWrap = document.getElementById('personal-records-wrap');
+    prWrap.innerHTML = '';
+    let challengesCta = false;
+    if (data.personal_records && data.personal_records.length > 0) {
+        data.personal_records.forEach((pr, i) => {
+            let icon = '🏆'; let colorClass = 'green';
+            if (pr.type === 'first_ace')   { icon = '🎯'; colorClass = 'ace'; }
+            if (pr.type === 'birdie_streak') { icon = '🔥'; colorClass = 'green'; }
+            if (pr.type === 'challenges_ready') { icon = '⚡'; colorClass = 'gold'; }
+            const isAce = pr.type === 'first_ace';
+            const isChallenge = pr.type === 'challenges_ready';
+            const card = document.createElement('div');
+            card.className = `personal-record-card${isAce ? ' ace-card' : isChallenge ? ' challenge-card' : ''}`;
+            card.style.animationDelay = (i * 0.1) + 's';
+            card.innerHTML = `<div class="pr-icon">${icon}</div><div class="pr-msg ${colorClass}">${esc(pr.message)}</div>`;
+            prWrap.appendChild(card);
+            if (isChallenge) challengesCta = true;
+        });
+        prWrap.style.display = 'block';
+    }
+
+    // ── Challenges CTA ─────────────────────────────────────────────────────────
+    const ctaEl = document.getElementById('challenges-cta');
+    const ctaDescEl = document.getElementById('challenges-cta-desc');
+    const ctaPlainEl = document.getElementById('btn-view-challenges-plain');
+    const challengeRecord = data.personal_records && data.personal_records.find(p => p.type === 'challenges_ready');
+    if (challengeRecord && ctaEl) {
+        ctaDescEl.textContent = `${challengeRecord.count} challenge${challengeRecord.count > 1 ? 's' : ''} ready to claim!`;
+        ctaEl.style.display = 'flex';
+        if (ctaPlainEl) ctaPlainEl.style.display = 'none';
+    } else if (ctaEl) {
+        ctaEl.style.display = 'none';
+        if (ctaPlainEl) ctaPlainEl.style.display = 'block';
+    }
+
+    // ── Share card (canvas) ────────────────────────────────────────────────────
+    if (!isPreviewMode) {
+        document.getElementById('share-card').style.display = 'block';
+        // Async: fetch full summary from API then draw canvas
+        const roundId = data.round_id;
+        if (roundId) {
+            generateShareCard(roundId, data);
+        }
+    }
+
+    show('finish-screen');
+    fetchFinishRank();
+}
+
+// ── Share card canvas generation ──────────────────────────────────────────────
+// Draws a 1080×1080 dark-theme card and shows a scaled preview.
+// Falls back gracefully to text share if canvas fails.
+
+async function generateShareCard(roundId, fallbackData) {
+    try {
+        const res = await fetch(`/api/rounds/${roundId}/summary`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('summary fetch failed');
+        const summary = await res.json();
+        window._lastShareSummary = summary;
+        drawShareCard(summary);
+    } catch (_e) {
+        // Canvas failed — keep text share button visible, hide canvas elements
+        document.getElementById('share-card-generating').style.display = 'none';
+    }
+}
+
+function drawShareCard(s) {
+    const canvas = document.getElementById('share-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = 1080, H = 1080;
+    canvas.width = W; canvas.height = H;
+
+    // ── Background gradient ───────────────────────────────────────────────────
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#0d1a0d');
+    bg.addColorStop(0.5, '#111f14');
+    bg.addColorStop(1, '#0a1410');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle dot texture
+    ctx.fillStyle = 'rgba(76,223,60,0.025)';
+    for (let x = 27; x < W; x += 54) {
+        for (let y = 27; y < H; y += 54) {
+            ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    // Top green accent bar
+    const topBar = ctx.createLinearGradient(0, 0, W, 0);
+    topBar.addColorStop(0, '#3ca83c');
+    topBar.addColorStop(1, '#22c55e');
+    ctx.fillStyle = topBar;
+    ctx.fillRect(0, 0, W, 8);
+
+    // ── Personal best banner ──────────────────────────────────────────────────
+    let contentTop = 72;
+    if (s.is_personal_best) {
+        ctx.fillStyle = 'rgba(255,215,0,0.12)';
+        roundRect(ctx, 60, 24, W - 120, 54, 12);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+        ctx.lineWidth = 2;
+        roundRect(ctx, 60, 24, W - 120, 54, 12);
+        ctx.stroke();
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 32px "Space Grotesk", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏆 New Personal Best!', W / 2, 62);
+        contentTop = 108;
+    }
+
+    // ── Player name + course (compact header) ─────────────────────────────────
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '30px "Space Grotesk", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText((s.player_name || 'Disc Golfer').toUpperCase(), W / 2, contentTop + 18);
+
+    // Course name (smaller, below player)
+    if (s.course_name) {
+        ctx.font = 'bold 34px "Space Grotesk", Arial, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        let cname = s.course_name;
+        while (ctx.measureText(cname).width > W - 120 && cname.length > 10) cname = cname.slice(0, -4) + '…';
+        ctx.fillText(cname, W / 2, contentTop + 58);
+        if (s.course_city || s.course_state) {
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.font = '26px "Space Grotesk", Arial, sans-serif';
+            const parts = [];
+            if (s.course_city) parts.push(s.course_city);
+            if (s.course_state) parts.push(s.course_state);
+            if (s.layout_name && s.layout_name !== 'Default') parts.push(s.layout_name);
+            ctx.fillText(parts.join(' · '), W / 2, contentTop + 88);
+        }
+    }
+
+    // ── Score (giant) ─────────────────────────────────────────────────────────
+    const diff = s.score_vs_par;
+    const diffStr = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
+    const scoreColor = diff < 0 ? '#7ed957' : diff > 0 ? '#fc8181' : '#f0efe9';
+    ctx.font = 'bold 200px "Space Mono", "Courier New", monospace';
+    ctx.fillStyle = scoreColor;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = scoreColor;
+    ctx.shadowBlur = 50;
+    ctx.fillText(diffStr, W / 2, contentTop + 290);
+    ctx.shadowBlur = 0;
+
+    // vs par label + strokes/holes on same line
+    const vsLabel = diff === 0 ? 'Even Par' : diff > 0 ? `${Math.abs(diff)} Over Par` : `${Math.abs(diff)} Under Par`;
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '36px "Space Grotesk", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${vsLabel}  ·  ${s.total_score} strokes  ·  ${s.holes_played} holes`, W / 2, contentTop + 340);
+
+    // ── Divider ───────────────────────────────────────────────────────────────
+    ctx.strokeStyle = 'rgba(76,223,60,0.18)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(80, contentTop + 372); ctx.lineTo(W - 80, contentTop + 372); ctx.stroke();
+
+    // ── Per-hole score grid ────────────────────────────────────────────────────
+    // Color-coded circles: ace=red, eagle=gold, birdie=green, par=dim white, bogey=orange, double+=red-dim
+    const holeData = (s.holes && s.holes.length > 0) ? s.holes : [];
+    if (holeData.length > 0) {
+        const gridTop = contentTop + 392;
+        const cols = holeData.length <= 9 ? holeData.length : 9;
+        const rows = Math.ceil(holeData.length / 9);
+        const cellW = (W - 120) / cols;
+        const cellH = rows === 1 ? 110 : 92;
+        const circleR = rows === 1 ? 36 : 30;
+
+        holeData.forEach((h, i) => {
+            const col = i % 9;
+            const row = Math.floor(i / 9);
+            const cx = 60 + col * cellW + cellW / 2;
+            const cy = gridTop + row * (cellH + 10) + circleR + 18;
+
+            const vp = h.score - h.par;
+            let fillColor, borderColor;
+            if (h.score === 1 && h.par >= 2) {
+                // Ace
+                fillColor = 'rgba(240,98,80,0.9)'; borderColor = '#f06250';
+            } else if (vp <= -2) {
+                // Eagle or better
+                fillColor = 'rgba(255,215,0,0.85)'; borderColor = '#ffd700';
+            } else if (vp === -1) {
+                // Birdie
+                fillColor = 'rgba(60,168,60,0.85)'; borderColor = '#7ed957';
+            } else if (vp === 0) {
+                // Par
+                fillColor = 'rgba(255,255,255,0.08)'; borderColor = 'rgba(255,255,255,0.2)';
+            } else if (vp === 1) {
+                // Bogey
+                fillColor = 'rgba(255,165,0,0.2)'; borderColor = '#ffa94d';
+            } else {
+                // Double bogey+
+                fillColor = 'rgba(252,129,129,0.15)'; borderColor = '#fc8181';
+            }
+
+            // Circle
+            ctx.fillStyle = fillColor;
+            ctx.beginPath(); ctx.arc(cx, cy, circleR, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = vp <= -1 || (h.score === 1 && h.par >= 2) ? 2.5 : 1.5;
+            ctx.beginPath(); ctx.arc(cx, cy, circleR, 0, Math.PI * 2); ctx.stroke();
+
+            // Score number inside circle
+            const scoreText = String(h.score);
+            const textColor = (vp === 0 || vp >= 2) ? 'rgba(255,255,255,0.55)' : '#fff';
+            ctx.fillStyle = textColor;
+            ctx.font = `bold ${circleR < 32 ? 24 : 28}px "Space Mono", monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(scoreText, cx, cy);
+            ctx.textBaseline = 'alphabetic';
+
+            // Hole number below circle (very small)
+            ctx.fillStyle = 'rgba(255,255,255,0.28)';
+            ctx.font = `${circleR < 32 ? 18 : 20}px "Space Grotesk", Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText(String(h.hole), cx, cy + circleR + 18);
+        });
+
+        var gridBottom = gridTop + rows * (cellH + 10);
+
+        // ── Stat pills (compact row below grid) ───────────────────────────────
+        const bd = s.breakdown || {};
+        const stats = [];
+        if (bd.aces > 0)    stats.push({ label: `${bd.aces} Ace${bd.aces > 1 ? 's' : ''}`,   color: '#f06250', bg: 'rgba(240,98,80,0.15)' });
+        if (bd.eagles > 0)  stats.push({ label: `${bd.eagles} Eagle${bd.eagles > 1 ? 's' : ''}`, color: '#ffd700', bg: 'rgba(255,215,0,0.12)' });
+        if (bd.birdies > 0) stats.push({ label: `${bd.birdies} Birdie${bd.birdies > 1 ? 's' : ''}`, color: '#7ed957', bg: 'rgba(76,223,60,0.12)' });
+        if (s.longest_birdie_streak >= 3) stats.push({ label: `${s.longest_birdie_streak}🔥 Streak`, color: '#ffa94d', bg: 'rgba(255,165,0,0.1)' });
+        if (bd.pars > 0)    stats.push({ label: `${bd.pars} Par${bd.pars > 1 ? 's' : ''}`,   color: '#68d391', bg: 'rgba(104,211,145,0.1)' });
+
+        if (stats.length > 0) {
+            const pillY = gridBottom + 14;
+            ctx.font = 'bold 28px "Space Grotesk", Arial, sans-serif';
+            const pillH = 50, pillPad = 22, pillGap = 12;
+            const pillWidths = stats.map(st => ctx.measureText(st.label).width + pillPad * 2);
+            const totalPillW = pillWidths.reduce((a, b) => a + b, 0) + pillGap * (stats.length - 1);
+            // Wrap to two rows if too wide
+            let pillX = Math.max(60, (W - Math.min(totalPillW, W - 120)) / 2);
+            if (totalPillW > W - 120) pillX = 60;
+            stats.forEach((st, i) => {
+                const pw = pillWidths[i];
+                ctx.fillStyle = st.bg;
+                roundRect(ctx, pillX, pillY, pw, pillH, pillH / 2); ctx.fill();
+                ctx.strokeStyle = st.color;
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = 0.5;
+                roundRect(ctx, pillX, pillY, pw, pillH, pillH / 2); ctx.stroke();
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = st.color;
+                ctx.textAlign = 'left';
+                ctx.fillText(st.label, pillX + pillPad, pillY + pillH - 12);
+                pillX += pw + pillGap;
+            });
+        }
+    } else {
+        // No hole data: show stat pills in original position
+        const bd = s.breakdown || {};
+        const stats = [];
+        if (bd.aces > 0)    stats.push({ label: `🎯 ${bd.aces} Ace${bd.aces > 1 ? 's' : ''}`,     color: '#f06250', bg: 'rgba(240,98,80,0.15)' });
+        if (bd.eagles > 0)  stats.push({ label: `🦅 ${bd.eagles} Eagle${bd.eagles > 1 ? 's' : ''}`, color: '#6b9af0', bg: 'rgba(107,154,240,0.15)' });
+        if (bd.birdies > 0) stats.push({ label: `🐦 ${bd.birdies} Birdie${bd.birdies > 1 ? 's' : ''}`, color: '#7ed957', bg: 'rgba(76,223,60,0.15)' });
+        if (s.longest_birdie_streak >= 3) stats.push({ label: `🔥 ${s.longest_birdie_streak}-Streak`, color: '#ffd700', bg: 'rgba(255,215,0,0.12)' });
+        if (bd.pars > 0)    stats.push({ label: `✅ ${bd.pars} Par${bd.pars > 1 ? 's' : ''}`,     color: '#68d391', bg: 'rgba(104,211,145,0.12)' });
+        if (stats.length > 0) {
+            ctx.font = 'bold 36px "Space Grotesk", Arial, sans-serif';
+            const pillH = 64, pillPad = 28, pillGap = 16;
+            const pillWidths = stats.map(st => ctx.measureText(st.label).width + pillPad * 2);
+            const totalW = pillWidths.reduce((a, b) => a + b, 0) + pillGap * (stats.length - 1);
+            let pillX = (W - totalW) / 2;
+            const pillY = contentTop + 420;
+            stats.forEach((st, i) => {
+                const pw = pillWidths[i];
+                ctx.fillStyle = st.bg;
+                roundRect(ctx, pillX, pillY, pw, pillH, pillH / 2); ctx.fill();
+                ctx.strokeStyle = st.color.replace(')', ', 0.4)').replace('rgb', 'rgba');
+                ctx.lineWidth = 1.5;
+                roundRect(ctx, pillX, pillY, pw, pillH, pillH / 2); ctx.stroke();
+                ctx.fillStyle = st.color;
+                ctx.textAlign = 'left';
+                ctx.fillText(st.label, pillX + pillPad, pillY + pillH - 18);
+                pillX += pw + pillGap;
+            });
+        }
+    }
+
+    // ── Date (above branding) ─────────────────────────────────────────────────
+    if (s.date_played) {
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.font = '26px "Space Grotesk", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        const d = new Date(s.date_played);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        ctx.fillText(dateStr, W / 2, H - 148);
+    }
+
+    // ── Branding footer ───────────────────────────────────────────────────────
+    ctx.strokeStyle = 'rgba(76,223,60,0.12)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(80, H - 120); ctx.lineTo(W - 80, H - 120); ctx.stroke();
+
+    // Disc icon (drawn)
+    const discX = W / 2 - 120, discY = H - 80;
+    ctx.fillStyle = '#7ed957';
+    ctx.beginPath(); ctx.arc(discX + 22, discY + 8, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0d1a0d';
+    ctx.beginPath(); ctx.arc(discX + 22, discY + 8, 9, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#7ed957';
+    ctx.font = 'bold 36px "Space Grotesk", Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Disc Golf Go', discX + 50, discY + 20);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '24px "Space Grotesk", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('discgolfgo.com', W / 2, H - 22);
+
+    // Show canvas, hide spinner
+    document.getElementById('share-card-generating').style.display = 'none';
+    canvas.style.display = 'block';
+    document.getElementById('btn-share-image').style.display = 'flex';
+    document.getElementById('btn-download-image').style.display = 'flex';
+    document.getElementById('btn-share-text').style.display = 'none';
+}
+
+// Helper: rounded rect path
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+async function shareRoundImage() {
+    const canvas = document.getElementById('share-canvas');
+    try {
+        canvas.toBlob(async (blob) => {
+            if (!blob) { shareRound(); return; }
+            const file = new File([blob], 'disc-golf-round.png', { type: 'image/png' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'My Disc Golf Round',
+                    files: [file],
+                });
+            } else if (navigator.share) {
+                // Share text fallback
+                shareRound();
+            } else {
+                downloadRoundImage();
+            }
+        }, 'image/png');
+    } catch(_e) { shareRound(); }
+}
+
+function downloadRoundImage() {
+    const canvas = document.getElementById('share-canvas');
+    const s = window._lastShareSummary;
+    const fname = s && s.course_name
+        ? `disc-golf-${s.course_name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`
+        : 'disc-golf-round.png';
+    const link = document.createElement('a');
+    link.download = fname;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Image saved!');
+}
+
+async function shareRound() {
+    const data = window._lastFinishData;
+    if (!data) return;
+    const diff = data.score_vs_par;
+    const diffStr = diff === 0 ? 'Even par' : diff > 0 ? `+${diff} over par` : `${diff} under par`;
+    const bd = data.breakdown || {};
+    const highlights = [];
+    if (bd.aces > 0) highlights.push(`${bd.aces} ace${bd.aces > 1 ? 's' : ''}`);
+    if (bd.eagles > 0) highlights.push(`${bd.eagles} eagle${bd.eagles > 1 ? 's' : ''}`);
+    if (bd.birdies > 0) highlights.push(`${bd.birdies} birdie${bd.birdies > 1 ? 's' : ''}`);
+    const coursePart = data.course_name ? ` at ${data.course_name}` : '';
+    const text = `Just finished a round of disc golf${coursePart}!\n${data.holes_logged} holes · ${diffStr}${highlights.length ? '\n' + highlights.join(', ') : ''}\n\n🥏 Disc Golf Go — discgolfgo.com`;
+    try {
+        if (navigator.share) {
+            await navigator.share({ title: 'My Disc Golf Round', text });
+        } else {
+            await navigator.clipboard.writeText(text);
+            showToast('Round summary copied to clipboard!');
+        }
+    } catch(_e) {
+        showToast('Could not share — try copying manually');
+    }
+}
+
+async function fetchFinishRank() {
+    try {
+        const pid = localStorage.getItem('dggo_player_id');
+        const res = await fetch('/api/leaderboard?category=overall');
+        if (!res.ok) { document.getElementById('rank-nudge').style.display = 'flex'; return; }
+        const list = await res.json();
+        const entry = list.find(p => String(p.player_id) === String(pid));
+        const nudge = document.getElementById('rank-nudge');
+        const txt = document.getElementById('rank-nudge-text');
+        if (entry) {
+            const rank = entry.rank;
+            const suffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
+            txt.textContent = `You're #${rank}${suffix} overall`;
+        } else { txt.textContent = 'See where you rank'; }
+        nudge.style.display = 'flex';
+    } catch {}
+}
+
+init();
+</script>
+<!-- Add Players Modal (mid-round) -->
+<div class="add-players-modal" id="add-players-modal">
+    <div class="add-players-modal-box">
+        <div class="add-players-modal-title">👥 Add Players</div>
+        <div class="player-picker-list" id="modal-player-list">
+            <div class="player-picker-loading">Searching for players...</div>
+        </div>
+        <div class="add-players-modal-actions">
+            <button class="btn-modal-cancel" onclick="closeAddPlayersModal()">Cancel</button>
+            <button class="btn-modal-confirm" id="btn-modal-add" disabled onclick="confirmAddPlayers()">Add Selected</button>
+        </div>
+    </div>
+</div>
+
+<!-- Contact mini-footer -->
+<div class="contact-footer">
+    <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+    <div class="cf-socials">
+        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+
+        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+    </div>
+    <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+</div>
+<footer class="page-footer">
+    <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
+</footer>
+
+<!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item active" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+<script>
+// Polsia Analytics
+(function() {
+    var slug = 'disc-golf-go';
+    var vid = localStorage.getItem('polsia_vid');
+    if (!vid) {
+        vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        localStorage.setItem('polsia_vid', vid);
+    }
+    new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+})();
+</script>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;max-height:85vh;overflow-y:auto;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+  var currentNotifId = null;
+  function dismiss() {
+    document.getElementById('notifPopup').style.display='none';
+    document.getElementById('notifPopupOverlay').style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+  document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+  document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+  fetch('/api/notifications/active', { headers: headers })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.notification) return;
+      currentNotifId = d.notification.id;
+      document.getElementById('notifPopupTitle').textContent = d.notification.title;
+      document.getElementById('notifPopupMsg').textContent = d.notification.message;
+      document.getElementById('notifPopup').style.display = 'block';
+      document.getElementById('notifPopupOverlay').style.display = 'flex';
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

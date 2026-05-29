@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Profile — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0a0f0a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>        .page-content {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 1rem 1rem 1.5rem;
+        }
+
+        /* ──────────────────────────────────────────
+           HERO SECTION — Profile card
+        ────────────────────────────────────────── */
+        .hero-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: background var(--transition), border-color var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle green shimmer at top */
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright), var(--green));
+            opacity: 0.9;
+        }
+
+        .hero-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Avatar */
+        .avatar-wrap { position: relative; flex-shrink: 0; }
+        .avatar {
+            width: 76px; height: 76px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green-glow), var(--surface2));
+            border: 2.5px solid var(--green);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            color: var(--green);
+            overflow: hidden;
+            transition: border-color var(--transition);
+        }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-upload-btn {
+            position: absolute; bottom: 0; right: -2px;
+            width: 26px; height: 26px;
+            background: var(--green);
+            border: 2px solid var(--bg2);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem;
+            transition: background var(--transition);
+        }
+        .avatar-upload-btn:active { background: var(--green-bright); }
+        #photo-input { display: none; }
+
+        .hero-info { flex: 1; min-width: 0; }
+        .hero-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 0.2rem;
+            color: var(--text);
+        }
+        .hero-username {
+            font-size: 0.82rem;
+            color: var(--text3);
+            margin-bottom: 0.55rem;
+        }
+
+        .level-pill {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: var(--green-glow);
+            border: 1px solid rgba(60,168,60,0.3);
+            border-radius: var(--radius-pill);
+            padding: 0.28rem 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        [data-theme="dark"] .level-pill { border-color: rgba(76,223,60,0.3); }
+        .level-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--green);
+        }
+        .level-dot { color: rgba(60,168,60,0.5); font-size: 0.7rem; }
+        [data-theme="dark"] .level-dot { color: rgba(76,223,60,0.4); }
+        .level-title-text {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .streak-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .streak-chip {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            color: var(--text2);
+            font-weight: 500;
+            transition: background var(--transition);
+        }
+        .streak-chip.hot { background: rgba(232,96,32,0.1); border-color: rgba(232,96,32,0.2); color: var(--orange); }
+
+        /* XP bar */
+        .xp-section { margin-top: 0.1rem; }
+        .xp-header {
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-bottom: 0.4rem;
+        }
+        .xp-label { font-size: 0.74rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+        .xp-value { font-family: 'Space Mono', monospace; font-size: 0.88rem; font-weight: 700; color: var(--green); }
+        .xp-track {
+            width: 100%; height: 8px;
+            background: var(--surface2);
+            border-radius: var(--radius-pill);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--green-bright));
+            border-radius: var(--radius-pill);
+            transition: width 1.4s cubic-bezier(0.34,1.56,0.64,1);
+            width: 0%;
+        }
+        .xp-next { font-size: 0.73rem; color: var(--text3); margin-top: 0.35rem; }
+
+        /* Gold strip */
+        .gold-strip {
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(135deg, var(--gold-bg), transparent);
+            border: 1px solid var(--gold-border);
+            border-radius: var(--radius-card);
+            padding: 0.65rem 1rem;
+            margin-top: 0.85rem;
+            text-decoration: none;
+            transition: all var(--transition);
+        }
+        .gold-strip:hover, .gold-strip:active { border-color: rgba(224,165,0,0.4); background: linear-gradient(135deg, rgba(224,165,0,0.14), transparent); }
+        [data-theme="dark"] .gold-strip:hover {
+            box-shadow: 0 0 20px rgba(255,208,80,0.15), 0 0 8px rgba(255,208,80,0.08);
+        }
+        .gold-left { display: flex; align-items: center; gap: 0.5rem; }
+        .gold-icon { font-size: 1.25rem; }
+        .gold-label { font-size: 0.8rem; font-weight: 600; color: var(--gold); }
+        .gold-right { display: flex; align-items: center; gap: 0.5rem; }
+        .gold-amount { font-family: 'Space Mono', monospace; font-size: 0.95rem; font-weight: 700; color: var(--gold); }
+        .gold-caret { font-size: 0.75rem; color: var(--text3); }
+
+        /* ──────────────────────────────────────────
+           STATS ROW
+        ────────────────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 0.9rem 0.5rem;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+            transition: all var(--transition);
+        }
+        [data-theme="dark"] .stat-card:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 16px var(--green-glow), var(--shadow-card);
+        }
+        .stat-card:active { transform: scale(0.96); }
+
+        .stat-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--green);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+        .stat-lbl {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* ──────────────────────────────────────────
+           ACTION GRID
+        ────────────────────────────────────────── */
+        .section-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.65rem;
+            margin-top: 0.25rem;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-btn);
+            padding: 1.1rem 0.6rem;
+            text-align: center;
+            text-decoration: none;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-card);
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+            min-height: 90px;
+        }
+        .action-card:active { transform: scale(0.94); box-shadow: none; }
+        .action-card:hover { border-color: var(--border2); }
+        [data-theme="dark"] .action-card:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 20px var(--green-glow), var(--shadow-card);
+        }
+
+        .action-card.primary { border-color: rgba(60,168,60,0.3); background: linear-gradient(135deg, rgba(60,168,60,0.06) 0%, var(--surface) 100%); }
+        [data-theme="dark"] .action-card.primary { border-color: rgba(76,223,60,0.25); background: linear-gradient(135deg, rgba(76,223,60,0.07) 0%, var(--surface) 100%); }
+
+        .action-card.gold-card { border-color: rgba(224,165,0,0.25); background: linear-gradient(135deg, rgba(224,165,0,0.07) 0%, var(--surface) 100%); }
+        .action-card.orange-card { border-color: rgba(232,96,32,0.25); background: linear-gradient(135deg, rgba(232,96,32,0.06) 0%, var(--surface) 100%); }
+
+        .action-icon { font-size: 1.75rem; line-height: 1; }
+        .action-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text2);
+            letter-spacing: 0.01em;
+        }
+        .action-card.primary .action-label { color: var(--green); }
+        .action-card.gold-card .action-label { color: var(--gold); }
+        .action-card.orange-card .action-label { color: var(--orange); }
+
+        /* Active boost chips */
+        .boost-row {
+            display: none;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+        .boost-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-pill);
+            padding: 0.28rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text2);
+            text-decoration: none;
+        }
+
+        /* ──────────────────────────────────────────
+           SECTION BLOCK
+        ────────────────────────────────────────── */
+        .section-block {
+            margin-bottom: 1.25rem;
+        }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 0.65rem;
+        }
+        .section-title {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .section-count {
+            font-size: 0.73rem;
+            color: var(--text3);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            padding: 0.15rem 0.55rem;
+        }
+        .section-link {
+            font-size: 0.78rem;
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* ──────────────────────────────────────────
+           BADGE COLLECTION
+        ────────────────────────────────────────── */
+        .badge-category-group { margin-bottom: 1.25rem; }
+        .badge-category-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.55rem;
+        }
+        .badge-cat-icon { font-size: 1rem; }
+        .badge-cat-name { font-size: 0.84rem; font-weight: 700; color: var(--text2); }
+        .badge-cat-desc { font-size: 0.7rem; color: var(--text3); margin-left: auto; }
+        .badge-tier-row { display: flex; gap: 0.45rem; }
+
+        .badge-tile {
+            flex: 1; min-width: 0;
+            border-radius: var(--radius-card);
+            padding: 0.6rem 0.35rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            transition: transform 0.15s, border-color 0.15s;
+        }
+        .badge-tile.locked { opacity: 0.35; filter: grayscale(0.6); }
+        .badge-tile.earned:active { transform: scale(0.95); }
+        [data-theme="dark"] .badge-tile.earned:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 16px var(--green-glow);
+        }
+
+        .badge-tile.bronze.earned   { border-color: rgba(176,99,48,0.5); background: linear-gradient(135deg, rgba(176,99,48,0.08) 0%, var(--surface)); }
+        .badge-tile.silver.earned   { border-color: rgba(138,144,153,0.5); background: linear-gradient(135deg, rgba(138,144,153,0.07) 0%, var(--surface)); }
+        .badge-tile.gold.earned     { border-color: rgba(224,165,0,0.5); background: linear-gradient(135deg, rgba(224,165,0,0.08) 0%, var(--surface)); }
+        .badge-tile.platinum.earned { border-color: rgba(59,191,172,0.5); background: linear-gradient(135deg, rgba(59,191,172,0.08) 0%, var(--surface)); }
+        .badge-tile.diamond.earned  { border-color: rgba(107,154,240,0.5); background: linear-gradient(135deg, rgba(107,154,240,0.09) 0%, var(--surface)); }
+
+        .badge-tile-tier { font-size: 0.52rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.25rem; display: block; }
+        .bronze .badge-tile-tier   { color: var(--bronze); }
+        .silver .badge-tile-tier   { color: var(--silver); }
+        .gold .badge-tile-tier     { color: var(--gold); }
+        .platinum .badge-tile-tier { color: var(--platinum); }
+        .diamond .badge-tile-tier  { color: var(--diamond); }
+
+        .badge-tile-icon  { font-size: 1.2rem; display: block; margin-bottom: 0.2rem; }
+        .badge-tile-label { font-size: 0.6rem; font-weight: 700; line-height: 1.3; color: var(--text2); }
+        .badge-tile-check { position: absolute; top: 3px; right: 4px; font-size: 0.52rem; color: var(--green); font-weight: 800; }
+
+        /* ──────────────────────────────────────────
+           CHALLENGES
+        ────────────────────────────────────────── */
+        .challenges-list { display: flex; flex-direction: column; gap: 0.6rem; }
+        .challenge-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 0.9rem 1rem;
+            box-shadow: var(--shadow-card);
+            transition: all var(--transition);
+        }
+        .challenge-item.done { opacity: 0.65; }
+        [data-theme="dark"] .challenge-item:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 16px var(--green-glow), var(--shadow-card);
+        }
+        .challenge-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.5rem; }
+        .challenge-left { flex: 1; min-width: 0; }
+        .challenge-title { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+        .challenge-desc  { font-size: 0.73rem; color: var(--text3); margin-top: 0.15rem; }
+        .challenge-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; flex-shrink: 0; }
+        .challenge-xp { font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700; color: var(--green); white-space: nowrap; }
+        .challenge-diff {
+            font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+            padding: 0.18rem 0.45rem; border-radius: var(--radius-pill);
+            background: var(--surface2); color: var(--text3); border: 1px solid var(--border);
+        }
+        .challenge-diff.easy       { color: var(--green);   border-color: rgba(60,168,60,0.3);   background: rgba(60,168,60,0.08); }
+        .challenge-diff.medium     { color: var(--gold);    border-color: rgba(224,165,0,0.25);  background: rgba(224,165,0,0.07); }
+        .challenge-diff.hard       { color: var(--orange);  border-color: rgba(232,96,32,0.25);  background: rgba(232,96,32,0.07); }
+        .challenge-diff.legendary  { color: var(--diamond); border-color: rgba(107,154,240,0.25); background: rgba(107,154,240,0.08); }
+        .challenge-progress-track { height: 4px; background: var(--surface2); border-radius: var(--radius-pill); overflow: hidden; border: 1px solid var(--border); }
+        .challenge-progress-fill  { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-bright)); border-radius: var(--radius-pill); transition: width 0.8s ease-out; }
+
+        /* ──────────────────────────────────────────
+           RECENT ROUNDS
+        ────────────────────────────────────────── */
+        .round-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 0.9rem 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text);
+            box-shadow: var(--shadow-card);
+            margin-bottom: 0.6rem;
+            transition: all var(--transition);
+        }
+        .round-item:active { transform: scale(0.98); box-shadow: none; }
+        [data-theme="dark"] .round-item:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 16px var(--green-glow), var(--shadow-card);
+        }
+        .round-left  { flex: 1; min-width: 0; }
+        .round-course { font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .round-meta   { font-size: 0.73rem; color: var(--text3); margin-top: 0.1rem; }
+        .round-right  { text-align: right; flex-shrink: 0; margin-left: 1rem; }
+        .round-score  { font-family: 'Space Mono', monospace; font-size: 1.05rem; font-weight: 700; }
+        .round-score.under { color: var(--green); }
+        .round-score.over  { color: var(--red); }
+        .round-score.even  { color: var(--text2); }
+        .round-vpar { font-size: 0.72rem; color: var(--text3); margin-top: 1px; }
+
+        /* ──────────────────────────────────────────
+           CHECK-INS
+        ────────────────────────────────────────── */
+        .checkins-list { display: flex; flex-direction: column; gap: 0.6rem; }
+        .checkin-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 0.9rem 1rem;
+            box-shadow: var(--shadow-card);
+            transition: all var(--transition);
+        }
+        [data-theme="dark"] .checkin-item:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 16px var(--green-glow), var(--shadow-card);
+        }
+        .checkin-info { flex: 1; min-width: 0; }
+        .checkin-course { font-size: 0.88rem; font-weight: 700; }
+        .checkin-meta   { font-size: 0.73rem; color: var(--text3); margin-top: 0.1rem; }
+        .checkin-flags  { display: flex; gap: 0.3rem; margin-top: 0.2rem; flex-wrap: wrap; }
+        .flag-chip {
+            font-size: 0.62rem; padding: 0.1rem 0.4rem;
+            border-radius: var(--radius-pill);
+            background: rgba(60,168,60,0.08); color: var(--green);
+            border: 1px solid rgba(60,168,60,0.2);
+        }
+        [data-theme="dark"] .flag-chip { background: rgba(76,223,60,0.08); border-color: rgba(76,223,60,0.2); }
+        .checkin-xp { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--green); white-space: nowrap; margin-left: 0.75rem; }
+
+        /* ──────────────────────────────────────────
+           DISTANCE STATS
+        ────────────────────────────────────────── */
+        .dist-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 0.6rem; margin-bottom: 0.75rem;
+        }
+        .dist-cell {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 1rem 0.75rem;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+            transition: all var(--transition);
+        }
+        [data-theme="dark"] .dist-cell:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 16px var(--green-glow), var(--shadow-card);
+        }
+        .dist-num { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--green); }
+        .dist-lbl { font-size: 0.65rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.2rem; }
+
+        .dist-ach-list { display: flex; flex-direction: column; gap: 0.55rem; }
+        .dist-ach-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 0.85rem 1rem;
+            box-shadow: var(--shadow-card); transition: all var(--transition);
+        }
+        [data-theme="dark"] .dist-ach-item:hover {
+            border-color: var(--green-border);
+            box-shadow: 0 0 16px var(--green-glow), var(--shadow-card);
+        }
+        .dist-ach-item.earned  { border-color: rgba(60,168,60,0.3); }
+        [data-theme="dark"] .dist-ach-item.earned { border-color: rgba(76,223,60,0.25); }
+        .dist-ach-item.locked  { opacity: 0.45; filter: grayscale(0.4); }
+        .dist-ach-item-icon { font-size: 1.6rem; flex-shrink: 0; }
+        .dist-ach-item-
+        .dist-ach-item-name { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+        .dist-ach-item-desc { font-size: 0.73rem; color: var(--text3); margin-top: 0.1rem; }
+        .dist-ach-item-reward { font-size: 0.7rem; color: var(--gold); margin-top: 0.15rem; }
+        .dist-ach-badge { font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: var(--radius-pill); flex-shrink: 0; align-self: flex-start; }
+        .dist-ach-badge.earned { background: rgba(60,168,60,0.1); color: var(--green); border: 1px solid rgba(60,168,60,0.3); }
+        .dist-ach-badge.locked { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+
+        /* ──────────────────────────────────────────
+           CTA CARD
+        ────────────────────────────────────────── */
+        .cta-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+            margin-top: 0.5rem;
+        }
+        .cta-card h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.35rem; color: var(--text); }
+        .cta-card p  { font-size: 0.85rem; color: var(--text3); margin-bottom: 1rem; }
+
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            padding: 0.85rem 2rem;
+            background: var(--green);
+            color: #fff;
+            border: none; border-radius: var(--radius-btn);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem; font-weight: 700;
+            text-decoration: none; cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: 0 4px 16px rgba(60,168,60,0.35);
+        }
+        .btn-primary:active { transform: scale(0.97); box-shadow: none; }
+        .btn-primary:hover  { background: var(--green-bright); }
+        [data-theme="dark"] .btn-primary:hover {
+            box-shadow: 0 0 24px rgba(76,223,60,0.35), 0 4px 16px rgba(76,223,60,0.2);
+        }
+
+        /* ──────────────────────────────────────────
+           EMPTY STATE
+        ────────────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text3);
+        }
+
+        /* ──────────────────────────────────────────
+           TOAST + OVERLAYS
+        ────────────────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--tab-h) + var(--safe-b) + 1rem);
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-card);
+            padding: 0.85rem 1.4rem;
+            font-size: 0.88rem;
+            color: var(--text);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 200;
+            min-width: 200px; max-width: 340px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast-xp { font-family: 'Space Mono', monospace; font-size: 1.15rem; font-weight: 700; color: var(--green); }
+
+        /* Level-up overlay */
+        .level-up-overlay {
+            position: fixed; inset: 0; z-index: 300;
+            background: rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .level-up-overlay.show { opacity: 1; pointer-events: auto; }
+        .level-up-card {
+            background: var(--surface);
+            border: 1px solid var(--green);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            text-align: center; max-width: 320px; width: 90%;
+            animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: 0 0 60px var(--green-glow), var(--shadow-lg);
+            position: relative; overflow: hidden;
+        }
+        @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .lu-icon { font-size: 3rem; margin-bottom: 0.75rem; display: block; animation: bounce 1s infinite; }
+        @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+        .lu-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--green); font-weight: 700; margin-bottom: 0.3rem; }
+        .lu-num { font-family: 'Space Mono', monospace; font-size: 4rem; font-weight: 700; color: var(--green); line-height: 1; margin-bottom: 0.2rem; }
+        .lu-title-text { font-size: 1.35rem; font-weight: 800; color: var(--text); margin-bottom: 1.5rem; }
+        .lu-close { background: var(--green); color: #fff; border: none; border-radius: var(--radius-btn); padding: 0.8rem 2.25rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all var(--transition); }
+        [data-theme="dark"] .lu-close:hover { box-shadow: 0 0 20px rgba(76,223,60,0.3); }
+        .lu-close:active { transform: scale(0.96); }
+        .particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .particle { position: absolute; width: 5px; height: 5px; border-radius: 50%; animation: pflyout 1.4s ease-out forwards; }
+        @keyframes pflyout { from { transform: translate(0,0) scale(1); opacity: 1; } to { transform: translate(var(--tx),var(--ty)) scale(0); opacity: 0; } }
+
+        /* Round detail sheet */
+        .round-detail-overlay {
+            position: fixed; inset: 0; z-index: 150;
+            background: rgba(0,0,0,0.5);
+            display: none; align-items: flex-end; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .round-detail-overlay.open { display: flex; }
+        .round-detail-sheet {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px 24px 0 0;
+            padding: 1.5rem 1.25rem;
+            width: 100%; max-width: 540px; max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            padding-bottom: calc(1.5rem + var(--safe-b));
+        }
+        .rds-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 1.25rem; }
+        .rds-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--text); }
+        .rds-meta  { font-size: 0.8rem; color: var(--text3); margin-bottom: 1.25rem; }
+        .rds-hole-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px,1fr)); gap: 0.45rem; }
+        .rds-hole { border-radius: 10px; border: 1px solid var(--border); padding: 0.5rem 0.3rem; text-align: center; background: var(--surface2); }
+        .rds-hole .rh-num   { font-size: 0.58rem; color: var(--text3); }
+        .rds-hole .rh-score { font-family: 'Space Mono', monospace; font-size: 0.95rem; font-weight: 700; color: var(--text); }
+        .rds-hole .rh-vp    { font-size: 0.58rem; color: var(--text3); }
+        .rds-hole.rh-ace    { border-color: rgba(240,98,80,0.5); background: rgba(240,98,80,0.08); }
+        .rds-hole.rh-birdie { border-color: rgba(224,165,0,0.4);  background: rgba(224,165,0,0.06); }
+        .rds-hole.rh-eagle  { border-color: rgba(107,154,240,0.4); background: rgba(107,154,240,0.08); }
+        .rds-hole.rh-par    { border-color: rgba(60,168,60,0.3);  background: rgba(60,168,60,0.05); }
+        .rds-hole.rh-bogey  { border-color: var(--border2); }
+        .rds-hole.rh-double { border-color: rgba(224,80,80,0.3);  background: rgba(224,80,80,0.06); }
+        .btn-close-sheet { width: 100%; margin-top: 1.25rem; padding: 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-btn); color: var(--text3); cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600; transition: all var(--transition); }
+        .btn-close-sheet:active { background: var(--surface); }
+        [data-theme="dark"] .btn-close-sheet:hover { border-color: var(--green-border); }
+
+        /* ──────────────────────────────────────────
+           NOT SIGNED IN STATE
+        ────────────────────────────────────────── */
+        .no-profile {
+            display: none;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .no-profile-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .no-profile h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.6rem; }
+        .no-profile p  { color: var(--text3); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .no-profile-sub { margin-top: 1rem; font-size: 0.88rem; color: var(--text3); }
+        .no-profile-sub a { color: var(--green); text-decoration: none; font-weight: 600; }
+
+        /* ──────────────────────────────────────────
+           SIGN OUT BUTTON
+        ────────────────────────────────────────── */
+        .signout-wrap {
+            text-align: center;
+            padding: 0.75rem 1rem 0.25rem;
+        }
+        .signout-btn {
+            background: none;
+            border: none;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text3);
+            cursor: pointer;
+            padding: 0.4rem 0.75rem;
+            border-radius: var(--radius-btn);
+            text-decoration: none;
+            display: inline-block;
+            transition: color var(--transition), background var(--transition);
+        }
+        .signout-btn:hover, .signout-btn:active {
+            color: var(--red);
+            background: rgba(224,64,64,0.07);
+        }
+        [data-theme="dark"] .signout-btn:hover {
+            border-color: rgba(252,129,129,0.25);
+            border: 1px solid rgba(252,129,129,0.25);
+        }
+
+        /* ──────────────────────────────────────────
+           LOGOUT CONFIRMATION MODAL
+        ────────────────────────────────────────── */
+        .logout-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .logout-modal-overlay.open { display: flex; }
+        .logout-modal-card {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-card);
+            padding: 1.75rem 1.5rem 1.5rem;
+            max-width: 320px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+        [data-theme="dark"] .logout-modal-card {
+            box-shadow: 0 0 24px var(--green-glow), var(--shadow-lg);
+        }
+        .logout-modal-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
+        .logout-modal-title { font-size: 1.05rem; font-weight: 800; color: var(--text); margin-bottom: 0.4rem; }
+        .logout-modal-actions { display: flex; gap: 0.6rem; }
+        .logout-modal-cancel {
+            flex: 1;
+            padding: 0.75rem;
+            background: none;
+            border: 1.5px solid var(--border2);
+            border-radius: var(--radius-btn);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .logout-modal-cancel:active { background: var(--surface2); }
+        [data-theme="dark"] .logout-modal-cancel:hover {
+            border-color: var(--green-border);
+            background: var(--green-glow2);
+            color: var(--green);
+        }
+        .logout-modal-confirm {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--red);
+            border: none;
+            border-radius: var(--radius-btn);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .logout-modal-confirm:active { transform: scale(0.97); }
+
+        /* ──────────────────────────────────────────
+           CONTACT MINI-FOOTER
+        ────────────────────────────────────────── */
+        .contact-footer {
+            border-top: 1px solid var(--border);
+            padding: 0.85rem 1rem 0.5rem;
+            text-align: center;
+            font-size: 0.76rem;
+            color: var(--text3);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .contact-footer a {
+            color: var(--text3);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+        .contact-footer a:hover { color: var(--green); }
+        .contact-footer .cf-email {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .contact-footer .cf-socials {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .contact-footer .cf-socials a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-btn);
+            border: 1px solid var(--border2);
+            background: var(--surface2);
+            transition: all var(--transition);
+        }
+        .contact-footer .cf-socials a:hover {
+            border-color: var(--green);
+            background: var(--surface);
+            color: var(--green);
+        }
+        [data-theme="dark"] .contact-footer .cf-socials a:hover {
+            box-shadow: 0 0 12px var(--green-glow);
+        }
+        .contact-footer .cf-socials svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+        .contact-footer .cf-site {
+            font-size: 0.72rem;
+            opacity: 0.75;
+        }
+
+        /* ──────────────────────────────────────────
+           RESPONSIVE TWEAKS
+        ────────────────────────────────────────── */
+        @media (max-width: 380px) {
+            .action-grid { grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
+            .action-icon { font-size: 1.5rem; }
+            .action-card { min-height: 82px; padding: 0.9rem 0.4rem; }
+        }
+    </style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header class="top-header">
+        <a href="/" class="header-logo">
+            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            Disc Golf <span class="go">Go</span>
+        </a>
+        <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+            <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+        </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="page-content">
+
+        <!-- Profile Content — always visible; shows real data when loaded -->
+        <div id="profile-content">
+
+            <!-- ═══ HERO CARD ═══ -->
+            <div class="hero-card" id="hero-card">
+                <div class="hero-top">
+                    <div class="avatar-wrap">
+                        <div class="avatar" id="avatar-display">
+                            <span id="avatar-initials">?</span>
+                        </div>
+                        <div class="avatar-upload-btn" onclick="document.getElementById('photo-input').click()" title="Upload photo">📷</div>
+                        <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" onchange="uploadPhoto(this)">
+                    </div>
+                    <div class="hero-info">
+                        <div class="hero-name" id="player-name">—</div>
+                        <div class="hero-username" id="player-username"></div>
+                        <div class="level-pill">
+                            <span class="level-num" id="level-num">1</span>
+                            <span class="level-dot">·</span>
+                            <span id="level-title-icon">🥏</span>
+                            <span class="level-title-text" id="level-title-text">Rookie</span>
+                        </div>
+                        <div class="streak-row" id="streak-row"></div>
+                    </div>
+                </div>
+
+                <!-- XP progress -->
+                <div class="xp-section">
+                    <div class="xp-header">
+                        <span class="xp-label">XP Progress</span>
+                        <span class="xp-value" id="xp-value">0 XP</span>
+                    </div>
+                    <div class="xp-track"><div class="xp-fill" id="xp-bar"></div></div>
+                    <div class="xp-next" id="xp-next"></div>
+                </div>
+
+                <!-- Gold strip -->
+                <a href="/vault" class="gold-strip">
+                    <div class="gold-left">
+                        <span class="gold-icon">💰</span>
+                        <span class="gold-label">Gold Balance</span>
+                    </div>
+                    <div class="gold-right">
+                        <span class="gold-amount" id="gold-balance">0 Gold</span>
+                        <span class="gold-caret">›</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- ═══ STATS ROW ═══ -->
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-num" id="stat-checkins">0</div><div class="stat-lbl">Check-ins</div></div>
+                <div class="stat-card"><div class="stat-num" id="stat-courses">0</div><div class="stat-lbl">Courses</div></div>
+                <div class="stat-card"><div class="stat-num" id="stat-rounds">0</div><div class="stat-lbl">Rounds</div></div>
+                <div class="stat-card"><div class="stat-num" id="stat-battles">0</div><div class="stat-lbl">Wins</div></div>
+                <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-lbl">Streak</div></div>
+                <div class="stat-card"><div class="stat-num" id="stat-badges">0</div><div class="stat-lbl">Badges</div></div>
+            </div>
+
+            <!-- Active Boosts -->
+            <div class="boost-row" id="boost-row"></div>
+
+            <!-- ═══ QUICK ACTIONS ═══ -->
+            <div class="section-label">Quick Actions</div>
+            <div class="action-grid">
+                <a href="/story" class="action-card" style="border-color:rgba(160,80,255,0.3);background:linear-gradient(135deg,rgba(160,80,255,0.09) 0%,var(--surface) 100%);">
+                    <div class="action-icon">📖</div>
+                    <div class="action-label" style="color:var(--purple);">Career Mode</div>
+                </a>
+                <a href="/scorecard" class="action-card primary">
+                    <div class="action-icon">🥏</div>
+                    <div class="action-label">Play Round</div>
+                </a>
+                <a href="/challenges" class="action-card orange-card">
+                    <div class="action-icon">🎯</div>
+                    <div class="action-label">Quests</div>
+                </a>
+                <a href="/battles" class="action-card primary">
+                    <div class="action-icon">⚔️</div>
+                    <div class="action-label">Battles</div>
+                </a>
+                <a href="/leaderboard" class="action-card primary">
+                    <div class="action-icon">🏆</div>
+                    <div class="action-label">Leaderboard</div>
+                </a>
+                <a href="/vault" class="action-card gold-card">
+                    <div class="action-icon">🏪</div>
+                    <div class="action-label">Vault</div>
+                </a>
+                <a href="/map" class="action-card primary">
+                    <div class="action-icon">🌍</div>
+                    <div class="action-label">Map</div>
+                </a>
+                <a href="/rounds" class="action-card primary">
+                    <div class="action-icon">📋</div>
+                    <div class="action-label">Rounds</div>
+                </a>
+                <a href="/crews" class="action-card" style="border-color:rgba(107,154,240,0.28);background:linear-gradient(135deg,rgba(107,154,240,0.08) 0%,var(--surface) 100%);">
+                    <div class="action-icon">👥</div>
+                    <div class="action-label" style="color:var(--diamond);">Crews</div>
+                </a>
+            </div>
+
+            <!-- ═══ BADGES ═══ -->
+            <div class="section-block">
+                <div class="section-header">
+                    <span class="section-title">🏅 Badges</span>
+                    <span class="section-count" id="badges-count">0 / 85</span>
+                </div>
+                <div id="badges-container"></div>
+            </div>
+
+            <!-- ═══ DISTANCE STATS ═══ -->
+            <div class="section-block" id="distance-section" style="display:none">
+                <div class="section-header">
+                    <span class="section-title">🗺️ Distance Stats</span>
+                </div>
+                <div class="dist-grid">
+                    <div class="dist-cell">
+                        <div class="dist-num" id="dst-total">—</div>
+                        <div class="dist-lbl">Total Walked</div>
+                    </div>
+                    <div class="dist-cell">
+                        <div class="dist-num" id="dst-gps-rounds">—</div>
+                        <div class="dist-lbl">GPS Rounds</div>
+                    </div>
+                </div>
+                <div class="section-header" style="margin-top:0.5rem">
+                    <span class="section-title">🏅 Distance Achievements</span>
+                    <span class="section-count" id="dist-ach-count">0 / 5</span>
+                </div>
+                <div class="dist-ach-list" id="dist-ach-list"></div>
+            </div>
+
+            <!-- ═══ ACTIVE QUESTS ═══ -->
+            <div class="section-block">
+                <div class="section-header">
+                    <span class="section-title">⚡ Active Quests</span>
+                </div>
+                <div class="challenges-list" id="challenges-list"></div>
+            </div>
+
+            <!-- ═══ RECENT ROUNDS ═══ -->
+            <div class="section-block" id="rounds-section" style="display:none">
+                <div class="section-header">
+                    <span class="section-title">🥏 Recent Rounds</span>
+                    <a href="/rounds" class="section-link">View all ›</a>
+                </div>
+                <div id="rounds-list"></div>
+            </div>
+
+            <!-- ═══ RECENT CHECK-INS ═══ -->
+            <div class="section-block">
+                <div class="section-header">
+                    <span class="section-title">📍 Recent Check-ins</span>
+                </div>
+                <div class="checkins-list" id="checkins-list"></div>
+            </div>
+
+            <!-- CTA -->
+            <div class="cta-card">
+                <h3>Always something to chase.</h3>
+                <p>Find a nearby course and keep earning XP</p>
+                <a href="/checkin" class="btn-primary">📍 Find Nearby Courses</a>
+            </div>
+        </div>
+
+        <!-- Not signed in -->
+        <div class="no-profile" id="no-profile">
+            <div class="no-profile-icon">🥏</div>
+            <h2>Sign in to view your profile</h2>
+            <p>Your XP and badges are waiting</p>
+            <a href="/login" class="btn-primary">Sign In</a>
+            <div class="no-profile-sub">New? <a href="/register">Create an account</a></div>
+        </div>
+
+        <!-- Log Out button -->
+        <div class="signout-wrap" id="signout-wrap" style="display:none">
+            <button class="signout-btn" onclick="confirmLogout()">Log Out</button>
+        </div>
+
+        <!-- Logout confirmation modal -->
+        <div class="logout-modal-overlay" id="logout-modal">
+            <div class="logout-modal-card">
+                <span class="logout-modal-icon">🚪</span>
+                <div class="logout-modal-title">Log out of Disc Golf Go?</div>
+                <div class="logout-modal-body">Are you sure? You'll need to sign back in to access your profile, rounds, and stats.</div>
+                <div class="logout-modal-actions">
+                    <button class="logout-modal-cancel" onclick="closeLogoutModal()">Cancel</button>
+                    <button class="logout-modal-confirm" onclick="doLogout()">Log Out</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact mini-footer -->
+        <div class="contact-footer">
+            <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+            <div class="cf-socials">
+                <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                </a>
+                <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                </a>
+
+                <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+            </div>
+            <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+        </div>
+
+        <footer class="page-footer">
+            <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
+        </footer>
+    </main>
+
+    <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+    <nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item active" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Round detail sheet -->
+    <div class="round-detail-overlay" id="round-detail-overlay">
+        <div class="round-detail-sheet">
+            <div class="rds-handle"></div>
+            <div class="rds-title" id="rds-title">Round Details</div>
+            <div class="rds-meta" id="rds-meta"></div>
+            <div class="rds-hole-grid" id="rds-hole-grid"></div>
+            <button class="btn-close-sheet" onclick="document.getElementById('round-detail-overlay').classList.remove('open')">Close</button>
+        </div>
+    </div>
+
+    <!-- Level-up overlay -->
+    <div class="level-up-overlay" id="level-up-overlay">
+        <div class="level-up-card">
+            <div class="particles" id="particles"></div>
+            <span class="lu-icon">🎉</span>
+            <div class="lu-label">Level Up!</div>
+            <div class="lu-num" id="lu-level">2</div>
+            <div class="lu-title-text" id="lu-title">Amateur</div>
+            <button class="lu-close" onclick="closeLevelUp()">Keep Playing 🥏</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         JAVASCRIPT
+    ══════════════════════════════════════════════════════════ -->
+    <script>
+    // ── SERVICE WORKER POLICY ─────────────────────────────────────────────
+    // Service workers DO NOT work in iOS WKWebView (Capacitor) and behave
+    // unpredictably on Android with Capacitor. Capacitor apps ship all assets
+    // bundled — SWs are unnecessary and cause broken offline logic.
+    // If you accidentally copy a navigator.serviceWorker.register() call here,
+    // it will throw on native builds. See SW_POLICY.md for the full policy.
+    (function() {
+        try {
+            // Attempt to detect if Capacitor is present via global
+            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform) {
+                if (Capacitor.isNativePlatform()) {
+                    // Native builds: throw early if anyone tries to register a SW
+                    throw new Error('SW_POLICY: Service worker registration is BLOCKED on iOS/Android native builds. Capacitor apps ship bundled assets and do not need offline caching. See SW_POLICY.md');
+                }
+            }
+        } catch (e) {
+            // Re-throw only the SW policy error; ignore other Capacitor errors
+            if (e.message && e.message.startsWith('SW_POLICY:')) throw e;
+        }
+    })();
+
+    // ── DARK MODE TOGGLE (theme already set by blocking <head> script) ──
+    (function() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+    })();
+
+    document.getElementById('themeToggle').addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        this.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('dggo_theme')) {
+            var next = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        }
+    });
+
+    // ── XP / LEVEL MATH ─────────────────────────────────────────
+    function totalXpForLevel(n) { return n <= 1 ? 0 : 125 * n * (n - 1); }
+    function getLevelFromXp(xp) {
+        var lo = 1, hi = 500;
+        while (lo < hi) {
+            var mid = Math.floor((lo + hi + 1) / 2);
+            if (totalXpForLevel(mid) <= xp) lo = mid; else hi = mid - 1;
+        }
+        return lo;
+    }
+    function getLevelProgress(xp) {
+        var l = getLevelFromXp(xp);
+        var cur = totalXpForLevel(l), nxt = totalXpForLevel(l + 1);
+        var prog = xp - cur, needed = nxt - cur;
+        return { level: l, progress: prog, needed: needed, percent: Math.min(100, Math.round(prog / needed * 100)) };
+    }
+
+    function timeAgo(d) {
+        var diff = Date.now() - new Date(d).getTime();
+        var m = Math.floor(diff / 60000);
+        if (m < 60) return m <= 1 ? 'just now' : m + 'm ago';
+        var h = Math.floor(m / 60);
+        if (h < 24) return h + 'h ago';
+        return Math.floor(h / 24) + 'd ago';
+    }
+
+    // ── LOGOUT MODAL ─────────────────────────────────────────────
+    function confirmLogout() {
+        document.getElementById('logout-modal').classList.add('open');
+    }
+    function closeLogoutModal() {
+        document.getElementById('logout-modal').classList.remove('open');
+    }
+    function doLogout() {
+        ['dggo_token','dggo_player_name','dggo_player_id','dggo_player_uuid'].forEach(function(k) { localStorage.removeItem(k); });
+        window.location.href = '/login';
+    }
+
+    // ── AUTH ─────────────────────────────────────────────────────
+    function getToken() { return localStorage.getItem('dggo_token'); }
+    function authHeaders() {
+        var t = getToken(), h = {};
+        if (t) h['Authorization'] = 'Bearer ' + t;
+        else { var u = localStorage.getItem('dggo_player_uuid'); if (u) h['X-Player-Id'] = u; }
+        return h;
+    }
+
+    // ── TOAST ────────────────────────────────────────────────────
+    var _toastTimer = null;
+    function showToast(html, dur) {
+        dur = dur || 4000;
+        var t = document.getElementById('toast');
+        t.innerHTML = html; t.classList.add('show');
+        if (_toastTimer) clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(function() { t.classList.remove('show'); }, dur);
+    }
+
+    // ── LEVEL UP ─────────────────────────────────────────────────
+    function showLevelUp(level, title) {
+        document.getElementById('lu-level').textContent = level;
+        document.getElementById('lu-title').textContent = title;
+        document.getElementById('level-up-overlay').classList.add('show');
+        spawnParticles();
+    }
+    function closeLevelUp() { document.getElementById('level-up-overlay').classList.remove('show'); }
+    function spawnParticles() {
+        var c = document.getElementById('particles');
+        c.innerHTML = '';
+        var cols = ['#a3f07a','#7ed957','#ffd700','#ff9f43','#a0c8ff','#7cf5e4','#ff6f20'];
+        for (var i = 0; i < 40; i++) {
+            var p = document.createElement('div');
+            p.className = 'particle';
+            p.style.cssText = 'left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;background:' + cols[i%cols.length] + ';--tx:' + (Math.random()*130-65) + 'px;--ty:' + (Math.random()*-90-20) + 'px;animation-delay:' + (Math.random()*0.4) + 's';
+            c.appendChild(p);
+        }
+    }
+
+    // ── UPLOAD PHOTO ─────────────────────────────────────────────
+    async function uploadPhoto(input) {
+        if (!input.files || !input.files[0]) return;
+        var file = input.files[0];
+        if (file.size > 5*1024*1024) { showToast('Photo must be under 5MB'); return; }
+        showToast('Uploading…');
+        var fd = new FormData(); fd.append('photo', file);
+        try {
+            var res = await fetch('/api/players/me/photo', { method: 'POST', headers: authHeaders(), body: fd });
+            var data = await res.json();
+            if (!res.ok) { showToast('Upload failed'); return; }
+            document.getElementById('avatar-display').innerHTML = '<img src="' + data.url + '" alt="">';
+            showToast('Photo updated!');
+        } catch(e) { showToast('Upload failed'); }
+        input.value = '';
+    }
+
+    // ── RENDER BADGES ─────────────────────────────────────────────
+    function renderBadges(categories) {
+        var container = document.getElementById('badges-container');
+        container.innerHTML = '';
+        var earned = 0, total = 0;
+        for (var ci = 0; ci < categories.length; ci++) {
+            var cat = categories[ci];
+            for (var ti = 0; ti < cat.tiers.length; ti++) {
+                total++;
+                if (cat.tiers[ti].earned) earned++;
+            }
+            var group = document.createElement('div');
+            group.className = 'badge-category-group';
+            group.innerHTML = '<div class="badge-category-header">' +
+                '<span class="badge-cat-icon">' + cat.icon + '</span>' +
+                '<span class="badge-cat-name">' + cat.name + '</span>' +
+                '<span class="badge-cat-desc">' + cat.description + '</span></div>';
+            var row = document.createElement('div');
+            row.className = 'badge-tier-row';
+            for (var ti2 = 0; ti2 < cat.tiers.length; ti2++) {
+                var tier = cat.tiers[ti2];
+                var tile = document.createElement('div');
+                tile.className = 'badge-tile ' + tier.tier + (tier.earned ? ' earned' : ' locked');
+                tile.title = tier.earned ? tier.label + '\n' + tier.desc : tier.desc + '\nLocked';
+                tile.innerHTML =
+                    (tier.earned ? '<span class="badge-tile-check">✓</span>' : '') +
+                    '<span class="badge-tile-tier">' + tier.tier + '</span>' +
+                    '<span class="badge-tile-icon">' + cat.icon + '</span>' +
+                    '<div class="badge-tile-label">' + (tier.earned ? tier.label : '???') + '</div>';
+                row.appendChild(tile);
+            }
+            group.appendChild(row);
+            container.appendChild(group);
+        }
+        document.getElementById('badges-count').textContent = earned + ' / ' + total;
+    }
+
+    // ── RENDER CHALLENGES ─────────────────────────────────────────
+    function renderChallenges(challenges) {
+        var list = document.getElementById('challenges-list');
+        var badge = document.getElementById('challenge-badge');
+        list.innerHTML = '';
+        if (!challenges || !challenges.length) {
+            list.innerHTML = '<div class="empty-state">No active challenges yet</div>'; return;
+        }
+        var activeCount = challenges.filter(function(c) { return !c.completed; }).length;
+        if (activeCount > 0 && badge) { badge.textContent = activeCount; badge.classList.add('show'); }
+        for (var i = 0; i < challenges.length; i++) {
+            var ch = challenges[i];
+            var pct = Math.min(100, Math.round(ch.progress / ch.target_value * 100));
+            var div = document.createElement('div');
+            div.className = 'challenge-item' + (ch.completed ? ' done' : '');
+            div.innerHTML =
+                '<div class="challenge-top">' +
+                  '<div class="challenge-left">' +
+                    '<div class="challenge-title">' + (ch.completed ? '✅ ' : '') + ch.title + '</div>' +
+                    (ch.description ? '<div class="challenge-desc">' + ch.description + '</div>' : '') +
+                  '</div>' +
+                  '<div class="challenge-right">' +
+                    '<span class="challenge-xp">+' + ch.xp_reward + ' XP</span>' +
+                    '<span class="challenge-diff ' + ch.difficulty + '">' + ch.difficulty + '</span>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="challenge-progress-track"><div class="challenge-progress-fill" style="width:' + pct + '%"></div></div>' +
+                '<div style="font-size:0.68rem;color:var(--text3);margin-top:0.25rem;">' + ch.progress + ' / ' + ch.target_value + '</div>';
+            list.appendChild(div);
+        }
+    }
+
+    // ── RENDER CHECK-INS ──────────────────────────────────────────
+    function renderCheckins(checkins) {
+        var list = document.getElementById('checkins-list');
+        list.innerHTML = '';
+        if (!checkins || !checkins.length) {
+            list.innerHTML = '<div class="empty-state">No check-ins yet — go find a course! 🥏</div>'; return;
+        }
+        for (var i = 0; i < checkins.length; i++) {
+            var ci = checkins[i];
+            var flags = [];
+            if (ci.is_round_complete) flags.push('✅ Full Round');
+            if (ci.weather_condition) {
+                var wm = { rain:'🌧️ Rain', snow:'❄️ Snow', cold:'🥶 Cold', heat:'☀️ Heat' };
+                flags.push(wm[ci.weather_condition] || ci.weather_condition);
+            }
+            var div = document.createElement('div');
+            div.className = 'checkin-item';
+            div.innerHTML =
+                '<div class="checkin-info">' +
+                  '<div class="checkin-course">' + ci.course_name + '</div>' +
+                  '<div class="checkin-meta">' + (ci.city||'') + (ci.state?', '+ci.state:'') + ' · ' + timeAgo(ci.checked_in_at) + '</div>' +
+                  (flags.length ? '<div class="checkin-flags">' + flags.map(function(f){return '<span class="flag-chip">'+f+'</span>';}).join('') + '</div>' : '') +
+                '</div>' +
+                '<div class="checkin-xp">+' + ci.xp_earned + ' XP</div>';
+            list.appendChild(div);
+        }
+    }
+
+    // ── RECENT ROUNDS ─────────────────────────────────────────────
+    async function loadRecentRounds() {
+        var token = getToken();
+        if (!token) return;
+        try {
+            var res = await fetch('/api/rounds/history', { headers: { Authorization: 'Bearer ' + token } });
+            if (!res.ok) return;
+            var data = await res.json();
+            var rounds = data.rounds || [];
+            if (!rounds.length) return;
+            renderRounds(rounds.slice(0, 5));
+            document.getElementById('rounds-section').style.display = 'block';
+        } catch(e) {}
+    }
+
+    function renderRounds(rounds) {
+        var list = document.getElementById('rounds-list');
+        list.innerHTML = '';
+        for (var i = 0; i < rounds.length; i++) {
+            var r = rounds[i];
+            var diff = parseInt(r.score_vs_par) || (parseInt(r.total_score) - parseInt(r.total_par));
+            var diffStr = diff === 0 ? 'E' : diff > 0 ? '+' + diff : String(diff);
+            var diffClass = diff < 0 ? 'under' : diff > 0 ? 'over' : 'even';
+            var dateStr = r.completed_at ? new Date(r.completed_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+            var div = document.createElement('div');
+            div.className = 'round-item';
+            div.innerHTML =
+                '<div class="round-left">' +
+                  '<div class="round-course">' + (r.course_name || 'Unknown Course') + '</div>' +
+                  '<div class="round-meta">' + (r.city||'') + (r.state?', '+r.state:'') + ' · ' + r.holes_count + ' holes · ' + dateStr + '</div>' +
+                '</div>' +
+                '<div class="round-right">' +
+                  '<div class="round-score ' + diffClass + '">' + r.total_score + '</div>' +
+                  '<div class="round-vpar">' + diffStr + ' vs par</div>' +
+                '</div>';
+            (function(rid) {
+                div.addEventListener('click', function() { openRoundDetail(rid); });
+            })(r.id);
+            list.appendChild(div);
+        }
+    }
+
+    async function openRoundDetail(roundId) {
+        var token = getToken();
+        if (!token) return;
+        try {
+            var res = await fetch('/api/rounds/' + roundId, { headers: { Authorization: 'Bearer ' + token } });
+            if (!res.ok) return;
+            var data = await res.json();
+            var round = data.round, holes = data.holes || [];
+            var diff = parseInt(round.total_score) - parseInt(round.total_par);
+            var diffStr = diff === 0 ? 'Even par' : diff > 0 ? '+' + diff + ' over par' : diff + ' under par';
+            var dateStr = round.completed_at ? new Date(round.completed_at).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+            document.getElementById('rds-title').textContent = round.course_name || 'Round';
+            document.getElementById('rds-meta').textContent = round.holes_count + ' holes · ' + round.total_score + ' strokes · ' + diffStr + (dateStr ? ' · ' + dateStr : '');
+            var grid = document.getElementById('rds-hole-grid');
+            grid.innerHTML = '';
+            for (var i = 0; i < holes.length; i++) {
+                var h = holes[i];
+                var d = parseInt(h.score) - parseInt(h.par);
+                var cls = '', vpLabel = '';
+                if (parseInt(h.score) === 1)  { cls = 'rh-ace';    vpLabel = 'ACE'; }
+                else if (d <= -2)              { cls = 'rh-eagle';  vpLabel = d; }
+                else if (d === -1)             { cls = 'rh-birdie'; vpLabel = '-1'; }
+                else if (d === 0)              { cls = 'rh-par';    vpLabel = 'E'; }
+                else if (d === 1)              { cls = 'rh-bogey';  vpLabel = '+1'; }
+                else                           { cls = 'rh-double'; vpLabel = '+' + d; }
+                var cell = document.createElement('div');
+                cell.className = 'rds-hole ' + cls;
+                cell.innerHTML = '<div class="rh-num">H' + h.hole_number + '</div><div class="rh-score">' + h.score + '</div><div class="rh-vp">' + vpLabel + '</div>';
+                grid.appendChild(cell);
+            }
+            document.getElementById('round-detail-overlay').classList.add('open');
+        } catch(e) {}
+    }
+
+    document.getElementById('round-detail-overlay').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('open');
+    });
+
+    // ── DISTANCE STATS ────────────────────────────────────────────
+    function fmtDist(m) {
+        if (!m || m === 0) return '—';
+        if (m < 1000) return Math.round(m) + 'm';
+        return (m / 1000).toFixed(2) + 'km';
+    }
+
+    async function loadDistanceStats() {
+        var token = getToken();
+        if (!token) return;
+        try {
+            var res = await fetch('/api/players/distance-stats', { headers: authHeaders() });
+            if (!res.ok) return;
+            renderDistanceStats(await res.json());
+        } catch(e) {}
+    }
+
+    function renderDistanceStats(d) {
+        var section = document.getElementById('distance-section');
+        var totalDistM = d.total_distance_m || 0;
+        var gpsRounds = d.gps_rounds || 0;
+        var achievements = d.achievements || [];
+        var earnedCount = achievements.filter(function(a) { return a.earned; }).length;
+        if (totalDistM === 0 && gpsRounds === 0 && earnedCount === 0) return;
+
+        document.getElementById('dst-total').textContent = fmtDist(totalDistM);
+        document.getElementById('dst-gps-rounds').textContent = gpsRounds;
+        document.getElementById('dist-ach-count').textContent = earnedCount + ' / ' + achievements.length;
+
+        var list = document.getElementById('dist-ach-list');
+        list.innerHTML = '';
+        for (var i = 0; i < achievements.length; i++) {
+            var ach = achievements[i];
+            var div = document.createElement('div');
+            div.className = 'dist-ach-item ' + (ach.earned ? 'earned' : 'locked');
+            var dateStr = ach.earned_at ? new Date(ach.earned_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+            div.innerHTML =
+                '<div class="dist-ach-item-icon">' + ach.icon + '</div>' +
+                '<div class="dist-ach-item-body">' +
+                    '<div class="dist-ach-item-name">' + (ach.earned ? '✅ ' : '🔒 ') + ach.name + '</div>' +
+                    '<div class="dist-ach-item-desc">' + ach.description + '</div>' +
+                    (ach.earned
+                        ? '<div class="dist-ach-item-reward">Earned ' + dateStr + ' · +' + ach.xp_reward + ' XP · +' + ach.gold_reward + ' Gold</div>'
+                        : '<div class="dist-ach-item-reward">+' + ach.xp_reward + ' XP · +' + ach.gold_reward + ' Gold on unlock</div>') +
+                '</div>' +
+                '<div class="dist-ach-badge ' + (ach.earned ? 'earned' : 'locked') + '">' + (ach.earned ? 'EARNED' : 'LOCKED') + '</div>';
+            list.appendChild(div);
+        }
+        section.style.display = 'block';
+    }
+
+    // ── VAULT BOOSTS WIDGET ───────────────────────────────────────
+    async function loadVaultWidget() {
+        var token = getToken();
+        if (!token) return;
+        try {
+            var res = await fetch('/api/vault/active-boosts', { headers: authHeaders() });
+            if (!res.ok) return;
+            var data = await res.json();
+            var row = document.getElementById('boost-row');
+            if (data.active_boosts && data.active_boosts.length) {
+                row.innerHTML = '';
+                for (var i = 0; i < data.active_boosts.length; i++) {
+                    var b = data.active_boosts[i];
+                    var remaining = Math.ceil((new Date(b.expires_at) - Date.now()) / 60000);
+                    if (remaining <= 0) continue;
+                    var chip = document.createElement('a');
+                    chip.href = '/vault';
+                    chip.className = 'boost-chip';
+                    chip.textContent = b.icon + ' ' + b.effect_value + '% — ' + remaining + 'm';
+                    row.appendChild(chip);
+                }
+                if (row.children.length) row.style.display = 'flex';
+            }
+        } catch(e) {}
+    }
+
+    // ── LOAD PROFILE ──────────────────────────────────────────────
+    // Helper: fetch with explicit timeout (avoids indefinite hanging in webview)
+    
+    async function loadProfile() {
+        var token = getToken(), legacyUuid = localStorage.getItem('dggo_player_uuid');
+        if (!token && !legacyUuid) {
+            document.getElementById('no-profile').style.display = 'block'; return;
+        }
+
+        try {
+            var res = await fetch('/api/players/me', { headers: authHeaders() });
+            if (!res.ok) {
+                ['dggo_token','dggo_player_name','dggo_player_id'].forEach(function(k) { localStorage.removeItem(k); });
+                document.getElementById('no-profile').style.display = 'block'; return;
+            }
+            var data = await res.json();
+
+            var badgeCategories = null;
+            try {
+                var br = await fetch('/api/players/badges', { headers: authHeaders() });
+                if (br.ok) badgeCategories = (await br.json()).categories;
+            } catch(e) { /* non-fatal — profile renders without badges */ }
+
+            renderProfile(data, badgeCategories);
+        } catch(e) {
+            console.error('loadProfile error:', e.message || e.name || String(e));
+            document.getElementById('no-profile').style.display = 'block';
+        }
+    }
+
+    function renderProfile(data, badgeCategories) {
+        var level = data.level || 1;
+        var levelTitle = data.level_title || 'Rookie';
+        var levelTitleIcon = data.level_title_icon || '🥏';
+        var lp = data.level_progress || getLevelProgress(data.xp || 0);
+
+        document.getElementById('player-name').textContent = data.display_name;
+        document.getElementById('player-username').textContent = data.username ? '@' + data.username : '';
+        if (data.profile_photo_url) {
+            document.getElementById('avatar-display').innerHTML = '<img src="' + data.profile_photo_url + '" alt="">';
+        } else {
+            var init = data.display_name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+            document.getElementById('avatar-initials').textContent = init || '?';
+        }
+        document.getElementById('level-num').textContent = level;
+        document.getElementById('level-title-icon').textContent = levelTitleIcon;
+        document.getElementById('level-title-text').textContent = levelTitle;
+
+        var sr = document.getElementById('streak-row');
+        sr.innerHTML = '';
+        if (data.login_streak > 0) {
+            sr.innerHTML += '<span class="streak-chip' + (data.login_streak >= 7 ? ' hot' : '') + '">🔥 ' + data.login_streak + '-day streak</span>';
+        }
+        if (data.best_streak > 0 && data.best_streak > data.login_streak) {
+            sr.innerHTML += '<span class="streak-chip">Best: ' + data.best_streak + 'd</span>';
+        }
+        if (data.battle_wins > 0 || data.battle_losses > 0) {
+            var wl = (data.battle_wins||0) + 'W–' + (data.battle_losses||0) + 'L';
+            sr.innerHTML += '<span class="streak-chip"><a href="/battles" style="color:inherit;text-decoration:none">⚔️ ' + wl + (data.win_streak > 1 ? ' 🔥'+data.win_streak : '') + '</a></span>';
+        }
+
+        document.getElementById('xp-value').textContent = (data.xp||0).toLocaleString() + ' XP';
+        document.getElementById('xp-next').textContent = (lp.needed - lp.progress).toLocaleString() + ' XP to Level ' + (level + 1) + ' · ' + levelTitle;
+        setTimeout(function() { document.getElementById('xp-bar').style.width = lp.percent + '%'; }, 120);
+
+        var goldEl = document.getElementById('gold-balance');
+        if (goldEl) goldEl.textContent = (data.gold || 0).toLocaleString() + ' Gold';
+
+        var stats = data.stats || {};
+        document.getElementById('stat-checkins').textContent = stats.total_checkins || 0;
+        document.getElementById('stat-courses').textContent = stats.unique_courses || 0;
+        document.getElementById('stat-rounds').textContent = stats.total_rounds || 0;
+        document.getElementById('stat-battles').textContent = data.battle_wins || 0;
+        document.getElementById('stat-streak').textContent = data.login_streak || 0;
+        document.getElementById('stat-badges').textContent = (data.badges || []).length;
+
+        if (badgeCategories) renderBadges(badgeCategories);
+        renderChallenges(data.active_challenges || []);
+        renderCheckins(data.recent_checkins || []);
+
+        if (data.login_xp) {
+            var lxp = data.login_xp;
+            showToast(
+                '<div style="margin-bottom:0.3rem;">🔥 ' + lxp.streak + '-day Streak!</div>' +
+                '<div class="toast-xp">+' + lxp.amount + ' XP</div>',
+                5000
+            );
+        }
+
+        document.getElementById('profile-content').style.display = 'block';
+        var sw = document.getElementById('signout-wrap');
+        if (sw) sw.style.display = 'block';
+
+        // loadRecentRounds, loadDistanceStats, loadVaultWidget removed — they
+        // triggered loading circles that weren't there before May 28 changes.
+    }
+
+    // Level-up from check-in redirect
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('levelup')) {
+            window.history.replaceState({}, '', '/profile');
+            setTimeout(function() {
+                showLevelUp(parseInt(params.get('levelup')), decodeURIComponent(params.get('title') || 'Leveled Up'));
+            }, 800);
+        }
+    })();
+
+    loadProfile();
+
+    // Polsia Analytics
+    (function() {
+        var slug = 'disc-golf-go';
+        var vid = localStorage.getItem('polsia_vid');
+        if (!vid) {
+            vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+            localStorage.setItem('polsia_vid', vid);
+        }
+        new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+    })();
+    </script>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+  var currentNotifId = null;
+  function dismiss() {
+    document.getElementById('notifPopup').style.display='none';
+    document.getElementById('notifPopupOverlay').style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+  document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+  document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+  fetch('/api/notifications/active', { headers: headers })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.notification) return;
+        currentNotifId = d.notification.id;
+        document.getElementById('notifPopupTitle').textContent = d.notification.title;
+        document.getElementById('notifPopupMsg').textContent = d.notification.message;
+        document.getElementById('notifPopup').style.display = 'block';
+        document.getElementById('notifPopupOverlay').style.display = 'flex';
+      })
+      .catch(function(){});
+})();
+</script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                        method: 'POST',
+                        headers: { Authorization: 'Bearer ' + token }
+                    }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

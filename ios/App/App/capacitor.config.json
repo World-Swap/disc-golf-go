@@ -1,0 +1,42 @@
+{
+	"appId": "the.discgolfgo.app",
+	"appName": "Disc Golf Go",
+	"webDir": "public",
+	"server": {
+		"url": "https://discgolfgo.app",
+		"cleartext": false,
+		"allowNavigation": [
+			"discgolfgo.app",
+			"*.discgolfgo.app"
+		]
+	},
+	"android": {
+		"backgroundColor": "#0d2b33",
+		"allowMixedContent": false,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": false
+	},
+	"ios": {
+		"backgroundColor": "#0d2b33",
+		"contentInset": "always",
+		"scrollEnabled": true,
+		"preferredContentMode": "mobile"
+	},
+	"plugins": {
+		"Geolocation": {},
+		"SplashScreen": {
+			"launchShowDuration": 2500,
+			"launchFadeOutDuration": 300,
+			"launchAutoHide": true,
+			"backgroundColor": "#0d2b33",
+			"showSpinner": false,
+			"androidScaleType": "CENTER_CROP",
+			"splashFullScreen": true,
+			"splashImmersive": true
+		}
+	},
+	"packageClassList": [
+		"GeolocationPlugin",
+		"SplashScreenPlugin"
+	]
+}

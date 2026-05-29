@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Disc Golf Go — Investor Overview</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <meta name="description" content="Disc Golf Go — Pre-seed investment overview. Pokémon Go meets disc golf. 4.6M players, zero gamification in the market, MVP live.">
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>body { display: flex; flex-direction: column; }
+
+/* Page-specific: Investor deck */
+.page-wrap { max-width: 800px; margin: 0 auto; padding: 1.5rem 1.25rem 2rem; flex: 1; }
+.deck-header { text-align: center; margin-bottom: 2.5rem; padding-top: 1rem; }
+.deck-header h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+.deck-header .tagline { font-size: 1.05rem; color: var(--text3); margin-bottom: 1rem; }
+.deck-header .round-info { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--green-glow); border: 1px solid rgba(60,168,60,0.2); border-radius: var(--radius-pill); padding: 0.35rem 1rem; font-size: 0.85rem; font-weight: 600; color: var(--green); }
+.deck-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-card); box-shadow: var(--shadow-card);
+    padding: 1.75rem; margin-bottom: 1rem;
+    transition: all var(--transition);
+}
+.deck-section h2 {
+    font-size: 1.1rem; font-weight: 700; color: var(--green);
+    margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.deck-section h2 .icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--green-glow); border: 1px solid rgba(60,168,60,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+}
+.deck-section p { font-size: 0.9rem; color: var(--text2); line-height: 1.7; margin-bottom: 0.6rem; }
+.deck-section ul { list-style: none; padding: 0; }
+.deck-section ul li { font-size: 0.88rem; color: var(--text2); line-height: 1.6; padding: 0.25rem 0 0.25rem 1.25rem; position: relative; }
+.deck-section ul li::before { content: '\203A'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+.stat-highlight {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-family: 'Space Mono', monospace; font-weight: 700; color: var(--green);
+}
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; margin: 0.75rem 0; }
+.metric-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 0.75rem; text-align: center;
+}
+.metric-card .num { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--green); }
+.metric-card .lbl { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
+table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.82rem; }
+th { text-align: left; padding: 0.6rem 0.75rem; background: var(--surface2); color: var(--text3); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text2); }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+.team-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
+.team-card .name { font-weight: 700; color: var(--text); }
+.team-card .role { font-size: 0.82rem; color: var(--green); font-weight: 600; }
+.team-card .bio { font-size: 0.8rem; color: var(--text3); margin-top: 0.3rem; line-height: 1.5; }
+.cta-section { text-align: center; padding: 1.5rem; }
+.btn-primary {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    padding: 0.85rem 2rem; background: var(--green); color: #fff;
+    border: none; border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem; font-weight: 700;
+    text-decoration: none; cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 16px rgba(60,168,60,0.25);
+}
+.btn-primary:hover { background: var(--green-bright); }
+.btn-secondary {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.7rem 1.5rem; background: transparent;
+    border: 1px solid var(--border2); color: var(--text2);
+    border-radius: 12px; font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-secondary:hover { border-color: var(--green); color: var(--green); }
+
+/* Section labels */
+.section-label {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 0.75rem;
+}
+
+/* Problem stats */
+.problem-stat {
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+}
+.problem-stat:last-child { border-bottom: none; padding-bottom: 0; }
+.problem-stat:first-child { padding-top: 0; }
+.stat-num {
+    font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700;
+    color: var(--green); line-height: 1; min-width: 80px; flex-shrink: 0;
+}
+.stat-desc { font-size: 0.9rem; color: var(--text2); padding-top: 0.1rem; line-height: 1.5; }
+.stat-desc strong { color: var(--text); }
+
+/* Solution */
+.solution-hook {
+    font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.2; margin-bottom: 1rem; color: var(--text);
+}
+.solution-hook .highlight { color: var(--green); }
+.feature-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.pill {
+    font-size: 0.8rem; font-weight: 600; padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-pill); background: var(--surface2);
+    border: 1px solid var(--border2); color: var(--text);
+}
+.pill.green-pill {
+    background: var(--green-glow); border-color: rgba(60,168,60,0.25); color: var(--green);
+}
+.solution-model {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.85rem 1rem; background: var(--surface2);
+    border-radius: 10px; border: 1px solid var(--border); margin-top: 0.5rem;
+}
+.model-icon { font-size: 1.3rem; flex-shrink: 0; }
+.model-text { font-size: 0.9rem; color: var(--text2); line-height: 1.4; }
+.model-text strong { color: var(--text); }
+
+/* Traction / What's Live */
+.traction-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.75rem; margin-bottom: 0.75rem;
+}
+.traction-item {
+    padding: 1rem; background: var(--surface2);
+    border-radius: 10px; border: 1px solid var(--border);
+}
+.traction-item.full-width { grid-column: 1 / -1; }
+.traction-val {
+    font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700;
+    color: var(--green); line-height: 1; margin-bottom: 0.25rem;
+}
+.traction-val.amber { color: var(--gold); }
+.traction-label { font-size: 0.8rem; color: var(--text2); line-height: 1.4; }
+.traction-status {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.7rem 0.9rem; background: var(--green-glow);
+    border-radius: 8px; border: 1px solid rgba(60,168,60,0.2);
+    font-size: 0.85rem; color: var(--green);
+}
+.status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); flex-shrink: 0; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* Feature checklist */
+.feature-list {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.5rem; margin: 0.75rem 0;
+}
+.feature-item {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    font-size: 0.85rem; color: var(--text2); line-height: 1.4;
+    padding: 0.6rem 0.75rem; background: var(--surface2);
+    border-radius: 8px; border: 1px solid var(--border);
+}
+.feature-item .fi-check { color: var(--green); font-size: 0.9rem; flex-shrink: 0; margin-top: 0.1rem; }
+.feature-item .fi-soon { color: var(--gold); font-size: 0.9rem; flex-shrink: 0; margin-top: 0.1rem; }
+.feature-item .fi-text strong { color: var(--text); display: block; font-size: 0.82rem; font-weight: 600; }
+.feature-item .fi-text span { font-size: 0.78rem; color: var(--text3); }
+
+/* Market */
+.market-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem; margin-bottom: 0.75rem;
+}
+.market-item {
+    text-align: center; padding: 1.1rem 0.75rem;
+    background: var(--surface2); border-radius: 10px; border: 1px solid var(--border);
+}
+.market-num {
+    font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700;
+    color: var(--green); line-height: 1; margin-bottom: 0.25rem;
+}
+.market-label { font-size: 0.75rem; color: var(--text2); line-height: 1.3; }
+.market-callout {
+    padding: 0.85rem 1rem; background: var(--surface2);
+    border-radius: 10px; border: 1px solid var(--border);
+    font-size: 0.9rem; color: var(--text2); text-align: center;
+}
+.market-callout strong { color: var(--text); }
+
+/* Business model */
+.biz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.biz-item {
+    padding: 1rem; background: var(--surface2);
+    border-radius: 10px; border: 1px solid var(--border);
+}
+.biz-item-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem; color: var(--text); }
+.biz-item-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.4; }
+
+/* Team */
+.founder-row { display: flex; align-items: flex-start; gap: 1rem; }
+.founder-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--green-glow); border: 2px solid rgba(60,168,60,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; flex-shrink: 0;
+}
+.founder-info { flex: 1; }
+.founder-name { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem; }
+.founder-role { font-size: 0.8rem; color: var(--green); font-weight: 600; margin-bottom: 0.5rem; }
+.founder-bio { font-size: 0.9rem; color: var(--text2); line-height: 1.5; }
+
+/* Competitor table */
+.comp-table { width: 100%; border-collapse: collapse; }
+.comp-table th {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text3);
+    padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border);
+}
+.comp-table th:not(:first-child) { text-align: center; }
+.comp-table td {
+    padding: 0.75rem; font-size: 0.88rem;
+    border-bottom: 1px solid var(--border); color: var(--text2);
+}
+.comp-table td:not(:first-child) { text-align: center; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table .dgg-row td { color: var(--text); background: var(--green-glow); }
+.comp-table .dgg-row td:first-child { color: var(--green); font-weight: 700; }
+.check { color: var(--green); font-size: 1rem; }
+.cross { color: var(--text3); font-size: 1rem; }
+.amber-check { color: var(--gold); font-size: 1rem; }
+
+/* Roadmap */
+.roadmap-col { display: flex; flex-direction: column; gap: 0.5rem; }
+.roadmap-item {
+    display: flex; align-items: flex-start; gap: 0.65rem;
+    padding: 0.75rem; background: var(--surface2);
+    border-radius: 8px; border: 1px solid var(--border);
+}
+.roadmap-badge {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 0.2rem 0.5rem;
+    border-radius: 4px; flex-shrink: 0; margin-top: 0.1rem;
+    white-space: nowrap;
+}
+.badge-live { background: var(--green-glow); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+.badge-soon { background: rgba(224,165,0,0.12); color: var(--gold); border: 1px solid rgba(224,165,0,0.25); }
+.badge-next { background: rgba(232,96,32,0.1); color: var(--orange); border: 1px solid rgba(232,96,32,0.2); }
+.roadmap-text { font-size: 0.85rem; color: var(--text2); line-height: 1.4; }
+.roadmap-text strong { color: var(--text); display: block; font-size: 0.83rem; font-weight: 600; margin-bottom: 0.1rem; }
+
+/* Ask section */
+.ask-amount {
+    font-family: 'Space Mono', monospace; font-size: 3rem; font-weight: 700;
+    color: var(--green); letter-spacing: -0.01em; line-height: 1; margin-bottom: 0.25rem;
+}
+.ask-subtitle { font-size: 0.9rem; color: var(--text2); margin-bottom: 1.25rem; }
+.ask-uses { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.65rem; }
+.ask-use {
+    padding: 0.85rem 0.75rem; background: var(--surface2);
+    border-radius: 10px; border: 1px solid var(--border); text-align: center;
+}
+.ask-use-icon { font-size: 1.4rem; margin-bottom: 0.35rem; }
+.ask-use-label { font-size: 0.78rem; color: var(--text2); font-weight: 600; line-height: 1.3; }
+
+/* CTA */
+.cta-text { font-size: 0.9rem; color: var(--text2); margin-bottom: 1rem; }
+.cta-text a { color: var(--green); text-decoration: none; font-weight: 600; }
+.cta-text a:hover { text-decoration: underline; }
+.cta-socials {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--text3);
+}
+
+.print-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 1.2rem; background: var(--surface);
+    border: 1px solid var(--border2); border-radius: 8px;
+    color: var(--text2); font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: border-color var(--transition), color var(--transition);
+    margin-bottom: 1.5rem;
+}
+.print-btn:hover { border-color: var(--green); color: var(--green); }
+
+/* Print styles */
+@media print {
+    .top-header, .page-footer, .theme-btn, .no-print, .print-btn { display: none !important; }
+    
+    .deck-section { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+    .page-wrap { max-width: 100%; padding: 1rem; }
+    .metric-card, .traction-item, .market-item, .biz-item, .ask-use, .solution-model,
+    .feature-item, .roadmap-item { background: #f5f5f5; border-color: #ddd; }
+    .stat-num, .traction-val, .market-num, .ask-amount, .metric-card .num,
+    .check, .comp-table .dgg-row td:first-child, .founder-role,
+    .deck-section h2, .solution-hook .highlight, .pill.green-pill,
+    .traction-status, .status-dot, .badge-live { color: #3a8a1a !important; }
+    .comp-table .dgg-row td { background: rgba(58,138,26,0.06); }
+    .cross { color: #999 !important; }
+    .amber-check, .traction-val.amber, .badge-soon, .fi-soon { color: #b07d00 !important; }
+    .badge-next { color: #b84700 !important; }
+}
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+    .traction-grid { grid-template-columns: 1fr 1fr; }
+    .market-row { grid-template-columns: 1fr 1fr; }
+    .market-row .market-item:last-child { grid-column: 1 / -1; }
+    .biz-grid { grid-template-columns: 1fr; }
+    .ask-uses { grid-template-columns: 1fr; }
+    .ask-amount { font-size: 2.4rem; }
+    .comp-table { font-size: 0.8rem; }
+    .comp-table th, .comp-table td { padding: 0.55rem 0.5rem; }
+    .feature-list { grid-template-columns: 1fr; }
+}
+
+/* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.22s;
+}
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.contact-footer .cf-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.contact-footer .cf-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    transition: all 0.22s;
+}
+.contact-footer .cf-socials a:hover {
+    border-color: var(--green);
+    background: var(--surface);
+    color: var(--green);
+}
+.contact-footer .cf-socials svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.contact-footer .cf-site {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+<header class="top-header">
+    <a href="/" class="header-logo">
+        <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+        Disc Golf <span class="go">Go</span>
+    </a>
+    <div class="header-actions">
+        <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+    </div>
+</header>
+
+<div class="page-wrap">
+
+    <!-- HEADER -->
+    <div class="deck-header">
+        <div class="round-info">Pre-Seed &nbsp;·&nbsp; Investor Overview &nbsp;·&nbsp; Confidential</div>
+        <h1>Disc Golf Go</h1>
+        <div class="tagline">Pokémon Go meets disc golf. GPS-gated. Fully shipped.</div>
+        <a href="https://discgolfgo.com" target="_blank" rel="noopener" style="color:var(--green);text-decoration:none;font-size:0.9rem;letter-spacing:0.02em;">discgolfgo.com</a>
+    </div>
+
+    <!-- PROBLEM -->
+    <div class="section-label">The Problem</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="problem-stat">
+            <div class="stat-num">4.6M</div>
+            <div class="stat-desc"><strong>US disc golfers</strong> — fastest-growing outdoor sport in America, up 20%+ YoY since 2020. 44+ states with active courses.</div>
+        </div>
+        <div class="problem-stat">
+            <div class="stat-num">$90/yr</div>
+            <div class="stat-desc"><strong>UDisc dominates scorekeeping</strong> — it's a spreadsheet with a paywall. No gamification, no engagement loops, built exclusively for serious players.</div>
+        </div>
+        <div class="problem-stat">
+            <div class="stat-num">70%</div>
+            <div class="stat-desc"><strong>Casual players are completely ignored</strong> — they are the growth market. No app has been built for them. That gap is wide open.</div>
+        </div>
+    </div>
+
+    <!-- SOLUTION -->
+    <div class="section-label">The Solution</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="solution-hook">Turn every course into a <span class="highlight">quest.</span> Make every round feel like progress.</div>
+        <div class="feature-pills">
+            <span class="pill">📍 GPS Check-Ins</span>
+            <span class="pill">⚡ XP &amp; Levels</span>
+            <span class="pill">🏆 Achievements</span>
+            <span class="pill">⚔️ Async PvP Battles</span>
+            <span class="pill">🎯 16 Quest Types</span>
+            <span class="pill green-pill">🎒 Vault Economy</span>
+            <span class="pill green-pill">🆓 Free to Play</span>
+            <span class="pill">👥 Crews (Soon)</span>
+        </div>
+        <div class="solution-model">
+            <div class="model-icon">🎮</div>
+            <div class="model-text">Players must <strong>physically be at a course</strong> to start a round — GPS-gated. 2,670+ real courses across 44+ US states and 11 countries. Every course is a location to discover, not just a pin on a map.</div>
+        </div>
+        <div class="solution-model" style="margin-top:0.5rem;">
+            <div class="model-icon">💰</div>
+            <div class="model-text"><strong>Zero barrier entry</strong> (F2P vs UDisc's $90/yr) · In-game gold economy with Vault shop · XP/Gold/Drop-Rate boosts, cosmetics · <strong>$5/mo premium</strong> quest tier</div>
+        </div>
+    </div>
+
+    <!-- WHAT'S LIVE NOW -->
+    <div class="section-label">What's Live Now — Full MVP Shipped</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="traction-status" style="margin-bottom:1rem;">
+            <div class="status-dot"></div>
+            <span>Every feature below is live today at <strong>discgolfgo.com</strong> — not a mockup, not a prototype.</span>
+        </div>
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Full Scorecard System</strong><span>Post-round review: color-coded hole grid, 6-stat summary panel, ace &amp; birdie overlays</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>GPS Walk Path Map</strong><span>Live route trace per hole, color-coded by hole number, birdie/eagle overlays, dark map tiles</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Interactive Course Map</strong><span>2,670+ pins across 11 countries, state filtering, visited/unvisited status</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Course Progress Tracker</strong><span>State completion bars, exploration badges, per-course best scores</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Async PvP Battles</strong><span>Challenge any player, head-to-head hole scoring, battle history</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>16 Quest Types</strong><span>Rotating challenges with slot-based completion, XP rewards, badge unlocks</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>XP + Gold Economy</strong><span>Full progression loop — earn, spend, boost. Vault shop with boosts &amp; cosmetics</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Leaderboards</strong><span>Global rankings by XP, gold, achievements, and course exploration</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Shareable Round Cards</strong><span>1080×1080 summary cards built for Instagram/TikTok sharing — viral loop built in</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Player Profiles &amp; Stats</strong><span>Total distance, aces, birdies, check-ins, courses visited, lifetime stats</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>In-App Notifications</strong><span>Admin-composed alerts delivered to logged-in players across 10 pages, permanent dismiss</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-check">✓</div>
+                <div class="fi-text"><strong>Admin Email Messaging</strong><span>Broadcast or per-user email system with searchable recipient picker and audit log</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-soon">◎</div>
+                <div class="fi-text"><strong>Crews &amp; Crew Wars</strong><span>Create a crew (500 gold), set home course, invite players, compete crew vs crew — in development</span></div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-soon">◎</div>
+                <div class="fi-text"><strong>iOS App</strong><span>Capacitor build ready — submission queued for App Store</span></div>
+            </div>
+        </div>
+        <div class="traction-grid" style="margin-top:0.75rem;">
+            <div class="traction-item">
+                <div class="traction-val">2,670+</div>
+                <div class="traction-label">Verified courses across 44+ US states &amp; 11 countries</div>
+            </div>
+            <div class="traction-item">
+                <div class="traction-val amber">Android</div>
+                <div class="traction-label">Native Android app via Capacitor — full feature parity</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MARKET -->
+    <div class="section-label">Market</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="market-row">
+            <div class="market-item">
+                <div class="market-num">4.6M</div>
+                <div class="market-label">US disc golfers</div>
+            </div>
+            <div class="market-item">
+                <div class="market-num">+20%</div>
+                <div class="market-label">YoY growth since 2020</div>
+            </div>
+            <div class="market-item">
+                <div class="market-num">$250M+</div>
+                <div class="market-label">Equipment market</div>
+            </div>
+        </div>
+        <div class="market-callout">
+            Disc golf is the <strong>fastest-growing outdoor sport in America.</strong> UDisc has ~1M paying subscribers at $90/yr — with zero gamification. The casual majority is entirely underserved. <strong>That's the gap.</strong>
+        </div>
+    </div>
+
+    <!-- COMPETITIVE POSITION -->
+    <div class="section-label">Competitive Position</div>
+    <div class="deck-section" style="margin-bottom:1.75rem; padding: 1.25rem;">
+        <table class="comp-table">
+            <thead>
+                <tr>
+                    <th>App</th>
+                    <th>Free</th>
+                    <th>Gamification</th>
+                    <th>GPS Gating</th>
+                    <th>PvP</th>
+                    <th>Casual-First</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="dgg-row">
+                    <td>Disc Golf Go</td>
+                    <td><span class="check">✓</span></td>
+                    <td><span class="check">✓</span></td>
+                    <td><span class="check">✓</span></td>
+                    <td><span class="check">✓</span></td>
+                    <td><span class="check">✓</span></td>
+                </tr>
+                <tr>
+                    <td>UDisc</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>Upshot</td>
+                    <td><span class="amber-check">~</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>Pokémon GO</td>
+                    <td><span class="check">✓</span></td>
+                    <td><span class="check">✓</span></td>
+                    <td><span class="amber-check">~</span></td>
+                    <td><span class="amber-check">~</span></td>
+                    <td><span class="check">✓</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top:0.75rem;">UDisc owns <em>scorekeeping</em>. Nobody owns <em>gamified exploration</em>. Disc Golf Go is building that category from scratch — with real-world GPS gating that Pokémon GO approximates but disc golf makes mandatory by design.</p>
+    </div>
+
+    <!-- BUSINESS MODEL -->
+    <div class="section-label">Business Model</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="biz-grid">
+            <div class="biz-item">
+                <div class="biz-item-title">🎒 Vault Shop</div>
+                <div class="biz-item-desc">XP boosts, Gold multipliers, Drop-Rate upgrades, cosmetic items. High-margin digital goods. No logistics, no inventory.</div>
+            </div>
+            <div class="biz-item">
+                <div class="biz-item-title">⚡ Premium Tier · $5/mo</div>
+                <div class="biz-item-desc">Exclusive rotating quest tiers, premium battle modes, early access to seasonal content. Low price, high retention.</div>
+            </div>
+            <div class="biz-item">
+                <div class="biz-item-title">🆓 Zero Barrier Entry</div>
+                <div class="biz-item-desc">F2P core game removes every acquisition friction. No $90/yr wall. Players download, check in, and convert at their own pace.</div>
+            </div>
+            <div class="biz-item">
+                <div class="biz-item-title">📈 Network Effects</div>
+                <div class="biz-item-desc">Battles, crew wars, leaderboards, and shareable round cards create compounding social loops. More players → more competition → more spend.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div class="section-label">What's Next</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="roadmap-col">
+            <div class="roadmap-item">
+                <span class="roadmap-badge badge-live">Live</span>
+                <div class="roadmap-text"><strong>Full MVP</strong>Scorecard, GPS maps, battles, quests, vault, leaderboards, share cards, notifications, admin tools — all running in production.</div>
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-badge badge-soon">In Progress</span>
+                <div class="roadmap-text"><strong>Android App</strong>Capacitor-based native build shipping to Google Play. Full feature parity with web app.</div>
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-badge badge-soon">In Progress</span>
+                <div class="roadmap-text"><strong>Crews &amp; Crew Wars</strong>Create a crew for 500 gold, set a home course, roster your players, compete crew vs crew. Social retention multiplier.</div>
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-badge badge-next">Queued</span>
+                <div class="roadmap-text"><strong>iOS App Store Release</strong>Capacitor iOS build ready. App Store submission queued pending final review assets.</div>
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-badge badge-next">Queued</span>
+                <div class="roadmap-text"><strong>Seasonal Events &amp; Premium Tiers</strong>Time-limited quests, holiday challenges, exclusive drops. Recurring revenue through seasonal content packs.</div>
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-badge badge-next">Queued</span>
+                <div class="roadmap-text"><strong>Expanded Course Database &amp; Global Growth</strong>Currently 2,670+ courses. Target: full PDGA registry coverage, community submissions, international expansion.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="section-label">Team</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="founder-row">
+            <div class="founder-avatar">👤</div>
+            <div class="founder-info">
+                <div class="founder-name">Ian — Founder &amp; CEO</div>
+                <div class="founder-role">Solo Technical Founder</div>
+                <div class="founder-bio">Designed, built, and shipped the entire product solo — full-stack web app, GPS walk-path tracking, game mechanics, async PvP system, Android native via Capacitor, 2,670+ course database, admin tooling, in-app notifications, email broadcasting, payment integration, and a viral share-card generator. Everything in this deck is live and working. Not a prototype — a product.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASK -->
+    <div class="section-label">The Ask</div>
+    <div class="deck-section" style="margin-bottom:1.75rem;">
+        <div class="ask-amount">[AMOUNT]</div>
+        <div class="ask-subtitle">Pre-seed &nbsp;·&nbsp; Use of proceeds</div>
+        <div class="ask-uses">
+            <div class="ask-use">
+                <div class="ask-use-icon">📣</div>
+                <div class="ask-use-label">Launch Marketing &amp; User Acquisition</div>
+            </div>
+            <div class="ask-use">
+                <div class="ask-use-icon">🍎</div>
+                <div class="ask-use-label">iOS App Store Release</div>
+            </div>
+            <div class="ask-use">
+                <div class="ask-use-icon">👥</div>
+                <div class="ask-use-label">First 10K Active Players</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+        <button class="print-btn no-print" onclick="window.print()">
+            ⬇ Save as PDF
+        </button>
+        <div class="cta-text">
+            Questions? Reach us at <a href="mailto:contact@discgolfgo.com">contact@discgolfgo.com</a>
+            &nbsp;&middot;&nbsp; Try the app at <a href="https://discgolfgo.com" target="_blank" rel="noopener">discgolfgo.com</a>
+        </div>
+        <div class="cta-socials">
+            <span>@discgolfgo</span>
+            <span>&middot;</span>
+            <span>Twitter / X</span>
+            <span>&middot;</span>
+            <span>Instagram</span>
+            <span>&middot;</span>
+            <span>TikTok</span>
+        </div>
+    </div>
+
+</div>
+
+
+        <!-- Contact mini-footer -->
+        <div class="contact-footer">
+            <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+            <div class="cf-socials">
+                <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                </a>
+                <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                </a>
+
+                <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+            </div>
+            <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+        </div>
+        <footer class="page-footer">
+    <p>Disc Golf Go &nbsp;&middot;&nbsp; <a href="/privacy">Privacy</a> &nbsp;&middot;&nbsp; <a href="/delete-account">Delete Account</a></p>
+</footer>
+
+<script>
+(function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+})();
+document.getElementById('themeToggle').addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('dggo_theme', next);
+    this.textContent = next === 'dark' ? '☀️' : '🌙';
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    if (!localStorage.getItem('dggo_theme')) {
+        var next = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+});
+</script>
+<script>
+(function() {
+    var slug = 'disc-golf-go';
+    var vid = localStorage.getItem('polsia_vid');
+    if (!vid) {
+        vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        localStorage.setItem('polsia_vid', vid);
+    }
+    new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+})();
+</script>
+</body>
+</html>

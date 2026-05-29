@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Disc Golf Go — Hit The Course</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0a0f0a">
+    <meta name="description" content="Disc Golf Go — GPS check-in, course battles, XP, leaderboards. The competitive disc golf app. Available now on the App Store.">
+    <meta property="og:title" content="Disc Golf Go — Hit The Course">
+    <meta property="og:description" content="GPS check-in. Course battles. XP. Leaderboards. The competitive disc golf app.">
+    <meta property="og:image" content="/logo-original-1080.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+/* ── Design tokens ── */
+:root {
+    --bg-deep: #050a05;
+    --bg: #0a0f0a;
+    --surface: #111811;
+    --surface2: #182018;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f4f0;
+    --text2: #b8c8b8;
+    --text3: #6a7a6a;
+    --green: #4cdf3c;
+    --green-bright: #7ed957;
+    --green-dim: #2a7a20;
+    --green-glow: rgba(76,223,60,0.15);
+    --green-glow2: rgba(76,223,60,0.08);
+    --gold: #ffd050;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+    --font-mono: 'Space Mono', monospace;
+}
+
+body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+}
+
+/* ── Scanline texture overlay ── */
+body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+}
+
+/* ── HERO ── */
+.launcher-hero {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--safe-t) + 2rem) 1.5rem calc(var(--safe-b) + 2rem);
+    text-align: center;
+    overflow: hidden;
+}
+
+/* Radial green glow behind hero */
+.launcher-hero::before {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw;
+    height: 80vw;
+    max-width: 600px;
+    max-height: 600px;
+    background: radial-gradient(ellipse at center, rgba(76,223,60,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── Grid lines (game UI aesthetic) ── */
+.hero-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+        linear-gradient(rgba(76,223,60,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(76,223,60,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+}
+
+/* Fade grid at edges */
+.hero-grid::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, var(--bg-deep) 80%);
+}
+
+.hero-inner {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
+    max-width: 520px;
+}
+
+/* ── Logo mark ── */
+.hero-logo-wrap {
+    position: relative;
+    margin-bottom: 2rem;
+}
+.hero-logo {
+    width: 120px; height: 120px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 32px rgba(76,223,60,0.5)) drop-shadow(0 0 8px rgba(76,223,60,0.8));
+    animation: logo-pulse 3s ease-in-out infinite;
+}
+@keyframes logo-pulse {
+    0%, 100% { filter: drop-shadow(0 0 28px rgba(76,223,60,0.5)) drop-shadow(0 0 8px rgba(76,223,60,0.8)); }
+    50%       { filter: drop-shadow(0 0 48px rgba(76,223,60,0.75)) drop-shadow(0 0 12px rgba(76,223,60,1)); }
+}
+
+/* Small "DISC GOLF" badge above */
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(76,223,60,0.1);
+    border: 1px solid rgba(76,223,60,0.3);
+    border-radius: 100px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--green);
+    margin-bottom: 1.25rem;
+}
+.hero-badge::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── Main headline ── */
+.hero-title {
+    font-size: clamp(2.8rem, 10vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    margin-bottom: 1.25rem;
+    color: var(--text);
+}
+.hero-title .green {
+    color: var(--green);
+    text-shadow: 0 0 40px rgba(76,223,60,0.4);
+}
+.hero-title .dim { color: var(--text2); }
+
+/* ── Sub copy ── */
+.hero-sub {
+    font-size: 1.05rem;
+    color: var(--text2);
+    line-height: 1.55;
+    max-width: 380px;
+    margin: 0 auto 2.5rem;
+    font-weight: 400;
+}
+
+/* ── App Store CTA ── */
+.cta-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 2.5rem;
+}
+
+.btn-appstore {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem 1.75rem;
+    background: var(--text);
+    color: var(--bg-deep);
+    border: none;
+    border-radius: 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 32px rgba(240,244,240,0.15);
+    letter-spacing: -0.01em;
+}
+.btn-appstore:hover, .btn-appstore:active {
+    background: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 40px rgba(240,244,240,0.25);
+}
+.btn-appstore:active { transform: scale(0.98); }
+.appstore-icon {
+    width: 24px; height: 24px; flex-shrink: 0;
+}
+
+/* Play Now — primary CTA for existing users */
+.btn-playnow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1.1rem 1.75rem;
+    background: var(--green);
+    color: #050a05;
+    border: none;
+    border-radius: 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 0 32px rgba(76,223,60,0.35), 0 4px 24px rgba(76,223,60,0.2);
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-playnow:hover, .btn-playnow:active {
+    background: #7ed957;
+    transform: translateY(-2px);
+    box-shadow: 0 0 48px rgba(76,223,60,0.5), 0 8px 32px rgba(76,223,60,0.3);
+}
+.btn-playnow:active { transform: scale(0.98); }
+
+/* Two-up download row */
+.download-row {
+    display: flex;
+    gap: 0.6rem;
+    width: 100%;
+}
+.btn-appstore--small {
+    flex: 1;
+    padding: 0.7rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-radius: 12px;
+}
+
+.btn-web {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; width: 100%;
+    padding: 0.85rem 1.75rem;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    border-radius: 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-web:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-glow2);
+}
+
+/* ── Stat counters ── */
+.hero-stats {
+    display: flex; gap: 2rem; align-items: center;
+    padding-top: 0.5rem;
+}
+.hero-stat {
+    text-align: center;
+}
+.hero-stat .num {
+    font-family: var(--font-mono);
+    font-size: 1.4rem; font-weight: 700;
+    color: var(--green);
+    display: block;
+    text-shadow: 0 0 16px rgba(76,223,60,0.4);
+}
+.hero-stat .lbl {
+    font-size: 0.65rem; font-weight: 600;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em;
+    display: block; margin-top: 0.15rem;
+}
+.stat-divider {
+    width: 1px; height: 32px; background: var(--border2);
+}
+
+/* ── Scroll indicator ── */
+.scroll-hint {
+    position: absolute; bottom: calc(var(--safe-b) + 1.5rem); left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+    color: var(--text3); font-size: 0.65rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em; z-index: 1;
+    animation: scroll-bob 2s ease-in-out infinite;
+}
+@keyframes scroll-bob { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(4px)} }
+.scroll-hint svg { width: 16px; height: 16px; opacity: 0.5; }
+
+/* ── FEATURES SECTION ── */
+.features-section {
+    position: relative; z-index: 1;
+    padding: 5rem 1.5rem 3rem;
+    max-width: 700px; margin: 0 auto;
+}
+
+.section-eyebrow {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--green);
+    margin-bottom: 0.75rem;
+}
+
+.section-title {
+    font-size: clamp(1.75rem, 6vw, 2.5rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    line-height: 1.1; color: var(--text);
+    margin-bottom: 3rem;
+}
+.section-title .dim { color: var(--text3); }
+
+.features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.feat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem 1.25rem;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+.feat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(76,223,60,0.3), transparent);
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+.feat-card:hover::before { opacity: 1; }
+.feat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+
+.feat-card--wide { grid-column: 1 / -1; }
+
+.feat-icon {
+    font-size: 1.75rem; margin-bottom: 0.75rem; display: block;
+}
+.feat-card h3 {
+    font-size: 0.95rem; font-weight: 700; color: var(--text);
+    margin-bottom: 0.4rem; letter-spacing: -0.01em;
+}
+.feat-card p {
+    font-size: 0.8rem; color: var(--text3); line-height: 1.5;
+}
+
+/* ── HOW IT WORKS ── */
+.how-section {
+    position: relative; z-index: 1;
+    padding: 3rem 1.5rem;
+    max-width: 700px; margin: 0 auto;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.step-num-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; border-radius: 8px;
+    background: var(--green-glow);
+    border: 1px solid rgba(76,223,60,0.2);
+    font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
+    color: var(--green);
+    margin-bottom: 0.75rem;
+}
+
+.step-card h4 {
+    font-size: 0.9rem; font-weight: 700; color: var(--text);
+    margin-bottom: 0.35rem;
+}
+.step-card p { font-size: 0.78rem; color: var(--text3); line-height: 1.5; }
+
+/* ── FINAL CTA ── */
+.final-cta {
+    position: relative; z-index: 1;
+    padding: 4rem 1.5rem calc(var(--safe-b) + 4rem);
+    text-align: center;
+    max-width: 500px; margin: 0 auto;
+}
+
+.final-cta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2.5rem 1.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.final-cta-card::before {
+    content: '';
+    position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 200px;
+    background: radial-gradient(ellipse, rgba(76,223,60,0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.final-cta-card h2 {
+    font-size: clamp(1.6rem, 6vw, 2rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    color: var(--text); margin-bottom: 0.75rem;
+}
+
+.final-cta-card p {
+    font-size: 0.9rem; color: var(--text2); line-height: 1.55;
+    margin-bottom: 2rem; max-width: 340px; margin-left: auto; margin-right: auto;
+}
+
+/* ── Footer ── */
+.site-footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 1.5rem calc(var(--safe-b) + 1rem);
+    text-align: center;
+}
+
+.footer-links {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.25rem; flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.footer-links a {
+    font-size: 0.75rem; color: var(--text3); text-decoration: none;
+    transition: color var(--transition);
+}
+.footer-links a:hover { color: var(--green); }
+
+.footer-social {
+    display: flex; align-items: center; justify-content: center; gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+.footer-social a {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px;
+    border: 1px solid var(--border2); border-radius: 8px;
+    background: var(--surface); color: var(--text3);
+    transition: all var(--transition);
+}
+.footer-social a:hover { border-color: var(--green); color: var(--green); background: var(--green-glow2); }
+.footer-social svg { width: 14px; height: 14px; fill: currentColor; }
+
+.footer-copy {
+    font-size: 0.7rem; color: var(--text3);
+}
+
+/* ── Fade in animation ── */
+.reveal {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 480px) {
+    .hero-title { font-size: 2.6rem; }
+    .hero-stats { gap: 1.25rem; }
+    .features-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .hero-logo { width: 96px; height: 96px; }
+}
+
+/* ── FEEDBACK SECTION ── */
+.feedback-section {
+    position: relative; z-index: 1;
+    padding: 3rem 1.5rem 4rem;
+    max-width: 600px; margin: 0 auto;
+}
+
+.feedback-form-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.feedback-form-wrap::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(76,223,60,0.25), transparent);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.85rem;
+}
+
+.form-field label {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--text2); letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    transition: border-color var(--transition);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.form-field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a7a6a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+.form-field select option {
+    background: var(--surface2);
+    color: var(--text);
+}
+
+.form-field textarea {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.5;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.form-field .field-error {
+    font-size: 0.72rem;
+    color: #ff6b6b;
+    display: none;
+    margin-top: 0.15rem;
+}
+
+.form-field.has-error input,
+.form-field.has-error select,
+.form-field.has-error textarea {
+    border-color: #ff6b6b;
+}
+
+.form-field.has-error .field-error { display: block; }
+
+.btn-feedback {
+    width: 100%;
+    padding: 0.9rem 1.75rem;
+    background: var(--green);
+    color: #050a05;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem; font-weight: 800;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 0 24px rgba(76,223,60,0.25);
+    letter-spacing: -0.01em;
+    margin-top: 0.5rem;
+}
+.btn-feedback:hover { background: #7ed957; transform: translateY(-1px); }
+.btn-feedback:active { transform: scale(0.98); }
+.btn-feedback:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.feedback-success {
+    display: none;
+    flex-direction: column; align-items: center;
+    text-align: center; padding: 2rem 1rem;
+    gap: 0.75rem;
+}
+.feedback-success.show { display: flex; }
+.feedback-success .success-icon {
+    font-size: 3rem; line-height: 1;
+}
+.feedback-success h3 {
+    font-size: 1.1rem; font-weight: 700; color: var(--green);
+}
+.feedback-success p { font-size: 0.85rem; color: var(--text2); }
+
+@media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 600px) {
+    .features-grid { grid-template-columns: repeat(3, 1fr); }
+    .steps-grid { grid-template-columns: repeat(4, 1fr); }
+}
+    </style>
+    <!-- Blocking theme init (keep bg dark always on landing) -->
+    <script>(function(){document.documentElement.style.setProperty('background','#050a05');})()</script>
+</head>
+<body class="landing-page">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HERO — LAUNCHER SCREEN                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="launcher-hero">
+    <div class="hero-grid"></div>
+
+    <div class="hero-inner">
+        <!-- Badge -->
+        <div class="hero-badge">Disc Golf · Now Live</div>
+
+        <!-- Logo -->
+        <div class="hero-logo-wrap">
+            <img
+                src="/logo.png?v=3"
+                alt="Disc Golf Go"
+                class="hero-logo"
+                width="120" height="120"
+                loading="eager"
+            >
+        </div>
+
+        <!-- Headline -->
+        <h1 class="hero-title">
+            Hit <span class="green">The</span><br>
+            Course.
+        </h1>
+
+        <!-- Sub -->
+        <p class="hero-sub">
+            GPS check-in. Course battles. XP and leaderboards.<br>
+            Disc golf meets mobile game.
+        </p>
+
+        <!-- CTAs -->
+        <div class="cta-group">
+            <!-- Play Now — primary CTA for existing users -->
+            <a href="/login" class="btn-playnow">
+                ▶ Play Now
+            </a>
+
+            <!-- New user downloads -->
+            <div class="download-row">
+                <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" class="btn-appstore btn-appstore--small" target="_blank" rel="noopener">
+                    <svg class="appstore-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                    </svg>
+                    App Store
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=com.discgolfgo.app" class="btn-appstore btn-appstore--small" target="_blank" rel="noopener">
+                    <svg class="appstore-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a.996.996 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.635-8.634z"/>
+                    </svg>
+                    Google Play
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="num" id="stat-courses">---</span>
+                <span class="lbl">Courses</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="hero-stat">
+                <span class="num">8M+</span>
+                <span class="lbl">Disc Golfers</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="hero-stat">
+                <span class="num">1</span>
+                <span class="lbl">App for All of It</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll hint -->
+    <div class="scroll-hint">
+        <span>More</span>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 6l4 4 4-4"/>
+        </svg>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- FEATURES                                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="features-section reveal">
+    <div class="section-eyebrow">What's in the App</div>
+    <div class="section-title">Not Another <span class="dim">Scorecard App.</span></div>
+
+    <div class="features-grid">
+        <div class="feat-card">
+            <span class="feat-icon">📍</span>
+            <h3>GPS Check-In</h3>
+            <p>You must physically be at the course. No faking rounds.</p>
+        </div>
+        <div class="feat-card">
+            <span class="feat-icon">⚔️</span>
+            <h3>Player Battles</h3>
+            <p>Challenge nearby players. Win XP, badges, and bragging rights.</p>
+        </div>
+        <div class="feat-card">
+            <span class="feat-icon">🎯</span>
+            <h3>Course Quests</h3>
+            <p>Time-limited challenges at real courses. Weekly quests drive exploration.</p>
+        </div>
+        <div class="feat-card">
+            <span class="feat-icon">⬡</span>
+            <h3>XP &amp; Leveling</h3>
+            <p>Every round earns XP. Climb the global leaderboard.</p>
+        </div>
+        <div class="feat-card">
+            <span class="feat-icon">👥</span>
+            <h3>Crew Wars</h3>
+            <p>Form a crew. Challenge rivals. Defend your home course.</p>
+        </div>
+        <div class="feat-card">
+            <span class="feat-icon">🏆</span>
+            <h3>Achievements</h3>
+            <p>Ace Hunter. Birdie Streak. Hundreds of badges tell your story.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HOW IT WORKS                                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="how-section reveal">
+    <div class="section-eyebrow">The Loop</div>
+    <div class="section-title">Show Up. <span class="dim">Play. Level Up.</span></div>
+
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-num-badge">01</div>
+            <h4>Show Up</h4>
+            <p>GPS confirms you're at the course. No check-in, no round.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num-badge">02</div>
+            <h4>Play Your Round</h4>
+            <p>Score hole by hole. Accept challenges mid-round.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num-badge">03</div>
+            <h4>Earn XP</h4>
+            <p>New courses, battle wins, quest completions — all XP.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num-badge">04</div>
+            <h4>Climb The Board</h4>
+            <p>Global and regional leaderboards. Your crew vs. theirs.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- FEEDBACK                                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="feedback-section reveal">
+    <div class="section-eyebrow">Help Us Improve</div>
+    <div class="section-title">Got Feedback? <span class="dim">We Want It.</span></div>
+
+    <div class="feedback-form-wrap">
+        <div id="feedback-form-container">
+            <div class="form-row">
+                <div class="form-field" id="ff-name-wrap">
+                    <label for="ff-name">Name <span style="color:var(--text3)">(optional)</span></label>
+                    <input type="text" id="ff-name" placeholder="Your name" maxlength="100" autocomplete="name">
+                    <span class="field-error" id="ff-name-error"></span>
+                </div>
+                <div class="form-field" id="ff-email-wrap">
+                    <label for="ff-email">Email <span style="color:var(--text3)">(optional)</span></label>
+                    <input type="email" id="ff-email" placeholder="you@example.com" maxlength="255" autocomplete="email">
+                    <span class="field-error" id="ff-email-error"></span>
+                </div>
+            </div>
+
+            <div class="form-field" id="ff-category-wrap">
+                <label for="ff-category">Category</label>
+                <select id="ff-category">
+                    <option value="Feedback" selected>Feedback</option>
+                    <option value="Suggestion">Suggestion</option>
+                    <option value="Bug Report">Bug Report</option>
+                </select>
+                <span class="field-error" id="ff-category-error"></span>
+            </div>
+
+            <div class="form-field" id="ff-message-wrap">
+                <label for="ff-message">Message <span style="color:var(--text3)">(min. 10 characters)</span></label>
+                <textarea id="ff-message" placeholder="Tell us what's on your mind..." maxlength="2000"></textarea>
+                <span class="field-error" id="ff-message-error"></span>
+            </div>
+
+            <button type="button" class="btn-feedback" id="ff-submit" onclick="submitFeedback()">Send Feedback</button>
+        </div>
+
+        <div class="feedback-success" id="feedback-success">
+            <span class="success-icon">✉️</span>
+            <h3>Thanks for your feedback!</h3>
+            <p>We read every submission and use it to make Disc Golf Go better.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- FINAL CTA                                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="final-cta reveal">
+    <div class="final-cta-card">
+        <h2>The Course Is Calling.</h2>
+        <p>Every round matters. Every course is a quest. Download free and start building your legend.</p>
+
+        <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" class="btn-appstore" target="_blank" rel="noopener" style="max-width:300px; margin: 0 auto 0.75rem;">
+            <svg class="appstore-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            Download on the App Store
+        </a>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- FOOTER                                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+    <div class="footer-social">
+        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+            <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+            <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+            <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+    </div>
+    <div class="footer-links">
+        <a href="mailto:contact@discgolfgo.com">contact@discgolfgo.com</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/delete-account">Delete Account</a>
+        <a href="/leaderboard">Leaderboard</a>
+        <a href="/register">Play in Browser</a>
+    </div>
+    <p class="footer-copy">Disc Golf Go &copy; 2026 &nbsp;&middot;&nbsp; discgolfgo.com</p>
+</footer>
+
+<!-- Dynamic course count -->
+<script>
+(function() {
+    fetch('/api/courses/count')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.total) {
+                var el = document.getElementById('stat-courses');
+                if (el) el.textContent = data.total + '+';
+            }
+        })
+        .catch(function() {});
+})();
+</script>
+
+<!-- Scroll reveal -->
+<script>
+(function() {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+        els.forEach(function(el) { el.classList.add('visible'); });
+        return;
+    }
+    var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+        });
+    }, { threshold: 0.08 });
+    els.forEach(function(el) { obs.observe(el); });
+})();
+</script>
+
+<!-- Polsia Analytics -->
+<script>
+(function() {
+    var slug = 'disc-golf-go';
+    var vid = localStorage.getItem('polsia_vid');
+    if (!vid) {
+        vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        localStorage.setItem('polsia_vid', vid);
+    }
+    new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+})();
+</script>
+
+<!-- Feedback form -->
+<script>
+(function() {
+    function setFieldError(id, msg) {
+        var wrap = document.getElementById(id + '-wrap');
+        var errEl = document.getElementById(id + '-error');
+        if (wrap) wrap.classList.remove('has-error');
+        if (errEl) errEl.textContent = '';
+        if (msg) {
+            if (wrap) wrap.classList.add('has-error');
+            if (errEl) errEl.textContent = msg;
+        }
+    }
+
+    function clearAllErrors() {
+        ['ff-name', 'ff-email', 'ff-category', 'ff-message'].forEach(function(id) {
+            setFieldError(id, '');
+        });
+    }
+
+    window.submitFeedback = function() {
+        clearAllErrors();
+        var btn = document.getElementById('ff-submit');
+        var name = document.getElementById('ff-name').value.trim();
+        var email = document.getElementById('ff-email').value.trim();
+        var category = document.getElementById('ff-category').value;
+        var message = document.getElementById('ff-message').value;
+        var valid = true;
+
+        if (!message || message.length < 10) {
+            setFieldError('ff-message', 'Please enter at least 10 characters.');
+            valid = false;
+        }
+
+        if (!valid) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name || null, email: email || null, category: category, message: message })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                document.getElementById('feedback-form-container').style.display = 'none';
+                document.getElementById('feedback-success').classList.add('show');
+            } else {
+                setFieldError('ff-message', data.error || 'Something went wrong. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Send Feedback';
+            }
+        })
+        .catch(function() {
+            setFieldError('ff-message', 'Network error. Please check your connection and try again.');
+            btn.disabled = false;
+            btn.textContent = 'Send Feedback';
+        });
+    };
+})();
+</script>
+
+</body>
+</html>

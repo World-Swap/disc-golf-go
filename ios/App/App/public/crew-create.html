@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Create Crew — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+    <style>        .back-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--surface);
+            color: var(--text2); font-size: 1.1rem; text-decoration: none; flex-shrink: 0;
+        }
+        .header-title { font-size: 1.05rem; font-weight: 700; flex: 1; }
+        main { padding: 1.25rem; max-width: 480px; margin: 0 auto; }
+
+        /* Cost banner */
+        .cost-banner {
+            background: rgba(224,165,0,0.08); border: 1px solid rgba(224,165,0,0.2);
+            border-radius: 14px; padding: 0.85rem 1rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .cost-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .cost-text { flex: 1; }
+        .cost-amount { font-size: 0.95rem; font-weight: 700; color: var(--gold); }
+        .cost-desc { font-size: 0.78rem; color: var(--text3); margin-top: 0.1rem; }
+        .balance-chip {
+            font-size: 0.75rem; font-weight: 700;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 8px; padding: 0.25rem 0.5rem;
+            color: var(--text2); flex-shrink: 0;
+        }
+        .balance-chip.enough { color: var(--green); border-color: rgba(60,168,60,0.25); background: rgba(60,168,60,0.08); }
+        .balance-chip.short { color: var(--red); border-color: rgba(224,64,64,0.25); background: rgba(224,64,64,0.08); }
+
+        /* Form card */
+        .form-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 1.25rem;
+            box-shadow: var(--shadow-card); margin-bottom: 1.25rem;
+        }
+        .field { margin-bottom: 1.1rem; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label {
+            font-size: 0.8rem; font-weight: 700; color: var(--text3);
+            text-transform: uppercase; letter-spacing: 0.05em;
+            margin-bottom: 0.4rem; display: block;
+        }
+        .field-input {
+            width: 100%; padding: 0.7rem 0.9rem; border-radius: 12px;
+            border: 1px solid var(--border2); background: var(--surface);
+            font-family: inherit; font-size: 0.95rem; color: var(--text); outline: none;
+            transition: border-color var(--transition);
+        }
+        .field-input:focus { border-color: var(--green); }
+        .field-input::placeholder { color: var(--text3); }
+        .field-input.error { border-color: var(--red); }
+        .field-hint { font-size: 0.75rem; color: var(--text3); margin-top: 0.3rem; }
+        .field-hint.error-msg { color: var(--red); }
+        .char-count { float: right; }
+
+        /* Logo preview */
+        .logo-field-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+        .logo-preview {
+            width: 56px; height: 56px; border-radius: 14px;
+            border: 1px solid var(--border2); object-fit: cover;
+            background: var(--surface2);
+        }
+        .logo-preview-wrap {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 12px; padding: 0.6rem 0.9rem;
+        }
+        .logo-preview-wrap img { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); }
+        .logo-preview-wrap span { font-size: 0.78rem; color: var(--text3); flex: 1; }
+        .logo-preview-wrap button {
+            background: none; border: none; color: var(--text3); font-size: 0.85rem;
+            cursor: pointer; padding: 0.2rem 0.4rem;
+        }
+        .logo-preview-wrap button:hover { color: var(--red); }
+
+        /* Course picker */
+        .course-picker-wrap { position: relative; }
+        .course-picker-input {
+            width: 100%; padding: 0.7rem 0.9rem; border-radius: 12px;
+            border: 1px solid var(--border2); background: var(--surface);
+            font-family: inherit; font-size: 0.88rem; color: var(--text); outline: none;
+        }
+        .course-picker-input:focus { border-color: var(--green); }
+        .course-picker-input::placeholder { color: var(--text3); }
+        .course-dropdown {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 200;
+            background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 12px; box-shadow: var(--shadow-lg);
+            max-height: 220px; overflow-y: auto; display: none;
+        }
+        .course-dropdown.open { display: block; }
+        .course-option {
+            padding: 0.65rem 0.9rem; font-size: 0.88rem; cursor: pointer;
+            border-bottom: 1px solid var(--border); transition: background var(--transition);
+        }
+        .course-option:last-child { border-bottom: none; }
+        .course-option:hover, .course-option.selected { background: var(--surface2); }
+        .course-option-name { font-weight: 600; }
+        .course-option-meta { font-size: 0.75rem; color: var(--text3); margin-top: 0.1rem; }
+        .selected-course-chip {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: rgba(60,168,60,0.08); border: 1px solid rgba(60,168,60,0.2);
+            border-radius: 10px; padding: 0.5rem 0.7rem; margin-top: 0.5rem;
+        }
+        .selected-course-chip-name { font-size: 0.85rem; font-weight: 700; flex: 1; color: var(--green); }
+        .clear-course-btn {
+            background: none; border: none; color: var(--text3); cursor: pointer;
+            font-size: 0.85rem; padding: 0;
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%; padding: 0.9rem 1rem; border-radius: 13px; border: none;
+            font-family: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+            background: var(--green); color: #111; display: flex;
+            align-items: center; justify-content: center; gap: 0.4rem;
+            transition: opacity var(--transition), transform var(--transition);
+        }
+        .submit-btn:active { opacity: 0.8; transform: scale(0.98); }
+        .submit-btn:disabled { opacity: 0.45; cursor: default; }
+
+        .tab-item.active { color: var(--green); }
+        #toast {
+            position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 1rem);
+            left: 50%; transform: translateX(-50%); z-index: 9999;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--border2); border-radius: 12px;
+            padding: 0.65rem 1.25rem; font-size: 0.88rem; font-weight: 600;
+            box-shadow: var(--shadow-lg); pointer-events: none;
+            opacity: 0; transition: opacity 0.2s; white-space: nowrap; max-width: 90vw;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { border-color: var(--red); color: var(--red); }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <a href="/crews" class="back-btn">‹</a>
+        <div class="header-title">Create a Crew</div>
+    </header>
+
+    <main>
+        <!-- Cost banner -->
+        <div class="cost-banner">
+            <span class="cost-icon">🪙</span>
+            <div class="cost-text">
+                <div class="cost-amount">500 Gold to Create</div>
+                <div class="cost-desc">One-time cost. Deducted from your balance on creation.</div>
+            </div>
+            <div class="balance-chip" id="balanceChip">Balance: …</div>
+        </div>
+
+        <!-- Form -->
+        <div class="form-card">
+            <div class="field">
+                <label class="field-label" for="crewName">Crew Name</label>
+                <input type="text" id="crewName" class="field-input" placeholder="Enter a crew name…" maxlength="40" autocomplete="off">
+                <div class="field-hint"><span id="charCount">0</span>/40 characters</div>
+                <div class="field-hint error-msg" id="nameError" style="display:none;"></div>
+            </div>
+
+            <div class="field">
+                <label class="field-label">Home Course <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <div class="course-picker-wrap">
+                    <input type="text" id="courseSearch" class="course-picker-input" placeholder="Search for a course…" autocomplete="off">
+                    <div id="courseDropdown" class="course-dropdown"></div>
+                </div>
+                <div id="selectedCourseChip" style="display:none;" class="selected-course-chip">
+                    <span class="selected-course-chip-name" id="selectedCourseName"></span>
+                    <button class="clear-course-btn" onclick="clearCourse()">✕</button>
+                </div>
+                <div class="field-hint">The course your crew calls home. Shows on your crew profile.</div>
+            </div>
+        </div>
+
+        <button class="submit-btn" id="submitBtn" onclick="createCrew()">
+            🏰 Create Crew (500🪙)
+        </button>
+    </main>
+
+    <nav class="bottom-tab-bar">
+    <a class="tab-item active" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+    <div id="toast"></div>
+
+    <script>
+    (function() {
+        var token = localStorage.getItem('dggo_token');
+        var playerId = localStorage.getItem('dggo_player_id');
+        if (!token) { window.location.href = '/login'; return; }
+        var authHeaders = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+        var allCourses = [];
+        var selectedCourseId = null;
+        var playerGold = 0;
+
+        function toast(msg, isErr) {
+            var el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = isErr ? 'error show' : 'show';
+            setTimeout(function() { el.className = ''; }, 2800);
+        }
+
+        function escHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ── Block if already in a crew ────────────────────────────────
+        fetch('/api/players/' + playerId + '/crew', { headers: authHeaders })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.crew && d.crew.id) {
+                    // Already in a crew — redirect
+                    toast('You\'re already in a crew!', true);
+                    setTimeout(function() { window.location.href = '/crew/me'; }, 1000);
+                }
+            });
+
+        // ── Load player's gold balance ────────────────────────────────
+        fetch('/api/players/' + playerId, { headers: authHeaders })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                var p = d.player || d;
+                playerGold = parseInt(p.gold || 0);
+                var chip = document.getElementById('balanceChip');
+                chip.textContent = 'Balance: 🪙 ' + playerGold;
+                chip.className = 'balance-chip ' + (playerGold >= 500 ? 'enough' : 'short');
+                if (playerGold < 500) {
+                    document.getElementById('submitBtn').disabled = true;
+                    var costEl = document.querySelector('.cost-desc');
+                    if (costEl) costEl.textContent = 'Need ' + (500 - playerGold) + ' more gold. Keep playing to earn more!';
+                }
+            }).catch(function() {});
+
+        // ── Load courses (async, used for search) ────────────────────
+        fetch('/api/courses', { headers: authHeaders })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { allCourses = Array.isArray(d) ? d : (d.courses || []); })
+            .catch(function() {});
+
+        // ── Crew name char counter ────────────────────────────────────
+        document.getElementById('crewName').addEventListener('input', function() {
+            var len = this.value.length;
+            document.getElementById('charCount').textContent = len;
+            document.getElementById('nameError').style.display = 'none';
+            this.className = 'field-input';
+        });
+
+        // ── Course search ─────────────────────────────────────────────
+        var courseSearchTimeout;
+        document.getElementById('courseSearch').addEventListener('input', function() {
+            clearTimeout(courseSearchTimeout);
+            var q = this.value.trim().toLowerCase();
+            var dropdown = document.getElementById('courseDropdown');
+            if (!q || q.length < 2) { dropdown.classList.remove('open'); return; }
+            courseSearchTimeout = setTimeout(function() {
+                var matches = allCourses.filter(function(c) {
+                    return (c.name || '').toLowerCase().indexOf(q) !== -1 ||
+                           (c.city || '').toLowerCase().indexOf(q) !== -1 ||
+                           (c.state || '').toLowerCase().indexOf(q) !== -1;
+                }).slice(0, 12);
+                if (!matches.length) { dropdown.classList.remove('open'); return; }
+                dropdown.innerHTML = matches.map(function(c) {
+                    return '<div class="course-option" onclick="selectCourse(' + c.id + ', \'' + escHtml(c.name) + '\')">' +
+                        '<div class="course-option-name">' + escHtml(c.name) + '</div>' +
+                        '<div class="course-option-meta">' + escHtml((c.city || '') + (c.state ? ', ' + c.state : '')) + '</div>' +
+                        '</div>';
+                }).join('');
+                dropdown.classList.add('open');
+            }, 220);
+        });
+
+        document.getElementById('courseSearch').addEventListener('blur', function() {
+            // Delay so click on option fires first
+            setTimeout(function() { document.getElementById('courseDropdown').classList.remove('open'); }, 200);
+        });
+
+        window.selectCourse = function(id, name) {
+            selectedCourseId = id;
+            document.getElementById('courseSearch').value = '';
+            document.getElementById('courseDropdown').classList.remove('open');
+            document.getElementById('selectedCourseName').textContent = name;
+            document.getElementById('selectedCourseChip').style.display = 'flex';
+        };
+
+        window.clearCourse = function() {
+            selectedCourseId = null;
+            document.getElementById('selectedCourseChip').style.display = 'none';
+            document.getElementById('courseSearch').value = '';
+        };
+
+
+        // ── Submit ────────────────────────────────────────────────────
+        window.createCrew = function() {
+            var name = document.getElementById('crewName').value.trim();
+            var nameInput = document.getElementById('crewName');
+            var nameError = document.getElementById('nameError');
+
+            if (!name) {
+                nameInput.className = 'field-input error';
+                nameError.textContent = 'Crew name is required';
+                nameError.style.display = 'block';
+                nameInput.focus();
+                return;
+            }
+            if (name.length < 3) {
+                nameInput.className = 'field-input error';
+                nameError.textContent = 'Name must be at least 3 characters';
+                nameError.style.display = 'block';
+                return;
+            }
+
+            var btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating…';
+
+            fetch('/api/crews', {
+                method: 'POST', headers: authHeaders,
+                body: JSON.stringify({
+                    name: name,
+                    home_course_id: selectedCourseId || null
+                })
+            }).then(function(r) { return r.json().then(function(d) { return { status: r.status, data: d }; }); })
+            .then(function(res) {
+                var d = res.data;
+                if (res.status === 402) {
+                    btn.disabled = false;
+                    btn.textContent = '🏰 Create Crew (500🪙)';
+                    toast('Not enough gold — need ' + (500 - (d.gold || 0)) + ' more', true);
+                } else if (res.status === 409) {
+                    btn.disabled = false;
+                    btn.textContent = '🏰 Create Crew (500🪙)';
+                    nameInput.className = 'field-input error';
+                    nameError.textContent = 'That crew name is already taken. Try another.';
+                    nameError.style.display = 'block';
+                } else if (d.crew && d.crew.id) {
+                    toast('Crew created! 🎉');
+                    setTimeout(function() { window.location.href = '/crew/me'; }, 900);
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = '🏰 Create Crew (500🪙)';
+                    toast(d.error || 'Failed to create crew', true);
+                }
+            }).catch(function() {
+                btn.disabled = false;
+                btn.textContent = '🏰 Create Crew (500🪙)';
+                toast('Network error', true);
+            });
+        };
+    })();
+    </script>
+</body>
+</html>

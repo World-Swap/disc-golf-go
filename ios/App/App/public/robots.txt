@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin
+Disallow: /api
+Allow: /
+Sitemap: https://discgolfgo.app/sitemap.xml

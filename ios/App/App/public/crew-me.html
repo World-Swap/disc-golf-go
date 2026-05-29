@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>My Crew — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+    <style>        .back-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--surface);
+            color: var(--text2); font-size: 1.1rem; text-decoration: none; flex-shrink: 0;
+        }
+        .header-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; flex: 1; }
+        main { padding: 1.25rem; max-width: 480px; margin: 0 auto; }
+
+        /* Crew hero card */
+        .crew-hero {
+            background: var(--surface);
+            border: 1px solid rgba(60,168,60,0.25);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.5rem 1.25rem 1.25rem;
+            margin-bottom: 1.25rem;
+            position: relative; overflow: hidden;
+        }
+        .crew-hero::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+        }
+        .crew-hero-top { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 0.9rem; }
+        .crew-hero-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            background: var(--surface2); display: flex; align-items: center;
+            justify-content: center; font-size: 1.8rem; font-weight: 700;
+            color: var(--text); flex-shrink: 0;
+        }
+        .crew-hero-info { flex: 1; min-width: 0; }
+        .crew-hero-name { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 0.25rem; }
+        .crew-hero-meta { font-size: 0.82rem; color: var(--text3); line-height: 1.5; }
+        .crew-hero-meta span { margin-right: 0.6rem; }
+        .crew-stats-row { display: flex; gap: 0.6rem; }
+        .crew-stat-chip {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 0.45rem 0.7rem; text-align: center; flex: 1;
+        }
+        .crew-stat-value { font-size: 1rem; font-weight: 700; }
+        .crew-stat-label { font-size: 0.7rem; color: var(--text3); margin-top: 0.1rem; }
+
+        /* Action buttons row */
+        .action-row {
+            display: flex; gap: 0.6rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+        }
+        .btn {
+            flex: 1; min-width: 0; padding: 0.65rem 0.9rem; border-radius: 12px; border: none;
+            font-family: inherit; font-size: 0.85rem; font-weight: 700;
+            cursor: pointer; text-decoration: none; display: inline-flex;
+            align-items: center; justify-content: center; gap: 0.3rem;
+            transition: opacity var(--transition), transform var(--transition);
+            white-space: nowrap;
+        }
+        .btn:active { opacity: 0.8; transform: scale(0.97); }
+        .btn-primary { background: var(--green); color: #111; }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+        .btn-danger { background: rgba(224,64,64,0.1); color: var(--red); border: 1px solid rgba(224,64,64,0.2); }
+
+        /* Section label */
+        .section-label {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--text3); margin-bottom: 0.6rem;
+        }
+
+        /* Invite link card */
+        .invite-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 1rem 1.1rem;
+            box-shadow: var(--shadow-card); margin-bottom: 1.25rem;
+        }
+        .invite-card-label { font-size: 0.82rem; color: var(--text3); margin-bottom: 0.5rem; }
+        .invite-link-row { display: flex; gap: 0.5rem; align-items: center; }
+        .invite-link-box {
+            flex: 1; padding: 0.55rem 0.8rem; border-radius: 10px;
+            border: 1px solid var(--border2); background: var(--surface2);
+            font-size: 0.78rem; color: var(--text2); overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; font-family: 'Space Mono', monospace;
+        }
+        .copy-btn {
+            padding: 0.55rem 0.8rem; border-radius: 10px; border: none;
+            background: var(--surface2); color: var(--text); font-family: inherit;
+            font-size: 0.82rem; font-weight: 700; cursor: pointer;
+            border: 1px solid var(--border2); white-space: nowrap;
+            transition: background var(--transition);
+        }
+        .copy-btn.copied { background: var(--green); color: #111; border-color: var(--green); }
+        .invite-expiry { font-size: 0.75rem; color: var(--text3); margin-top: 0.4rem; }
+
+        /* Pending requests */
+        .request-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 0.9rem 1.1rem;
+            box-shadow: var(--shadow-card); margin-bottom: 0.6rem;
+            display: flex; align-items: center; gap: 0.8rem;
+        }
+        .request-avatar {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: var(--surface2); display: flex; align-items: center;
+            justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .request-info { flex: 1; min-width: 0; }
+        .request-username { font-size: 0.9rem; font-weight: 700; }
+        .request-meta { font-size: 0.78rem; color: var(--text3); }
+        .request-btns { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .btn-xs {
+            padding: 0.4rem 0.65rem; border-radius: 8px; border: none;
+            font-family: inherit; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; transition: opacity var(--transition);
+        }
+        .btn-xs:active { opacity: 0.75; }
+        .btn-xs-green { background: var(--green); color: #111; }
+        .btn-xs-outline { background: var(--surface2); color: var(--text3); border: 1px solid var(--border2); }
+
+        /* Member roster cards */
+        .member-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+        .member-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 0.85rem 1rem;
+            box-shadow: var(--shadow-card);
+            display: flex; align-items: center; gap: 0.85rem;
+        }
+        .member-card.is-boss { border-color: rgba(224,165,0,0.25); }
+        .rank-num {
+            font-size: 0.75rem; font-weight: 700; color: var(--text3);
+            width: 20px; text-align: center; flex-shrink: 0;
+        }
+        .rank-num.top3 { color: var(--gold); }
+        .member-avatar {
+            width: 38px; height: 38px; border-radius: 11px;
+            background: var(--surface2); display: flex; align-items: center;
+            justify-content: center; font-size: 1rem; flex-shrink: 0;
+        }
+        .member-info { flex: 1; min-width: 0; }
+        .member-name-row { display: flex; align-items: center; gap: 0.4rem; }
+        .member-username { font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .boss-crown { font-size: 0.8rem; }
+        .member-meta { font-size: 0.75rem; color: var(--text3); margin-top: 0.1rem; }
+        .level-badge {
+            display: inline-flex; align-items: center;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.2rem 0.45rem;
+            font-size: 0.72rem; font-weight: 700; color: var(--text2); flex-shrink: 0;
+        }
+        .kick-btn {
+            background: none; border: none; color: var(--text3); font-size: 0.8rem;
+            cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 6px;
+            transition: color var(--transition);
+        }
+        .kick-btn:hover { color: var(--red); }
+
+        /* Crew logo upload */
+        .crew-logo-wrap { position: relative; flex-shrink: 0; }
+        .crew-logo-upload-btn {
+            position: absolute; bottom: -3px; right: -5px;
+            width: 22px; height: 22px;
+            background: var(--green); border: 2px solid var(--bg);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 0.55rem; cursor: pointer;
+            transition: background var(--transition);
+        }
+        .crew-logo-upload-btn:active { background: var(--green-bright); }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 9990;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 18px; box-shadow: var(--shadow-lg);
+            padding: 1.5rem; width: 100%; max-width: 380px;
+        }
+        .modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.6rem; }
+        .modal p { font-size: 0.88rem; color: var(--text2); line-height: 1.5; margin-bottom: 1.1rem; }
+        .modal-btns { display: flex; gap: 0.6rem; }
+        .modal-btns .btn { font-size: 0.88rem; }
+
+        /* Transfer boss select */
+        .transfer-select {
+            width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px;
+            border: 1px solid var(--border2); background: var(--surface);
+            font-family: inherit; font-size: 0.88rem; color: var(--text);
+            margin-bottom: 1rem; outline: none;
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 1rem);
+            left: 50%; transform: translateX(-50%); z-index: 9999;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--border2); border-radius: 12px;
+            padding: 0.65rem 1.25rem; font-size: 0.88rem; font-weight: 600;
+            box-shadow: var(--shadow-lg); pointer-events: none;
+            opacity: 0; transition: opacity 0.2s;
+            white-space: nowrap; max-width: 90vw;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { border-color: var(--red); color: var(--red); }
+
+        .tab-item.active { color: var(--green); }
+        .empty-section { text-align: center; padding: 1.25rem; color: var(--text3); font-size: 0.85rem; }
+
+        /* Crew Vault */
+        .vault-gold-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 0.75rem;
+        }
+        .vault-gold-val {
+            font-size: 1.3rem; font-weight: 700; color: var(--gold);
+        }
+        .vault-gold-label { font-size: 0.78rem; color: var(--text3); margin-top: 0.1rem; }
+        .vault-item-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.75rem 0.9rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            margin-bottom: 0.5rem; box-shadow: var(--shadow-card);
+        }
+        .vault-item-icon { font-size: 1.4rem; flex-shrink: 0; }
+        .vault-item-info { flex: 1; min-width: 0; }
+        .vault-item-name { font-size: 0.88rem; font-weight: 700; }
+        .vault-item-meta { font-size: 0.74rem; color: var(--text3); margin-top: 0.1rem; }
+        .vault-item-badge {
+            font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.5rem;
+            border-radius: 20px; flex-shrink: 0;
+        }
+        .vault-badge-unassigned { background: rgba(60,168,60,0.12); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+        .vault-badge-assigned { background: rgba(138,138,134,0.12); color: var(--text3); border: 1px solid var(--border); }
+        .btn-assign {
+            padding: 0.4rem 0.7rem; border-radius: 8px; border: none;
+            background: var(--green); color: #111;
+            font-family: inherit; font-size: 0.75rem; font-weight: 700;
+            cursor: pointer; transition: opacity var(--transition); flex-shrink: 0;
+        }
+        .btn-assign:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* form-group / form-input for vault modal (reuse) */
+        .form-group-vault { margin-bottom: 0.9rem; }
+        .form-label-vault { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text2); margin-bottom: 0.35rem; }
+        .form-input-vault, .form-select-vault {
+            width: 100%; padding: 0.65rem 0.85rem;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 10px; color: var(--text); font-size: 0.88rem;
+            font-family: inherit; outline: none;
+        }
+        .form-input-vault:focus, .form-select-vault:focus { border-color: var(--green); }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <a href="/crews" class="back-btn">‹</a>
+        <div class="header-title" id="pageTitle">My Crew</div>
+    </header>
+
+    <main id="mainContent">
+        <div style="text-align:center;padding:3rem 1rem;color:var(--text3);">Loading…</div>
+    </main>
+
+    <!-- Invite card (hidden until generated) -->
+    <div id="inviteSection" style="display:none;padding:0 1.25rem;max-width:480px;margin:0 auto;"></div>
+
+    <nav class="bottom-tab-bar">
+    <a class="tab-item active" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+    <!-- Disband confirm modal -->
+    <div id="disbandModal" class="modal-overlay">
+        <div class="modal">
+            <h3>⚠️ Disband Crew?</h3>
+            <p>This is permanent. All members will be removed and the crew will be dissolved. You cannot undo this.</p>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="closeModal('disbandModal')">Cancel</button>
+                <button class="btn btn-danger" id="disbandConfirmBtn">Disband</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave confirm modal -->
+    <div id="leaveModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Leave Crew?</h3>
+            <p>You'll be removed from the crew. You can rejoin later via invite or request.</p>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="closeModal('leaveModal')">Cancel</button>
+                <button class="btn btn-danger" id="leaveConfirmBtn">Leave</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer boss modal -->
+    <div id="transferModal" class="modal-overlay">
+        <div class="modal">
+            <h3>New Boss</h3>
+            <p>Choose a crew member to become the new boss. You'll become a regular member.</p>
+            <select id="transferSelect" class="transfer-select"></select>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="closeModal('transferModal')">Cancel</button>
+                <button class="btn btn-primary" id="transferConfirmBtn">Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <!-- Distribute Gold modal -->
+    <div id="distributeGoldModal" class="modal-overlay">
+        <div class="modal">
+            <h3>🪙 Distribute Gold</h3>
+            <div class="form-group-vault">
+                <label class="form-label-vault">Member</label>
+                <select id="distributeGoldMember" class="form-select-vault"></select>
+            </div>
+            <div class="form-group-vault">
+                <label class="form-label-vault">Amount</label>
+                <input type="number" id="distributeGoldAmount" class="form-input-vault" placeholder="e.g. 50" min="1" max="9999">
+            </div>
+            <div id="distributeGoldBalanceNote" style="font-size:0.75rem;color:var(--text3);margin-bottom:0.85rem;"></div>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="closeModal('distributeGoldModal')">Cancel</button>
+                <button class="btn btn-primary" id="distributeGoldConfirmBtn">Send Gold</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Item modal -->
+    <div id="assignItemModal" class="modal-overlay">
+        <div class="modal">
+            <h3>🎁 Assign Item</h3>
+            <p id="assignItemNameLabel" style="font-size:0.88rem;color:var(--text2);margin-bottom:0.9rem;"></p>
+            <div class="form-group-vault">
+                <label class="form-label-vault">Assign to member</label>
+                <select id="assignItemMember" class="form-select-vault"></select>
+            </div>
+            <input type="hidden" id="assignItemId">
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="closeModal('assignItemModal')">Cancel</button>
+                <button class="btn btn-primary" id="assignItemConfirmBtn">Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+    <div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div id="notifPopupTitle" style="font-size:1rem;font-weight:700;line-height:1.3;padding-right:8px;"></div>
+            <button id="notifPopupClose" style="background:none;border:none;cursor:pointer;color:var(--text3,#78787a);font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
+        </div>
+        <div id="notifPopupMsg" style="font-size:0.88rem;color:var(--text2,#c4c4bc);line-height:1.55;margin-bottom:16px;"></div>
+        <button id="notifPopupDismissBtn" style="width:100%;padding:10px;background:var(--green,#7ed957);border:none;border-radius:10px;font-size:0.9rem;font-weight:700;color:#111;cursor:pointer;">Got it</button>
+    </div>
+    <input type="file" id="crew-logo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadCrewLogo(this)">
+    <div id="toast"></div>
+
+    <script>
+    (function() {
+        var token = localStorage.getItem('dggo_token');
+        var playerId = parseInt(localStorage.getItem('dggo_player_id') || '0');
+        if (!token) { window.location.href = '/login'; return; }
+        var authHeaders = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+        var crewId = null;
+        var myRole = null;
+        var allMembers = [];
+
+        function toast(msg, isErr) {
+            var el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = isErr ? 'error show' : 'show';
+            setTimeout(function() { el.className = ''; }, 2800);
+        }
+
+        function escHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            var d = new Date(iso);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        window.closeModal = function(id) {
+            document.getElementById(id).classList.remove('open');
+        };
+
+        // ── Upload crew logo ────────────────────────────────────────────
+        window.uploadCrewLogo = function(input) {
+            if (!input.files || !input.files[0]) return;
+            var file = input.files[0];
+            if (file.size > 5*1024*1024) { toast('Image must be under 5MB', true); return; }
+            toast('Uploading…');
+            var fd = new FormData();
+            fd.append('logo', file);
+            fetch('/api/crews/' + crewId + '/logo', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: fd
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) { toast('Upload failed', true); return; }
+                toast('Logo updated!');
+                // Reload crew to refresh icon
+                fetch('/api/crews/' + crewId, { headers: authHeaders })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d2) { if (d2.crew) renderCrew(d2.crew); });
+            }).catch(function() { toast('Upload failed', true); });
+            input.value = '';
+        };
+
+        // ── Load crew from player's crew ────────────────────────────────
+        function init() {
+            fetch('/api/players/' + playerId + '/crew', { headers: authHeaders })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (!d.crew || !d.crew.id) {
+                        window.location.href = '/crews';
+                        return;
+                    }
+                    crewId = d.crew.id;
+                    myRole = d.crew.role;
+                    document.getElementById('pageTitle').textContent = escHtml(d.crew.name);
+                    renderCrew(d.crew);
+                    loadMembers();
+                    if (['boss','manager'].includes(myRole)) {
+                        loadJoinRequests();
+                        loadVault();
+                    }
+                })
+                .catch(function(e) {
+                    document.getElementById('mainContent').innerHTML =
+                        '<div style="text-align:center;padding:3rem 1rem;color:var(--text3);">Could not load crew</div>';
+                });
+        }
+
+        function renderCrew(crew) {
+            var initial = crew.name ? crew.name.charAt(0).toUpperCase() : '👥';
+            var html = '<div class="crew-hero">';
+            html += '<div class="crew-hero-top">';
+            var iconInner = crew.logo_url ? '<img src="' + escHtml(crew.logo_url) + '" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:16px;" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'""><div style="display:none;font-size:1.8rem;font-weight:700;">' + initial + '</div>' : initial;
+            if (['boss','manager'].includes(myRole)) {
+                html += '<div class="crew-logo-wrap"><div class="crew-hero-icon" onclick="document.getElementById(\'crew-logo-input\').click()" style="cursor:pointer;" title="Change crew logo">' + iconInner + '</div><div class="crew-logo-upload-btn" onclick="document.getElementById(\'crew-logo-input\').click()">📷</div></div>';
+            } else {
+                html += '<div class="crew-hero-icon">' + iconInner + '</div>';
+            }
+            html += '<div class="crew-hero-info">';
+            html += '<div class="crew-hero-name">' + escHtml(crew.name) + '</div>';
+            html += '<div class="crew-hero-meta">';
+            if (crew.home_course_name) html += '<span>📍 ' + escHtml(crew.home_course_name) + '</span>';
+            html += '<span>Since ' + formatDate(crew.created_at) + '</span>';
+            html += '</div></div></div>';
+            html += '<div class="crew-stats-row">';
+            html += '<div class="crew-stat-chip"><div class="crew-stat-value">' + crew.member_count + '</div><div class="crew-stat-label">Members</div></div>';
+            if (crew.crew_gold !== undefined) {
+                html += '<div class="crew-stat-chip"><div class="crew-stat-value">🪙 ' + (crew.crew_gold || 0) + '</div><div class="crew-stat-label">Crew Gold</div></div>';
+            }
+            html += '<div class="crew-stat-chip"><div class="crew-stat-value">' + escHtml(crew.role === 'boss' ? '👑 Boss' : crew.role === 'manager' ? '⚡ Mgr.' : 'Member') + '</div><div class="crew-stat-label">Your Role</div></div>';
+            html += '</div></div>';
+
+            // Action buttons
+            html += '<div class="action-row">';
+            if (['boss','manager'].includes(myRole)) {
+                html += '<button class="btn btn-primary" onclick="generateInvite()">✉️ Invite</button>';
+            }
+            html += '<button class="btn btn-secondary" onclick="window.location.href=\'/crew/wars\'">⚔️ Wars</button>';
+            if (myRole === 'boss') {
+                html += '<button class="btn btn-secondary" onclick="openTransferModal()">New Boss</button>';
+                html += '<button class="btn btn-danger" onclick="document.getElementById(\'disbandModal\').classList.add(\'open\')">Disband</button>';
+            } else {
+                html += '<button class="btn btn-danger" onclick="document.getElementById(\'leaveModal\').classList.add(\'open\')">Leave Crew</button>';
+            }
+            html += '</div>';
+
+            // Placeholders for sections filled by later fetches
+            if (['boss','manager'].includes(myRole)) {
+                html += '<div class="section-label">Pending Requests</div>';
+                html += '<div id="requestsList"><div class="empty-section">Loading requests…</div></div>';
+            }
+            html += '<div class="section-label" style="margin-top:1rem">Roster</div>';
+            html += '<div class="member-list" id="memberList"><div style="text-align:center;padding:1.5rem;color:var(--text3);">Loading…</div></div>';
+
+            // Crew Vault — boss/manager only
+            if (['boss','manager'].includes(myRole)) {
+                html += '<div class="section-label" style="margin-top:1.25rem">💰 Crew Vault</div>';
+                html += '<div id="crewVaultSection"><div class="empty-section">Loading vault…</div></div>';
+            }
+
+            document.getElementById('mainContent').innerHTML = html;
+
+            // Wire up modals
+            document.getElementById('disbandConfirmBtn').onclick = disbandCrew;
+            document.getElementById('leaveConfirmBtn').onclick = leaveCrew;
+        }
+
+        // ── Load members ───────────────────────────────────────────────
+        function loadMembers() {
+            fetch('/api/crews/' + crewId + '/members', { headers: authHeaders })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    allMembers = d.members || [];
+                    renderMembers(allMembers);
+                    populateTransferSelect(allMembers);
+                })
+                .catch(function() {
+                    var el = document.getElementById('memberList');
+                    if (el) el.innerHTML = '<div class="empty-section">Could not load members</div>';
+                });
+        }
+
+        function renderMembers(members) {
+            var el = document.getElementById('memberList');
+            if (!el) return;
+            if (!members.length) { el.innerHTML = '<div class="empty-section">No members</div>'; return; }
+            el.innerHTML = members.map(function(m, i) {
+                var isBoss = m.role === 'boss';
+                var isManager = m.role === 'manager';
+                var isMe = m.player_id === playerId;
+                var rank = i + 1;
+                // Boss can kick non-boss members; managers can kick plain members
+                var canKick = !isMe && !isBoss && (
+                    myRole === 'boss' ||
+                    (myRole === 'manager' && !isManager)
+                );
+                // Only boss can promote/demote
+                var canPromote = myRole === 'boss' && !isMe && !isBoss;
+                var actionHtml = '';
+                if (canPromote) {
+                    if (isManager) {
+                        actionHtml += '<button class="kick-btn" style="background:rgba(138,138,134,0.15);color:var(--text3);border:1px solid var(--border);margin-right:0.3rem;padding:0.3rem 0.55rem;font-size:0.7rem;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit" onclick="setMemberRole(' + m.player_id + ', \'member\', \'' + escHtml(m.username) + '\')">Demote</button>';
+                    } else {
+                        actionHtml += '<button class="kick-btn" style="background:rgba(60,168,60,0.12);color:var(--green);border:1px solid rgba(60,168,60,0.25);margin-right:0.3rem;padding:0.3rem 0.55rem;font-size:0.7rem;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit" onclick="setMemberRole(' + m.player_id + ', \'manager\', \'' + escHtml(m.username) + '\')">Promote</button>';
+                    }
+                }
+                if (canKick) {
+                    actionHtml += '<button class="kick-btn" onclick="kickMember(' + m.player_id + ', \'' + escHtml(m.username) + '\')">✕</button>';
+                }
+                return '<div class="member-card' + (isBoss ? ' is-boss' : '') + '">' +
+                    '<div class="rank-num' + (rank <= 3 ? ' top3' : '') + '">' +
+                        (rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank) +
+                    '</div>' +
+                    '<div class="member-avatar">👤</div>' +
+                    '<div class="member-info">' +
+                        '<div class="member-name-row">' +
+                            '<span class="member-username">' + escHtml(m.username) + (isMe ? ' (you)' : '') + '</span>' +
+                            (isBoss ? '<span class="boss-crown">👑</span>' : isManager ? '<span class="boss-crown" title="Manager">⚡</span>' : '') +
+                        '</div>' +
+                        '<div class="member-meta">Lv ' + (m.level || 1) + ' · ' + (isBoss ? 'Boss' : isManager ? 'Manager' : 'Member') + ' · Joined ' + formatDate(m.joined_at) + '</div>' +
+                    '</div>' +
+                    '<div class="level-badge">Lv ' + (m.level || 1) + '</div>' +
+                    actionHtml +
+                    '</div>';
+            }).join('');
+        }
+
+        // Promote to manager / demote to member (boss only)
+        window.setMemberRole = function(pid, role, name) {
+            var label = role === 'manager' ? 'promote ' + name + ' to Manager?' : 'demote ' + name + ' to Member?';
+            if (!confirm('Are you sure you want to ' + label)) return;
+            fetch('/api/crews/' + crewId + '/members/' + pid + '/role', {
+                method: 'PATCH',
+                headers: authHeaders,
+                body: JSON.stringify({ role: role })
+            }).then(function(r) { return r.json(); })
+              .then(function(d) {
+                if (d.error) { toast('Error: ' + d.error, true); return; }
+                toast(role === 'manager' ? name + ' is now a Manager ⚡' : name + ' demoted to Member');
+                loadMembers();
+              }).catch(function() { toast('Request failed', true); });
+        };
+
+        function populateTransferSelect(members) {
+            var sel = document.getElementById('transferSelect');
+            if (!sel) return;
+            var options = members.filter(function(m) { return m.player_id !== playerId; });
+            sel.innerHTML = options.map(function(m) {
+                return '<option value="' + m.player_id + '">' + escHtml(m.username) + ' (Lv ' + (m.level||1) + ')</option>';
+            }).join('');
+        }
+
+        // ── Load join requests ────────────────────────────────────────
+        function loadJoinRequests() {
+            fetch('/api/crews/' + crewId + '/join-requests', { headers: authHeaders })
+                .then(function(r) { return r.json(); })
+                .then(function(d) { renderRequests(d.requests || []); })
+                .catch(function() {});
+        }
+
+        function renderRequests(requests) {
+            var el = document.getElementById('requestsList');
+            if (!el) return;
+            if (!requests.length) { el.innerHTML = '<div class="empty-section">No pending requests</div>'; return; }
+            el.innerHTML = requests.map(function(r) {
+                return '<div class="request-card" id="req-' + r.request_id + '">' +
+                    '<div class="request-avatar">👤</div>' +
+                    '<div class="request-info">' +
+                        '<div class="request-username">' + escHtml(r.username) + '</div>' +
+                        '<div class="request-meta">Lv ' + (r.level||1) + ' · ' + formatDate(r.created_at) + '</div>' +
+                    '</div>' +
+                    '<div class="request-btns">' +
+                        '<button class="btn-xs btn-xs-green" onclick="handleRequest(\'' + r.request_id + '\', \'approve\', this)">✓</button>' +
+                        '<button class="btn-xs btn-xs-outline" onclick="handleRequest(\'' + r.request_id + '\', \'decline\', this)">✕</button>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        window.handleRequest = function(requestId, action, btn) {
+            btn.disabled = true;
+            fetch('/api/crews/' + crewId + '/join-request/' + encodeURIComponent(requestId), {
+                method: 'PUT',
+                headers: authHeaders,
+                body: JSON.stringify({ action: action })
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) {
+                    var card = document.getElementById('req-' + requestId);
+                    if (card) card.remove();
+                    toast(action === 'approve' ? 'Player approved!' : 'Request declined');
+                    if (action === 'approve') loadMembers();
+                } else {
+                    btn.disabled = false;
+                    toast(d.error || 'Failed', true);
+                }
+            }).catch(function() { btn.disabled = false; toast('Network error', true); });
+        };
+
+        // ── Generate invite ───────────────────────────────────────────
+        window.generateInvite = function() {
+            fetch('/api/crews/' + crewId + '/invite', {
+                method: 'POST', headers: authHeaders
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.invite_url) {
+                    var fullUrl = window.location.origin + d.invite_url;
+                    var section = document.getElementById('inviteSection');
+                    section.style.display = 'block';
+                    section.innerHTML = '<div class="invite-card" style="margin-bottom:1.25rem;">' +
+                        '<div class="invite-card-label">✉️ Invite link (expires in 7 days)</div>' +
+                        '<div class="invite-link-row">' +
+                            '<div class="invite-link-box" id="inviteUrl">' + escHtml(fullUrl) + '</div>' +
+                            '<button class="copy-btn" onclick="copyInvite(\'' + escHtml(fullUrl) + '\', this)">Copy</button>' +
+                        '</div>' +
+                        '<div class="invite-expiry">Share this link to invite players to your crew</div>' +
+                        '</div>';
+                    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    toast(d.error || 'Failed to generate invite', true);
+                }
+            }).catch(function() { toast('Network error', true); });
+        };
+
+        window.copyInvite = function(url, btn) {
+            navigator.clipboard.writeText(url).then(function() {
+                btn.textContent = 'Copied!';
+                btn.className = 'copy-btn copied';
+                setTimeout(function() { btn.textContent = 'Copy'; btn.className = 'copy-btn'; }, 2000);
+            }).catch(function() {
+                // Fallback for WebView
+                var ta = document.createElement('textarea');
+                ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.focus(); ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btn.textContent = 'Copied!'; btn.className = 'copy-btn copied';
+                setTimeout(function() { btn.textContent = 'Copy'; btn.className = 'copy-btn'; }, 2000);
+            });
+        };
+
+        // ── Kick member ───────────────────────────────────────────────
+        window.kickMember = function(memberId, username) {
+            if (!confirm('Remove ' + username + ' from the crew?')) return;
+            fetch('/api/crews/' + crewId + '/kick/' + memberId, {
+                method: 'POST', headers: authHeaders
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { toast(username + ' removed'); loadMembers(); }
+                else toast(d.error || 'Failed', true);
+            }).catch(function() { toast('Network error', true); });
+        };
+
+        // ── Leave crew ────────────────────────────────────────────────
+        window.leaveCrew = function() {
+            document.getElementById('leaveModal').classList.remove('open');
+            fetch('/api/crews/' + crewId + '/leave', {
+                method: 'DELETE', headers: authHeaders
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { toast('Left crew'); setTimeout(function() { window.location.href = '/crews'; }, 800); }
+                else toast(d.error || 'Failed to leave', true);
+            }).catch(function() { toast('Network error', true); });
+        };
+
+        // ── Disband crew ──────────────────────────────────────────────
+        window.disbandCrew = function() {
+            document.getElementById('disbandModal').classList.remove('open');
+            fetch('/api/crews/' + crewId, {
+                method: 'DELETE', headers: authHeaders
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { toast('Crew disbanded'); setTimeout(function() { window.location.href = '/crews'; }, 800); }
+                else toast(d.error || 'Failed to disband', true);
+            }).catch(function() { toast('Network error', true); });
+        };
+
+        // ── Transfer boss ─────────────────────────────────────────────
+        window.openTransferModal = function() {
+            document.getElementById('transferModal').classList.add('open');
+        };
+        document.getElementById('transferConfirmBtn').onclick = function() {
+            var sel = document.getElementById('transferSelect');
+            var newBossId = parseInt(sel.value);
+            if (!newBossId) { toast('Select a member', true); return; }
+            document.getElementById('transferModal').classList.remove('open');
+            fetch('/api/crews/' + crewId + '/transfer-boss', {
+                method: 'PATCH', headers: authHeaders,
+                body: JSON.stringify({ new_boss_player_id: newBossId })
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { toast('Boss transferred! Reloading…'); setTimeout(function() { window.location.reload(); }, 1000); }
+                else toast(d.error || 'Failed', true);
+            }).catch(function() { toast('Network error', true); });
+        };
+
+        // ── Crew Vault ────────────────────────────────────────────────
+        var vaultData = { gold: 0, items: [], members: [] };
+
+        function loadVault() {
+            fetch('/api/crews/' + crewId + '/vault', { headers: authHeaders })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.error) return;
+                    vaultData = d;
+                    renderVault(d);
+                    populateVaultMemberSelects(d.members);
+                })
+                .catch(function() {});
+        }
+
+        function renderVault(d) {
+            var el = document.getElementById('crewVaultSection');
+            if (!el) return;
+            var itemTypeIcon = { cosmetic: '🎨', xp_boost: '⚡', gold_boost: '🪙', badge: '🏅' };
+            var html = '';
+
+            // Gold balance row
+            html += '<div class="vault-gold-row">';
+            html += '<div><div class="vault-gold-val">🪙 ' + (d.gold || 0) + '</div><div class="vault-gold-label">Crew Treasury</div></div>';
+            html += '<button class="btn btn-secondary" style="flex:none;padding:0.55rem 0.9rem;font-size:0.82rem" onclick="openDistributeGoldModal()">Distribute</button>';
+            html += '</div>';
+
+            if (!d.items || !d.items.length) {
+                html += '<div class="empty-section">No items yet — win a war to earn rewards!</div>';
+            } else {
+                d.items.forEach(function(item) {
+                    var assigned = !!item.assigned_to;
+                    html += '<div class="vault-item-card">';
+                    html += '<div class="vault-item-icon">' + (itemTypeIcon[item.item_type] || '🎁') + '</div>';
+                    html += '<div class="vault-item-info">';
+                    html += '<div class="vault-item-name">' + escHtml(item.item_name) + '</div>';
+                    html += '<div class="vault-item-meta">' + escHtml(item.item_type.replace('_', ' '));
+                    if (assigned) html += ' · Assigned to ' + escHtml(item.assigned_to_username || 'member');
+                    html += '</div></div>';
+                    if (!assigned) {
+                        html += '<button class="btn-assign" onclick="openAssignItemModal(' + item.id + ', \'' + escHtml(item.item_name) + '\')">Assign</button>';
+                    } else {
+                        html += '<span class="vault-item-badge vault-badge-assigned">Assigned</span>';
+                    }
+                    html += '</div>';
+                });
+            }
+            el.innerHTML = html;
+        }
+
+        function populateVaultMemberSelects(members) {
+            var sel1 = document.getElementById('distributeGoldMember');
+            var sel2 = document.getElementById('assignItemMember');
+            if (!sel1 || !sel2) return;
+            var opts = (members || []).map(function(m) {
+                return '<option value="' + m.player_id + '">' + escHtml(m.username) + ' (' + escHtml(m.role) + ')</option>';
+            }).join('');
+            sel1.innerHTML = opts;
+            sel2.innerHTML = opts;
+        }
+
+        window.openDistributeGoldModal = function() {
+            var note = document.getElementById('distributeGoldBalanceNote');
+            if (note) note.textContent = 'Treasury balance: ' + vaultData.gold + ' gold';
+            document.getElementById('distributeGoldAmount').value = '';
+            document.getElementById('distributeGoldModal').classList.add('open');
+        };
+        document.getElementById('distributeGoldConfirmBtn').onclick = function() {
+            var memberId = parseInt(document.getElementById('distributeGoldMember').value);
+            var amount = parseInt(document.getElementById('distributeGoldAmount').value);
+            if (!memberId || !amount || amount <= 0) { toast('Enter a valid amount', true); return; }
+            var btn = document.getElementById('distributeGoldConfirmBtn');
+            btn.disabled = true; btn.textContent = 'Sending…';
+            fetch('/api/crews/' + crewId + '/vault/distribute-gold', {
+                method: 'POST', headers: authHeaders,
+                body: JSON.stringify({ player_id: memberId, amount: amount })
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                btn.disabled = false; btn.textContent = 'Send Gold';
+                if (d.error) { toast('Error: ' + d.error, true); return; }
+                toast('🪙 ' + amount + ' gold sent!');
+                closeModal('distributeGoldModal');
+                loadVault();
+            }).catch(function() { btn.disabled = false; btn.textContent = 'Send Gold'; toast('Network error', true); });
+        };
+
+        window.openAssignItemModal = function(itemId, itemName) {
+            document.getElementById('assignItemId').value = itemId;
+            document.getElementById('assignItemNameLabel').textContent = 'Item: ' + itemName;
+            document.getElementById('assignItemModal').classList.add('open');
+        };
+        document.getElementById('assignItemConfirmBtn').onclick = function() {
+            var itemId = parseInt(document.getElementById('assignItemId').value);
+            var memberId = parseInt(document.getElementById('assignItemMember').value);
+            if (!itemId || !memberId) { toast('Select a member', true); return; }
+            var btn = document.getElementById('assignItemConfirmBtn');
+            btn.disabled = true; btn.textContent = 'Assigning…';
+            fetch('/api/crews/' + crewId + '/vault/assign-item', {
+                method: 'POST', headers: authHeaders,
+                body: JSON.stringify({ item_id: itemId, player_id: memberId })
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                btn.disabled = false; btn.textContent = 'Assign';
+                if (d.error) { toast('Error: ' + d.error, true); return; }
+                toast('🎁 Item assigned!');
+                closeModal('assignItemModal');
+                loadVault();
+            }).catch(function() { btn.disabled = false; btn.textContent = 'Assign'; toast('Network error', true); });
+        };
+
+        // ── Notifications ─────────────────────────────────────────────
+        (function() {
+            var headers = { 'Authorization': 'Bearer ' + token };
+            var currentNotifId = null;
+            function dismiss() {
+                document.getElementById('notifPopup').style.display = 'none';
+                document.getElementById('notifPopupOverlay').style.display = 'none';
+                if (!currentNotifId) return;
+                fetch('/api/notifications/' + currentNotifId + '/dismiss', { method: 'POST', headers: headers }).catch(function(){});
+            }
+            document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+            document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+            document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+            fetch('/api/notifications/active', { headers: headers })
+                .then(function(r){ return r.json(); })
+                .then(function(d) {
+                    if (!d.notification) return;
+                    currentNotifId = d.notification.id;
+                    document.getElementById('notifPopupTitle').textContent = d.notification.title;
+                    document.getElementById('notifPopupMsg').textContent = d.notification.message;
+                    document.getElementById('notifPopup').style.display = 'block';
+                    document.getElementById('notifPopupOverlay').style.display = 'flex';
+                }).catch(function(){});
+        })();
+
+        init();
+    })();
+    </script>
+</body>
+</html>

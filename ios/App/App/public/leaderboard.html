@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Leaderboard — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>        body { padding-top: var(--safe-t); }
+        button { font-family: inherit; cursor: pointer; }
+        a { color: inherit; text-decoration: none; }
+
+        .header-logo span { color: var(--green); }
+        /* ── Page layout ──────────────────────────────────────────────── */
+        .page-wrap {
+            max-width: 640px; margin: 0 auto;
+            padding: 1.25rem 1rem calc(var(--tab-h) + var(--safe-b) + 1.5rem);
+        }
+
+        /* ── Page header ──────────────────────────────────────────────── */
+        .page-header { margin-bottom: 1.25rem; }
+        .page-title { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.2rem; }
+        .page-sub { color: var(--text3); font-size: 0.9rem; }
+
+        /* ── Category tabs (scrollable) ───────────────────────────────── */
+        .tab-outer {
+            margin-bottom: 1.25rem; position: relative;
+        }
+        .tab-outer::after {
+            content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 32px;
+            background: linear-gradient(to right, transparent, var(--bg));
+            pointer-events: none;
+        }
+        .tabs {
+            display: flex; gap: 0.35rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.3rem;
+            overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            flex-shrink: 0; padding: 0.5rem 0.8rem; border-radius: 9px;
+            border: none; background: transparent;
+            color: var(--text3); font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.18s; white-space: nowrap;
+        }
+        .tab:hover { color: var(--text2); }
+        .tab.active {
+            background: var(--surface);
+            color: var(--green);
+            box-shadow: var(--shadow-card);
+        }
+
+        /* ── Category banner ──────────────────────────────────────────── */
+        .cat-banner {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            background: var(--green-bg);
+            border: 1px solid var(--green-border);
+            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-card);
+        }
+        .cat-icon { font-size: 1.25rem; flex-shrink: 0; }
+        .cat-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 0.1rem; }
+        .cat-desc { font-size: 0.77rem; color: var(--text3); }
+
+        /* ── Podium ───────────────────────────────────────────────────── */
+        .podium-section { margin-bottom: 1.5rem; }
+        .podium {
+            display: flex; gap: 0.65rem; align-items: flex-end; justify-content: center;
+        }
+        .podium-slot {
+            flex: 1; max-width: 180px; text-align: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px; padding: 1.1rem 0.6rem 1rem;
+            position: relative; overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+        .podium-slot.rank-1 {
+            border-color: rgba(212,160,23,0.35);
+            background: linear-gradient(160deg, var(--gold-bg), var(--surface));
+            min-height: 175px;
+        }
+        .podium-slot.rank-2 {
+            border-color: rgba(110,117,128,0.3);
+            background: linear-gradient(160deg, var(--silver-bg), var(--surface));
+            min-height: 150px;
+        }
+        .podium-slot.rank-3 {
+            border-color: rgba(160,82,45,0.3);
+            background: linear-gradient(160deg, var(--bronze-bg), var(--surface));
+            min-height: 135px;
+        }
+        [data-theme="dark"] .podium-slot.rank-1 { border-color: rgba(251,191,36,0.28); }
+        [data-theme="dark"] .podium-slot.rank-2 { border-color: rgba(156,163,175,0.22); }
+        [data-theme="dark"] .podium-slot.rank-3 { border-color: rgba(205,124,47,0.22); }
+
+        .podium-slot::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        }
+        .podium-slot.rank-1::before { background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+        .podium-slot.rank-2::before { background: linear-gradient(90deg, transparent, var(--silver), transparent); }
+        .podium-slot.rank-3::before { background: linear-gradient(90deg, transparent, var(--bronze), transparent); }
+
+        .podium-crown { font-size: 1.35rem; margin-bottom: 0.3rem; display: block; }
+        .rank-1 .podium-crown { font-size: 1.55rem; }
+        .podium-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--surface2);
+            border: 2px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; margin: 0 auto 0.5rem; overflow: hidden;
+            font-weight: 700;
+        }
+        .rank-1 .podium-avatar {
+            width: 58px; height: 58px;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 2px var(--gold-bg);
+        }
+        .rank-2 .podium-avatar { border-color: var(--silver); }
+        .rank-3 .podium-avatar { border-color: var(--bronze); }
+        .podium-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .podium-me-ring { box-shadow: 0 0 0 3px var(--green) !important; }
+        .podium-name {
+            font-size: 0.78rem; font-weight: 700; margin-bottom: 0.1rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .rank-1 .podium-name { font-size: 0.85rem; }
+        .podium-level { font-size: 0.65rem; color: var(--text3); margin-bottom: 0.3rem; }
+        .podium-stat {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem; font-weight: 700;
+        }
+        .rank-1 .podium-stat { font-size: 1.35rem; color: var(--gold); }
+        .rank-2 .podium-stat { color: var(--silver); }
+        .rank-3 .podium-stat { color: var(--bronze); }
+        .podium-stat-label { font-size: 0.62rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* ── Player list ──────────────────────────────────────────────── */
+        .list-header {
+            display: grid; grid-template-columns: 44px 1fr auto;
+            gap: 0.65rem; align-items: center;
+            padding: 0 0.5rem 0.5rem;
+            font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em;
+            color: var(--text3); font-weight: 600;
+        }
+        .player-list { display: flex; flex-direction: column; gap: 0.4rem; }
+        .player-row {
+            display: grid; grid-template-columns: 44px 1fr auto;
+            gap: 0.65rem; align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0.7rem 0.8rem;
+            transition: border-color 0.15s;
+            box-shadow: var(--shadow-card);
+        }
+        .player-row:hover { border-color: var(--border2); }
+        .player-row.is-me {
+            background: linear-gradient(135deg, var(--green-bg), var(--surface));
+            border-color: var(--green-border);
+        }
+        .player-row.out-of-top {
+            margin-top: 0.65rem; border-style: dashed;
+            border-color: var(--green-border);
+        }
+        .player-row.rank-gold {
+            border-color: rgba(212,160,23,0.28);
+            background: linear-gradient(135deg, var(--gold-bg), var(--surface));
+        }
+        .player-row.rank-silver { border-color: rgba(110,117,128,0.22); }
+        .player-row.rank-bronze { border-color: rgba(160,82,45,0.2); }
+        [data-theme="dark"] .player-row.rank-gold { border-color: rgba(251,191,36,0.22); }
+
+        /* ── Rank cell ────────────────────────────────────────────────── */
+        .rank-cell {
+            text-align: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.82rem; font-weight: 700; color: var(--text3);
+        }
+        .rank-medal { font-size: 1.05rem; }
+
+        /* ── Player info ──────────────────────────────────────────────── */
+        .player-info { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+        .row-avatar {
+            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700; overflow: hidden;
+        }
+        .row-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .row-avatar.me-ring { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-bg); }
+        .player-text { min-width: 0; }
+        .player-name-row {
+            font-size: 0.88rem; font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: flex; align-items: center; gap: 0.35rem;
+        }
+        .you-chip {
+            font-size: 0.6rem; font-weight: 700;
+            background: var(--green-bg); color: var(--green);
+            border: 1px solid var(--green-border);
+            border-radius: 100px; padding: 0.08rem 0.4rem;
+            text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0;
+        }
+        .player-meta { font-size: 0.72rem; color: var(--text3); margin-top: 0.1rem; }
+        .level-pill {
+            display: inline-flex; align-items: center; gap: 0.15rem;
+            font-size: 0.62rem; color: var(--green);
+            background: var(--green-bg); border: 1px solid var(--green-border);
+            border-radius: 100px; padding: 0.08rem 0.4rem; font-weight: 700; white-space: nowrap;
+        }
+
+        /* ── Stat cell ────────────────────────────────────────────────── */
+        .stat-cell {
+            text-align: right;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+        }
+        .stat-unit { font-size: 0.67rem; color: var(--text3); font-weight: 400; margin-left: 0.1rem; }
+
+        /* ── Divider ──────────────────────────────────────────────────── */
+        .top10-divider {
+            display: flex; align-items: center; gap: 0.65rem;
+            margin: 0.75rem 0 0.5rem;
+            font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.09em;
+            color: var(--text3); font-weight: 600;
+        }
+        .top10-divider::before, .top10-divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border2);
+        }
+
+        /* ── Loading ──────────────────────────────────────────────────── */
+        .loading-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+        /* ── Empty state ──────────────────────────────────────────────── */
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+        .empty-icon { font-size: 3rem; margin-bottom: 0.85rem; display: block; }
+        .empty-sub { font-size: 0.83rem; margin-top: 0.4rem; }
+
+        /* ── Bottom tab bar ───────────────────────────────────────────── */
+        /* ── Responsive ───────────────────────────────────────────────── */
+        @media (max-width: 480px) {
+            .tab { font-size: 0.75rem; padding: 0.45rem 0.65rem; }
+            .list-header { display: none; }
+            .player-row { padding: 0.6rem 0.65rem; }
+            .podium-slot { padding: 0.9rem 0.45rem 0.75rem; }
+            .podium-name { font-size: 0.72rem; }
+        }
+    
+/* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.22s;
+}
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.contact-footer .cf-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.contact-footer .cf-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    transition: all 0.22s;
+}
+.contact-footer .cf-socials a:hover {
+    border-color: var(--green);
+    background: var(--surface);
+    color: var(--green);
+}
+.contact-footer .cf-socials svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.contact-footer .cf-site {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+
+<!-- Top header -->
+<header class="top-header">
+    <a href="/" class="header-logo">
+        <img src="/logo.png?v=3" width="30" height="30" loading="eager" alt="Disc Golf Go logo">
+        Disc Golf <span>Go</span>
+    </a>
+    <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+        <button class="btn-icon" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+    </div>
+</header>
+
+<div class="page-wrap">
+    <div class="page-header">
+        <h1 class="page-title">🏆 Leaderboard</h1>
+        <p class="page-sub">Top players across every stat. Where do you rank?</p>
+    </div>
+
+    <div class="tab-outer">
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-cat="overall">⭐ Overall</button>
+            <button class="tab" data-cat="checkins">📍 Check-ins</button>
+            <button class="tab" data-cat="rounds">🔄 Rounds</button>
+            <button class="tab" data-cat="birdies">🐦 Birdies</button>
+            <button class="tab" data-cat="aces">🎯 Aces</button>
+            <button class="tab" data-cat="challenges">⚔️ Quests</button>
+            <button class="tab" data-cat="battles">🥊 Battles</button>
+            <button class="tab" data-cat="courses">🗺️ Courses</button>
+            <button class="tab" data-cat="streak">🔥 Streak</button>
+        </div>
+    </div>
+
+    <div id="lb-content"></div>
+</div>
+
+
+<!-- Contact mini-footer -->
+<div class="contact-footer">
+    <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+    <div class="cf-socials">
+        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+
+        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+    </div>
+    <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+</div>
+<footer class="page-footer">
+    <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
+</footer>
+
+<!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+<script>
+// ── Dark mode toggle ──────────────────────────────────────────────────────────
+(function() {
+    var btn = document.getElementById('themeToggle');
+    function update() {
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        btn.textContent = dark ? '☀️' : '🌙';
+    }
+    update();
+    btn.addEventListener('click', function() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        var next = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        update();
+    });
+})();
+</script>
+
+<script>
+// ── Auth helpers ─────────────────────────────────────────────────────────────
+function getAuthHeaders() {
+    const token = localStorage.getItem('token') || localStorage.getItem('dggo_token');
+    const h = {};
+    if (token) { h['Authorization'] = 'Bearer ' + token; }
+    else {
+        const uuid = localStorage.getItem('dggo_player_uuid');
+        if (uuid) h['X-Player-Id'] = uuid;
+    }
+    return h;
+}
+
+// ── Level helpers ─────────────────────────────────────────────────────────────
+function getLevelTitle(lvl) {
+    if (lvl < 5) return { icon: '🥏', title: 'Rookie' };
+    if (lvl < 10) return { icon: '⛳', title: 'Amateur' };
+    if (lvl < 15) return { icon: '🎯', title: 'Intermediate' };
+    if (lvl < 25) return { icon: '🏅', title: 'Advanced' };
+    if (lvl < 40) return { icon: '🥇', title: 'Pro' };
+    if (lvl < 60) return { icon: '👑', title: 'Legend' };
+    return { icon: '🐐', title: 'GOAT' };
+}
+
+function initials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+}
+
+// ── Category metadata ─────────────────────────────────────────────────────────
+const CAT_META = {
+    overall:    { icon: '⭐', title: 'Overall XP',         desc: 'Total experience points earned across everything', unit: 'XP', fmt: n => Number(n).toLocaleString() },
+    checkins:   { icon: '📍', title: 'Most Check-ins',     desc: 'Total course check-ins logged', unit: 'check-ins', fmt: n => n },
+    rounds:     { icon: '🔄', title: 'Rounds Completed',   desc: 'Full rounds finished on the scorecard', unit: 'rounds', fmt: n => n },
+    birdies:    { icon: '🐦', title: 'Most Birdies',       desc: 'Holes finished one stroke under par', unit: 'birdies', fmt: n => n },
+    aces:       { icon: '🎯', title: 'Most Aces',          desc: 'Holes-in-one — the rarest shot in disc golf', unit: 'aces', fmt: n => n },
+    challenges: { icon: '⚔️', title: 'Quests Done',   desc: 'Daily, weekly, monthly and all-time quests completed', unit: 'done', fmt: n => n },
+    battles:    { icon: '🥊', title: 'Battle Wins',        desc: 'Head-to-head PvP victories', unit: 'wins', fmt: n => n },
+    courses:    { icon: '🗺️', title: 'Courses Explored',  desc: 'Unique disc golf courses visited', unit: 'courses', fmt: n => n },
+    streak:     { icon: '🔥', title: 'Best Streak',        desc: 'Longest consecutive login streak ever achieved', unit: 'days', fmt: n => n },
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let activeCategory = 'overall';
+let cache = {};
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+async function loadCategory(cat) {
+    if (cache[cat]) return cache[cat];
+    const res = await fetch('/api/leaderboard?category=' + cat, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error('Failed');
+    const data = await res.json();
+    cache[cat] = data;
+    return data;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function avatarHTML(p, cls) {
+    const me = cls || '';
+    if (p.profile_photo_url) {
+        return `<div class="row-avatar ${me}"><img src="${escHtml(p.profile_photo_url)}" alt=""></div>`;
+    }
+    return `<div class="row-avatar ${me}">${escHtml(initials(p.display_name))}</div>`;
+}
+
+function podiumAvatarHTML(p, isMe) {
+    const ring = isMe ? ' podium-me-ring' : '';
+    if (p.profile_photo_url) {
+        return `<div class="podium-avatar${ring}"><img src="${escHtml(p.profile_photo_url)}" alt=""></div>`;
+    }
+    return `<div class="podium-avatar${ring}">${escHtml(initials(p.display_name))}</div>`;
+}
+
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderPodium(players, meta) {
+    const top3 = players.filter(p => p.rank <= 3 && !p.out_of_top).slice(0, 3);
+    if (top3.length < 2) return ''; // not enough for podium
+
+    // Reorder: 2, 1, 3
+    const order = [top3[1], top3[0], top3[2]].filter(Boolean);
+    const crowns = ['🥈', '🥇', '🥉'];
+    const rankClasses = ['rank-2', 'rank-1', 'rank-3'];
+
+    const slots = order.map((p, i) => {
+        const rankClass = rankClasses[i];
+        const crown = crowns[i];
+        const lt = getLevelTitle(p.level || 1);
+        const statFmt = meta.fmt(p.stat_value);
+        return `
+            <div class="podium-slot ${rankClass}">
+                <span class="podium-crown">${crown}</span>
+                ${podiumAvatarHTML(p, p.is_me)}
+                <div class="podium-name">${escHtml(p.display_name)}${p.is_me ? ' 👈' : ''}</div>
+                <div class="podium-level">${escHtml(lt.icon)} Lv.${p.level || 1}</div>
+                <div class="podium-stat">${statFmt}</div>
+                <div class="podium-stat-label">${meta.unit}</div>
+            </div>`;
+    });
+
+    return `<div class="podium-section"><div class="podium">${slots.join('')}</div></div>`;
+}
+
+function renderList(players, meta) {
+    if (!players || players.length === 0) {
+        return `<div class="empty-state"><span class="empty-icon">🥏</span><div>No players yet in this category.</div><div class="empty-sub">Be the first! Go play some disc golf.</div></div>`;
+    }
+
+    const top100 = players.filter(p => !p.out_of_top);
+    const myRow  = players.find(p => p.out_of_top);
+
+    const rankMedal = r => {
+        if (r === 1) return `<span class="rank-medal">🥇</span>`;
+        if (r === 2) return `<span class="rank-medal">🥈</span>`;
+        if (r === 3) return `<span class="rank-medal">🥉</span>`;
+        return `<span>#${r}</span>`;
+    };
+
+    const rankRowClass = r => {
+        if (r === 1) return ' rank-gold';
+        if (r === 2) return ' rank-silver';
+        if (r === 3) return ' rank-bronze';
+        return '';
+    };
+
+    const renderRow = p => {
+        const lt = getLevelTitle(p.level || 1);
+        const meClass = p.is_me ? ' is-me' : '';
+        const otClass = p.out_of_top ? ' out-of-top' : '';
+        const avMe = p.is_me ? 'me-ring' : '';
+        const statFmt = meta.fmt(p.stat_value);
+
+        return `
+            <div class="player-row${meClass}${otClass}${rankRowClass(p.rank)}">
+                <div class="rank-cell">${rankMedal(p.rank)}</div>
+                <div class="player-info">
+                    ${avatarHTML(p, avMe)}
+                    <div class="player-text">
+                        <div class="player-name-row">
+                            ${escHtml(p.display_name)}
+                            ${p.is_me ? '<span class="you-chip">You</span>' : ''}
+                        </div>
+                        <div class="player-meta">
+                            <span class="level-pill">${escHtml(lt.icon)} Lv.${p.level || 1} ${escHtml(lt.title)}</span>
+                            ${p.username ? ' &nbsp;<span style="color:var(--text3);">@' + escHtml(p.username) + '</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-cell">${statFmt}<span class="stat-unit">${meta.unit}</span></div>
+            </div>`;
+    };
+
+    // Split top 10 and the rest
+    const first10 = top100.filter(p => p.rank <= 10);
+    const rest    = top100.filter(p => p.rank > 10);
+
+    let html = `<div class="list-header"><div>Rank</div><div>Player</div><div>Stat</div></div>`;
+    html += `<div class="player-list">`;
+    html += first10.map(renderRow).join('');
+    if (rest.length > 0) {
+        html += `<div class="top10-divider">Positions 11+</div>`;
+        html += rest.map(renderRow).join('');
+    }
+    if (myRow) {
+        html += renderRow(myRow);
+    }
+    html += `</div>`;
+    return html;
+}
+
+async function render(cat) {
+    const content = document.getElementById('lb-content');
+    content.style.display = 'block';
+
+    let data;
+    try {
+        data = await loadCategory(cat);
+    } catch {
+        loading.style.display = 'none';
+        content.style.display = 'block';
+        content.innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><div>Failed to load leaderboard. Try refreshing.</div></div>`;
+        return;
+    }
+
+    const meta = CAT_META[cat] || CAT_META.overall;
+    const players = data.players || [];
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+
+    let html = `
+        <div class="cat-banner">
+            <span class="cat-icon">${meta.icon}</span>
+            <div>
+                <div class="cat-title">${meta.title}</div>
+                <div class="cat-desc">${meta.desc}</div>
+            </div>
+        </div>`;
+
+    html += renderPodium(players, meta);
+    html += renderList(players, meta);
+
+    content.innerHTML = html;
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+document.getElementById('tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeCategory = tab.dataset.cat;
+    render(activeCategory);
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+render(activeCategory).then(() => {
+    // If arriving from "See where you stand" link, scroll to the current user's row
+    if (new URLSearchParams(window.location.search).get('highlight') === 'me') {
+        requestAnimationFrame(() => {
+            var meRow = document.querySelector('.player-row.is-me, .player-row.out-of-top');
+            if (meRow) {
+                meRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                meRow.style.outline = '2px solid var(--green)';
+                meRow.style.outlineOffset = '2px';
+                setTimeout(function() { meRow.style.outline = ''; meRow.style.outlineOffset = ''; }, 2000);
+            }
+        });
+    }
+});
+</script>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+  var currentNotifId = null;
+  function dismiss() {
+    document.getElementById('notifPopup').style.display='none';
+    document.getElementById('notifPopupOverlay').style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+  document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+  document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+  fetch('/api/notifications/active', { headers: headers })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.notification) return;
+      currentNotifId = d.notification.id;
+      document.getElementById('notifPopupTitle').textContent = d.notification.title;
+      document.getElementById('notifPopupMsg').textContent = d.notification.message;
+      document.getElementById('notifPopup').style.display = 'block';
+      document.getElementById('notifPopupOverlay').style.display = 'flex';
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>
