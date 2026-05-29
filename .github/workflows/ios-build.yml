@@ -196,6 +196,13 @@ jobs:
           </plist>
           EOF
 
+      # ── 6b. Configure App signing for distribution ───────────────────────
+      - name: Configure App signing
+        run: |
+          # Switch App target to manual signing (Pods stay Automatic)
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = ""/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_UUID"'"/' ios/App/App.xcodeproj/project.pbxproj
+
       # ── 7. Build Xcode archive ────────────────────────────────────────────
       - name: Build Xcode Archive
         env:
