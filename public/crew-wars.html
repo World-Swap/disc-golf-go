@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Crew Wars — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+    <style>
+body { padding-bottom: 0; }        .back-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--surface);
+            color: var(--text2); font-size: 1.1rem; text-decoration: none; flex-shrink: 0;
+        }
+        .header-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; flex: 1; }
+        .notif-btn {
+            position: relative; width: 36px; height: 36px;
+            border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
+            color: var(--text2); font-size: 1.1rem; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .notif-dot {
+            position: absolute; top: 6px; right: 6px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--red); border: 1.5px solid var(--bg2);
+        }
+        .notif-badge {
+            position: absolute; top: 4px; right: 4px;
+            background: var(--red); color: white;
+            font-size: 0.6rem; font-weight: 700;
+            min-width: 14px; height: 14px;
+            border-radius: 7px; display: flex; align-items: center; justify-content: center;
+            padding: 0 2px; border: 1.5px solid var(--bg2);
+        }
+
+        main { padding: 1rem 1.25rem 1.25rem; max-width: 480px; margin: 0 auto; }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 0.25rem; background: var(--surface2);
+            border-radius: 12px; padding: 0.3rem;
+            margin-bottom: 1.25rem; border: 1px solid var(--border);
+        }
+        .tab-btn {
+            flex: 1; padding: 0.55rem 0.5rem; border: none; background: transparent;
+            border-radius: 9px; font-size: 0.8rem; font-weight: 600;
+            color: var(--text3); cursor: pointer; transition: var(--transition);
+            font-family: inherit; position: relative;
+        }
+        .tab-btn.active {
+            background: var(--surface); color: var(--green);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Section chips */
+        .section-chip {
+            font-size: 0.72rem; font-weight: 700; color: var(--text3);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 0.75rem; padding-left: 0.1rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        /* Cards */
+        .war-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.15rem 1.1rem;
+            margin-bottom: 0.9rem;
+            position: relative; overflow: hidden;
+        }
+        .war-card.active-war { border-color: rgba(60,168,60,0.3); }
+        .war-card.active-war::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+            pointer-events: none;
+        }
+        .war-card.pending-war { border-color: rgba(224,165,0,0.3); }
+        .war-card.pending-war::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            pointer-events: none;
+        }
+        .war-card.open-war { border-color: rgba(107,154,240,0.3); }
+        .war-card.open-war::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--diamond), transparent);
+            pointer-events: none;
+        }
+        .war-card.won-war::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+            pointer-events: none;
+        }
+        .war-card.lost-war::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--red), transparent);
+            pointer-events: none;
+        }
+        .war-card.my-posted { border-color: rgba(107,154,240,0.25); }
+
+        .war-header {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+        .war-crews {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.88rem; font-weight: 700; flex: 1; flex-wrap: wrap;
+        }
+        .crew-name { color: var(--green); }
+        .vs-badge {
+            font-size: 0.65rem; font-weight: 800; color: var(--text3);
+            background: var(--surface2); border: 1px solid var(--border);
+            padding: 0.15rem 0.4rem; border-radius: 4px; letter-spacing: 0.04em;
+        }
+        .opp-crew-name { color: var(--text); }
+        .open-crew-label { color: var(--diamond); font-size: 0.75rem; }
+
+        .war-status-pill {
+            font-size: 0.68rem; font-weight: 700; padding: 0.22rem 0.6rem;
+            border-radius: 20px; letter-spacing: 0.03em; flex-shrink: 0;
+        }
+        .pill-active { background: rgba(60,168,60,0.15); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+        .pill-pending { background: rgba(224,165,0,0.15); color: var(--gold); border: 1px solid rgba(224,165,0,0.25); }
+        .pill-open { background: rgba(107,154,240,0.15); color: var(--diamond); border: 1px solid rgba(107,154,240,0.25); }
+        .pill-won { background: rgba(60,168,60,0.15); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+        .pill-lost { background: rgba(224,64,64,0.15); color: var(--red); border: 1px solid rgba(224,64,64,0.25); }
+        .pill-draw { background: rgba(138,138,134,0.15); color: var(--text3); border: 1px solid var(--border); }
+        .pill-type {
+            background: rgba(107,154,240,0.1); color: var(--diamond);
+            border: 1px solid rgba(107,154,240,0.2);
+        }
+
+        .war-course {
+            font-size: 0.78rem; color: var(--text3); margin-bottom: 0.75rem;
+            display: flex; align-items: center; gap: 0.3rem;
+        }
+
+        /* Score comparison row */
+        .score-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .score-side {
+            flex: 1; text-align: center;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 0.5rem;
+        }
+        .score-side.winning { border-color: rgba(60,168,60,0.35); background: rgba(60,168,60,0.07); }
+        .score-side.losing { border-color: rgba(224,64,64,0.25); background: rgba(224,64,64,0.05); }
+        .score-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.35rem; font-weight: 700; line-height: 1;
+            color: var(--text);
+        }
+        .score-label { font-size: 0.65rem; color: var(--text3); margin-top: 0.15rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .score-players { font-size: 0.7rem; color: var(--text3); margin-top: 0.2rem; }
+
+        .vs-divider { font-size: 0.75rem; font-weight: 800; color: var(--text3); flex-shrink: 0; }
+
+        .war-meta {
+            display: flex; gap: 0.5rem; font-size: 0.74rem; color: var(--text3);
+            flex-wrap: wrap;
+        }
+        .war-meta span { display: flex; align-items: center; gap: 0.25rem; }
+
+        /* Timer */
+        .timer-row {
+            background: rgba(60,168,60,0.07); border: 1px solid rgba(60,168,60,0.2);
+            border-radius: 8px; padding: 0.4rem 0.7rem;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+        .timer-label { font-size: 0.7rem; color: var(--text3); font-weight: 600; }
+        .timer-val { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--green); }
+
+        /* Action buttons */
+        .war-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .btn {
+            flex: 1; padding: 0.65rem; border: none; border-radius: 10px;
+            font-size: 0.83rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: var(--transition);
+        }
+        .btn-accept { background: var(--green); color: white; }
+        .btn-accept:hover { filter: brightness(1.1); }
+        .btn-join { background: var(--diamond); color: white; }
+        .btn-join:hover { filter: brightness(1.1); }
+        .btn-decline { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+        .btn-decline:hover { background: var(--border2); }
+        .btn-cancel { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+        .btn-cancel:hover { background: var(--border2); }
+        .btn-view { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); flex: none; padding: 0.65rem 0.9rem; }
+        .btn-challenge {
+            width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #3ca83c, #7ed957);
+            color: white; border: none; border-radius: 12px;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: var(--transition);
+            margin-bottom: 1.25rem;
+        }
+        .btn-challenge:hover { filter: brightness(1.07); }
+        .btn-challenge:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+        /* Empty states */
+        .empty-state {
+            text-align: center; padding: 2.5rem 1rem; color: var(--text3);
+        }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-title { font-size: 1rem; font-weight: 700; color: var(--text2); margin-bottom: 0.4rem; }
+        .empty-desc { font-size: 0.82rem; line-height: 1.5; }
+
+        /* Modal overlay */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: var(--bg2); border-radius: 20px 20px 0 0;
+            padding: 1.5rem 1.5rem calc(1.5rem + var(--safe-b));
+            width: 100%; max-width: 480px;
+            transform: translateY(30px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .modal-overlay.open .modal { transform: translateY(0); }
+        .modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 1.25rem; }
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            width: 30px; height: 30px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--surface);
+            color: var(--text3); font-size: 0.9rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-family: inherit;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text2); margin-bottom: 0.4rem; }
+        .form-input, .form-select {
+            width: 100%; padding: 0.75rem 0.9rem;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 10px; color: var(--text); font-size: 0.88rem;
+            font-family: inherit; outline: none; transition: border-color var(--transition);
+        }
+        .form-input:focus, .form-select:focus { border-color: var(--green); }
+        .form-select option { background: var(--surface); }
+        .form-hint { font-size: 0.72rem; color: var(--text3); margin-top: 0.25rem; }
+
+        .crew-search-results {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; margin-top: 0.25rem; overflow: hidden;
+            max-height: 180px; overflow-y: auto; display: none; position: absolute;
+            width: calc(100% - 0px); z-index: 10;
+            box-shadow: var(--shadow-lg);
+        }
+        .crew-result-item {
+            padding: 0.7rem 0.9rem; cursor: pointer; font-size: 0.85rem;
+            border-bottom: 1px solid var(--border); transition: background var(--transition);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .crew-result-item:last-child { border-bottom: none; }
+        .crew-result-item:hover { background: var(--border); }
+        .crew-result-name { font-weight: 600; }
+        .crew-result-meta { font-size: 0.72rem; color: var(--text3); }
+        .duration-pills { display: flex; gap: 0.5rem; }
+        .duration-pill {
+            flex: 1; padding: 0.6rem; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            text-align: center; font-family: inherit; color: var(--text2);
+            transition: var(--transition);
+        }
+        .duration-pill.selected { background: rgba(60,168,60,0.12); border-color: var(--green); color: var(--green); }
+        .gold-cost-note {
+            font-size: 0.76rem; color: var(--gold); display: flex; align-items: center;
+            gap: 0.3rem; margin-bottom: 1rem;
+        }
+        .btn-submit-challenge {
+            width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #3ca83c, #7ed957);
+            color: white; border: none; border-radius: 12px;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: var(--transition);
+        }
+        .btn-submit-challenge:hover { filter: brightness(1.07); }
+        .btn-submit-challenge:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+        /* Challenge type toggle */
+        .challenge-type-toggle {
+            display: flex; gap: 0.5rem; margin-bottom: 1.25rem;
+        }
+        .type-option {
+            flex: 1; padding: 0.75rem; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 10px;
+            cursor: pointer; font-family: inherit; text-align: center;
+            transition: var(--transition);
+        }
+        .type-option:hover { border-color: var(--green); }
+        .type-option.selected { background: rgba(60,168,60,0.1); border-color: var(--green); }
+        .type-option-icon { font-size: 1.3rem; display: block; margin-bottom: 0.25rem; }
+        .type-option-label { font-size: 0.82rem; font-weight: 700; color: var(--text2); display: block; }
+        .type-option.selected .type-option-label { color: var(--green); }
+        .type-option-desc { font-size: 0.7rem; color: var(--text3); margin-top: 0.15rem; display: block; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 1rem); left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--text); color: var(--bg); padding: 0.65rem 1.2rem;
+            border-radius: 20px; font-size: 0.83rem; font-weight: 600;
+            opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 300;
+            white-space: nowrap; max-width: 90vw;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Result badge */
+        .result-badge {
+            font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem;
+            border-radius: 20px;
+        }
+        .badge-won { background: rgba(60,168,60,0.15); color: var(--green); }
+        .badge-lost { background: rgba(224,64,64,0.15); color: var(--red); }
+        .badge-draw { background: rgba(138,138,134,0.12); color: var(--text3); }
+        .badge-declined { background: rgba(138,138,134,0.12); color: var(--text3); }
+
+        /* Layout picker */
+        .layout-picker-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .layout-pill {
+            padding: 0.5rem 0.8rem; background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+            font-family: inherit; color: var(--text2); transition: var(--transition);
+        }
+        .layout-pill:hover { border-color: var(--green); color: var(--green); }
+        .layout-pill.selected { background: rgba(60,168,60,0.12); border-color: var(--green); color: var(--green); }
+
+        /* Deferred start row */
+        .deferred-toggle {
+            display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;
+            font-size: 0.8rem; font-weight: 600; color: var(--text2); cursor: pointer;
+        }
+        .deferred-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); }
+        .deferred-row { display: none; }
+
+        /* Hole count picker */
+        .hole-picker { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .hole-pill {
+            padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+            font-family: inherit; color: var(--text2); transition: var(--transition);
+            text-align: center; min-width: 70px;
+        }
+        .hole-pill:hover { border-color: var(--green); color: var(--green); }
+        .hole-pill.selected { background: rgba(60,168,60,0.12); border-color: var(--green); color: var(--green); }
+        .hole-placeholder { font-size: 0.82rem; color: var(--text3); padding: 0.3rem 0; }
+
+        /* Notifications panel */
+        .notif-panel {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; box-shadow: var(--shadow-modal);
+            margin-bottom: 1rem; overflow: hidden;
+        }
+        .notif-item {
+            padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--border);
+            display: flex; align-items: flex-start; gap: 0.75rem;
+            cursor: pointer; transition: background var(--transition);
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: var(--surface2); }
+        .notif-item.unread { background: rgba(60,168,60,0.04); }
+        .notif-icon { font-size: 1.2rem; flex-shrink: 0; width: 28px; text-align: center; }
+        .notif-content { flex: 1; }
+        .notif-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--text); }
+        .notif-time { font-size: 0.7rem; color: var(--text3); margin-top: 0.3rem; }
+    </style>
+</head>
+<body>
+
+<header class="top-header">
+    <a href="/crew/me" class="back-btn">←</a>
+    <span class="header-title">⚔️ Crew Wars</span>
+    <button class="notif-btn" id="notifBtn" onclick="openNotifications()" style="display:none">
+        🔔
+        <span class="notif-dot" id="notifDot" style="display:none"></span>
+    </button>
+</header>
+
+<main>
+    <!-- Notifications overlay -->
+    <div class="modal-overlay" id="notifModal" onclick="closeNotifications(event)">
+        <div class="modal" style="position:relative;max-height:70vh;overflow-y:auto">
+            <button class="modal-close" onclick="closeNotifications()">✕</button>
+            <div class="modal-title">🔔 Crew Notifications</div>
+            <div id="notifList">
+                <div class="empty-state" style="padding:1.5rem"><div class="empty-desc">No notifications yet</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Challenge button (boss/manager only) -->
+    <button class="btn-challenge" id="challengeBtn" style="display:none" onclick="openChallengeModal()">
+        ⚔️ Challenge Another Crew
+    </button>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('active')">Active</button>
+        <button class="tab-btn" onclick="switchTab('pending')" id="pendingTabBtn">
+            Pending
+            <span class="tab-badge" id="pendingBadge" style="display:none">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('open')" id="openTabBtn">
+            Open
+            <span class="tab-badge" id="openBadge" style="display:none">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('history')">History</button>
+    </div>
+
+    <!-- Active Wars tab -->
+    <div class="tab-panel active" id="panel-active">
+        <div id="activeWarsContainer">
+            <div class="empty-state"><div class="empty-icon">⚔️</div><div class="empty-title">No Active Wars</div><div class="empty-desc">Challenge another crew to start a war. Play a round at the agreed course to score points for your crew.</div></div>
+        </div>
+    </div>
+
+    <!-- Pending tab -->
+    <div class="tab-panel" id="panel-pending">
+        <div class="section-chip" id="pendingSectionLabel" style="display:none">Incoming Challenges</div>
+        <div id="pendingWarsContainer">
+            <div class="empty-state"><div class="empty-icon">📬</div><div class="empty-title">No Pending Challenges</div><div class="empty-desc">No incoming crew war challenges right now.</div></div>
+        </div>
+        <div class="section-chip" id="myPostedLabel" style="display:none;margin-top:1.5rem">My Posted Challenges</div>
+        <div id="myPostedContainer" style="display:none"></div>
+    </div>
+
+    <!-- Open Challenges tab -->
+    <div class="tab-panel" id="panel-open">
+        <div class="section-chip">Open Challenges — Join to start a war!</div>
+        <div id="openWarsContainer">
+            <div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">No Open Challenges</div><div class="empty-desc">No crews have posted open challenges right now. Post your own to invite any crew to battle!</div></div>
+        </div>
+    </div>
+
+    <!-- History tab -->
+    <div class="tab-panel" id="panel-history">
+        <div id="historyWarsContainer">
+            <div class="empty-state"><div class="empty-icon">📜</div><div class="empty-title">No War History</div><div class="empty-desc">Completed wars will appear here.</div></div>
+        </div>
+        <div id="historyLoadMoreContainer" style="display:none;padding:1rem 0;text-align:center;">
+            <button id="historyLoadMoreBtn" class="tab-btn" onclick="loadHistoryMore()" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:10px 24px;font-size:0.8rem;font-weight:600;color:var(--text2);cursor:pointer;">Load more</button>
+        </div>
+    </div>
+</main>
+
+<!-- Challenge Modal -->
+<div class="modal-overlay" id="challengeModal" onclick="closeChallengeModal(event)">
+    <div class="modal" style="position:relative">
+        <button class="modal-close" onclick="closeChallengeModal()">✕</button>
+        <div class="modal-title">⚔️ Challenge a Crew</div>
+
+        <!-- Challenge type toggle -->
+        <div class="challenge-type-toggle" id="challengeTypeToggle">
+            <button class="type-option selected" id="typeTarget" onclick="selectChallengeType('target')">
+                <span class="type-option-icon">🎯</span>
+                <span class="type-option-label">Target Crew</span>
+                <span class="type-option-desc">Pick a specific crew to battle</span>
+            </button>
+            <button class="type-option" id="typeOpen" onclick="selectChallengeType('open')">
+                <span class="type-option-icon">🌐</span>
+                <span class="type-option-label">Open Challenge</span>
+                <span class="type-option-desc">Any crew can join</span>
+            </button>
+        </div>
+        <input type="hidden" id="challengeType" value="target">
+
+        <!-- Target crew search (hidden for open challenges) -->
+        <div class="form-group" id="targetCrewGroup">
+            <label class="form-label">Target Crew</label>
+            <div style="position:relative">
+                <input type="text" class="form-input" id="crewSearchInput" placeholder="Search crews..." autocomplete="off" oninput="searchCrews(this.value)">
+                <div class="crew-search-results" id="crewSearchResults"></div>
+            </div>
+            <input type="hidden" id="selectedCrewId">
+        </div>
+
+        <!-- Course search -->
+        <div class="form-group">
+            <label class="form-label">Course</label>
+            <div style="position:relative">
+                <input type="text" class="form-input" id="courseSearchInput" placeholder="Search courses..." autocomplete="off" oninput="searchCourses(this.value)">
+                <div class="crew-search-results" id="courseSearchResults"></div>
+            </div>
+            <input type="hidden" id="selectedCourseId">
+        </div>
+
+        <!-- Layout picker -->
+        <div class="form-group" id="layoutPickerGroup" style="display:none">
+            <label class="form-label">Layout <span id="layoutHint" style="font-weight:400;color:var(--text3);margin-left:0.3rem"></span></label>
+            <select class="form-select" id="layoutSelect" onchange="selectLayout(this.value)">
+                <option value="">Loading…</option>
+            </select>
+            <input type="hidden" id="selectedLayoutId">
+        </div>
+
+        <!-- Hole count picker -->
+        <div class="form-group" id="holeCountGroup" style="display:none">
+            <label class="form-label">Hole Count</label>
+            <div class="hole-picker" id="holePicker">
+                <div class="hole-placeholder">Select a layout to see hole count options</div>
+            </div>
+            <input type="hidden" id="selectedHolesCount">
+        </div>
+
+        <!-- Duration: target challenges (24/48/72h) -->
+        <div class="form-group" id="targetDurationGroup">
+            <label class="form-label">War Duration</label>
+            <div class="duration-pills">
+                <button class="duration-pill" onclick="selectDuration(24, this)">24h</button>
+                <button class="duration-pill selected" onclick="selectDuration(48, this)">48h</button>
+                <button class="duration-pill" onclick="selectDuration(72, this)">72h</button>
+            </div>
+            <input type="hidden" id="selectedDuration" value="48">
+        </div>
+
+        <!-- Duration: open challenges (72h/1w/1m) -->
+        <div class="form-group" id="openDurationGroup" style="display:none">
+            <label class="form-label">Window Duration <span class="form-hint">— timer starts when someone joins</span></label>
+            <div class="duration-pills">
+                <button class="duration-pill" onclick="selectWindowDuration(72, this)">72h</button>
+                <button class="duration-pill selected" onclick="selectWindowDuration(168, this)">1 Week</button>
+                <button class="duration-pill" onclick="selectWindowDuration(720, this)">1 Month</button>
+            </div>
+            <input type="hidden" id="selectedWindowDuration" value="168">
+        </div>
+
+        <!-- Deferred start (target challenges only) -->
+        <div class="form-group" id="deferredGroup" style="display:none">
+            <label class="deferred-toggle">
+                <input type="checkbox" id="useDeferredStart" onchange="toggleDeferredStart()">
+                <span>⏰ Schedule a start time (optional)</span>
+            </label>
+            <div class="deferred-row" id="deferredRow">
+                <label class="form-label">War starts at</label>
+                <input type="datetime-local" class="form-input" id="scheduledStart" min="">
+            </div>
+        </div>
+
+        <div class="gold-cost-note">🏆 Free to enter · Winner earns 200 gold + item reward</div>
+
+        <button class="btn-submit-challenge" id="submitChallengeBtn" onclick="submitChallenge()">
+            ⚔️ Send Challenge
+        </button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Bottom Tab Bar -->
+<nav id="bottomNav"></nav>
+
+<script>
+const TOKEN = localStorage.getItem('dggo_token');
+if (!TOKEN) window.location.href = '/login';
+
+let myCrewId = null;
+let myRole = null;
+let unreadNotifCount = 0;
+let historyCursor = null;  // cursor for history pagination
+let historyHasMore = false;
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        const tabs = ['active', 'pending', 'open', 'history'];
+        b.classList.toggle('active', tabs[i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.toggle('active', p.id === 'panel-' + name);
+    });
+}
+
+function showToast(msg, dur = 2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur);
+}
+
+async function apiGet(path) {
+    const r = await fetch(path, { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    return r.json();
+}
+async function apiPost(path, body) {
+    const r = await fetch(path, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    // Gracefully handle non-2xx responses — return error object so callers
+    // that check data.error continue to work as before.
+    if (!r.ok) {
+        let msg = 'Request failed (' + r.status + ')';
+        try { const j = await r.json(); msg = j.error || msg; } catch { /* not JSON */ }
+        return { error: msg };
+    }
+    return r.json();
+}
+async function apiPatch(path) {
+    const r = await fetch(path, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    return r.json();
+}
+
+function scoreLabel(n) {
+    const num = parseInt(n) || 0;
+    if (num === 0) return 'E';
+    return num > 0 ? '+' + num : '' + num;
+}
+
+function renderActiveWar(war) {
+    const myScore = war.my_combined_score || 0;
+    const oppScore = war.opp_combined_score || 0;
+    const myCount = war.my_player_count || 0;
+    const oppCount = war.opp_player_count || 0;
+    const isChallenger = war.challenging_crew_id === war.my_crew_id;
+    const myCrew = isChallenger ? war.challenger_crew_name : war.defending_crew_name;
+    const oppCrew = isChallenger ? war.defending_crew_name : war.challenger_crew_name;
+    const myLogo = isChallenger ? war.challenger_crew_logo_url : war.defending_crew_logo_url;
+    const oppLogo = isChallenger ? war.defending_crew_logo_url : war.challenger_crew_logo_url;
+    const myWinning = myCount > 0 && (oppCount === 0 || myScore < oppScore);
+    const oppWinning = oppCount > 0 && (myCount === 0 || oppScore < myScore);
+
+    return `<div class="war-card active-war" data-war-id="${war.id}">
+        <div class="war-header">
+            <div class="war-crews">
+                ${crewLogoHtml(myLogo, myCrew)}
+                <span class="crew-name">${esc(myCrew)}</span>
+                <span class="vs-badge">VS</span>
+                <span class="opp-crew-name">${esc(oppCrew)}</span>
+                ${crewLogoHtml(oppLogo, oppCrew)}
+            </div>
+            <span class="war-status-pill pill-active">LIVE</span>
+        </div>
+        <div class="war-course">📍 ${esc(war.course_name || 'Unknown Course')}${war.course_city ? ', ' + esc(war.course_city) : ''}</div>
+        <div class="timer-row">
+            <span class="timer-label">⏱ Time Remaining</span>
+            <span class="timer-val">${esc(war.time_remaining)}</span>
+        </div>
+        <div class="score-row">
+            <div class="score-side${myWinning ? ' winning' : oppWinning ? ' losing' : ''}">
+                <div class="score-num">${scoreLabel(myScore)}</div>
+                <div class="score-label">Your Crew</div>
+                <div class="score-players">${myCount} player${myCount !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="vs-divider">VS</div>
+            <div class="score-side${oppWinning ? ' winning' : myWinning ? ' losing' : ''}">
+                <div class="score-num">${scoreLabel(oppScore)}</div>
+                <div class="score-label">Opponent</div>
+                <div class="score-players">${oppCount} player${oppCount !== 1 ? 's' : ''}</div>
+            </div>
+        </div>
+        <div class="war-meta">
+            <span>⏳ ${war.duration_hours || war.window_duration_hours || 48}h war</span>
+            <span>🏅 200 gold reward</span>
+            ${war.challenge_type === 'open' ? '<span>🌐 Open</span>' : ''}
+        </div>
+    </div>`;
+}
+
+function renderPendingWar(war) {
+    const isBossOrManager = myRole === 'boss' || myRole === 'manager';
+    const isForMyCrew = war.defending_crew_id === myCrewId;
+    const isMyPosted = war.challenging_crew_id === myCrewId;
+    const isOpen = war.challenge_type === 'open';
+
+    let actionBtns = '';
+    if (isForMyCrew && isBossOrManager) {
+        // Incoming target challenge — show Accept/Decline
+        actionBtns = `<div class="war-actions">
+            <button class="btn btn-accept" onclick="acceptWar(${war.id})">✅ Accept</button>
+            <button class="btn btn-decline" onclick="declineWar(${war.id})">✕ Decline</button>
+           </div>`;
+    } else if (isMyPosted) {
+        // My posted challenge (target or open) — show Cancel
+        actionBtns = `<div class="war-actions">
+            <button class="btn btn-cancel" onclick="cancelWar(${war.id})">✕ Cancel</button>
+            <span style="flex:1;font-size:0.8rem;color:var(--text3);align-self:center">Waiting for response…</span>
+           </div>`;
+    } else {
+        actionBtns = `<div class="war-meta" style="margin-top:0.5rem"><span>⏳ Waiting for response…</span></div>`;
+    }
+
+    const deferredLabel = war.scheduled_start_at
+        ? ` · ⏰ ${new Date(war.scheduled_start_at).toLocaleString()}`
+        : '';
+
+    // Show "Open to all" for challenges without a defender (open OR target with null defender)
+    var defenderDisplay;
+    if (!war.defending_crew_id || !war.defending_crew_name) {
+        defenderDisplay = isOpen
+            ? '<span class="open-crew-label">Open to all</span>'
+            : '<span class="open-crew-label">Awaiting opponent</span>';
+    } else {
+        defenderDisplay = crewLogoHtml(war.defending_crew_logo_url, war.defending_crew_name) +
+            '<span class="opp-crew-name">' + esc(war.defending_crew_name) + '</span>';
+    }
+
+    return `<div class="war-card pending-war" data-war-id="${war.id}">
+        <div class="war-header">
+            <div class="war-crews">
+                ${crewLogoHtml(war.challenger_crew_logo_url, war.challenger_crew_name)}
+                <span class="crew-name">${esc(war.challenger_crew_name)}</span>
+                <span class="vs-badge">VS</span>
+                ${defenderDisplay}
+            </div>
+            <span class="war-status-pill pill-pending">PENDING</span>
+        </div>
+        <div class="war-course">📍 ${esc(war.course_name || 'Unknown Course')}${war.course_city ? ', ' + esc(war.course_city) : ''}</div>
+        <div class="war-meta" style="margin-bottom:0.6rem">
+            <span>⏳ ${war.duration_hours}h war</span>
+            <span>🏅 200 gold reward</span>
+            ${war.created_by_username ? `<span>By ${esc(war.created_by_username)}</span>` : ''}
+            ${deferredLabel}
+        </div>
+        ${actionBtns}
+    </div>`;
+}
+
+function renderOpenWar(war) {
+    const isBossOrManager = myRole === 'boss' || myRole === 'manager';
+    const timeLeft = formatTimeLeft(war.created_at, war.window_duration_hours || 72);
+
+    return `<div class="war-card open-war" data-war-id="${war.id}">
+        <div class="war-header">
+            <div class="war-crews">
+                ${crewLogoHtml(war.challenger_crew_logo_url, war.challenger_crew_name)}
+                <span class="crew-name">${esc(war.challenger_crew_name)}</span>
+                <span class="vs-badge">VS</span>
+                <span class="open-crew-label">Open to all crews</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
+                <span class="war-status-pill pill-open">OPEN</span>
+                <span class="war-status-pill pill-type">${formatDuration(war.window_duration_hours || 72)}</span>
+            </div>
+        </div>
+        <div class="war-course">📍 ${esc(war.course_name || 'Unknown Course')}${war.course_city ? ', ' + esc(war.course_city) : ''}</div>
+        <div class="war-meta" style="margin-bottom:0.75rem">
+            <span>⏰ Expires: ${timeLeft}</span>
+            <span>🏅 200 gold reward</span>
+            ${war.created_by_username ? `<span>By ${esc(war.created_by_username)}</span>` : ''}
+        </div>
+        ${isBossOrManager ? `<div class="war-actions">
+            <button class="btn btn-join" onclick="joinOpenWar(${war.id})">⚔️ Accept Challenge</button>
+        </div>` : `<div class="war-meta"><span style="color:var(--text3)">Boss/Manager only can join</span></div>`}
+    </div>`;
+}
+
+function formatDuration(hours) {
+    if (hours >= 720) return '1 Month';
+    if (hours >= 168) return '1 Week';
+    return '72h';
+}
+
+function formatTimeLeft(createdAt, windowHours) {
+    const expiry = new Date(new Date(createdAt).getTime() + windowHours * 3600 * 1000);
+    const now = Date.now();
+    const ms = expiry - now;
+    if (ms <= 0) return 'Expired';
+    const h = Math.floor(ms / 3600000);
+    if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
+    return `${h}h ${Math.floor((ms % 3600000) / 60000)}m`;
+}
+
+function renderHistoryWar(war) {
+    const isChallenger = war.challenging_crew_id === war.my_crew_id;
+    const myCrew = isChallenger ? war.challenger_crew_name : war.defending_crew_name;
+    const oppCrew = isChallenger ? war.defending_crew_name : war.challenger_crew_name;
+    const myLogo = isChallenger ? war.challenger_crew_logo_url : war.defending_crew_logo_url;
+    const oppLogo = isChallenger ? war.defending_crew_logo_url : war.challenger_crew_logo_url;
+
+    let badge = '';
+    let cardClass = '';
+    if (war.status === 'declined' || war.status === 'expired' || war.status === 'cancelled') {
+        badge = `<span class="result-badge badge-declined">${war.status.toUpperCase()}</span>`;
+    } else if (war.was_draw) {
+        badge = `<span class="result-badge badge-draw">DRAW</span>`;
+    } else if (war.won) {
+        badge = `<span class="result-badge badge-won">WON ✓</span>`;
+        cardClass = ' won-war';
+    } else {
+        badge = `<span class="result-badge badge-lost">LOST</span>`;
+        cardClass = ' lost-war';
+    }
+
+    return `<div class="war-card${cardClass}" data-war-id="${war.id}">
+        <div class="war-header">
+            <div class="war-crews">
+                ${crewLogoHtml(myLogo, myCrew)}
+                <span class="crew-name">${esc(myCrew)}</span>
+                <span class="vs-badge">VS</span>
+                <span class="opp-crew-name">${esc(oppCrew)}</span>
+                ${crewLogoHtml(oppLogo, oppCrew)}
+            </div>
+            ${badge}
+        </div>
+        <div class="war-course">📍 ${esc(war.course_name || 'Unknown Course')}${war.course_city ? ', ' + esc(war.course_city) : ''}</div>
+        <div class="war-meta">
+            <span>⏳ ${war.duration_hours || war.window_duration_hours || 48}h</span>
+            ${war.resolved_at ? `<span>${new Date(war.resolved_at).toLocaleDateString()}</span>` : ''}
+            ${war.challenge_type === 'open' ? '<span>🌐 Open</span>' : ''}
+        </div>
+    </div>`;
+}
+
+function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function crewLogoHtml(url, name, size) {
+    var s = size || 20;
+    if (url && /^https?:\/\/.+/.test(url)) {
+        return '<img src="' + esc(url) + '" alt="" style="width:' + s + 'px;height:' + s + 'px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'"">';
+    }
+    return '<span style="width:' + s + 'px;height:' + s + 'px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:4px;font-size:' + Math.floor(s * 0.6) + 'px;font-weight:700;flex-shrink:0;">' + esc(name ? name.charAt(0) : '?') + '</span>';
+}
+
+async function loadAll() {
+    // Load notifications
+    loadNotifications();
+
+    // Get player's crew membership
+    try {
+        const meRes = await apiGet('/api/players/me');
+        if (meRes && meRes.id) {
+            const crewRes = await apiGet('/api/players/' + meRes.id + '/crew');
+            if (crewRes.crew) {
+                myCrewId = crewRes.crew.id;
+                myRole = crewRes.crew.role;
+                if (myRole === 'boss' || myRole === 'manager') {
+                    document.getElementById('challengeBtn').style.display = 'block';
+                    document.getElementById('notifBtn').style.display = 'flex';
+                }
+            }
+        }
+    } catch(e) {}
+
+    // Active wars
+    try {
+        const data = await apiGet('/api/crew/wars/active');
+        const container = document.getElementById('activeWarsContainer');
+        if (data.wars && data.wars.length > 0) {
+            container.innerHTML = data.wars.map(renderActiveWar).join('');
+        }
+    } catch(e) {}
+
+    // Pending (incoming target challenges)
+    try {
+        const data = await apiGet('/api/crew/wars/pending');
+        const container = document.getElementById('pendingWarsContainer');
+        const sectionLabel = document.getElementById('pendingSectionLabel');
+        if (data.wars && data.wars.length > 0) {
+            container.innerHTML = data.wars.map(renderPendingWar).join('');
+            sectionLabel.style.display = 'flex';
+            const badge = document.getElementById('pendingBadge');
+            badge.textContent = data.wars.length;
+            badge.style.display = 'flex';
+        } else {
+            container.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-desc">No incoming target challenges.</div></div>';
+        }
+    } catch(e) {}
+
+    // My posted challenges
+    if (myRole === 'boss' || myRole === 'manager') {
+        try {
+            const data = await apiGet('/api/crew/wars/my-posted');
+            const container = document.getElementById('myPostedContainer');
+            const label = document.getElementById('myPostedLabel');
+            if (data.wars && data.wars.length > 0) {
+                // Only show pending ones that are mine
+                const mine = data.wars.filter(w => w.status === 'pending');
+                if (mine.length > 0) {
+                    container.innerHTML = mine.map(renderPendingWar).join('');
+                    label.style.display = 'flex';
+                    container.style.display = 'block';
+                }
+            }
+        } catch(e) {}
+    }
+
+    // Open challenges
+    try {
+        const data = await apiGet('/api/crew/wars/open');
+        const container = document.getElementById('openWarsContainer');
+        if (data.wars && data.wars.length > 0) {
+            container.innerHTML = data.wars.map(renderOpenWar).join('');
+            const badge = document.getElementById('openBadge');
+            badge.textContent = data.wars.length;
+            badge.style.display = 'flex';
+        }
+    } catch(e) {}
+
+    // History (cursor-based pagination — first page only on initial load)
+    try {
+        const qs = historyCursor ? '?cursor=' + encodeURIComponent(historyCursor) : '';
+        const data = await apiGet('/api/crew/wars/history' + qs);
+        const container = document.getElementById('historyWarsContainer');
+        if (!data.wars || data.wars.length === 0) {
+            historyHasMore = false;
+            updateHistoryLoadMoreBtn();
+            return;
+        }
+        if (!historyCursor) {
+            // First page — replace container
+            container.innerHTML = data.wars.map(renderHistoryWar).join('');
+        } else {
+            // Subsequent page — append
+            container.insertAdjacentHTML('beforeend', data.wars.map(renderHistoryWar).join(''));
+        }
+        historyCursor = data.next_cursor || null;
+        historyHasMore = data.next_cursor != null;
+        updateHistoryLoadMoreBtn();
+    } catch(e) {}
+}
+
+function updateHistoryLoadMoreBtn() {
+    var btn = document.getElementById('historyLoadMoreBtn');
+    var wrap = document.getElementById('historyLoadMoreContainer');
+    if (!btn || !wrap) return;
+    if (historyHasMore && historyCursor) {
+        wrap.style.display = '';
+    } else {
+        wrap.style.display = 'none';
+    }
+}
+
+function loadHistoryMore() {
+    loadAll();
+}
+window.loadHistoryMore = loadHistoryMore;
+
+async function loadNotifications() {
+    try {
+        const data = await apiGet('/api/crew/notifications');
+        if (data.notifications && data.notifications.length > 0) {
+            const dot = document.getElementById('notifDot');
+            const unread = data.notifications.filter(n => !n.read_at);
+            if (unread.length > 0) {
+                dot.style.display = 'block';
+                unreadNotifCount = unread.length;
+            }
+        }
+    } catch(e) {}
+}
+
+function openNotifications() {
+    loadNotificationsList();
+    document.getElementById('notifModal').classList.add('open');
+}
+
+function closeNotifications(e) {
+    if (!e || e.target === document.getElementById('notifModal')) {
+        document.getElementById('notifModal').classList.remove('open');
+    }
+}
+
+async function loadNotificationsList() {
+    const data = await apiGet('/api/crew/notifications');
+    const list = document.getElementById('notifList');
+    if (!data.notifications || !data.notifications.length) {
+        list.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-desc">No crew notifications yet</div></div>';
+        return;
+    }
+    list.innerHTML = data.notifications.map(n => `
+        <div class="notif-item${n.read_at ? '' : ' unread'}" onclick="markNotifRead(${n.id})">
+            <div class="notif-icon">${typeIcon(n.type)}</div>
+            <div class="notif-content">
+                <div class="notif-title">${esc(n.title)}</div>
+                <div class="notif-body">${esc(n.message)}</div>
+                <div class="notif-time">${timeAgo(n.created_at)}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function markNotifRead(id) {
+    await apiPatch('/api/crew/notifications/' + id + '/read');
+    loadNotificationsList();
+    document.getElementById('notifDot').style.display = 'none';
+}
+
+function typeIcon(type) {
+    const icons = {
+        'war_started': '⚔️',
+        'war_ended': '🏆',
+        'war_challenge': '🎯',
+        'info': 'ℹ️'
+    };
+    return icons[type] || '🔔';
+}
+
+function timeAgo(dateStr) {
+    const ms = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(ms / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+}
+
+/**
+ * Accept a target war challenge. Transitions war from pending -> active.
+ * Uses apiPost() (fetch) — same pattern as Cancel/Decline/Join which all work.
+ * Previous attempt used XMLHttpRequest which silently failed in Capacitor WebView.
+ */
+async function acceptWar(warId) {
+    console.log('[acceptWar] called with warId:', warId);
+    var btns = document.querySelectorAll('[data-war-id="' + warId + '"] .btn');
+    btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+    try {
+        var data = await apiPost('/api/crew/wars/' + warId + '/accept', {});
+        console.log('[acceptWar] response:', JSON.stringify(data));
+        if (data.error) {
+            showToast('❌ ' + data.error);
+            btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+        } else {
+            showToast('✅ War accepted! It\'s on!');
+            document.querySelectorAll('[data-war-id="' + warId + '"]').forEach(function(card) {
+                var actions = card.querySelector('.war-actions');
+                if (actions) actions.innerHTML = '<span style="flex:1;font-size:0.82rem;color:var(--green);align-self:center;font-weight:600">✅ War accepted!</span>';
+            });
+            refreshActiveWars();
+            var badge = document.getElementById('pendingBadge');
+            if (badge) badge.style.display = 'none';
+            switchTab('active');
+        }
+    } catch(err) {
+        console.error('[acceptWar] error:', err);
+        showToast('❌ Network error. Please try again.');
+        btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+    }
+}
+
+/**
+ * Refresh the active wars container from the API.
+ * Called after accept/join to immediately show wars in active state.
+ */
+async function refreshActiveWars() {
+    try {
+        const data = await apiGet('/api/crew/wars/active');
+        const container = document.getElementById('activeWarsContainer');
+        if (!container) return;
+        if (data.wars && data.wars.length > 0) {
+            container.innerHTML = data.wars.map(renderActiveWar).join('');
+        }
+    } catch(e) { console.error('refreshActiveWars error:', e); }
+}
+async function declineWar(warId) {
+    if (!confirm('Decline this war challenge?')) return;
+    var btns = document.querySelectorAll('[data-war-id="' + warId + '"] .btn');
+    btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+    try {
+        var data = await apiPost('/api/crew/wars/' + warId + '/decline', {});
+        if (data.error) {
+            showToast('❌ ' + data.error);
+            btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+        } else {
+            showToast('War declined.');
+            document.querySelectorAll('[data-war-id="' + warId + '"]').forEach(function(card) {
+                var actions = card.querySelector('.war-actions');
+                if (actions) actions.innerHTML = '<span style="flex:1;font-size:0.82rem;color:var(--text3);align-self:center;font-weight:600">✕ War declined</span>';
+            });
+            setTimeout(function() { location.reload(); }, 1500);
+        }
+    } catch(err) {
+        console.error('declineWar error:', err);
+        showToast('❌ Network error. Please try again.');
+        btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+    }
+}
+
+async function joinOpenWar(warId) {
+    var btns = document.querySelectorAll('[data-war-id="' + warId + '"] .btn');
+    btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+    try {
+        var data = await apiPost('/api/crew/wars/' + warId + '/join', {});
+        if (data.error) {
+            showToast('❌ ' + data.error);
+            btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+        } else {
+            showToast('⚔️ Challenge joined! War has begun!');
+            document.querySelectorAll('[data-war-id="' + warId + '"]').forEach(function(card) {
+                var actions = card.querySelector('.war-actions');
+                if (actions) actions.innerHTML = '<span style="flex:1;font-size:0.82rem;color:var(--green);align-self:center;font-weight:600">⚔️ War has begun!</span>';
+            });
+            refreshActiveWars();
+            switchTab('active');
+        }
+    } catch(err) {
+        console.error('joinOpenWar error:', err);
+        showToast('❌ Network error. Please try again.');
+        btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+    }
+}
+
+async function cancelWar(warId) {
+    if (!confirm('Cancel your challenge?')) return;
+    var btns = document.querySelectorAll('[data-war-id="' + warId + '"] .btn');
+    btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+    try {
+        var data = await apiPost('/api/crew/wars/' + warId + '/cancel', {});
+        if (data.error) {
+            showToast('❌ ' + data.error);
+            btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+        } else {
+            showToast('Challenge cancelled.');
+            document.querySelectorAll('[data-war-id="' + warId + '"]').forEach(function(card) {
+                var actions = card.querySelector('.war-actions');
+                if (actions) actions.innerHTML = '<span style="flex:1;font-size:0.82rem;color:var(--text3);align-self:center;font-weight:600">✕ Challenge cancelled</span>';
+            });
+            setTimeout(function() { location.reload(); }, 1500);
+        }
+    } catch(err) {
+        console.error('cancelWar error:', err);
+        showToast('❌ Network error. Please try again.');
+        btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+    }
+}
+
+// ── Challenge Modal ────────────────────────────────────────────────────────────
+
+function selectChallengeType(type) {
+    document.getElementById('challengeType').value = type;
+    document.getElementById('typeTarget').classList.toggle('selected', type === 'target');
+    document.getElementById('typeOpen').classList.toggle('selected', type === 'open');
+    document.getElementById('targetCrewGroup').style.display = type === 'target' ? 'block' : 'none';
+    document.getElementById('targetDurationGroup').style.display = type === 'target' ? 'block' : 'none';
+    document.getElementById('openDurationGroup').style.display = type === 'open' ? 'block' : 'none';
+    document.getElementById('deferredGroup').style.display = type === 'target' ? 'block' : 'none';
+    document.getElementById('selectedCrewId').value = '';
+    document.getElementById('crewSearchInput').value = '';
+}
+
+function openChallengeModal() {
+    document.getElementById('challengeModal').classList.add('open');
+    document.getElementById('layoutPickerGroup').style.display = 'none';
+    document.getElementById('selectedLayoutId').value = '';
+    document.getElementById('layoutSelect').innerHTML = '<option value="">Loading…</option>';
+    document.getElementById('layoutHint').textContent = '';
+    document.getElementById('holeCountGroup').style.display = 'none';
+    document.getElementById('selectedHolesCount').value = '';
+    document.getElementById('holePicker').innerHTML = '<div class="hole-placeholder">Select a layout to see hole count options</div>';
+    document.getElementById('useDeferredStart').checked = false;
+    document.getElementById('deferredRow').style.display = 'none';
+    document.getElementById('scheduledStart').value = '';
+    // Set minimum datetime to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('scheduledStart').min = tomorrow.toISOString().slice(0, 16);
+
+    // Reset to target type
+    selectChallengeType('target');
+}
+function closeChallengeModal(e) {
+    if (!e || e.target === document.getElementById('challengeModal')) {
+        document.getElementById('challengeModal').classList.remove('open');
+    }
+}
+
+function toggleDeferredStart() {
+    const checked = document.getElementById('useDeferredStart').checked;
+    document.getElementById('deferredRow').style.display = checked ? 'block' : 'none';
+}
+
+function selectDuration(h, el) {
+    document.querySelectorAll('#targetDurationGroup .duration-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('selectedDuration').value = h;
+}
+
+function selectWindowDuration(h, el) {
+    document.querySelectorAll('#openDurationGroup .duration-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('selectedWindowDuration').value = h;
+}
+
+let crewSearchTimer = null;
+function searchCrews(q) {
+    clearTimeout(crewSearchTimer);
+    if (q.length < 2) { document.getElementById('crewSearchResults').style.display = 'none'; return; }
+    crewSearchTimer = setTimeout(async () => {
+        const data = await apiGet('/api/crews?search=' + encodeURIComponent(q));
+        const res = document.getElementById('crewSearchResults');
+        const crews = data.crews;
+        if (!crews || !crews.length) { res.style.display = 'none'; return; }
+        res.innerHTML = crews.filter(c => c.id !== myCrewId).slice(0, 8).map(c =>
+            `<div class="crew-result-item" onclick="selectCrew(${c.id}, ${JSON.stringify(c.name).replace(/"/g, '&quot;')})">
+                <span class="crew-result-name">${esc(c.name)}</span>
+                <span class="crew-result-meta">${c.member_count} members</span>
+             </div>`
+        ).join('');
+        res.style.display = 'block';
+    }, 250);
+}
+function selectCrew(id, name) {
+    document.getElementById('selectedCrewId').value = id;
+    document.getElementById('crewSearchInput').value = name;
+    document.getElementById('crewSearchResults').style.display = 'none';
+}
+
+let courseSearchTimer = null;
+function searchCourses(q) {
+    clearTimeout(courseSearchTimer);
+    if (q.length < 2) { document.getElementById('courseSearchResults').style.display = 'none'; return; }
+    courseSearchTimer = setTimeout(async () => {
+        const data = await apiGet('/api/courses?search=' + encodeURIComponent(q) + '&limit=8');
+        const res = document.getElementById('courseSearchResults');
+        const courses = data.courses;
+        if (!Array.isArray(courses) || !courses.length) { res.style.display = 'none'; return; }
+        res.innerHTML = courses.slice(0, 8).map(c =>
+            `<div class="crew-result-item" onclick="selectCourse(${c.id}, ${JSON.stringify(c.name).replace(/"/g, '&quot;')})">
+                <span class="crew-result-name">${esc(c.name)}</span>
+                <span class="crew-result-meta">${esc(c.city || '')}${c.state ? ', ' + esc(c.state) : ''}</span>
+             </div>`
+        ).join('');
+        res.style.display = 'block';
+    }, 250);
+}
+function selectCourse(id, name) {
+    document.getElementById('selectedCourseId').value = id;
+    document.getElementById('courseSearchInput').value = name;
+    document.getElementById('courseSearchResults').style.display = 'none';
+    document.getElementById('selectedLayoutId').value = '';
+    document.getElementById('selectedHolesCount').value = '';
+    document.getElementById('holeCountGroup').style.display = 'none';
+    loadCourseLayouts(id);
+}
+
+async function loadCourseLayouts(courseId) {
+    const group = document.getElementById('layoutPickerGroup');
+    const select = document.getElementById('layoutSelect');
+    const hint = document.getElementById('layoutHint');
+    group.style.display = 'block';
+    select.innerHTML = '<option value="">Loading…</option>';
+
+    try {
+        const data = await apiGet('/api/courses/' + courseId + '/layouts');
+        if (!data || !data.length) {
+            select.innerHTML = '<option value="">No layouts — use course default</option>';
+            hint.textContent = '(use course default)';
+            document.getElementById('holeCountGroup').style.display = 'none';
+            document.getElementById('selectedLayoutId').value = '';
+            document.getElementById('selectedHolesCount').value = '';
+            return;
+        }
+        hint.textContent = '';
+        const defaultLayout = data.find(l => l.is_default) || data[0];
+        select.innerHTML = data.map(l =>
+            `<option value="${l.id}" data-holes="${l.total_holes || 18}">${esc(l.name)}${l.is_default ? ' (default)' : ''}${l.total_holes ? ' — ' + l.total_holes + ' holes' : ''}</option>`
+        ).join('');
+        select.value = defaultLayout.id;
+        document.getElementById('selectedLayoutId').value = defaultLayout.id;
+        // Init hole count picker with the default layout's hole count
+        const totalHoles = parseInt(defaultLayout.total_holes) || 18;
+        initHoleCountPicker(totalHoles);
+    } catch(e) {
+        select.innerHTML = '<option value="">Layouts unavailable</option>';
+    }
+}
+
+function selectLayout(layoutId) {
+    document.getElementById('selectedLayoutId').value = layoutId || '';
+    if (!layoutId) {
+        document.getElementById('holeCountGroup').style.display = 'none';
+        document.getElementById('selectedHolesCount').value = '';
+        return;
+    }
+    const select = document.getElementById('layoutSelect');
+    const option = select.options[select.selectedIndex];
+    const totalHoles = parseInt(option ? option.dataset.holes : 18) || 18;
+    initHoleCountPicker(totalHoles);
+}
+
+function initHoleCountPicker(totalHoles) {
+    const group = document.getElementById('holeCountGroup');
+    const picker = document.getElementById('holePicker');
+    group.style.display = 'block';
+    if (!totalHoles || totalHoles < 9) {
+        picker.innerHTML = '<div class="hole-placeholder">No hole data available</div>';
+        return;
+    }
+    const options = [];
+    // Always include 9 if total >= 9
+    if (totalHoles >= 9) options.push({ holes: 9, label: '9 Holes' });
+    // Always include 18 if total >= 18
+    if (totalHoles >= 18) options.push({ holes: 18, label: '18 Holes' });
+    // Include total holes (skip if 9 or 18)
+    if (totalHoles !== 9 && totalHoles !== 18) {
+        const fullLabel = totalHoles === 27 ? '27 Holes' : totalHoles + ' Holes';
+        options.push({ holes: totalHoles, label: fullLabel });
+    }
+    // Deduplicate
+    const seen = new Set();
+    const deduped = options.filter(o => { if (seen.has(o.holes)) return false; seen.add(o.holes); return true; });
+
+    picker.innerHTML = deduped.map((o, i) =>
+        `<div class="hole-pill${i === 0 ? ' selected' : ''}" data-holes="${o.holes}" onclick="selectHoleCount(${o.holes}, this)">${o.label}</div>`
+    ).join('');
+    // Default to 18 if available, otherwise first option
+    let defaultHoles = deduped.find(o => o.holes === 18);
+    if (!defaultHoles) defaultHoles = deduped[0];
+    document.getElementById('selectedHolesCount').value = defaultHoles ? defaultHoles.holes : '';
+}
+
+function selectHoleCount(holes, el) {
+    document.querySelectorAll('#holePicker .hole-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('selectedHolesCount').value = holes;
+}
+
+async function submitChallenge() {
+    const challengeType = document.getElementById('challengeType').value;
+    const crewId = document.getElementById('selectedCrewId').value;
+    const courseId = document.getElementById('selectedCourseId').value;
+    const layoutId = document.getElementById('selectedLayoutId').value;
+    const holesCount = document.getElementById('selectedHolesCount').value;
+    const duration = parseInt(document.getElementById('selectedDuration').value);
+    const windowDuration = parseInt(document.getElementById('selectedWindowDuration').value);
+
+    if (challengeType === 'target' && !crewId) { showToast('Select a target crew'); return; }
+    if (!courseId) { showToast('Select a course'); return; }
+
+    const btn = document.getElementById('submitChallengeBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+
+    const body = {
+        challenge_type: challengeType,
+        course_id: parseInt(courseId),
+        duration_hours: duration,
+    };
+
+    if (challengeType === 'target') {
+        body.target_crew_id = parseInt(crewId);
+        const useDeferred = document.getElementById('useDeferredStart').checked;
+        if (useDeferred) {
+            body.scheduled_start_at = document.getElementById('scheduledStart').value;
+        }
+    } else {
+        body.window_duration_hours = windowDuration;
+    }
+
+    if (layoutId) body.layout_id = parseInt(layoutId);
+    if (holesCount) body.holes_count = parseInt(holesCount);
+
+    const data = await apiPost('/api/crew/wars/challenge', body);
+
+    btn.disabled = false;
+    btn.textContent = '⚔️ Send Challenge';
+
+    if (data.error) {
+        showToast('❌ ' + data.error);
+    } else {
+        showToast('⚔️ ' + (challengeType === 'open' ? 'Open challenge posted!' : 'Challenge sent!'));
+        closeChallengeModal();
+        setTimeout(() => location.reload(), 1200);
+    }
+}
+
+// ── Bottom Tab Bar ─────────────────────────────────────────────────────────────
+(function renderNav() {
+    // Correct order per spec: Crews | Battles | Play | Profile | Quests | Map
+    const tabs = [
+        { icon: '👥', label: 'Crews', href: '/crews' },
+        { icon: '⚔️', label: 'Battles', href: '/battles' },
+        { icon: '🥏', label: 'Play', href: '/scorecard' },
+        { icon: '👤', label: 'Profile', href: '/profile' },
+        { icon: '🎯', label: 'Quests', href: '/challenges' },
+        { icon: '🗺️', label: 'Map', href: '/map' },
+    ];
+    const cur = location.pathname;
+    document.getElementById('bottomNav').outerHTML =
+        `<nav style="position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border);display:flex;padding:0.4rem 0 calc(0.4rem + var(--safe-b))">` +
+        tabs.map(t => {
+            const active = cur.startsWith(t.href) || (cur.startsWith('/crew') && t.href === '/crews');
+            return `<a href="${t.href}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:0.2rem 0">
+                <span style="font-size:1.25rem">${t.icon}</span>
+                <span style="font-size:0.6rem;font-weight:600;color:${active ? 'var(--green)' : 'var(--text3)'}">${t.label}</span>
+            </a>`;
+        }).join('') + `</nav>`;
+})();
+
+loadAll();
+</script>
+</body>
+</html>

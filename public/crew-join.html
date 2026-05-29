@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Join Crew — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+    <style>        .back-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--surface);
+            color: var(--text2); font-size: 1.1rem; text-decoration: none; flex-shrink: 0;
+        }
+        .header-title { font-size: 1.05rem; font-weight: 700; flex: 1; }
+        main { padding: 1.25rem; max-width: 480px; margin: 0 auto; }
+
+        .join-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 2rem 1.5rem;
+            box-shadow: var(--shadow-card); text-align: center;
+        }
+        .join-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+        .join-card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .join-card .crew-name { font-size: 1.5rem; font-weight: 700; color: var(--green); margin-bottom: 0.5rem; }
+        .join-card .crew-meta {
+            font-size: 0.85rem; color: var(--text3); margin-bottom: 1.5rem; line-height: 1.6;
+        }
+        .crew-meta span { display: block; }
+        .btn {
+            width: 100%; padding: 0.85rem 1rem; border-radius: 13px; border: none;
+            font-family: inherit; font-size: 1rem; font-weight: 700;
+            cursor: pointer; text-decoration: none; display: flex;
+            align-items: center; justify-content: center; gap: 0.4rem;
+            transition: opacity var(--transition), transform var(--transition);
+        }
+        .btn:active { opacity: 0.8; transform: scale(0.98); }
+        .btn-primary { background: var(--green); color: #111; }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); margin-top: 0.6rem; }
+        .btn:disabled { opacity: 0.5; cursor: default; }
+
+        .error-card {
+            background: var(--surface); border: 1px solid rgba(224,64,64,0.2);
+            border-radius: var(--radius-card); padding: 2rem 1.5rem;
+            box-shadow: var(--shadow-card); text-align: center;
+        }
+        .error-icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+        .error-card h2 { font-size: 1.1rem; font-weight: 700; color: var(--red); margin-bottom: 0.5rem; }
+        .error-card p { font-size: 0.88rem; color: var(--text2); line-height: 1.5; margin-bottom: 1.25rem; }
+
+        .in-crew-card {
+            background: var(--surface); border: 1px solid rgba(224,165,0,0.2);
+            border-radius: var(--radius-card); padding: 2rem 1.5rem;
+            box-shadow: var(--shadow-card); text-align: center;
+        }
+        .in-crew-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .in-crew-card p { font-size: 0.88rem; color: var(--text2); line-height: 1.5; margin-bottom: 1.25rem; }
+
+        .tab-item.active { color: var(--green); }
+        #toast {
+            position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 1rem);
+            left: 50%; transform: translateX(-50%); z-index: 9999;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--border2); border-radius: 12px;
+            padding: 0.65rem 1.25rem; font-size: 0.88rem; font-weight: 600;
+            box-shadow: var(--shadow-lg); pointer-events: none;
+            opacity: 0; transition: opacity 0.2s; white-space: nowrap; max-width: 90vw;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { border-color: var(--red); color: var(--red); }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <a href="/crews" class="back-btn">‹</a>
+        <div class="header-title">Join Crew</div>
+    </header>
+
+    <main id="mainContent">
+        <div style="text-align:center;padding:3rem 1rem;color:var(--text3);">Loading invite…</div>
+    </main>
+
+    <nav class="bottom-tab-bar">
+    <a class="tab-item active" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+    <div id="toast"></div>
+
+    <script>
+    (function() {
+        var token = localStorage.getItem('dggo_token');
+        var playerId = localStorage.getItem('dggo_player_id');
+        if (!token) {
+            // Save return URL and redirect to login
+            localStorage.setItem('dggo_return_url', window.location.href);
+            window.location.href = '/login';
+            return;
+        }
+        var authHeaders = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+        function toast(msg, isErr) {
+            var el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = isErr ? 'error show' : 'show';
+            setTimeout(function() { el.className = ''; }, 2800);
+        }
+
+        function escHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Parse token from URL
+        var params = new URLSearchParams(window.location.search);
+        var inviteToken = params.get('token');
+
+        if (!inviteToken) {
+            document.getElementById('mainContent').innerHTML =
+                '<div class="error-card">' +
+                '<span class="error-icon">🔗</span>' +
+                '<h2>Invalid Link</h2>' +
+                '<p>This invite link is missing or malformed. Ask your crew boss for a fresh invite.</p>' +
+                '<a href="/crews" class="btn btn-secondary">Back to Crews</a>' +
+                '</div>';
+            return;
+        }
+
+        // Look up invite
+        fetch('/api/crews/invite/' + inviteToken, { headers: authHeaders })
+            .then(function(r) { return r.json().then(function(d) { return { status: r.status, data: d }; }); })
+            .then(function(res) {
+                var d = res.data;
+                if (res.status === 404) {
+                    showError('Invite Not Found', 'This invite link doesn\'t exist. It may have been revoked by the crew boss.');
+                } else if (res.status === 409) {
+                    showError('Already Used', 'This invite has already been accepted. Ask for a new one.');
+                } else if (res.status === 410) {
+                    showError('Invite Expired', 'This invite link expired 7 days after it was created. Ask your crew boss for a fresh invite.');
+                } else if (res.status !== 200) {
+                    showError('Something Went Wrong', d.error || 'Unexpected error.');
+                } else {
+                    // Check if player is already in a crew
+                    fetch('/api/players/' + playerId + '/crew', { headers: authHeaders })
+                        .then(function(r2) { return r2.json(); })
+                        .then(function(cd) {
+                            if (cd.crew && cd.crew.id) {
+                                if (cd.crew.id === d.invite.crew_id) {
+                                    // Already in this crew
+                                    showAlreadyInCrew(d.invite, true);
+                                } else {
+                                    showAlreadyInCrew(d.invite, false);
+                                }
+                            } else {
+                                showJoinPrompt(d.invite);
+                            }
+                        })
+                        .catch(function() { showJoinPrompt(d.invite); });
+                }
+            })
+            .catch(function() {
+                showError('Network Error', 'Could not load invite. Check your connection and try again.');
+            });
+
+        function showError(title, msg) {
+            document.getElementById('mainContent').innerHTML =
+                '<div class="error-card">' +
+                '<span class="error-icon">❌</span>' +
+                '<h2>' + escHtml(title) + '</h2>' +
+                '<p>' + escHtml(msg) + '</p>' +
+                '<a href="/crews" class="btn btn-secondary">Back to Crews</a>' +
+                '</div>';
+        }
+
+        function showAlreadyInCrew(invite, isSameCrew) {
+            if (isSameCrew) {
+                document.getElementById('mainContent').innerHTML =
+                    '<div class="in-crew-card">' +
+                    '<span style="font-size:2rem;display:block;margin-bottom:0.75rem;">✅</span>' +
+                    '<h2>You\'re already in ' + escHtml(invite.crew_name) + '!</h2>' +
+                    '<p>You\'re already a member of this crew.</p>' +
+                    '<a href="/crew/me" class="btn btn-primary">View My Crew</a>' +
+                    '</div>';
+            } else {
+                document.getElementById('mainContent').innerHTML =
+                    '<div class="in-crew-card">' +
+                    '<span style="font-size:2rem;display:block;margin-bottom:0.75rem;">⚠️</span>' +
+                    '<h2>You\'re already in a crew</h2>' +
+                    '<p>You need to leave your current crew before joining <strong>' + escHtml(invite.crew_name) + '</strong>.</p>' +
+                    '<a href="/crew/me" class="btn btn-secondary" style="margin-bottom:0;">View My Crew</a>' +
+                    '</div>';
+            }
+        }
+
+        function showJoinPrompt(invite) {
+            var expiresIn = Math.ceil((new Date(invite.expires_at) - new Date()) / (1000 * 60 * 60 * 24));
+            document.getElementById('mainContent').innerHTML =
+                '<div class="join-card">' +
+                '<span class="join-icon">👥</span>' +
+                '<h2>You\'ve been invited to join</h2>' +
+                '<div class="crew-name">' + escHtml(invite.crew_name) + '</div>' +
+                '<div class="crew-meta">' +
+                (invite.home_course_name ? '<span>📍 ' + escHtml(invite.home_course_name) + '</span>' : '') +
+                '<span>👥 ' + invite.member_count + ' member' + (invite.member_count !== 1 ? 's' : '') + '</span>' +
+                '<span>⏰ Invite expires in ' + expiresIn + ' day' + (expiresIn !== 1 ? 's' : '') + '</span>' +
+                '</div>' +
+                '<button class="btn btn-primary" id="joinBtn" onclick="doJoin()">Join ' + escHtml(invite.crew_name) + ' 🏰</button>' +
+                '<a href="/crews" class="btn btn-secondary">Not now</a>' +
+                '</div>';
+        }
+
+        window.doJoin = function() {
+            var btn = document.getElementById('joinBtn');
+            btn.disabled = true;
+            btn.textContent = 'Joining…';
+            fetch('/api/crews/join', {
+                method: 'POST', headers: authHeaders,
+                body: JSON.stringify({ token: inviteToken })
+            }).then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) {
+                    toast('Welcome to the crew! 🎉');
+                    setTimeout(function() { window.location.href = '/crew/me'; }, 900);
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Join Crew';
+                    toast(d.error || 'Failed to join', true);
+                }
+            }).catch(function() {
+                btn.disabled = false;
+                btn.textContent = 'Join Crew';
+                toast('Network error', true);
+            });
+        };
+    })();
+    </script>
+</body>
+</html>

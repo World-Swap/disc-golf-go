@@ -1,0 +1,185 @@
+{
+  "verified_courses": [
+    "DeLaveaga Disc Golf Course",
+    "Morley Field Disc Golf Course",
+    "Polliwog Park",
+    "Central Park DGC",
+    "Irvine Regional Park",
+    "Balboa Park DGC",
+    "Loma Verde Community Park",
+    "Mission Trails Regional Park",
+    "Kit Carson Park DGC",
+    "Robb Field DGC",
+    "Sycamore Canyon Park",
+    "Fairmount Park",
+    "Veterans Park DGC",
+    "Cucamonga-Guasti Regional Park",
+    "Oak Canyon Nature Center",
+    "Peters Canyon Regional Park",
+    "Yorba Regional Park",
+    "Carbon Canyon Regional Park",
+    "Vista Hermosa Natural Park",
+    "Heritage Ranch Recreation Area",
+    "Meadow Park DGC",
+    "Henry Cowell Redwoods DGC",
+    "Pinto Lake Park",
+    "Hidden Hills DGC",
+    "Vasona Lake County Park",
+    "Harvey Bear Ranch",
+    "Martial Cottle Park",
+    "Almaden Lake Park",
+    "Hellyer County Park",
+    "Rancho San Antonio County Park",
+    "Calero County Park",
+    "Sycamore Valley Park",
+    "Black Diamond Mines Regional Preserve",
+    "Contra Loma Regional Park",
+    "Heather Farm Park",
+    "Cull Canyon Regional Recreation Area",
+    "Shadow Cliffs Regional Park",
+    "Garin Regional Park",
+    "Redwood Regional Park",
+    "Joaquin Miller Park",
+    "Coyote Hills Regional Park",
+    "Shoreline Park at Mountain View",
+    "Cesar Chavez Park",
+    "Bidwell Park DGC",
+    "William Land Park",
+    "Granite Beach DGC",
+    "Dry Creek Pioneer Regional Park"
+  ],
+  "unverified_courses": [
+    "Brengle Terrace Park",
+    "Poway Community Park",
+    "Kimball Park"
+  ],
+  "data_issues": [
+    {
+      "name": "DeLaveaga Disc Golf Course",
+      "city": "Santa Cruz",
+      "issues": [
+        "Holes mismatch: 18 vs 27",
+        "Par mismatch: 54 vs 81"
+      ]
+    },
+    {
+      "name": "Polliwog Park",
+      "city": "Manhattan Beach",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Loma Verde Community Park",
+      "city": "Chula Vista",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Cucamonga-Guasti Regional Park",
+      "city": "Ontario",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Peters Canyon Regional Park",
+      "city": "Orange",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Vista Hermosa Natural Park",
+      "city": "San Clemente",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Meadow Park DGC",
+      "city": "San Luis Obispo",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Henry Cowell Redwoods DGC",
+      "city": "Felton",
+      "issues": [
+        "Holes mismatch: 18 vs 27",
+        "Par mismatch: 54 vs 81"
+      ]
+    },
+    {
+      "name": "Pinto Lake Park",
+      "city": "Watsonville",
+      "issues": [
+        "Holes mismatch: 9 vs 18",
+        "Par mismatch: 36 vs 54"
+      ]
+    },
+    {
+      "name": "Almaden Lake Park",
+      "city": "San Jose",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Hellyer County Park",
+      "city": "San Jose",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Sycamore Valley Park",
+      "city": "Danville",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Cull Canyon Regional Recreation Area",
+      "city": "Castro Valley",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Joaquin Miller Park",
+      "city": "Oakland",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Coyote Hills Regional Park",
+      "city": "Fremont",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "Shoreline Park at Mountain View",
+      "city": "Mountain View",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    },
+    {
+      "name": "William Land Park",
+      "city": "Sacramento",
+      "issues": [
+        "Par mismatch: 36 vs 27"
+      ]
+    }
+  ],
+  "known_fake_removed": [
+    "Pogonip Open Space DGC",
+    "Wilder Ranch State Park DGC",
+    "Twin Lakes State Beach DGC"
+  ]
+}

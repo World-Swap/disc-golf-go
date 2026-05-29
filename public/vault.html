@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Vault — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>/* Page content */
+.page-content { max-width: 520px; margin: 0 auto; padding: 1rem 1rem 1.5rem; }
+/* VAULT HEADER */
+.vault-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow-card);
+}
+.vault-title-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;
+}
+.vault-title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; font-family: 'Space Grotesk', system-ui, sans-serif; }
+.vault-subtitle { font-size: 0.85rem; color: var(--text3); margin-top: 0.1rem; }
+.gold-badge {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(224,165,0,0.08);
+    border: 1px solid rgba(224,165,0,0.25);
+    border-radius: 14px;
+    padding: 0.6rem 1.1rem; flex-shrink: 0;
+}
+[data-theme="dark"] .gold-badge {
+    background: rgba(255,208,80,0.1);
+    border-color: rgba(255,208,80,0.3);
+}
+.gold-badge .gold-icon { font-size: 1.3rem; }
+.gold-badge .gold-amount { font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700; color: var(--gold); }
+.gold-badge .gold-label { font-size: 0.72rem; color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* ACTIVE BOOSTS BANNER */
+.active-boosts-banner {
+    background: var(--green-glow);
+    border: 1px solid rgba(60,168,60,0.2);
+    border-radius: 14px;
+    padding: 0.85rem 1.1rem; display: none; flex-direction: column; gap: 0.5rem;
+}
+[data-theme="dark"] .active-boosts-banner {
+    background: rgba(76,223,60,0.08);
+    border-color: rgba(76,223,60,0.2);
+}
+.active-boosts-banner.visible { display: flex; }
+.active-boost-label { font-size: 0.72rem; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.1rem; }
+.boost-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.boost-chip {
+    display: flex; align-items: center; gap: 0.35rem;
+    background: var(--green-glow);
+    border: 1px solid rgba(60,168,60,0.2);
+    border-radius: 100px; padding: 0.3rem 0.7rem; font-size: 0.8rem;
+}
+.boost-chip .bc-timer { color: var(--green); font-weight: 700; font-family: 'Space Mono', monospace; font-size: 0.75rem; }
+
+/* TABS */
+.tabs { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; }
+.tab-btn {
+    flex: 1; padding: 0.75rem; border-radius: 12px;
+    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.9rem; font-weight: 700;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text3); cursor: pointer; transition: all 0.2s;
+}
+.tab-btn.active {
+    background: var(--green-glow);
+    border-color: rgba(60,168,60,0.35); color: var(--green);
+}
+.tab-btn:hover:not(.active) { border-color: rgba(60,168,60,0.25); color: var(--text2); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* TYPE FILTER */
+.type-filter { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.filter-btn {
+    padding: 0.4rem 0.9rem; border-radius: 100px;
+    font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border);
+    background: transparent; color: var(--text3); cursor: pointer; transition: all 0.2s;
+}
+.filter-btn.active { background: var(--green-glow); border-color: rgba(60,168,60,0.35); color: var(--green); }
+.filter-btn:hover:not(.active) { border-color: rgba(60,168,60,0.25); color: var(--text2); }
+
+/* RARITY COLORS */
+.rarity-common    { color: #8ba888; }
+.rarity-uncommon  { color: #4ade80; }
+.rarity-rare      { color: #60a5fa; }
+.rarity-epic      { color: #c084fc; }
+.rarity-legendary { color: #fb923c; }
+
+.rarity-border-common    { border-color: rgba(139,168,136,0.3) !important; }
+.rarity-border-uncommon  { border-color: rgba(74,222,128,0.3) !important; }
+.rarity-border-rare      { border-color: rgba(96,165,250,0.3) !important; }
+.rarity-border-epic      { border-color: rgba(192,132,252,0.35) !important; }
+.rarity-border-legendary { border-color: rgba(251,146,60,0.4) !important; }
+
+.rarity-bg-common    { background: rgba(139,168,136,0.06); }
+.rarity-bg-uncommon  { background: rgba(74,222,128,0.06); }
+.rarity-bg-rare      { background: rgba(96,165,250,0.07); }
+.rarity-bg-epic      { background: rgba(192,132,252,0.08); }
+.rarity-bg-legendary { background: rgba(251,146,60,0.09); }
+
+.rarity-glow-common    { box-shadow: 0 0 10px rgba(139,168,136,0.1); }
+.rarity-glow-uncommon  { box-shadow: 0 0 12px rgba(74,222,128,0.12); }
+.rarity-glow-rare      { box-shadow: 0 0 14px rgba(96,165,250,0.15); }
+.rarity-glow-epic      { box-shadow: 0 0 16px rgba(192,132,252,0.2); }
+.rarity-glow-legendary { box-shadow: 0 0 20px rgba(251,146,60,0.25); }
+
+/* INVENTORY GRID */
+.inv-section { margin-bottom: 2rem; }
+.inv-section-title {
+    font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text3); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.inv-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem;
+}
+
+.inv-card {
+    border-radius: 14px; border: 1px solid; padding: 1rem 0.85rem;
+    position: relative; transition: transform 0.15s;
+    display: flex; flex-direction: column; gap: 0.5rem;
+}
+.inv-card:hover { transform: translateY(-2px); }
+.inv-card-icon { font-size: 2rem; text-align: center; margin-bottom: 0.1rem; }
+.inv-card-name { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.82rem; font-weight: 700; line-height: 1.3; text-align: center; }
+.inv-card-effect { font-size: 0.72rem; color: var(--text2); text-align: center; }
+.inv-card-rarity {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+    text-align: center; margin-top: auto;
+}
+.inv-qty-badge {
+    position: absolute; top: -5px; right: -5px;
+    background: var(--green); color: #fff;
+    border-radius: 100px; font-family: 'Space Mono', monospace;
+    font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.45rem;
+    min-width: 22px; text-align: center;
+}
+.btn-activate {
+    width: 100%; margin-top: 0.25rem; padding: 0.45rem;
+    background: var(--green);
+    color: #fff; border: none; border-radius: 8px;
+    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.75rem; font-weight: 700;
+    cursor: pointer; transition: opacity 0.15s;
+}
+.btn-activate:hover { opacity: 0.85; }
+.btn-activate:disabled { opacity: 0.4; cursor: not-allowed; background: rgba(60,168,60,0.3); }
+
+/* SHOP GRID */
+.shop-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 0.85rem;
+}
+.shop-card {
+    border-radius: 16px; border: 1px solid; padding: 1.2rem 1rem;
+    display: flex; flex-direction: column; gap: 0.45rem;
+    transition: transform 0.15s;
+}
+.shop-card:hover { transform: translateY(-2px); }
+.shop-card-icon { font-size: 2.2rem; text-align: center; }
+.shop-card-name { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.88rem; font-weight: 700; text-align: center; line-height: 1.3; }
+.shop-card-effect { font-size: 0.75rem; color: var(--text2); text-align: center; line-height: 1.4; }
+.shop-card-duration { font-size: 0.7rem; color: var(--text3); text-align: center; margin-top: 0.1rem; }
+.shop-card-rarity { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; text-align: center; }
+.shop-card-price {
+    display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+    font-family: 'Space Mono', monospace; font-size: 0.95rem; font-weight: 700;
+    color: var(--gold); margin-top: auto; padding-top: 0.25rem;
+}
+.shop-card-price-row {
+    display: flex; flex-direction: column; align-items: center; margin-top: auto;
+    gap: 0.15rem; padding-top: 0.25rem;
+}
+/* Buy buttons */
+.btn-buy {
+    width: 100%; padding: 0.55rem; margin-top: 0.15rem;
+    background: rgba(224,165,0,0.1);
+    border: 1px solid rgba(224,165,0,0.3); border-radius: 10px;
+    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.82rem; font-weight: 700;
+    color: var(--gold); cursor: pointer; transition: all 0.2s;
+}
+.btn-buy:hover { background: rgba(224,165,0,0.18); border-color: rgba(224,165,0,0.5); }
+.btn-buy:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-buy.cant-afford { opacity: 0.45; color: var(--text3); border-color: var(--border); background: transparent; cursor: not-allowed; }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 3rem 2rem; color: var(--text3); }
+.empty-state-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+.empty-state h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 0.5rem; }
+.empty-state p { font-size: 0.88rem; }
+.btn-orange {
+    display: inline-block; margin-top: 1rem;
+    background: var(--green);
+    color: white; border: none; border-radius: 12px; padding: 0.75rem 1.75rem;
+    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; text-decoration: none; transition: opacity 0.2s;
+}
+.btn-orange:hover { opacity: 0.9; }
+
+/* TOAST */
+.toast {
+    position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 1rem); left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 14px; padding: 0.9rem 1.5rem; font-size: 0.9rem; color: var(--text);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 200;
+    min-width: 200px; max-width: 380px; text-align: center; white-space: pre-line;
+    box-shadow: var(--shadow-lg);
+}
+.toast.show { opacity: 1; }
+.toast-xp { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--green); }
+
+/* ACTIVATE SHEET */
+.sheet-overlay {
+    position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.5);
+    display: none; align-items: flex-end; justify-content: center;
+}
+[data-theme="dark"] .sheet-overlay { background: rgba(0,0,0,0.7); }
+.sheet-overlay.open { display: flex; }
+.sheet {
+    background: var(--surface); border: 1px solid var(--border2); border-radius: 20px 20px 0 0;
+    padding: 1.5rem; width: 100%; max-width: 480px;
+}
+.sheet-handle { width: 40px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 1.25rem; }
+.sheet-icon { font-size: 3rem; text-align: center; margin-bottom: 0.5rem; }
+.sheet-title { font-size: 1.2rem; font-weight: 800; text-align: center; margin-bottom: 0.25rem; }
+.sheet-desc { font-size: 0.85rem; color: var(--text2); text-align: center; margin-bottom: 1.5rem; line-height: 1.5; }
+.sheet-effect-row {
+    display: flex; justify-content: space-around; margin-bottom: 1.5rem;
+    background: var(--surface2); border-radius: 12px; padding: 0.85rem;
+}
+.sheet-effect-item { text-align: center; }
+.sheet-effect-val { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--green); }
+.sheet-effect-lbl { font-size: 0.68rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.1rem; }
+.btn-confirm-activate {
+    width: 100%; padding: 0.9rem;
+    background: var(--green);
+    color: #fff; border: none; border-radius: 14px;
+    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1rem; font-weight: 800;
+    cursor: pointer; transition: opacity 0.15s; margin-bottom: 0.75rem;
+}
+.btn-confirm-activate:hover { opacity: 0.9; }
+.btn-cancel {
+    width: 100%; padding: 0.75rem; background: transparent;
+    border: 1px solid var(--border); border-radius: 14px;
+    color: var(--text3); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.9rem; cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .vault-title { font-size: 1.5rem; }
+    .inv-grid { grid-template-columns: repeat(2, 1fr); }
+    .shop-grid { grid-template-columns: repeat(2, 1fr); }
+}
+    
+/* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.22s;
+}
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.contact-footer .cf-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.contact-footer .cf-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    transition: all 0.22s;
+}
+.contact-footer .cf-socials a:hover {
+    border-color: var(--green);
+    background: var(--surface);
+    color: var(--green);
+}
+.contact-footer .cf-socials svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.contact-footer .cf-site {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+    <header class="top-header">
+        <a href="/" class="header-logo">
+            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            Disc Golf <span class="go">Go</span>
+        </a>
+        <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+            <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+        </div>
+    </header>
+
+        <div class="page-content">
+            <div id="vault-content">
+                <div class="vault-header">
+                    <div class="vault-title-row">
+                        <div>
+                            <div class="vault-title">Vault</div>
+                            <div class="vault-subtitle">Your items &amp; boosts</div>
+                        </div>
+                        <div class="gold-badge">
+                            <span class="gold-icon">💰</span>
+                            <div>
+                                <div class="gold-amount" id="gold-display">0</div>
+                                <div class="gold-label">Gold</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="active-boosts-banner" id="active-boosts-banner">
+                        <div class="active-boost-label">Active Boosts</div>
+                        <div class="boost-chips" id="active-boost-chips"></div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" id="tab-btn-inventory" onclick="switchTab('inventory', this)">🎒 Inventory</button>
+                    <button class="tab-btn" id="tab-btn-shop" onclick="switchTab('shop', this)">🛒 Shop</button>
+                </div>
+
+                <!-- INVENTORY TAB -->
+                <div id="tab-inventory" class="tab-panel active">
+                    <div id="inventory-body"></div>
+                </div>
+
+                <!-- SHOP TAB -->
+                <div id="tab-shop" class="tab-panel">
+                    <div class="type-filter" id="shop-filter">
+                        <button class="filter-btn active" onclick="filterShop('all', this)">All</button>
+                        <button class="filter-btn" onclick="filterShop('boost_xp', this)">XP Boosts</button>
+                        <button class="filter-btn" onclick="filterShop('boost_gold', this)">Gold Boosts</button>
+                        <button class="filter-btn" onclick="filterShop('boost_drops', this)">Drop Boosts</button>
+                    </div>
+                    <div class="shop-grid" id="shop-grid"></div>
+                </div>
+            </div>
+
+            <div id="no-auth" style="display:none;text-align:center;padding:4rem 2rem;">
+                <div style="font-size:3rem;margin-bottom:1rem;">🏪</div>
+                <h2 style="margin-bottom:0.75rem;">Sign in to access the Vault</h2>
+                <p style="color:var(--text2);margin-bottom:1.5rem;">Earn gold playing rounds, spend it on boosts and dominate the course</p>
+                <a href="/login" class="btn-orange">Sign In</a>
+                <div style="margin-top:1rem;font-size:0.9rem;color:var(--text3);">
+                    New? <a href="/register" style="color:var(--green);text-decoration:none;">Create an account</a>
+                </div>
+            </div>
+        </div>
+
+    <!-- Activate Confirmation Sheet -->
+    <div class="sheet-overlay" id="activate-sheet">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-icon" id="sheet-icon">⚡</div>
+            <div class="sheet-title" id="sheet-name">Item Name</div>
+            <div class="sheet-desc" id="sheet-desc">Description</div>
+            <div class="sheet-effect-row">
+                <div class="sheet-effect-item">
+                    <div class="sheet-effect-val" id="sheet-effect">+25%</div>
+                    <div class="sheet-effect-lbl">Boost</div>
+                </div>
+                <div class="sheet-effect-item">
+                    <div class="sheet-effect-val" id="sheet-duration">60m</div>
+                    <div class="sheet-effect-lbl">Duration</div>
+                </div>
+            </div>
+            <button class="btn-confirm-activate" id="sheet-confirm-btn">Activate Now</button>
+            <button class="btn-cancel" onclick="closeSheet()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    
+        <!-- Contact mini-footer -->
+        <div class="contact-footer">
+            <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+            <div class="cf-socials">
+                <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                </a>
+                <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                </a>
+
+                <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+            </div>
+            <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+        </div>
+        <footer class="page-footer">
+        <p>Disc Golf Go - Powered By You &nbsp;&bull;&nbsp; <a href="/privacy">Privacy</a> &nbsp;&bull;&nbsp; <a href="/delete-account">Delete Account</a></p>
+    </footer>
+
+    <script>
+    // ── Dark mode ────────────────────────────────────────────────────────────────
+    (function() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+    })();
+    document.getElementById('themeToggle').addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        this.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('dggo_theme')) {
+            var next = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        }
+    });
+    </script>
+
+    <script>
+    // ── Helpers ─────────────────────────────────────────────────────────────────
+    function getToken() { return localStorage.getItem('dggo_token'); }
+    function authHeaders() {
+        const t = getToken(), h = {};
+        if (t) h['Authorization'] = 'Bearer ' + t;
+        return h;
+    }
+    function signOut() {
+        ['dggo_token','dggo_player_name','dggo_player_id'].forEach(k => localStorage.removeItem(k));
+        window.location.href = '/login';
+    }
+
+    let _tt = null;
+    function showToast(html, dur = 4000) {
+        const t = document.getElementById('toast');
+        t.innerHTML = html; t.classList.add('show');
+        if (_tt) clearTimeout(_tt);
+        _tt = setTimeout(() => t.classList.remove('show'), dur);
+    }
+
+    const RARITY_COLORS = {
+        common: 'var(--r-common)',
+        uncommon: 'var(--r-uncommon)',
+        rare: 'var(--r-rare)',
+        epic: 'var(--r-epic)',
+        legendary: 'var(--r-legendary)',
+    };
+    const TYPE_LABELS = {
+        boost_xp: 'XP Boost',
+        boost_gold: 'Gold Boost',
+        boost_drops: 'Drop Boost',
+    };
+    const TYPE_ICONS_MAP = { boost_xp: '⚡ XP Boosts', boost_gold: '💰 Gold Boosts', boost_drops: '🍀 Drop Boosts' };
+
+    function formatDuration(mins) {
+        return mins >= 60 ? (mins / 60) + ' hr' : mins + ' min';
+    }
+
+    // ── State ────────────────────────────────────────────────────────────────────
+    let allShopItems = [];
+    let currentShopFilter = 'all';
+    let activeTimers = {};
+    let pendingActivate = null;
+
+    // ── Tabs ─────────────────────────────────────────────────────────────────────
+    function switchTab(tab, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        (btn || event.target).classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+        if (tab === 'shop' && allShopItems.length === 0) loadShop();
+    }
+
+    // ── Active boosts banner ─────────────────────────────────────────────────────
+    function renderActiveBoostsBanner(boosts) {
+        const banner = document.getElementById('active-boosts-banner');
+        const chips = document.getElementById('active-boost-chips');
+        if (!boosts || !boosts.length) { banner.classList.remove('visible'); return; }
+        banner.classList.add('visible');
+        chips.innerHTML = '';
+        for (const b of boosts) {
+            const chip = document.createElement('div');
+            chip.className = 'boost-chip';
+            chip.dataset.expires = b.expires_at;
+            chip.dataset.boostId = b.id;
+            chip.innerHTML = b.icon + ' <span>' + b.name + '</span> <span class="bc-timer" id="timer-' + b.id + '">–</span>';
+            chips.appendChild(chip);
+            startTimer(b.id, b.expires_at);
+        }
+    }
+
+    function startTimer(id, expiresAt) {
+        if (activeTimers[id]) clearInterval(activeTimers[id]);
+        function tick() {
+            const remaining = new Date(expiresAt) - Date.now();
+            const el = document.getElementById('timer-' + id);
+            if (!el) { clearInterval(activeTimers[id]); return; }
+            if (remaining <= 0) {
+                el.textContent = 'expired';
+                clearInterval(activeTimers[id]);
+                setTimeout(loadInventory, 1500);
+                return;
+            }
+            const m = Math.floor(remaining / 60000);
+            const s = Math.floor((remaining % 60000) / 1000);
+            el.textContent = m + ':' + String(s).padStart(2, '0');
+        }
+        tick();
+        activeTimers[id] = setInterval(tick, 1000);
+    }
+
+    // ── Gold display ─────────────────────────────────────────────────────────────
+    function setGold(amount) {
+        document.getElementById('gold-display').textContent = Number(amount).toLocaleString();
+    }
+
+    // ── Inventory ────────────────────────────────────────────────────────────────
+    async function loadInventory() {
+        try {
+            const res = await fetch('/api/vault/inventory', { headers: authHeaders() });
+            if (!res.ok) throw new Error('fail');
+            const data = await res.json();
+            setGold(data.gold);
+            renderActiveBoostsBanner(data.active_boosts);
+            renderInventory(data.inventory, data.active_boosts);
+        } catch {}
+    }
+
+    function renderInventory(items, activeBoosts) {
+        const body = document.getElementById('inventory-body');
+        if (!items || !items.length) {
+            body.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🎒</span><h3>Inventory is empty</h3><p>Head to the Shop tab to buy your first boost</p></div>';
+            return;
+        }
+
+        // Group by type
+        const groups = {};
+        for (const item of items) {
+            if (!groups[item.type]) groups[item.type] = [];
+            groups[item.type].push(item);
+        }
+
+        const activeTypeSet = new Set((activeBoosts || []).map(b => {
+            // We need item type from inventory. We'll check by item_id match.
+            return null; // filled below
+        }));
+        const activeItemIds = new Set((activeBoosts || []).map(b => b.item_id));
+
+        body.innerHTML = '';
+        for (const [type, typeItems] of Object.entries(groups)) {
+            const sec = document.createElement('div');
+            sec.className = 'inv-section';
+            sec.innerHTML = '<div class="inv-section-title">' + (TYPE_ICONS_MAP[type] || type) + ' <span style="color:var(--text3);font-size:0.7rem">·</span> <span style="color:var(--text3);font-size:0.7rem">' + typeItems.reduce((s,i) => s + i.quantity, 0) + ' owned</span></div>';
+            const grid = document.createElement('div');
+            grid.className = 'inv-grid';
+
+            for (const item of typeItems) {
+                const rarity = item.rarity;
+                const isActiveType = (activeBoosts || []).some(b => b.type === item.type);
+                const card = document.createElement('div');
+                card.className = 'inv-card rarity-bg-' + rarity + ' rarity-border-' + rarity + ' rarity-glow-' + rarity;
+                card.innerHTML =
+                    '<span class="inv-qty-badge">×' + item.quantity + '</span>' +
+                    '<div class="inv-card-icon">' + item.icon + '</div>' +
+                    '<div class="inv-card-name">' + item.name + '</div>' +
+                    '<div class="inv-card-effect">+' + item.effect_value + '% · ' + formatDuration(item.duration_minutes) + '</div>' +
+                    '<div class="inv-card-rarity rarity-' + rarity + '">' + rarity + '</div>' +
+                    '<button class="btn-activate" ' + (isActiveType ? 'disabled title="A ' + TYPE_LABELS[item.type] + ' is already active"' : '') + ' onclick="openActivateSheet(' + JSON.stringify(item).replace(/"/g, '&quot;') + ')">Activate</button>';
+                grid.appendChild(card);
+            }
+            sec.appendChild(grid);
+            body.appendChild(sec);
+        }
+    }
+
+    // ── Activate Sheet ────────────────────────────────────────────────────────────
+    function openActivateSheet(item) {
+        pendingActivate = item;
+        document.getElementById('sheet-icon').textContent = item.icon;
+        document.getElementById('sheet-name').textContent = item.name;
+        document.getElementById('sheet-desc').textContent = item.description || '+' + item.effect_value + '% for ' + formatDuration(item.duration_minutes);
+        document.getElementById('sheet-effect').textContent = '+' + item.effect_value + '%';
+        document.getElementById('sheet-duration').textContent = formatDuration(item.duration_minutes);
+        document.getElementById('sheet-confirm-btn').onclick = confirmActivate;
+        document.getElementById('activate-sheet').classList.add('open');
+    }
+
+    function closeSheet() {
+        document.getElementById('activate-sheet').classList.remove('open');
+        pendingActivate = null;
+    }
+
+    async function confirmActivate() {
+        if (!pendingActivate) return;
+        const item = pendingActivate;
+        const btn = document.getElementById('sheet-confirm-btn');
+        btn.disabled = true;
+        btn.textContent = 'Activating...';
+        try {
+            const res = await fetch('/api/vault/activate', {
+                method: 'POST',
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inventory_id: item.id }),
+            });
+            const data = await res.json();
+            closeSheet();
+            if (!res.ok) {
+                if (res.status === 409) {
+                    showToast('A ' + TYPE_LABELS[item.type] + ' is already active! (' + data.remaining_minutes + 'm left)');
+                } else {
+                    showToast(data.error || 'Could not activate');
+                }
+            } else {
+                showToast('⚡ ' + item.name + ' activated!\n+' + item.effect_value + '% for ' + formatDuration(item.duration_minutes));
+                setTimeout(loadInventory, 300);
+            }
+        } catch {
+            closeSheet();
+            showToast('Could not activate item');
+        }
+    }
+
+    // ── Shop ─────────────────────────────────────────────────────────────────────
+    async function loadShop() {
+        try {
+            const res = await fetch('/api/vault/shop', { headers: authHeaders() });
+            if (!res.ok) throw new Error('fail');
+            const data = await res.json();
+            allShopItems = data.items;
+            renderShop(allShopItems, currentShopFilter);
+        } catch {
+            document.getElementById('shop-grid').innerHTML = '<div class="empty-state"><p>Could not load shop</p></div>';
+        }
+    }
+
+    function filterShop(type, btn) {
+        currentShopFilter = type;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderShop(allShopItems, type);
+    }
+
+    function renderShop(items, filter) {
+        const grid = document.getElementById('shop-grid');
+        const filtered = filter === 'all' ? items : items.filter(i => i.type === filter);
+        const playerGold = parseInt(document.getElementById('gold-display').textContent.replace(/,/g,'')) || 0;
+
+        grid.innerHTML = '';
+        for (const item of filtered) {
+            const rarity = item.rarity;
+            const canAfford = playerGold >= item.gold_cost;
+
+            const card = document.createElement('div');
+            card.className = 'shop-card rarity-bg-' + rarity + ' rarity-border-' + rarity + ' rarity-glow-' + rarity;
+
+            const priceAndButtonsHtml =
+                '<div class="shop-card-price-row">' +
+                '<div class="shop-card-price">💰 ' + item.gold_cost.toLocaleString() + '</div>' +
+                '<button class="btn-buy ' + (canAfford ? '' : 'cant-afford') + '" onclick="buyItem(' + item.id + ', ' + item.gold_cost + ', this)" ' + (canAfford ? '' : 'disabled') + '>' +
+                (canAfford ? '💰 Buy' : '🔒 Need more gold') + '</button>' +
+                '</div>';
+
+            card.innerHTML =
+                '<div class="shop-card-icon">' + item.icon + '</div>' +
+                '<div class="shop-card-name">' + item.name + '</div>' +
+                '<div class="shop-card-effect">+' + item.effect_value + '% ' + TYPE_LABELS[item.type].replace(' Boost','') + '</div>' +
+                '<div class="shop-card-duration">⏱ ' + formatDuration(item.duration_minutes) + '</div>' +
+                '<div class="shop-card-rarity rarity-' + rarity + '">' + rarity + '</div>' +
+                priceAndButtonsHtml;
+            grid.appendChild(card);
+        }
+    }
+
+    async function buyItem(itemId, cost, btn) {
+        btn.disabled = true;
+        btn.innerHTML = 'Buying...';
+        try {
+            const res = await fetch('/api/vault/buy', {
+                method: 'POST',
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_id: itemId }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                btn.disabled = false;
+                btn.textContent = '💰 Buy';
+                if (res.status === 402) {
+                    showToast('💰 Not enough gold! Need ' + data.cost + ', you have ' + data.gold);
+                } else {
+                    showToast(data.error || 'Purchase failed');
+                }
+                return;
+            }
+            setGold(data.gold);
+            showToast('✅ Bought ' + data.item_name + '!\n💰 −' + data.gold_spent + ' gold · ' + Number(data.gold).toLocaleString() + ' remaining');
+            btn.textContent = '✓ Bought!';
+            btn.disabled = true;
+            // Re-render shop to update can-afford states
+            setTimeout(() => renderShop(allShopItems, currentShopFilter), 400);
+            // Reload inventory in background
+            setTimeout(loadInventory, 600);
+        } catch {
+            btn.disabled = false;
+            btn.textContent = 'Buy';
+            showToast('Purchase failed');
+        }
+    }
+
+    // Close sheet on backdrop click
+    document.getElementById('activate-sheet').addEventListener('click', function(e) {
+        if (e.target === this) closeSheet();
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────────────────
+    async function init() {
+        const token = getToken();
+        if (!token) {
+            document.getElementById('no-auth').style.display = 'block';
+            // Still load shop for unauthenticated users
+            loadShop();
+            return;
+        }
+
+        try {
+            await loadInventory();
+            document.getElementById('vault-content').style.display = 'block';
+        } catch {
+            document.getElementById('no-auth').style.display = 'block';
+        }
+    }
+
+    init();
+
+    // ── Analytics ────────────────────────────────────────────────────────────────
+    (function() {
+        var slug = 'disc-golf-go';
+        var vid = localStorage.getItem('polsia_vid');
+        if (!vid) {
+            vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+            localStorage.setItem('polsia_vid', vid);
+        }
+        new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+    })();
+    </script>
+
+    <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+    <nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+  var currentNotifId = null;
+  function dismiss() {
+    document.getElementById('notifPopup').style.display='none';
+    document.getElementById('notifPopupOverlay').style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+  document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+  document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+  fetch('/api/notifications/active', { headers: headers })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.notification) return;
+      currentNotifId = d.notification.id;
+      document.getElementById('notifPopupTitle').textContent = d.notification.title;
+      document.getElementById('notifPopupMsg').textContent = d.notification.message;
+      document.getElementById('notifPopup').style.display = 'block';
+      document.getElementById('notifPopupOverlay').style.display = 'flex';
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+  <title>Disc Golf Go &mdash; Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              300: 'var(--text2)',
+              400: 'var(--text3)',
+              500: 'var(--text3)',
+              600: 'var(--border2-raw)',
+              700: 'var(--border-raw)',
+              900: 'var(--surface2)',
+            },
+            green: {
+              500: 'var(--green)',
+              600: 'var(--green)',
+            },
+            red: {
+              400: 'var(--red)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+body { padding-bottom: 0; }    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04); transition: background var(--transition), border-color var(--transition); }
+    [data-theme="dark"] .card { box-shadow: 0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04); }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--text); font-family: 'Space Mono', monospace; }
+    .stat-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); font-family: 'Space Grotesk', sans-serif; }
+    .stat-sub { font-size: 0.8rem; color: var(--text3); margin-top: 2px; }
+    .green { color: var(--green); }
+    .badge-green { background: var(--green-glow); color: var(--green); padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-blue { background: rgba(59,130,246,0.12); color: #60a5fa; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .table-row:hover { background: var(--green-glow); cursor: pointer; }
+    #loginOverlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
+    .spinner-sm { border: 2px solid var(--border2); border-top-color: var(--green); border-radius: 50%; width: 14px; height: 14px; animation: spin 0.7s linear infinite; display: inline-block; }
+    .tab-btn { padding: 8px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tab-btn.active { background: var(--green); color: #fff; }
+    .tab-btn:not(.active) { color: var(--text3); border-color: var(--border); }
+    .tab-btn:not(.active):hover { color: var(--text); border-color: var(--border2); }
+    .sort-btn { color: var(--text3); font-size: 0.7rem; margin-left: 2px; }
+    .sort-btn.active-sort { color: var(--green); }
+    .input-field { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 0.875rem; width: 100%; outline: none; font-family: 'Space Grotesk', sans-serif; transition: border-color var(--transition); }
+    .input-field:focus { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .btn-primary { background: var(--green); color: #fff; font-weight: 800; border-radius: 8px; padding: 8px 16px; font-size: 0.875rem; cursor: pointer; transition: background 0.15s; border: none; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.04em; }
+    .btn-primary:hover { background: var(--green-bright); }
+    .btn-secondary { background: var(--surface2); color: var(--text); font-weight: 600; border-radius: 8px; padding: 8px 16px; font-size: 0.875rem; cursor: pointer; transition: background 0.15s; border: 1px solid var(--border2); }
+    .btn-secondary:hover { background: var(--surface); }
+    .btn-danger { background: var(--red); color: #fff; font-weight: 600; border-radius: 8px; padding: 8px 16px; font-size: 0.875rem; cursor: pointer; transition: background 0.15s; border: none; }
+    .btn-danger:hover { opacity: 0.85; }
+    .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+    .page-btn { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border); color: var(--text3); cursor: pointer; transition: all var(--transition); }
+    .page-btn:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+    .page-btn.current { background: var(--green); color: #fff; border-color: var(--green); }
+    .page-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* Admin header override */
+    .admin-header { background: var(--bg2); border-bottom: 1px solid var(--border); transition: background var(--transition); }
+    .admin-tabs { background: var(--bg); border-bottom: 1px solid var(--border); }
+
+    .theme-btn-admin {
+        width: 36px; height: 36px;
+        border: 1px solid var(--border2); border-radius: 8px;
+        background: var(--surface2); cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; color: var(--text2);
+        transition: all var(--transition);
+    }
+    .theme-btn-admin:hover { background: var(--surface); border-color: var(--green); }
+
+    /* Tailwind text-white override */
+    .text-white { color: var(--text) !important; }
+
+    /* Toast notification */
+    .admin-toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      padding: 10px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      animation: toastIn 0.3s ease-out;
+      transition: opacity 0.3s;
+    }
+    .admin-toast.success { background: var(--green); color: #fff; }
+    .admin-toast.error { background: var(--red); color: #fff; }
+    @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Inline edit overlay */
+    .inline-edit-overlay {
+      position: fixed; inset: 0; z-index: 45;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .inline-edit-box {
+      background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+      padding: 20px; width: 300px; max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    /* Badge tier colors */
+    .tier-bronze { color: #cd7f32; }
+    .tier-silver { color: #c0c0c0; }
+    .tier-gold { color: #ffd700; }
+    .tier-platinum { color: #e5e4e2; }
+    .tier-diamond { color: #b9f2ff; }
+
+    .page-footer a:hover { text-decoration: underline; }
+  
+/* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.22s;
+}
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.contact-footer .cf-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.contact-footer .cf-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    transition: all 0.22s;
+}
+.contact-footer .cf-socials a:hover {
+    border-color: var(--green);
+    background: var(--surface);
+    color: var(--green);
+}
+.contact-footer .cf-socials svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.contact-footer .cf-site {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body class="min-h-screen">
+
+<!-- Login Overlay -->
+<div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center" style="display:none!important">
+  <div class="card p-8 w-full max-w-sm mx-4">
+    <div class="text-center mb-6">
+      <div class="text-3xl mb-2">&#9971;</div>
+      <h1 class="text-xl font-bold text-white">Admin Access</h1>
+      <p class="text-sm text-slate-400 mt-1">Disc Golf Go Dashboard</p>
+    </div>
+    <form id="loginForm">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+        <input
+          id="passwordInput"
+          type="password"
+          class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+          placeholder="Enter admin password"
+          autofocus
+        />
+      </div>
+      <div id="loginError" class="text-red-400 text-sm mb-3 hidden">Incorrect password. Try again.</div>
+      <button
+        type="submit"
+        class="w-full bg-green-600 hover:bg-green-500 text-white font-semibold py-3 rounded-lg transition-colors"
+      >
+        Sign In
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <!-- Header -->
+  <header class="admin-header px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" style="object-fit:contain">
+        <div>
+          <h1 class="text-lg font-bold" style="color:var(--text)">Disc Golf Go</h1>
+          <p class="text-xs" style="color:var(--text3)">Admin Dashboard</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="lastUpdated" class="text-xs" style="color:var(--text3)"></span>
+        <button class="theme-btn-admin" id="themeToggle" title="Toggle dark mode">🌓</button>
+        <button onclick="logout()" class="text-sm transition-colors" style="color:var(--text3)">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <div class="admin-tabs px-6">
+    <div class="max-w-7xl mx-auto flex gap-2 py-3">
+      <button class="tab-btn active" id="tabStats" onclick="switchTab('stats')">&#128202; Stats</button>
+      <button class="tab-btn" id="tabUsers" onclick="switchTab('users')">&#128100; Users</button>
+      <button class="tab-btn" id="tabCourses" onclick="switchTab('courses')">&#127944; Courses</button>
+            <button class="tab-btn" id="tabPreview" onclick="switchTab('preview')">&#127919; Scorecard Preview</button>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- ══════════════ STATS TAB ══════════════ -->
+    <div id="statsTab">
+
+      <!-- Loading state -->
+      <div id="loadingState" class="text-center py-16 text-slate-400">
+        <div class="spinner mx-auto mb-4"></div>
+        <p>Loading dashboard...</p>
+      </div>
+
+      <!-- Main content (hidden until loaded) -->
+      <div id="mainContent" style="display:none">
+
+        <!-- Stat Cards -->
+        <section class="mb-8">
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Overview</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+
+            <div class="card p-5">
+              <p class="stat-label">Total Players</p>
+              <p class="stat-value green" id="statTotalPlayers">&mdash;</p>
+              <p class="stat-sub" id="statNewPlayers30d">&mdash; new this month</p>
+            </div>
+
+            <div class="card p-5">
+              <p class="stat-label">Active (7d)</p>
+              <p class="stat-value" id="statActive7d">&mdash;</p>
+              <p class="stat-sub" id="statActive30d">&mdash; active last 30d</p>
+            </div>
+
+            <div class="card p-5">
+              <p class="stat-label">New Players (7d)</p>
+              <p class="stat-value" id="statNewPlayers7d">&mdash;</p>
+              <p class="stat-sub">Avg XP: <span id="statAvgXp">&mdash;</span></p>
+            </div>
+
+            <div class="card p-5">
+              <p class="stat-label">Total Check-ins</p>
+              <p class="stat-value" id="statTotalCheckins">&mdash;</p>
+              <p class="stat-sub" id="statTotalRounds">&mdash; rounds played</p>
+            </div>
+
+            <div class="card p-5">
+              <p class="stat-label">Quests Done</p>
+              <p class="stat-value" id="statChallengesDone">&mdash;</p>
+              <p class="stat-sub">Player completions</p>
+            </div>
+
+            <div class="card p-5">
+              <p class="stat-label">Page Views</p>
+              <p class="stat-value" id="statTotalPageviews">&mdash;</p>
+              <p class="stat-sub" id="statTodayViews">&mdash; today</p>
+            </div>
+
+            <div class="card p-5">
+              <p class="stat-label">Unique Visitors</p>
+              <p class="stat-value" id="statUniqueVisitors">&mdash;</p>
+              <p class="stat-sub">Last 30 days</p>
+            </div>
+
+            <div class="card p-5">
+              <p class="stat-label">Avg XP / Player</p>
+              <p class="stat-value" id="statAvgXpCard">&mdash;</p>
+              <p class="stat-sub">Global average</p>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Charts -->
+        <section class="mb-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-slate-300 mb-4">Daily Traffic (30 days)</h3>
+              <div style="position:relative;height:220px">
+                <canvas id="trafficChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-slate-300 mb-4">New Player Signups (30 days)</h3>
+              <div style="position:relative;height:220px">
+                <canvas id="growthChart"></canvas>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Activity Chart -->
+        <section class="mb-8">
+          <div class="card p-5">
+            <h3 class="text-sm font-semibold text-slate-300 mb-4">Daily Check-ins (14 days)</h3>
+            <div style="position:relative;height:180px">
+              <canvas id="checkinsChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tables -->
+        <section class="mb-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Top Players -->
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-slate-300 mb-4">Top Players by XP</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-slate-500 text-xs uppercase">
+                      <th class="text-left pb-2 pr-3">#</th>
+                      <th class="text-left pb-2 pr-3">Player</th>
+                      <th class="text-right pb-2 pr-3">XP</th>
+                      <th class="text-right pb-2 pr-3">Lvl</th>
+                      <th class="text-right pb-2">Check-ins</th>
+                    </tr>
+                  </thead>
+                  <tbody id="topPlayersTable">
+                    <tr><td colspan="5" class="py-4 text-center text-slate-500">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Top Pages -->
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-slate-300 mb-4">Most Visited Pages (30 days)</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-slate-500 text-xs uppercase">
+                      <th class="text-left pb-2 pr-3">Page</th>
+                      <th class="text-right pb-2 pr-3">Views</th>
+                      <th class="text-right pb-2">Uniques</th>
+                    </tr>
+                  </thead>
+                  <tbody id="topPagesTable">
+                    <tr><td colspan="3" class="py-4 text-center text-slate-500">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Admin Tools -->
+        <section class="mb-8">
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Admin Tools</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            <a href="/admin/notifications" class="card p-5 flex items-start gap-4 transition-all" style="text-decoration:none;cursor:pointer;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor=''">
+              <div style="font-size:1.75rem;line-height:1;">📣</div>
+              <div>
+                <p class="font-bold text-sm" style="color:var(--text);">Notifications &amp; Email</p>
+                <p class="text-xs mt-1" style="color:var(--text3);">Compose in-app notifications or send email blasts to all players or individuals.</p>
+              </div>
+            </a>
+
+          </div>
+        </section>
+
+      </div><!-- /mainContent -->
+    </div><!-- /statsTab -->
+
+    <!-- ══════════════ USERS TAB ══════════════ -->
+    <div id="usersTab" style="display:none">
+
+      <!-- ── USER LIST VIEW ── -->
+      <div id="usersListView">
+        <!-- Toolbar -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-6">
+          <div class="flex-1 relative">
+            <input
+              type="text"
+              id="userSearch"
+              class="input-field pl-9"
+              placeholder="Search by name, @username, or email..."
+              oninput="debounceSearch()"
+            />
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">&#128269;</span>
+          </div>
+          <button class="btn-primary flex items-center gap-2" onclick="openAddModal()">
+            <span>+</span> Add User
+          </button>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="border-b border-slate-700">
+                <tr class="text-slate-500 text-xs uppercase">
+                  <th class="text-left px-4 py-3 cursor-pointer" onclick="sortBy('display_name')">
+                    Name <span id="sort_display_name" class="sort-btn"></span>
+                  </th>
+                  <th class="text-left px-4 py-3 cursor-pointer" onclick="sortBy('username')">
+                    @Username <span id="sort_username" class="sort-btn"></span>
+                  </th>
+                  <th class="text-left px-4 py-3 cursor-pointer hidden sm:table-cell" onclick="sortBy('email')">
+                    Email <span id="sort_email" class="sort-btn"></span>
+                  </th>
+                  <th class="text-right px-4 py-3 cursor-pointer" onclick="sortBy('xp')">
+                    XP <span id="sort_xp" class="sort-btn"></span>
+                  </th>
+                  <th class="text-right px-4 py-3 cursor-pointer hidden md:table-cell" onclick="sortBy('level')">
+                    Lvl <span id="sort_level" class="sort-btn"></span>
+                  </th>
+                  <th class="text-right px-4 py-3 cursor-pointer hidden lg:table-cell" onclick="sortBy('created_at')">
+                    Joined <span id="sort_created_at" class="sort-btn"></span>
+                  </th>
+                  <th class="text-right px-4 py-3 cursor-pointer hidden lg:table-cell" onclick="sortBy('last_active')">
+                    Last Active <span id="sort_last_active" class="sort-btn"></span>
+                  </th>
+                  <th class="text-right px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="8" class="py-8 text-center text-slate-500">
+                  <div class="spinner mx-auto mb-2"></div>
+                  Loading users...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div id="usersPagination" class="border-t border-slate-700 px-4 py-3 flex items-center justify-between" style="display:none!important">
+            <span id="paginationInfo" class="text-xs text-slate-500"></span>
+            <div id="paginationBtns" class="flex gap-1"></div>
+          </div>
+        </div>
+      </div><!-- /usersListView -->
+
+      <!-- ── USER DETAIL/STATS VIEW ── -->
+      <div id="usersDetailView" style="display:none">
+        <button class="btn-secondary mb-4 text-sm" onclick="closeUserDetail()">&#8592; Back to Users</button>
+
+        <!-- Loading -->
+        <div id="userDetailLoading" class="text-center py-16 text-slate-400">
+          <div class="spinner mx-auto mb-4"></div>
+          <p>Loading player stats...</p>
+        </div>
+
+        <!-- Content -->
+        <div id="userDetailContent" style="display:none">
+
+          <!-- ─ Header Card ─ -->
+          <div class="card p-5 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div class="flex-1">
+                <h2 id="ud_name" class="text-xl font-bold" style="color:var(--text)"></h2>
+                <p class="text-sm" style="color:var(--text3)">
+                  <span id="ud_username" class="font-mono"></span>
+                  &nbsp;&middot;&nbsp;
+                  <span id="ud_email"></span>
+                </p>
+                <p class="text-xs mt-1" style="color:var(--text3)">Joined <span id="ud_joined"></span> &middot; Last login <span id="ud_lastlogin"></span></p>
+              </div>
+              <div class="flex gap-2">
+                <button class="btn-secondary text-xs" onclick="if(window._udPlayer){openEditModal(window._udPlayer);}else{showToast('Loading user data...', 'error');}">&#9998; Edit Profile</button>
+                <button class="btn-danger text-xs" onclick="openDeleteModal(window._udPlayer.id, window._udPlayer.display_name)">&#128465; Delete</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─ Core Stats ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Core Stats</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('xp')" title="Click to edit">
+              <p class="stat-label">XP</p>
+              <p class="stat-value green" id="ud_xp">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('gold')" title="Click to edit">
+              <p class="stat-label">Gold</p>
+              <p class="stat-value" id="ud_gold" style="color:#f59e0b">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('level')" title="Click to edit">
+              <p class="stat-label">Level</p>
+              <p class="stat-value" id="ud_level">1</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('total_rounds')" title="Click to edit">
+              <p class="stat-label">Rounds Played</p>
+              <p class="stat-value" id="ud_total_rounds">0</p>
+            </div>
+          </div>
+
+          <!-- ─ Battle Stats ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Battle Stats</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('battle_wins')" title="Click to edit">
+              <p class="stat-label">Wins</p>
+              <p class="stat-value green" id="ud_battle_wins">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('battle_losses')" title="Click to edit">
+              <p class="stat-label">Losses</p>
+              <p class="stat-value" id="ud_battle_losses" style="color:var(--red)">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('login_streak')" title="Click to edit">
+              <p class="stat-label">Login Streak</p>
+              <p class="stat-value" id="ud_login_streak">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('best_streak')" title="Click to edit">
+              <p class="stat-label">Best Streak</p>
+              <p class="stat-value" id="ud_best_streak">0</p>
+            </div>
+          </div>
+
+          <!-- ─ Distance ─ -->
+          <div class="card p-4 mb-6 cursor-pointer" onclick="inlineEditStat('total_distance_m')" title="Click to edit">
+            <p class="stat-label">Total Distance</p>
+            <p class="stat-value" id="ud_distance">0 m</p>
+          </div>
+
+          <!-- ─ Game Stats ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Game Stats</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('total_birdies')" title="Click to edit">
+              <p class="stat-label">Birdies</p>
+              <p class="stat-value" id="ud_total_birdies" style="color:#60a5fa">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('total_aces')" title="Click to edit">
+              <p class="stat-label">Aces</p>
+              <p class="stat-value" id="ud_total_aces" style="color:#f59e0b">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('total_checkins')" title="Click to edit">
+              <p class="stat-label">Check-ins</p>
+              <p class="stat-value" id="ud_total_checkins">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('total_courses_visited')" title="Click to edit">
+              <p class="stat-label">Courses Visited</p>
+              <p class="stat-value" id="ud_total_courses_visited">0</p>
+            </div>
+            <div class="card p-4 cursor-pointer" onclick="inlineEditStat('challenges_completed')" title="Click to edit">
+              <p class="stat-label">Quests Done</p>
+              <p class="stat-value" id="ud_challenges_completed" style="color:var(--green)">0</p>
+            </div>
+          </div>
+
+          <!-- ─ Grant XP / Gold ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Grant Resources</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <div class="card p-4">
+              <p class="stat-label mb-2">Add XP</p>
+              <div class="flex gap-2">
+                <input type="number" min="1" id="ud_grant_xp" class="input-field flex-1" placeholder="Amount" />
+                <button class="btn-primary text-xs px-4" onclick="grantResource('xp')">Grant</button>
+              </div>
+              <div id="ud_grant_xp_msg" class="text-xs mt-1 hidden"></div>
+            </div>
+            <div class="card p-4">
+              <p class="stat-label mb-2">Add Gold</p>
+              <div class="flex gap-2">
+                <input type="number" min="1" id="ud_grant_gold" class="input-field flex-1" placeholder="Amount" />
+                <button class="btn-primary text-xs px-4" onclick="grantResource('gold')">Grant</button>
+              </div>
+              <div id="ud_grant_gold_msg" class="text-xs mt-1 hidden"></div>
+            </div>
+          </div>
+
+          <!-- ─ Achievements ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Achievements</h3>
+          <div class="card p-4 mb-6">
+            <div id="ud_achievements_list" class="mb-3"></div>
+            <div class="flex gap-2 mt-3 border-t pt-3" style="border-color:var(--border)">
+              <input type="text" id="ud_new_achievement" class="input-field flex-1 text-xs" placeholder="Achievement type (e.g. first_checkin, explorer)..." />
+              <button class="btn-primary text-xs px-3" onclick="grantAchievement()">+ Grant</button>
+            </div>
+            <div id="ud_achievement_msg" class="text-xs mt-1 hidden"></div>
+          </div>
+
+          <!-- ─ Badges ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Badges</h3>
+          <div class="card p-4 mb-6">
+            <div id="ud_badges_list" class="mb-3"></div>
+            <div class="flex gap-2 mt-3 border-t pt-3" style="border-color:var(--border)">
+              <input type="text" id="ud_new_badge_cat" class="input-field flex-1 text-xs" placeholder="Category (e.g. rounds, checkins)..." />
+              <select id="ud_new_badge_tier" class="input-field text-xs" style="width:auto;min-width:100px">
+                <option value="bronze">Bronze</option>
+                <option value="silver">Silver</option>
+                <option value="gold">Gold</option>
+                <option value="platinum">Platinum</option>
+                <option value="diamond">Diamond</option>
+              </select>
+              <button class="btn-primary text-xs px-3" onclick="grantBadge()">+ Grant</button>
+            </div>
+            <div id="ud_badge_msg" class="text-xs mt-1 hidden"></div>
+          </div>
+
+          <!-- ─ Quests ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Quests</h3>
+          <div class="card overflow-hidden mb-6">
+            <div id="ud_challenges_list" class="overflow-x-auto"></div>
+          </div>
+
+          <!-- ─ Check-in History ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Recent Check-ins</h3>
+          <div class="card overflow-hidden mb-6">
+            <div id="ud_checkins_list" class="overflow-x-auto"></div>
+          </div>
+
+          <!-- ─ Rounds ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Recent Rounds</h3>
+          <div class="card overflow-hidden mb-6">
+            <div id="ud_rounds_list" class="overflow-x-auto"></div>
+          </div>
+
+          <!-- ─ Battle History ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Battle History</h3>
+          <div class="card overflow-hidden mb-6">
+            <div id="ud_battles_list" class="overflow-x-auto"></div>
+          </div>
+
+          <!-- ─ Reset Stats ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Reset Stats</h3>
+          <div class="card p-4 mb-6">
+            <p class="text-xs mb-3" style="color:var(--text3)">Zero out individual stats. This cannot be undone.</p>
+            <div class="flex flex-wrap gap-2" id="ud_reset_btns"></div>
+          </div>
+
+          <!-- ─ Audit Log ─ -->
+          <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text3)">Admin Audit Log</h3>
+          <div class="card overflow-hidden mb-6">
+            <div id="ud_audit_list" class="overflow-x-auto"></div>
+          </div>
+
+        </div><!-- /userDetailContent -->
+      </div><!-- /usersDetailView -->
+
+    </div><!-- /usersTab -->
+
+    <!-- ══════════════ COURSES TAB ══════════════ -->
+    <div id="coursesTab" style="display:none">
+
+      <!-- Toolbar -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <div class="flex-1 relative">
+          <input
+            type="text"
+            id="courseSearch"
+            class="input-field pl-9"
+            placeholder="Search course names..."
+            oninput="debounceCourseSearch()"
+          />
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">&#128269;</span>
+        </div>
+        <select id="courseStateFilter" class="input-field" style="width:auto;min-width:160px" onchange="onStateFilterChange()">
+          <option value="">All States</option>
+        </select>
+        <button class="btn-primary flex items-center gap-2 whitespace-nowrap" onclick="openAddCourseModal()">
+          <span>+</span> Add Course
+        </button>
+      </div>
+
+      <!-- Summary bar -->
+      <div id="courseSummaryBar" class="flex gap-4 mb-4 text-sm text-slate-400 flex-wrap">
+        <span id="courseTotalCount" class="text-white font-semibold"></span>
+        <span id="courseStateCount"></span>
+      </div>
+
+      <!-- Courses Table -->
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="border-b border-slate-700">
+              <tr class="text-slate-500 text-xs uppercase">
+                <th class="text-left px-4 py-3 cursor-pointer" onclick="sortCourseBy('name')">
+                  Name <span id="csort_name" class="sort-btn"></span>
+                </th>
+                <th class="text-left px-4 py-3 cursor-pointer hidden sm:table-cell" onclick="sortCourseBy('city')">
+                  City <span id="csort_city" class="sort-btn"></span>
+                </th>
+                <th class="text-left px-4 py-3 cursor-pointer hidden md:table-cell" onclick="sortCourseBy('state')">
+                  State <span id="csort_state" class="sort-btn"></span>
+                </th>
+                <th class="text-right px-4 py-3 cursor-pointer" onclick="sortCourseBy('holes')">
+                  Holes <span id="csort_holes" class="sort-btn"></span>
+                </th>
+                <th class="text-right px-4 py-3 cursor-pointer hidden sm:table-cell" onclick="sortCourseBy('par')">
+                  Par <span id="csort_par" class="sort-btn"></span>
+                </th>
+                <th class="text-left px-4 py-3 hidden lg:table-cell cursor-pointer" onclick="sortCourseBy('terrain')">
+                  Terrain <span id="csort_terrain" class="sort-btn"></span>
+                </th>
+                <th class="text-left px-4 py-3 hidden lg:table-cell cursor-pointer" onclick="sortCourseBy('difficulty')">
+                  Difficulty <span id="csort_difficulty" class="sort-btn"></span>
+                </th>
+                <th class="text-left px-4 py-3 hidden xl:table-cell cursor-pointer" onclick="sortCourseBy('source')">
+                  Source <span id="csort_source" class="sort-btn"></span>
+                </th>
+                <th class="text-right px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="coursesTableBody">
+              <tr><td colspan="9" class="py-8 text-center text-slate-500">
+                <div class="spinner mx-auto mb-2"></div>
+                Loading courses...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div id="coursesPagination" class="border-t border-slate-700 px-4 py-3 flex items-center justify-between" style="display:none!important">
+          <span id="coursesPaginationInfo" class="text-xs text-slate-500"></span>
+          <div id="coursesPaginationBtns" class="flex gap-1"></div>
+        </div>
+      </div>
+
+    </div><!-- /coursesTab -->
+
+    <!-- ══════════════ SCORECARD PREVIEW TAB ══════════════ -->
+    <div id="previewTab" style="display:none">
+      <div class="mb-6">
+        <h2 class="text-lg font-bold text-white">Scorecard Preview</h2>
+        <p class="text-sm text-slate-400 mt-0.5">Launch any course's scorecard without a GPS check-in. Rounds are immediately abandoned — no XP, gold, or leaderboard impact.</p>
+      </div>
+
+      <div class="card p-6 max-w-lg">
+        <!-- Course search -->
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Course</label>
+          <div style="position:relative">
+            <input id="previewCourseSearch" type="text" class="input-field" placeholder="Search courses by name or city…" autocomplete="off" />
+            <div id="previewCourseDropdown" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50; background:#0a0a1a; border:1px solid rgba(255,255,255,0.12); border-radius:8px; max-height:280px; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.5);"></div>
+          </div>
+          <div id="previewCourseSelected" style="display:none; margin-top:8px; padding:8px 12px; background:rgba(76,223,60,0.08); border:1px solid rgba(76,223,60,0.25); border-radius:8px; font-size:0.875rem; color:#7ed957;"></div>
+        </div>
+
+        <!-- Holes picker -->
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Holes</label>
+          <div id="previewHolesPicker" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <div style="color:#555577; font-size:0.85rem; font-style:italic;">Select a course first</div>
+          </div>
+        </div>
+
+        <!-- Launch button -->
+        <button id="previewLaunchBtn" class="btn-primary w-full" style="width:100%; opacity:0.4; cursor:not-allowed;" disabled onclick="launchScorecardPreview()">
+          &#127919; Launch Scorecard Preview
+        </button>
+        <p class="text-xs text-slate-500 mt-3">Opens in a new tab. You must be logged in to the app as a player to use preview mode.</p>
+      </div>
+    </div><!-- /previewTab -->
+
+  </main>
+</div><!-- /dashboard -->
+
+<!-- ═══════════════════ ADD USER MODAL ═══════════════════ -->
+<div id="addModal" class="fixed inset-0 z-40 modal-overlay flex items-center justify-center p-4" style="display:none!important">
+  <div class="card p-6 w-full max-w-md">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-base font-bold text-white">Add New User</h2>
+      <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+    </div>
+    <form id="addUserForm">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Display Name</label>
+          <input id="add_display_name" type="text" class="input-field" placeholder="John Birdie" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">@Username</label>
+          <input id="add_username" type="text" class="input-field" placeholder="johnbirdie" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Email</label>
+          <input id="add_email" type="email" class="input-field" placeholder="john@example.com" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Password</label>
+          <input id="add_password" type="password" class="input-field" placeholder="Min 8 characters" required />
+        </div>
+      </div>
+      <div id="addError" class="text-red-400 text-sm mt-3 hidden"></div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" class="btn-secondary flex-1" onclick="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn-primary flex-1" id="addSubmitBtn">Create User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ EDIT USER MODAL ═══════════════════ -->
+<div id="editModal" class="fixed inset-0 z-40 modal-overlay flex items-center justify-center p-4" style="display:none!important">
+  <div class="card p-6 w-full max-w-md">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-base font-bold text-white">Edit User</h2>
+      <button onclick="closeEditModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+    </div>
+    <form id="editUserForm">
+      <input type="hidden" id="edit_id" />
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Display Name</label>
+          <input id="edit_display_name" type="text" class="input-field" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">@Username</label>
+          <input id="edit_username" type="text" class="input-field" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Email</label>
+          <input id="edit_email" type="email" class="input-field" required />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">XP</label>
+            <input id="edit_xp" type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Level</label>
+            <input id="edit_level" type="number" min="1" class="input-field" />
+          </div>
+        </div>
+        <div class="border-t border-slate-700 pt-4">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">New Password <span class="text-slate-600 normal-case font-normal">(leave blank to keep current)</span></label>
+          <input id="edit_password" type="password" class="input-field" placeholder="Min 8 characters" />
+        </div>
+      </div>
+      <div id="editError" class="text-red-400 text-sm mt-3 hidden"></div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" class="btn-secondary flex-1" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn-primary flex-1" id="editSubmitBtn">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ DELETE CONFIRM MODAL ═══════════════════ -->
+<div id="deleteModal" class="fixed inset-0 z-40 modal-overlay flex items-center justify-center p-4" style="display:none!important">
+  <div class="card p-6 w-full max-w-sm">
+    <div class="text-center mb-5">
+      <div class="text-4xl mb-3">&#9888;&#65039;</div>
+      <h2 class="text-base font-bold text-white mb-2">Delete User?</h2>
+      <p class="text-sm text-slate-400">This will permanently delete <strong id="deleteUserName" class="text-white"></strong> and all their data including check-ins, scores, challenge progress, and leaderboard entries.</p>
+      <div class="mt-3">
+        <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Type username to confirm</label>
+        <input type="text" id="deleteConfirmInput" class="input-field text-center" placeholder="@username" autocomplete="off" />
+      </div>
+    </div>
+    <div id="deleteError" class="text-red-400 text-sm mb-3 hidden"></div>
+    <div class="flex gap-3">
+      <button class="btn-secondary flex-1" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-danger flex-1" id="deleteConfirmBtn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ ADD COURSE MODAL ═══════════════════ -->
+<div id="addCourseModal" class="fixed inset-0 z-40 modal-overlay flex items-center justify-center p-4" style="display:none!important">
+  <div class="card p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-base font-bold text-white">Add New Course</h2>
+      <button onclick="closeAddCourseModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+    </div>
+    <form id="addCourseForm">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Required fields -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Course Name <span class="text-red-400">*</span></label>
+          <input id="ac_name" type="text" class="input-field" placeholder="e.g. Golden Gate Park DGC" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">City <span class="text-red-400">*</span></label>
+          <input id="ac_city" type="text" class="input-field" placeholder="e.g. San Francisco" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">State <span class="text-red-400">*</span></label>
+          <select id="ac_state" class="input-field" required>
+            <option value="">— Select State —</option>
+            <option>AL</option><option>AK</option><option>AZ</option><option>AR</option>
+            <option>CA</option><option>CO</option><option>CT</option><option>DE</option>
+            <option>FL</option><option>GA</option><option>HI</option><option>ID</option>
+            <option>IL</option><option>IN</option><option>IA</option><option>KS</option>
+            <option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+            <option>MA</option><option>MI</option><option>MN</option><option>MS</option>
+            <option>MO</option><option>MT</option><option>NE</option><option>NV</option>
+            <option>NH</option><option>NJ</option><option>NM</option><option>NY</option>
+            <option>NC</option><option>ND</option><option>OH</option><option>OK</option>
+            <option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+            <option>SD</option><option>TN</option><option>TX</option><option>UT</option>
+            <option>VT</option><option>VA</option><option>WA</option><option>WV</option>
+            <option>WI</option><option>WY</option><option>DC</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Holes <span class="text-red-400">*</span></label>
+          <input id="ac_holes" type="number" min="1" max="99" class="input-field" placeholder="18" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Par <span class="text-red-400">*</span></label>
+          <input id="ac_par" type="number" min="1" max="999" class="input-field" placeholder="54" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">GPS Latitude <span class="text-red-400">*</span></label>
+          <input id="ac_lat" type="number" step="any" class="input-field" placeholder="e.g. 37.7749" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">GPS Longitude <span class="text-red-400">*</span></label>
+          <input id="ac_lng" type="number" step="any" class="input-field" placeholder="e.g. -122.4194" required />
+        </div>
+        <!-- Optional fields -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Terrain</label>
+          <select id="ac_terrain" class="input-field">
+            <option value="">— not set —</option>
+            <option value="wooded">Wooded</option>
+            <option value="open">Open</option>
+            <option value="mixed">Mixed</option>
+            <option value="hilly">Hilly</option>
+            <option value="flat">Flat</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Difficulty</label>
+          <select id="ac_difficulty" class="input-field">
+            <option value="">— not set —</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+            <option value="pro">Pro</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Source</label>
+          <select id="ac_source" class="input-field">
+            <option value="manual">Manual</option>
+            <option value="pdga">PDGA</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Active</label>
+          <select id="ac_is_active" class="input-field">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">PDGA Rating</label>
+          <input id="ac_pdga_rating" type="number" step="0.1" min="0" class="input-field" placeholder="e.g. 4.2" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">DGCourseReview Rating</label>
+          <input id="ac_dgcr_rating" type="number" step="0.1" min="0" max="10" class="input-field" placeholder="e.g. 7.8" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Year Established</label>
+          <input id="ac_year" type="number" min="1900" max="2100" class="input-field" placeholder="e.g. 2005" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Designer</label>
+          <input id="ac_designer" type="text" class="input-field" placeholder="e.g. Dave Dunipace" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Course Length (ft)</label>
+          <input id="ac_length" type="number" min="0" class="input-field" placeholder="e.g. 7200" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Elevation Change (ft)</label>
+          <input id="ac_elevation" type="number" class="input-field" placeholder="e.g. 150" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Fees</label>
+          <input id="ac_fees" type="text" class="input-field" placeholder="e.g. Free, $5/day" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Notable Features</label>
+          <input id="ac_notable" type="text" class="input-field" placeholder="e.g. Water hazards, tournament host" />
+        </div>
+      </div>
+      <div id="addCourseError" class="text-red-400 text-sm mt-3 hidden"></div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" class="btn-secondary flex-1" onclick="closeAddCourseModal()">Cancel</button>
+        <button type="submit" class="btn-primary flex-1" id="addCourseSubmitBtn">Create Course</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ EDIT COURSE MODAL ═══════════════════ -->
+<div id="editCourseModal" class="fixed inset-0 z-40 modal-overlay flex items-center justify-center p-4" style="display:none!important">
+  <div class="card p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-base font-bold text-white">Edit Course</h2>
+      <button onclick="closeEditCourseModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+    </div>
+    <form id="editCourseForm">
+      <input type="hidden" id="ec_id" />
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Course Name</label>
+          <input id="ec_name" type="text" class="input-field" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">City</label>
+          <input id="ec_city" type="text" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">State</label>
+          <input id="ec_state" type="text" class="input-field" placeholder="e.g. CA" maxlength="50" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Holes</label>
+          <input id="ec_holes" type="number" min="1" max="99" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Par</label>
+          <input id="ec_par" type="number" min="1" max="999" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Latitude</label>
+          <input id="ec_lat" type="number" step="any" class="input-field" placeholder="e.g. 37.7749" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Longitude</label>
+          <input id="ec_lng" type="number" step="any" class="input-field" placeholder="e.g. -122.4194" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Terrain</label>
+          <select id="ec_terrain" class="input-field">
+            <option value="">— not set —</option>
+            <option value="wooded">Wooded</option>
+            <option value="open">Open</option>
+            <option value="mixed">Mixed</option>
+            <option value="hilly">Hilly</option>
+            <option value="flat">Flat</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Difficulty</label>
+          <select id="ec_difficulty" class="input-field">
+            <option value="">— not set —</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+            <option value="pro">Pro</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Source</label>
+          <select id="ec_source" class="input-field">
+            <option value="manual">Manual</option>
+            <option value="pdga">PDGA</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Active</label>
+          <select id="ec_is_active" class="input-field">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">PDGA Rating</label>
+          <input id="ec_pdga_rating" type="number" step="0.1" min="0" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">DGCourseReview Rating</label>
+          <input id="ec_dgcr_rating" type="number" step="0.1" min="0" max="10" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Year Established</label>
+          <input id="ec_year" type="number" min="1900" max="2100" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Designer</label>
+          <input id="ec_designer" type="text" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Course Length (ft)</label>
+          <input id="ec_length" type="number" min="0" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Elevation Change (ft)</label>
+          <input id="ec_elevation" type="number" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Fees</label>
+          <input id="ec_fees" type="text" class="input-field" placeholder="e.g. Free, $5/day" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Notable Features</label>
+          <input id="ec_notable" type="text" class="input-field" placeholder="e.g. Water hazards, tournament host" />
+        </div>
+      </div>
+
+      <!-- ── Hole Details ──────────────────────────────────────────────── -->
+      <div class="mt-4">
+        <button type="button" id="ec_toggle_holes" onclick="toggleHoleDetails()"
+          class="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wide hover:text-white transition-colors">
+          <span id="ec_toggle_holes_icon" style="font-size:0.7rem">▶</span>
+          Hole Details
+          <span class="text-slate-600 normal-case font-normal">— par &amp; distance per hole</span>
+        </button>
+        <div id="ec_hole_details_panel" style="display:none" class="mt-3">
+          <!-- Bulk actions -->
+          <div class="flex gap-2 mb-3 flex-wrap">
+            <button type="button" onclick="ecSetAllPar(3)" class="btn-secondary text-xs py-1 px-3">Set all Par 3</button>
+            <button type="button" onclick="ecSetAllPar(4)" class="btn-secondary text-xs py-1 px-3">Set all Par 4</button>
+            <button type="button" onclick="ecSetAllPar(5)" class="btn-secondary text-xs py-1 px-3">Set all Par 5</button>
+            <button type="button" onclick="ecResetHoles()" class="btn-secondary text-xs py-1 px-3">Reset Distances</button>
+          </div>
+          <!-- Column headers -->
+          <div class="grid gap-1 mb-1" style="grid-template-columns: 48px 72px 1fr 1fr;">
+            <div class="text-xs text-slate-500 font-semibold uppercase text-center">Hole</div>
+            <div class="text-xs text-slate-500 font-semibold uppercase text-center">Label</div>
+            <div class="text-xs text-slate-500 font-semibold uppercase text-center">Par</div>
+            <div class="text-xs text-slate-500 font-semibold uppercase text-center">Dist (ft)</div>
+          </div>
+          <div id="ec_hole_rows" class="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1"></div>
+          <p class="text-xs text-slate-600 mt-2">Save hole details separately with the button below.</p>
+          <button type="button" id="ec_save_holes_btn" onclick="saveHoleDetails()" class="btn-primary mt-2 w-full text-xs py-2">💾 Save Hole Details</button>
+          <div id="ec_holes_msg" class="text-xs mt-1 hidden"></div>
+        </div>
+      </div>
+
+      <div id="editCourseError" class="text-red-400 text-sm mt-3 hidden"></div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" class="btn-secondary flex-1" onclick="closeEditCourseModal()">Cancel</button>
+        <button type="submit" class="btn-primary flex-1" id="editCourseSubmitBtn">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ DELETE COURSE MODAL ═══════════════════ -->
+<div id="deleteCourseModal" class="fixed inset-0 z-40 modal-overlay flex items-center justify-center p-4" style="display:none!important">
+  <div class="card p-6 w-full max-w-sm">
+    <div class="text-center mb-5">
+      <div class="text-4xl mb-3">&#9888;&#65039;</div>
+      <h2 class="text-base font-bold text-white mb-2">Delete Course?</h2>
+      <p class="text-sm text-slate-400">This will permanently delete <strong id="deleteCourseName" class="text-white"></strong> and all associated check-ins. Rounds will lose the course reference.</p>
+      <p id="deleteCourseCheckinWarning" class="text-xs text-amber-400 mt-2 hidden"></p>
+    </div>
+    <div id="deleteCourseError" class="text-red-400 text-sm mb-3 hidden"></div>
+    <div class="flex gap-3">
+      <button class="btn-secondary flex-1" onclick="closeDeleteCourseModal()">Cancel</button>
+      <button class="btn-danger flex-1" id="deleteCourseConfirmBtn" onclick="confirmDeleteCourse()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Layout Editor Panel (full-screen slide-in) -->
+<div id="layoutEditorPanel" style="display:none!important" class="fixed inset-0 z-50 flex">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)" onclick="closeLayoutEditor()"></div>
+  <div class="relative ml-auto w-full max-w-4xl h-full flex flex-col" style="background:var(--bg);border-left:1px solid var(--border2);overflow:hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color:var(--border);background:var(--bg2)">
+      <div>
+        <h2 class="text-base font-bold" style="color:var(--text)" id="leCourseName">Layouts</h2>
+        <p class="text-xs mt-0.5" style="color:var(--text3)">Course layout &amp; hole configuration</p>
+      </div>
+      <button onclick="closeLayoutEditor()" class="text-slate-400 hover:text-white text-2xl leading-none px-2" title="Close">&times;</button>
+    </div>
+    <div class="flex items-center gap-2 px-6 py-3 border-b" style="border-color:var(--border);background:var(--surface);flex-shrink:0">
+      <div id="leLayoutTabs" class="flex gap-2 flex-wrap flex-1"></div>
+      <button class="btn-primary text-xs px-3 py-1.5 whitespace-nowrap" onclick="leNewLayoutModal()">+ New Layout</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+      <div id="leLayoutMeta" style="display:none" class="card p-4 mb-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex gap-4 items-center flex-wrap">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color:var(--text3)">Layout</p>
+            <p class="font-semibold text-sm" id="leLayoutNameDisplay" style="color:var(--text)"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color:var(--text3)">Holes</p>
+            <p class="font-semibold text-sm" id="leLayoutHoleCount" style="color:var(--text)"></p>
+          </div>
+          <span id="leDefaultBadge" class="badge-green text-xs" style="display:none">Default</span>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn-secondary text-xs px-3 py-1.5" onclick="leEditLayoutMeta()">&#9998; Rename</button>
+          <button class="btn-secondary text-xs px-3 py-1.5" onclick="leSetDefault()" id="leSetDefaultBtn" style="display:none">Set as Default</button>
+          <button class="btn-danger text-xs px-3 py-1.5" onclick="leDeleteLayout()" id="leDeleteBtn" style="display:none">Delete</button>
+        </div>
+      </div>
+      <div id="leHoleToolbar" style="display:none" class="flex flex-col sm:flex-row gap-3 mb-3 items-start sm:items-center">
+        <h3 class="text-sm font-semibold" style="color:var(--text)">Hole Details</h3>
+        <div class="flex gap-2 ml-0 sm:ml-auto flex-wrap">
+          <select id="leGenHoleCount" class="input-field text-xs" style="width:auto;padding:4px 8px" onchange="leGenerateHoles()">
+            <option value="">Auto-generate...</option>
+          </select>
+          <button class="btn-secondary text-xs px-3 py-1" onclick="leSetAllPars(3)">All par 3</button>
+          <button class="btn-secondary text-xs px-3 py-1" onclick="leSetAllPars(4)">All par 4</button>
+          <button class="btn-secondary text-xs px-3 py-1" onclick="leClearDistances()">Clear dist.</button>
+        </div>
+      </div>
+      <div id="leIncompleteWarning" style="display:none;background:rgba(224,64,64,0.1);color:var(--red)" class="text-xs mb-3 px-3 py-2 rounded-lg">
+        &#9888; Some holes are missing par — highlighted rows need a value before saving.
+      </div>
+      <div id="leHoleTableWrap" style="display:none" class="card overflow-hidden mb-4">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="leHoleTable">
+            <thead class="border-b" style="border-color:var(--border)">
+              <tr style="color:var(--text3)" class="text-xs uppercase">
+                <th class="text-center px-3 py-2 w-12">#</th>
+                <th class="text-center px-3 py-2 w-20">Par <span class="text-red-400">*</span></th>
+                <th class="text-center px-3 py-2 w-28">Dist (ft)</th>
+                <th class="text-left px-3 py-2">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="leHoleTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="leSaveRow" style="display:none" class="flex items-center gap-3">
+        <button class="btn-primary px-6 py-2" onclick="leSaveHoles()" id="leSaveBtn">Save All Holes</button>
+        <span id="leSaveStatus" class="text-xs" style="color:var(--text3)"></span>
+      </div>
+      <div id="leEmptyState" class="text-center py-16" style="color:var(--text3)">
+        <p class="text-4xl mb-3">&#9635;</p>
+        <p class="text-sm font-medium">Select a layout above to edit its holes</p>
+        <p class="text-xs mt-1">or create a new layout</p>
+      </div>
+      <div id="leLoadingState" style="display:none" class="text-center py-12" style="color:var(--text3)">
+        <div class="spinner mx-auto mb-3"></div>
+        <p class="text-sm">Loading holes...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Layout Name/Edit Modal -->
+<div id="leNameModal" style="display:none!important" class="fixed inset-0 z-60 flex items-center justify-center">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)" onclick="leCloseNameModal()"></div>
+  <div class="card p-6 w-full max-w-sm mx-4 relative">
+    <h3 class="text-base font-bold mb-4" style="color:var(--text)" id="leNameModalTitle">New Layout</h3>
+    <div class="mb-3">
+      <label class="block text-xs font-semibold uppercase tracking-wide mb-1" style="color:var(--text3)">Layout Name <span class="text-red-400">*</span></label>
+      <input id="leNameInput" type="text" class="input-field" placeholder="e.g. Default, Short Loop, Championship" maxlength="60" onkeydown="if(event.key==='Enter')leSubmitNameModal()" />
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-semibold uppercase tracking-wide mb-1" style="color:var(--text3)">Hole Count</label>
+      <input id="leHoleCountInput" type="number" min="1" max="99" class="input-field" placeholder="18" onkeydown="if(event.key==='Enter')leSubmitNameModal()" />
+    </div>
+    <div id="leNameError" class="text-red-400 text-xs mb-3 hidden"></div>
+    <div class="flex gap-3">
+      <button class="btn-secondary flex-1" onclick="leCloseNameModal()">Cancel</button>
+      <button class="btn-primary flex-1" id="leNameSubmitBtn" onclick="leSubmitNameModal()">Create</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.le-hole-row td { padding: 4px 6px; border-top: 1px solid var(--border); }
+.le-hole-row.missing-par { background: rgba(224,64,64,0.07); }
+.le-hole-row.missing-par td:first-child { border-left: 3px solid var(--red); }
+.le-hole-input { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 4px 8px; color: var(--text); font-size: 0.8rem; text-align: center; outline: none; width: 100%; font-family: 'Space Grotesk', sans-serif; }
+.le-hole-input:focus { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+.le-notes-input { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 4px 10px; color: var(--text); font-size: 0.8rem; outline: none; width: 100%; font-family: 'Space Grotesk', sans-serif; }
+.le-notes-input:focus { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+.le-layout-tab { padding: 5px 14px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); color: var(--text3); background: transparent; transition: all 0.12s; white-space: nowrap; }
+.le-layout-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
+.le-layout-tab:not(.active):hover { color: var(--text); border-color: var(--green); }
+#leNameModal { z-index: 60; }
+</style>
+
+<script>
+(function() {
+  var STORAGE_KEY = 'dgg_admin_token';
+  var token = '';
+
+  var trafficChartInst = null;
+  var growthChartInst = null;
+  var checkinsChartInst = null;
+
+  // User management state
+  var usersState = {
+    page: 1,
+    limit: 25,
+    search: '',
+    sort: 'created_at',
+    dir: 'desc',
+    total: 0,
+    pages: 0,
+    loading: false
+  };
+  var deleteTargetId = null;
+  var deleteTargetName = '';
+  var searchTimer = null;
+
+  function getToken() { return localStorage.getItem(STORAGE_KEY) || ''; }
+  function setToken(t) { localStorage.setItem(STORAGE_KEY, t); token = t; }
+
+  function logout() {
+    localStorage.removeItem(STORAGE_KEY);
+    token = '';
+    showLogin();
+  }
+  window.logout = logout;
+
+  function showLogin() {
+    document.getElementById('loginOverlay').style.cssText = '';
+    document.getElementById('dashboard').style.display = 'none';
+  }
+
+  function showDashboard() {
+    document.getElementById('loginOverlay').style.cssText = 'display:none!important';
+    document.getElementById('dashboard').style.display = '';
+    // Init preview tab course search on first dashboard show
+    if (typeof initPreviewIfNeeded === 'function') initPreviewIfNeeded();
+  }
+
+  function fmtNum(n) {
+    if (n == null) return '&mdash;';
+    return parseInt(n).toLocaleString();
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  window.escHtml = escHtml;
+
+  function fmtDate(d) {
+    if (!d) return '&mdash;';
+    var date = new Date(d);
+    return (date.getMonth() + 1) + '/' + date.getDate() + '/' + (date.getFullYear() + '').slice(2);
+  }
+
+  function apiFetch(path, opts) {
+    var options = opts || {};
+    options.headers = options.headers || {};
+    options.headers['X-Admin-Token'] = token;
+    if (options.body && !options.headers['Content-Type']) {
+      options.headers['Content-Type'] = 'application/json';
+    }
+    return fetch(path, options).then(function(r) {
+      if (r.status === 401) { logout(); throw new Error('Unauthorized'); }
+      return r.json().then(function(data) { return { ok: r.ok, status: r.status, data: data }; });
+    });
+  }
+  window.apiFetch = apiFetch;
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.getElementById('tabStats').classList.toggle('active', tab === 'stats');
+    document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
+    document.getElementById('tabCourses').classList.toggle('active', tab === 'courses');
+    document.getElementById('tabPreview').classList.toggle('active', tab === 'preview');
+    document.getElementById('statsTab').style.display = tab === 'stats' ? '' : 'none';
+    document.getElementById('usersTab').style.display = tab === 'users' ? '' : 'none';
+    document.getElementById('coursesTab').style.display = tab === 'courses' ? '' : 'none';
+    document.getElementById('previewTab').style.display = tab === 'preview' ? '' : 'none';
+    if (tab === 'users' && usersState.total === 0 && !usersState.loading) {
+      loadUsers();
+    }
+    if (tab === 'courses' && coursesState.total === 0 && !coursesState.loading) {
+      loadCourses();
+    }
+    if (tab === 'stats') {
+      document.getElementById('lastUpdated').textContent = '';
+    }
+  }
+  window.switchTab = switchTab;
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+
+  function makeDateLabels(rows, key) {
+    if (!rows || rows.length === 0) return { labels: [], data: [] };
+    var end = new Date();
+    var start = new Date(end);
+    start.setDate(start.getDate() - 29);
+    var labels = [];
+    var dataMap = {};
+    rows.forEach(function(r) { dataMap[r[key]] = r; });
+    var cur = new Date(start);
+    while (cur <= end) {
+      var day = cur.toISOString().split('T')[0];
+      labels.push(day);
+      cur.setDate(cur.getDate() + 1);
+    }
+    return { labels: labels, dataMap: dataMap };
+  }
+
+  function chartDefaults() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: {
+            color: '#64748b', font: { size: 10 }, maxRotation: 45,
+            callback: function(val) {
+              var lbl = this.getLabelForValue(val);
+              var d = new Date(lbl + 'T00:00:00');
+              return (d.getMonth() + 1) + '/' + d.getDate();
+            }
+          },
+          grid: { color: '#1e293b' }
+        },
+        y: {
+          ticks: { color: '#64748b', font: { size: 10 } },
+          grid: { color: '#1e293b' },
+          beginAtZero: true
+        }
+      }
+    };
+  }
+
+  function renderTrafficChart(rows) {
+    var ctx = document.getElementById('trafficChart').getContext('2d');
+    var info = makeDateLabels(rows, 'day');
+    var views = info.labels.map(function(d) { return info.dataMap && info.dataMap[d] ? parseInt(info.dataMap[d].views) : 0; });
+    var uniques = info.labels.map(function(d) { return info.dataMap && info.dataMap[d] ? parseInt(info.dataMap[d].uniques) : 0; });
+    if (trafficChartInst) trafficChartInst.destroy();
+    var cfg = chartDefaults();
+    cfg.plugins = { legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 } } } };
+    trafficChartInst = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: info.labels,
+        datasets: [
+          { label: 'Views', data: views, backgroundColor: 'rgba(34,197,94,0.7)', borderRadius: 4, borderSkipped: false },
+          { label: 'Uniques', data: uniques, backgroundColor: 'rgba(59,130,246,0.5)', borderRadius: 4, borderSkipped: false }
+        ]
+      },
+      options: cfg
+    });
+  }
+
+  function renderGrowthChart(rows) {
+    var ctx = document.getElementById('growthChart').getContext('2d');
+    var info = makeDateLabels(rows, 'day');
+    var signups = info.labels.map(function(d) { return info.dataMap && info.dataMap[d] ? parseInt(info.dataMap[d].signups) : 0; });
+    if (growthChartInst) growthChartInst.destroy();
+    growthChartInst = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: info.labels,
+        datasets: [{ label: 'Signups', data: signups, backgroundColor: 'rgba(168,85,247,0.7)', borderRadius: 4, borderSkipped: false }]
+      },
+      options: chartDefaults()
+    });
+  }
+
+  function renderCheckinsChart(rows) {
+    if (!rows || rows.length === 0) return;
+    var ctx = document.getElementById('checkinsChart').getContext('2d');
+    var labels = rows.map(function(r) { var d = new Date(r.day + 'T00:00:00'); return (d.getMonth() + 1) + '/' + d.getDate(); });
+    var checkins = rows.map(function(r) { return parseInt(r.checkins); });
+    var players = rows.map(function(r) { return parseInt(r.active_players); });
+    if (checkinsChartInst) checkinsChartInst.destroy();
+    var cfg = chartDefaults();
+    cfg.plugins = { legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 } } } };
+    checkinsChartInst = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Check-ins', data: checkins, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+          { label: 'Active Players', data: players, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.3, fill: true, pointRadius: 3 }
+        ]
+      },
+      options: cfg
+    });
+  }
+
+  function renderTopPlayers(players) {
+    var tbody = document.getElementById('topPlayersTable');
+    if (!players || players.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-slate-500">No players yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = players.slice(0, 15).map(function(p, i) {
+      var medal = i === 0 ? '\uD83E\uDD47' : i === 1 ? '\uD83E\uDD48' : i === 2 ? '\uD83E\uDD49' : (i + 1) + '.';
+      return '<tr class="table-row border-t border-slate-700">' +
+        '<td class="py-2 pr-3 pl-2 text-slate-400">' + medal + '</td>' +
+        '<td class="py-2 pr-3 text-white font-medium">' + escHtml(p.display_name) + '</td>' +
+        '<td class="py-2 pr-3 text-right green font-semibold">' + fmtNum(p.xp) + '</td>' +
+        '<td class="py-2 pr-3 text-right text-slate-400">' + fmtNum(p.level) + '</td>' +
+        '<td class="py-2 text-right text-slate-400 pr-2">' + fmtNum(p.total_checkins) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function renderTopPages(pages) {
+    var tbody = document.getElementById('topPagesTable');
+    if (!pages || pages.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-500">No data yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pages.map(function(pg) {
+      return '<tr class="table-row border-t border-slate-700">' +
+        '<td class="py-2 pr-3 pl-2 text-slate-300 font-mono text-xs">' + escHtml(pg.path) + '</td>' +
+        '<td class="py-2 pr-3 text-right text-white">' + fmtNum(pg.views) + '</td>' +
+        '<td class="py-2 text-right text-slate-400 pr-2">' + fmtNum(pg.uniques) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function loadAll() {
+    document.getElementById('loadingState').style.display = '';
+    document.getElementById('mainContent').style.display = 'none';
+
+    Promise.all([
+      apiFetch('/api/admin/stats'),
+      apiFetch('/api/admin/traffic'),
+      apiFetch('/api/admin/players-growth'),
+      apiFetch('/api/admin/top-players'),
+      apiFetch('/api/admin/top-pages'),
+      apiFetch('/api/admin/weekly-checkins')
+    ]).then(function(results) {
+      var stats = results[0].data;
+      var traffic = results[1].data;
+      var growth = results[2].data;
+      var topPlayers = results[3].data;
+      var topPages = results[4].data;
+      var checkins = results[5].data;
+
+      document.getElementById('statTotalPlayers').textContent = (stats.players.total || 0).toLocaleString();
+      document.getElementById('statNewPlayers30d').textContent = (stats.players.new_30d || 0).toLocaleString() + ' new this month';
+      document.getElementById('statActive7d').textContent = (stats.players.active_7d || 0).toLocaleString();
+      document.getElementById('statActive30d').textContent = (stats.players.active_30d || 0).toLocaleString() + ' active last 30d';
+      document.getElementById('statNewPlayers7d').textContent = (stats.players.new_7d || 0).toLocaleString();
+      document.getElementById('statAvgXp').textContent = (stats.players.avg_xp || 0).toLocaleString();
+      document.getElementById('statTotalCheckins').textContent = (stats.activity.total_checkins || 0).toLocaleString();
+      document.getElementById('statTotalRounds').textContent = (stats.activity.total_rounds || 0).toLocaleString() + ' rounds played';
+      document.getElementById('statChallengesDone').textContent = (stats.activity.challenges_completed || 0).toLocaleString();
+      document.getElementById('statTotalPageviews').textContent = (stats.traffic.total_pageviews || 0).toLocaleString();
+      document.getElementById('statTodayViews').textContent = (stats.traffic.today_pageviews || 0).toLocaleString() + ' today';
+      document.getElementById('statUniqueVisitors').textContent = (stats.traffic.unique_visitors_30d || 0).toLocaleString();
+      document.getElementById('statAvgXpCard').textContent = (stats.players.avg_xp || 0).toLocaleString();
+
+      renderTrafficChart(traffic.traffic || []);
+      renderGrowthChart(growth.growth || []);
+      renderCheckinsChart(checkins.checkins || []);
+      renderTopPlayers(topPlayers.players || []);
+      renderTopPages(topPages.pages || []);
+
+      document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('mainContent').style.display = '';
+    }).catch(function(err) {
+      if (err.message !== 'Unauthorized') {
+        document.getElementById('loadingState').innerHTML = '<p class="text-red-400">Failed to load data. <button onclick="loadAll()" class="underline">Retry</button></p>';
+      }
+    });
+  }
+  window.loadAll = loadAll;
+
+  // ── Users ─────────────────────────────────────────────────────────────────
+
+  function loadUsers() {
+    usersState.loading = true;
+    var tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-500"><div class="spinner mx-auto mb-2"></div><p>Loading users...</p></td></tr>';
+
+    var qs = '?page=' + usersState.page + '&limit=' + usersState.limit
+      + '&sort=' + usersState.sort + '&dir=' + usersState.dir;
+    if (usersState.search) qs += '&search=' + encodeURIComponent(usersState.search);
+
+    apiFetch('/api/admin/users' + qs).then(function(result) {
+      usersState.loading = false;
+      if (!result.ok) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-red-400">Failed to load users.</td></tr>';
+        return;
+      }
+      var d = result.data;
+      usersState.total = d.total;
+      usersState.pages = d.pages;
+      renderUsersTable(d.users);
+      renderPagination(d.total, d.page, d.pages);
+    }).catch(function() {
+      usersState.loading = false;
+      tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-red-400">Failed to load users.</td></tr>';
+    });
+  }
+
+  function renderUsersTable(users) {
+    var tbody = document.getElementById('usersTableBody');
+    if (!users || users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-500">No users found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(function(u) {
+      return '<tr class="table-row border-t border-slate-700" onclick="openUserDetail(' + u.id + ')">' +
+        '<td class="px-4 py-3 text-white font-medium">' + escHtml(u.display_name) + '</td>' +
+        '<td class="px-4 py-3 text-slate-400 text-xs font-mono">' + (u.username ? '@' + escHtml(u.username) : '<span class="text-slate-600">\u2014</span>') + '</td>' +
+        '<td class="px-4 py-3 text-slate-400 text-xs hidden sm:table-cell">' + escHtml(u.email || '') + '</td>' +
+        '<td class="px-4 py-3 text-right green font-semibold">' + (parseInt(u.xp) || 0).toLocaleString() + '</td>' +
+        '<td class="px-4 py-3 text-right text-slate-400 hidden md:table-cell">' + (parseInt(u.level) || 1) + '</td>' +
+        '<td class="px-4 py-3 text-right text-slate-500 text-xs hidden lg:table-cell">' + fmtDate(u.created_at) + '</td>' +
+        '<td class="px-4 py-3 text-right text-slate-500 text-xs hidden lg:table-cell">' + fmtDate(u.last_active) + '</td>' +
+        '<td class="px-4 py-3 text-right" onclick="event.stopPropagation()">' +
+          '<button class="text-blue-400 hover:text-blue-300 text-xs font-semibold px-2 py-1 rounded border border-slate-700 hover:border-blue-800 transition-colors" onclick="event.stopPropagation();openUserDetail(' + u.id + ')">' +
+            'View' +
+          '</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function renderPagination(total, page, pages) {
+    var pag = document.getElementById('usersPagination');
+    var info = document.getElementById('paginationInfo');
+    var btns = document.getElementById('paginationBtns');
+
+    if (pages <= 1 && total <= usersState.limit) {
+      pag.style.cssText = 'display:none!important';
+      return;
+    }
+
+    pag.style.cssText = '';
+    var start = (page - 1) * usersState.limit + 1;
+    var end = Math.min(page * usersState.limit, total);
+    info.textContent = start + '–' + end + ' of ' + total.toLocaleString() + ' users';
+
+    var html = '';
+    html += '<button class="page-btn" onclick="goToPage(' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>&larr;</button>';
+
+    var startPage = Math.max(1, page - 2);
+    var endPage = Math.min(pages, page + 2);
+    if (startPage > 1) html += '<button class="page-btn" onclick="goToPage(1)">1</button>';
+    if (startPage > 2) html += '<span class="text-slate-600 px-1">…</span>';
+    for (var i = startPage; i <= endPage; i++) {
+      html += '<button class="page-btn ' + (i === page ? 'current' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+    }
+    if (endPage < pages - 1) html += '<span class="text-slate-600 px-1">…</span>';
+    if (endPage < pages) html += '<button class="page-btn" onclick="goToPage(' + pages + ')">' + pages + '</button>';
+    html += '<button class="page-btn" onclick="goToPage(' + (page + 1) + ')" ' + (page >= pages ? 'disabled' : '') + '>&rarr;</button>';
+
+    btns.innerHTML = html;
+  }
+
+  function goToPage(p) {
+    if (p < 1 || p > usersState.pages) return;
+    usersState.page = p;
+    loadUsers();
+  }
+  window.goToPage = goToPage;
+
+  function sortBy(field) {
+    if (usersState.sort === field) {
+      usersState.dir = usersState.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      usersState.sort = field;
+      usersState.dir = field === 'display_name' || field === 'username' || field === 'email' ? 'asc' : 'desc';
+    }
+    usersState.page = 1;
+    updateSortIndicators();
+    loadUsers();
+  }
+  window.sortBy = sortBy;
+
+  function updateSortIndicators() {
+    var fields = ['display_name', 'username', 'email', 'xp', 'level', 'created_at', 'last_active'];
+    fields.forEach(function(f) {
+      var el = document.getElementById('sort_' + f);
+      if (!el) return;
+      if (usersState.sort === f) {
+        el.textContent = usersState.dir === 'asc' ? '▲' : '▼';
+        el.className = 'sort-btn active-sort';
+      } else {
+        el.textContent = '⇅';
+        el.className = 'sort-btn';
+      }
+    });
+  }
+
+  function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function() {
+      usersState.search = document.getElementById('userSearch').value.trim();
+      usersState.page = 1;
+      loadUsers();
+    }, 300);
+  }
+  window.debounceSearch = debounceSearch;
+
+  // ── Add User Modal ────────────────────────────────────────────────────────
+
+  function openAddModal() {
+    document.getElementById('add_display_name').value = '';
+    document.getElementById('add_username').value = '';
+    document.getElementById('add_email').value = '';
+    document.getElementById('add_password').value = '';
+    document.getElementById('addError').classList.add('hidden');
+    document.getElementById('addSubmitBtn').textContent = 'Create User';
+    document.getElementById('addSubmitBtn').disabled = false;
+    document.getElementById('addModal').style.cssText = '';
+    document.getElementById('addModal').classList.add('open');
+  }
+  window.openAddModal = openAddModal;
+
+  function closeAddModal() {
+    document.getElementById('addModal').classList.remove('open');
+    document.getElementById('addModal').style.cssText = 'display:none!important';
+  }
+  window.closeAddModal = closeAddModal;
+
+  document.getElementById('addUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var errEl = document.getElementById('addError');
+    errEl.classList.add('hidden');
+    var btn = document.getElementById('addSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Creating...';
+
+    var body = {
+      display_name: document.getElementById('add_display_name').value,
+      username: document.getElementById('add_username').value,
+      email: document.getElementById('add_email').value,
+      password: document.getElementById('add_password').value
+    };
+
+    apiFetch('/api/admin/users', { method: 'POST', body: JSON.stringify(body) }).then(function(result) {
+      if (result.ok) {
+        closeAddModal();
+        loadUsers();
+      } else {
+        errEl.textContent = result.data.error || 'Failed to create user';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Create User';
+        btn.disabled = false;
+      }
+    }).catch(function() {
+      errEl.textContent = 'Network error. Try again.';
+      errEl.classList.remove('hidden');
+      btn.textContent = 'Create User';
+      btn.disabled = false;
+    });
+  });
+
+  // ── Edit User Modal ───────────────────────────────────────────────────────
+
+  function openEditModal(user) {
+    if (!user || (typeof user === 'object' && Object.keys(user).length === 0)) {
+      showToast('User data not loaded. Please refresh the detail view.', 'error');
+      return;
+    }
+    if (typeof user === 'string') user = JSON.parse(user);
+    document.getElementById('edit_id').value = user.id;
+    document.getElementById('edit_display_name').value = user.display_name || '';
+    document.getElementById('edit_username').value = user.username || '';
+    document.getElementById('edit_email').value = user.email || '';
+    document.getElementById('edit_xp').value = user.xp || 0;
+    document.getElementById('edit_level').value = user.level || 1;
+    document.getElementById('edit_password').value = '';
+    document.getElementById('editError').classList.add('hidden');
+    document.getElementById('editSubmitBtn').textContent = 'Save Changes';
+    document.getElementById('editSubmitBtn').disabled = false;
+    document.getElementById('editModal').style.cssText = '';
+    document.getElementById('editModal').classList.add('open');
+  }
+  window.openEditModal = openEditModal;
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('open');
+    document.getElementById('editModal').style.cssText = 'display:none!important';
+  }
+  window.closeEditModal = closeEditModal;
+
+  document.getElementById('editUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var errEl = document.getElementById('editError');
+    errEl.classList.add('hidden');
+    var btn = document.getElementById('editSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Saving...';
+
+    var userId = document.getElementById('edit_id').value;
+    var pw = document.getElementById('edit_password').value;
+
+    var body = {
+      display_name: document.getElementById('edit_display_name').value,
+      username: document.getElementById('edit_username').value,
+      email: document.getElementById('edit_email').value,
+      xp: parseInt(document.getElementById('edit_xp').value) || 0,
+      level: parseInt(document.getElementById('edit_level').value) || 1
+    };
+
+    apiFetch('/api/admin/users/' + userId, { method: 'PUT', body: JSON.stringify(body) }).then(function(result) {
+      if (!result.ok) {
+        errEl.textContent = result.data.error || 'Failed to update user';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Save Changes';
+        btn.disabled = false;
+        return;
+      }
+      // Reset password if provided
+      if (pw && pw.length >= 8) {
+        return apiFetch('/api/admin/users/' + userId + '/reset-password', {
+          method: 'POST', body: JSON.stringify({ password: pw })
+        }).then(function(pwResult) {
+          if (!pwResult.ok) {
+            errEl.textContent = 'User updated but password reset failed: ' + (pwResult.data.error || 'unknown error');
+            errEl.classList.remove('hidden');
+            btn.textContent = 'Save Changes';
+            btn.disabled = false;
+            return;
+          }
+          closeEditModal();
+          showToast('Profile updated', 'success');
+          // Refresh detail view if open
+          if (window._udPlayer && window._udPlayer.id == userId) openUserDetail(parseInt(userId));
+          loadUsers();
+        });
+      } else if (pw && pw.length > 0 && pw.length < 8) {
+        errEl.textContent = 'User updated but password too short (min 8 chars) \u2014 password not changed.';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Save Changes';
+        btn.disabled = false;
+        loadUsers();
+        return;
+      }
+      closeEditModal();
+      showToast('Profile updated', 'success');
+      if (window._udPlayer && window._udPlayer.id == userId) openUserDetail(parseInt(userId));
+      loadUsers();
+    }).catch(function() {
+      errEl.textContent = 'Network error. Try again.';
+      errEl.classList.remove('hidden');
+      btn.textContent = 'Save Changes';
+      btn.disabled = false;
+    });
+  });
+
+  // ── Delete Modal ──────────────────────────────────────────────────────────
+
+  function openDeleteModal(id, name) {
+    deleteTargetId = id;
+    deleteTargetName = name;
+    // Store username for confirmation
+    window._deleteTargetUsername = (window._udPlayer && window._udPlayer.id === id) ? (window._udPlayer.username || '') : '';
+    document.getElementById('deleteUserName').textContent = name;
+    document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('deleteError').classList.add('hidden');
+    document.getElementById('deleteConfirmBtn').textContent = 'Delete';
+    document.getElementById('deleteConfirmBtn').disabled = false;
+    document.getElementById('deleteModal').style.cssText = '';
+    document.getElementById('deleteModal').classList.add('open');
+  }
+  window.openDeleteModal = openDeleteModal;
+
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('open');
+    document.getElementById('deleteModal').style.cssText = 'display:none!important';
+    deleteTargetId = null;
+  }
+  window.closeDeleteModal = closeDeleteModal;
+
+  function confirmDelete() {
+    if (!deleteTargetId) return;
+    var confirmVal = document.getElementById('deleteConfirmInput').value.trim().replace(/^@/, '');
+    var expectedUsername = window._deleteTargetUsername || '';
+    if (expectedUsername && confirmVal.toLowerCase() !== expectedUsername.toLowerCase()) {
+      var errEl = document.getElementById('deleteError');
+      errEl.textContent = 'Username does not match. Type @' + expectedUsername + ' to confirm.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    var btn = document.getElementById('deleteConfirmBtn');
+    var errEl = document.getElementById('deleteError');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Deleting...';
+    errEl.classList.add('hidden');
+
+    var qs = confirmVal ? '?confirm_username=' + encodeURIComponent(confirmVal) : '';
+    apiFetch('/api/admin/users/' + deleteTargetId + qs, { method: 'DELETE' }).then(function(result) {
+      if (result.ok) {
+        closeDeleteModal();
+        closeUserDetail();
+        loadUsers();
+        showToast('User deleted', 'success');
+      } else {
+        errEl.textContent = result.data.error || 'Failed to delete user';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Delete';
+        btn.disabled = false;
+      }
+    }).catch(function() {
+      errEl.textContent = 'Network error. Try again.';
+      errEl.classList.remove('hidden');
+      btn.textContent = 'Delete';
+      btn.disabled = false;
+    });
+  }
+  window.confirmDelete = confirmDelete;
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+
+  function showToast(msg, type) {
+    var el = document.createElement('div');
+    el.className = 'admin-toast ' + (type || 'success');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function() { el.style.opacity = '0'; }, 2500);
+    setTimeout(function() { el.remove(); }, 3000);
+  }
+  window.showToast = showToast;
+
+  // ── User Detail View ──────────────────────────────────────────────────────
+
+  window._udPlayer = null;
+
+  function openUserDetail(userId) {
+    document.getElementById('usersListView').style.display = 'none';
+    document.getElementById('usersDetailView').style.display = '';
+    document.getElementById('userDetailLoading').style.display = '';
+    document.getElementById('userDetailContent').style.display = 'none';
+
+    apiFetch('/api/admin/users/' + userId + '/stats').then(function(result) {
+      if (!result.ok) {
+        document.getElementById('userDetailLoading').innerHTML = '<p class="text-red-400">Failed to load stats. <button onclick="openUserDetail(' + userId + ')" class="underline">Retry</button></p>';
+        return;
+      }
+      var data = result.data;
+      window._udPlayer = data.player;
+      renderUserDetail(data);
+      document.getElementById('userDetailLoading').style.display = 'none';
+      document.getElementById('userDetailContent').style.display = '';
+    }).catch(function() {
+      document.getElementById('userDetailLoading').innerHTML = '<p class="text-red-400">Network error. <button onclick="openUserDetail(' + userId + ')" class="underline">Retry</button></p>';
+    });
+  }
+  window.openUserDetail = openUserDetail;
+
+  function closeUserDetail() {
+    document.getElementById('usersDetailView').style.display = 'none';
+    document.getElementById('usersListView').style.display = '';
+    window._udPlayer = null;
+  }
+  window.closeUserDetail = closeUserDetail;
+
+  function renderUserDetail(data) {
+    var p = data.player;
+    document.getElementById('ud_name').textContent = p.display_name || 'Unknown';
+    document.getElementById('ud_username').textContent = p.username ? '@' + p.username : '\u2014';
+    document.getElementById('ud_email').textContent = p.email || '\u2014';
+    document.getElementById('ud_joined').textContent = fmtDate(p.created_at);
+    document.getElementById('ud_lastlogin').textContent = fmtDate(p.last_login_date);
+
+    // Core stats
+    document.getElementById('ud_xp').textContent = (parseInt(p.xp) || 0).toLocaleString();
+    document.getElementById('ud_gold').textContent = (parseInt(p.gold) || 0).toLocaleString();
+    document.getElementById('ud_level').textContent = parseInt(p.level) || 1;
+    document.getElementById('ud_total_rounds').textContent = parseInt(p.total_rounds) || 0;
+
+    // Battle stats
+    document.getElementById('ud_battle_wins').textContent = parseInt(p.battle_wins) || 0;
+    document.getElementById('ud_battle_losses').textContent = parseInt(p.battle_losses) || 0;
+    document.getElementById('ud_login_streak').textContent = parseInt(p.login_streak) || 0;
+    document.getElementById('ud_best_streak').textContent = parseInt(p.best_streak) || 0;
+
+    // Distance
+    var dist = parseFloat(p.total_distance_m) || 0;
+    document.getElementById('ud_distance').textContent = dist >= 1000 ? (dist / 1000).toFixed(1) + ' km' : Math.round(dist) + ' m';
+
+    // Game stats — display live-computed values from source tables (accurate);
+    // inline-edit still saves to stored columns (admin-editable per #1521231).
+    var cs = data.computed_stats || {};
+    document.getElementById('ud_total_birdies').textContent = cs.total_birdies != null ? parseInt(cs.total_birdies) : (parseInt(p.total_birdies) || 0);
+    document.getElementById('ud_total_aces').textContent = cs.total_aces != null ? parseInt(cs.total_aces) : (parseInt(p.total_aces) || 0);
+    document.getElementById('ud_total_checkins').textContent = cs.total_checkins != null ? parseInt(cs.total_checkins) : (parseInt(p.total_checkins) || 0);
+    document.getElementById('ud_total_courses_visited').textContent = cs.total_courses_visited != null ? parseInt(cs.total_courses_visited) : (parseInt(p.total_courses_visited) || 0);
+    document.getElementById('ud_challenges_completed').textContent = cs.challenges_completed != null ? parseInt(cs.challenges_completed) : (parseInt(p.challenges_completed) || 0);
+
+    // Achievements
+    renderAchievements(data.achievements || []);
+
+    // Badges
+    renderBadges(data.badges || []);
+
+    // Challenges
+    renderChallenges(data.challenges || []);
+
+    // Check-ins
+    renderCheckins(data.checkins || []);
+
+    // Rounds
+    renderRounds(data.rounds || []);
+
+    // Battles
+    renderBattles(data.battles || [], p.id);
+
+    // Reset stat buttons
+    renderResetButtons();
+
+    // Audit log
+    renderAuditLog(data.audit_log || []);
+  }
+
+  function renderAchievements(achievements) {
+    var el = document.getElementById('ud_achievements_list');
+    if (!achievements.length) {
+      el.innerHTML = '<p class="text-xs text-slate-500">No achievements yet.</p>';
+      return;
+    }
+    el.innerHTML = achievements.map(function(a) {
+      return '<div class="flex items-center justify-between py-1.5 border-b" style="border-color:var(--border)">' +
+        '<div>' +
+          '<span class="text-sm font-semibold" style="color:var(--text)">' + escHtml(a.achievement_type) + '</span>' +
+          '<span class="text-xs ml-2" style="color:var(--text3)">' + fmtDate(a.earned_at) + '</span>' +
+        '</div>' +
+        '<button class="text-xs px-2 py-1 rounded border transition-colors" style="color:var(--red);border-color:var(--border)" onclick="removeAchievement(' + a.id + ')">\u2715</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderBadges(badges) {
+    var el = document.getElementById('ud_badges_list');
+    if (!badges.length) {
+      el.innerHTML = '<p class="text-xs text-slate-500">No badges yet.</p>';
+      return;
+    }
+    el.innerHTML = badges.map(function(b) {
+      return '<div class="flex items-center justify-between py-1.5 border-b" style="border-color:var(--border)">' +
+        '<div>' +
+          '<span class="text-sm font-semibold" style="color:var(--text)">' + escHtml(b.category) + '</span>' +
+          '<span class="text-xs ml-2 tier-' + b.tier + ' font-semibold">' + b.tier + '</span>' +
+          '<span class="text-xs ml-2" style="color:var(--text3)">' + fmtDate(b.earned_at) + '</span>' +
+        '</div>' +
+        '<button class="text-xs px-2 py-1 rounded border transition-colors" style="color:var(--red);border-color:var(--border)" onclick="removeBadge(' + b.id + ')">\u2715</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderChallenges(challenges) {
+    var el = document.getElementById('ud_challenges_list');
+    if (!challenges.length) {
+      el.innerHTML = '<p class="text-xs text-slate-500 p-4">No challenges.</p>';
+      return;
+    }
+    el.innerHTML = '<table class="w-full text-sm"><thead><tr class="border-b text-xs uppercase" style="border-color:var(--border);color:var(--text3)">' +
+      '<th class="text-left px-4 py-2">Challenge</th>' +
+      '<th class="text-left px-4 py-2 hidden sm:table-cell">Difficulty</th>' +
+      '<th class="text-right px-4 py-2">Progress</th>' +
+      '<th class="text-right px-4 py-2">XP Reward</th>' +
+      '<th class="text-right px-4 py-2">Status</th>' +
+      '</tr></thead><tbody>' +
+      challenges.map(function(c) {
+        var status = c.completed
+          ? '<span class="badge-green">\u2713 Done</span>'
+          : '<span class="badge-blue">' + c.progress + '/' + c.target_value + '</span>';
+        return '<tr class="border-b" style="border-color:var(--border)">' +
+          '<td class="px-4 py-2 font-medium" style="color:var(--text)">' + escHtml(c.title) + '</td>' +
+          '<td class="px-4 py-2 hidden sm:table-cell" style="color:var(--text3)">' + escHtml(c.difficulty) + '</td>' +
+          '<td class="px-4 py-2 text-right" style="color:var(--text3)">' + c.progress + '/' + c.target_value + '</td>' +
+          '<td class="px-4 py-2 text-right green">' + c.xp_reward + '</td>' +
+          '<td class="px-4 py-2 text-right">' + status + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  function renderCheckins(checkins) {
+    var el = document.getElementById('ud_checkins_list');
+    if (!checkins.length) {
+      el.innerHTML = '<p class="text-xs text-slate-500 p-4">No check-ins yet.</p>';
+      return;
+    }
+    el.innerHTML = '<table class="w-full text-sm"><thead><tr class="border-b text-xs uppercase" style="border-color:var(--border);color:var(--text3)">' +
+      '<th class="text-left px-4 py-2">Course</th>' +
+      '<th class="text-left px-4 py-2 hidden sm:table-cell">Location</th>' +
+      '<th class="text-right px-4 py-2">XP</th>' +
+      '<th class="text-right px-4 py-2">Date</th>' +
+      '</tr></thead><tbody>' +
+      checkins.map(function(ci) {
+        return '<tr class="border-b" style="border-color:var(--border)">' +
+          '<td class="px-4 py-2 font-medium" style="color:var(--text)">' + escHtml(ci.course_name || 'Unknown') + '</td>' +
+          '<td class="px-4 py-2 hidden sm:table-cell" style="color:var(--text3)">' + escHtml((ci.city || '') + (ci.state ? ', ' + ci.state : '')) + '</td>' +
+          '<td class="px-4 py-2 text-right green">+' + (ci.xp_earned || 0) + '</td>' +
+          '<td class="px-4 py-2 text-right" style="color:var(--text3)">' + fmtDate(ci.checked_in_at) + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  function renderRounds(rounds) {
+    var el = document.getElementById('ud_rounds_list');
+    if (!rounds.length) {
+      el.innerHTML = '<p class="text-xs text-slate-500 p-4">No completed rounds.</p>';
+      return;
+    }
+    el.innerHTML = '<table class="w-full text-sm"><thead><tr class="border-b text-xs uppercase" style="border-color:var(--border);color:var(--text3)">' +
+      '<th class="text-left px-4 py-2">Course</th>' +
+      '<th class="text-right px-4 py-2">Holes</th>' +
+      '<th class="text-right px-4 py-2">Score</th>' +
+      '<th class="text-right px-4 py-2">Date</th>' +
+      '</tr></thead><tbody>' +
+      rounds.map(function(r) {
+        return '<tr class="border-b" style="border-color:var(--border)">' +
+          '<td class="px-4 py-2 font-medium" style="color:var(--text)">' + escHtml(r.course_name || 'Unknown') + '</td>' +
+          '<td class="px-4 py-2 text-right" style="color:var(--text3)">' + (r.holes_count || '\u2014') + '</td>' +
+          '<td class="px-4 py-2 text-right green font-semibold">' + (r.total_score || '\u2014') + '</td>' +
+          '<td class="px-4 py-2 text-right" style="color:var(--text3)">' + fmtDate(r.completed_at) + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  function renderBattles(battles, playerId) {
+    var el = document.getElementById('ud_battles_list');
+    if (!battles.length) {
+      el.innerHTML = '<p class="text-xs text-slate-500 p-4">No battles yet.</p>';
+      return;
+    }
+    el.innerHTML = '<table class="w-full text-sm"><thead><tr class="border-b text-xs uppercase" style="border-color:var(--border);color:var(--text3)">' +
+      '<th class="text-left px-4 py-2">Opponent</th>' +
+      '<th class="text-left px-4 py-2">Type</th>' +
+      '<th class="text-right px-4 py-2">Result</th>' +
+      '<th class="text-right px-4 py-2">Date</th>' +
+      '</tr></thead><tbody>' +
+      battles.map(function(b) {
+        var result = b.status === 'resolved'
+          ? (b.winner_id === playerId ? '<span class="green font-semibold">Won</span>' : '<span style="color:var(--red)" class="font-semibold">Lost</span>')
+          : '<span style="color:var(--text3)">' + b.status + '</span>';
+        return '<tr class="border-b" style="border-color:var(--border)">' +
+          '<td class="px-4 py-2 font-medium" style="color:var(--text)">' + escHtml(b.opponent_name || 'Unknown') + '</td>' +
+          '<td class="px-4 py-2" style="color:var(--text3)">' + escHtml(b.battle_type || 'checkin') + '</td>' +
+          '<td class="px-4 py-2 text-right">' + result + '</td>' +
+          '<td class="px-4 py-2 text-right" style="color:var(--text3)">' + fmtDate(b.created_at) + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  function renderResetButtons() {
+    var fields = ['xp', 'gold', 'battle_wins', 'battle_losses', 'total_rounds', 'login_streak', 'best_streak', 'total_distance_m', 'total_birdies', 'total_aces', 'total_checkins', 'total_courses_visited', 'challenges_completed'];
+    var el = document.getElementById('ud_reset_btns');
+    el.innerHTML = fields.map(function(f) {
+      return '<button class="text-xs px-3 py-1.5 rounded border font-semibold transition-colors" style="color:var(--red);border-color:var(--border)" ' +
+        'onclick="resetStat(\'' + f + '\')">' +
+        'Reset ' + f.replace(/_/g, ' ') +
+      '</button>';
+    }).join('');
+  }
+
+  function renderAuditLog(logs) {
+    var el = document.getElementById('ud_audit_list');
+    if (!logs.length) {
+      el.innerHTML = '<p class="text-xs text-slate-500 p-4">No admin actions recorded.</p>';
+      return;
+    }
+    el.innerHTML = '<table class="w-full text-sm"><thead><tr class="border-b text-xs uppercase" style="border-color:var(--border);color:var(--text3)">' +
+      '<th class="text-left px-4 py-2">Action</th>' +
+      '<th class="text-left px-4 py-2">Field</th>' +
+      '<th class="text-left px-4 py-2">Old</th>' +
+      '<th class="text-left px-4 py-2">New</th>' +
+      '<th class="text-right px-4 py-2">When</th>' +
+      '</tr></thead><tbody>' +
+      logs.map(function(l) {
+        var d = new Date(l.created_at);
+        var ts = (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+        return '<tr class="border-b" style="border-color:var(--border)">' +
+          '<td class="px-4 py-2 font-medium" style="color:var(--text)">' + escHtml(l.action) + '</td>' +
+          '<td class="px-4 py-2" style="color:var(--text3)">' + escHtml(l.field_name || '\u2014') + '</td>' +
+          '<td class="px-4 py-2" style="color:var(--red)">' + escHtml(l.old_value || '\u2014') + '</td>' +
+          '<td class="px-4 py-2 green">' + escHtml(l.new_value || '\u2014') + '</td>' +
+          '<td class="px-4 py-2 text-right" style="color:var(--text3)">' + ts + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  // ── Inline Stat Editing ───────────────────────────────────────────────────
+
+  function inlineEditStat(field) {
+    if (!window._udPlayer) return;
+    var currentVal = window._udPlayer[field];
+    if (currentVal === undefined || currentVal === null) currentVal = 0;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'inline-edit-overlay';
+    overlay.innerHTML = '<div class="inline-edit-box">' +
+      '<h3 class="text-sm font-bold mb-3" style="color:var(--text)">Edit ' + field.replace(/_/g, ' ') + '</h3>' +
+      '<input type="number" id="_ie_input" class="input-field mb-3" value="' + currentVal + '" min="' + (field === 'level' ? '1' : '0') + '" step="' + (field === 'total_distance_m' ? '0.1' : '1') + '" autofocus />' +
+      '<div id="_ie_error" class="text-xs mb-2 hidden" style="color:var(--red)"></div>' +
+      '<div class="flex gap-2">' +
+        '<button class="btn-secondary flex-1 text-xs" id="_ie_cancel">Cancel</button>' +
+        '<button class="btn-primary flex-1 text-xs" id="_ie_save">Save</button>' +
+      '</div>' +
+    '</div>';
+
+    document.body.appendChild(overlay);
+
+    var input = document.getElementById('_ie_input');
+    input.select();
+
+    document.getElementById('_ie_cancel').onclick = function() { overlay.remove(); };
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+    document.getElementById('_ie_save').onclick = function() {
+      var newVal = field === 'total_distance_m' ? parseFloat(input.value) : parseInt(input.value);
+      if (isNaN(newVal) || (field === 'level' && newVal < 1) || (field !== 'level' && newVal < 0)) {
+        document.getElementById('_ie_error').textContent = 'Invalid value';
+        document.getElementById('_ie_error').classList.remove('hidden');
+        return;
+      }
+      var saveBtn = document.getElementById('_ie_save');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner-sm"></span>';
+
+      var body = {};
+      body[field] = newVal;
+      apiFetch('/api/admin/users/' + window._udPlayer.id, { method: 'PUT', body: JSON.stringify(body) }).then(function(result) {
+        if (result.ok) {
+          overlay.remove();
+          showToast(field.replace(/_/g, ' ') + ' updated', 'success');
+          openUserDetail(window._udPlayer.id);
+        } else {
+          document.getElementById('_ie_error').textContent = result.data.error || 'Failed';
+          document.getElementById('_ie_error').classList.remove('hidden');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save';
+        }
+      }).catch(function() {
+        document.getElementById('_ie_error').textContent = 'Network error';
+        document.getElementById('_ie_error').classList.remove('hidden');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+      });
+    };
+
+    // Enter key submits
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('_ie_save').click();
+      if (e.key === 'Escape') overlay.remove();
+    });
+  }
+  window.inlineEditStat = inlineEditStat;
+
+  // ── Grant Resources ───────────────────────────────────────────────────────
+
+  function grantResource(type) {
+    if (!window._udPlayer) return;
+    var inputEl = document.getElementById('ud_grant_' + type);
+    var msgEl = document.getElementById('ud_grant_' + type + '_msg');
+    var amount = parseInt(inputEl.value);
+    if (!amount || amount <= 0) {
+      msgEl.textContent = 'Enter a positive amount';
+      msgEl.style.color = 'var(--red)';
+      msgEl.classList.remove('hidden');
+      return;
+    }
+
+    apiFetch('/api/admin/users/' + window._udPlayer.id + '/grant', {
+      method: 'POST',
+      body: JSON.stringify({ type: type, amount: amount })
+    }).then(function(result) {
+      if (result.ok) {
+        msgEl.textContent = '\u2713 Granted ' + amount + ' ' + type + ' (new total: ' + result.data.new_value.toLocaleString() + ')';
+        msgEl.style.color = 'var(--green)';
+        msgEl.classList.remove('hidden');
+        inputEl.value = '';
+        openUserDetail(window._udPlayer.id);
+        showToast(amount + ' ' + type + ' granted', 'success');
+      } else {
+        msgEl.textContent = result.data.error || 'Failed';
+        msgEl.style.color = 'var(--red)';
+        msgEl.classList.remove('hidden');
+      }
+    }).catch(function() {
+      msgEl.textContent = 'Network error';
+      msgEl.style.color = 'var(--red)';
+      msgEl.classList.remove('hidden');
+    });
+  }
+  window.grantResource = grantResource;
+
+  // ── Achievement Management ────────────────────────────────────────────────
+
+  function grantAchievement() {
+    if (!window._udPlayer) return;
+    var input = document.getElementById('ud_new_achievement');
+    var msgEl = document.getElementById('ud_achievement_msg');
+    var type = input.value.trim();
+    if (!type) { msgEl.textContent = 'Enter an achievement type'; msgEl.style.color = 'var(--red)'; msgEl.classList.remove('hidden'); return; }
+
+    apiFetch('/api/admin/users/' + window._udPlayer.id + '/achievements', {
+      method: 'POST',
+      body: JSON.stringify({ achievement_type: type })
+    }).then(function(result) {
+      if (result.ok) {
+        input.value = '';
+        msgEl.textContent = '\u2713 Achievement granted';
+        msgEl.style.color = 'var(--green)';
+        msgEl.classList.remove('hidden');
+        openUserDetail(window._udPlayer.id);
+        showToast('Achievement granted', 'success');
+      } else {
+        msgEl.textContent = result.data.error || 'Failed';
+        msgEl.style.color = 'var(--red)';
+        msgEl.classList.remove('hidden');
+      }
+    });
+  }
+  window.grantAchievement = grantAchievement;
+
+  function removeAchievement(achievementId) {
+    if (!window._udPlayer) return;
+    if (!confirm('Remove this achievement?')) return;
+    apiFetch('/api/admin/users/' + window._udPlayer.id + '/achievements/' + achievementId, { method: 'DELETE' }).then(function(result) {
+      if (result.ok) {
+        openUserDetail(window._udPlayer.id);
+        showToast('Achievement removed', 'success');
+      } else {
+        showToast(result.data.error || 'Failed', 'error');
+      }
+    });
+  }
+  window.removeAchievement = removeAchievement;
+
+  // ── Badge Management ──────────────────────────────────────────────────────
+
+  function grantBadge() {
+    if (!window._udPlayer) return;
+    var catInput = document.getElementById('ud_new_badge_cat');
+    var tierSelect = document.getElementById('ud_new_badge_tier');
+    var msgEl = document.getElementById('ud_badge_msg');
+    var category = catInput.value.trim();
+    if (!category) { msgEl.textContent = 'Enter a category'; msgEl.style.color = 'var(--red)'; msgEl.classList.remove('hidden'); return; }
+
+    apiFetch('/api/admin/users/' + window._udPlayer.id + '/badges', {
+      method: 'POST',
+      body: JSON.stringify({ category: category, tier: tierSelect.value })
+    }).then(function(result) {
+      if (result.ok) {
+        catInput.value = '';
+        msgEl.textContent = '\u2713 Badge granted';
+        msgEl.style.color = 'var(--green)';
+        msgEl.classList.remove('hidden');
+        openUserDetail(window._udPlayer.id);
+        showToast('Badge granted', 'success');
+      } else {
+        msgEl.textContent = result.data.error || 'Failed';
+        msgEl.style.color = 'var(--red)';
+        msgEl.classList.remove('hidden');
+      }
+    });
+  }
+  window.grantBadge = grantBadge;
+
+  function removeBadge(badgeId) {
+    if (!window._udPlayer) return;
+    if (!confirm('Remove this badge?')) return;
+    apiFetch('/api/admin/users/' + window._udPlayer.id + '/badges/' + badgeId, { method: 'DELETE' }).then(function(result) {
+      if (result.ok) {
+        openUserDetail(window._udPlayer.id);
+        showToast('Badge removed', 'success');
+      } else {
+        showToast(result.data.error || 'Failed', 'error');
+      }
+    });
+  }
+  window.removeBadge = removeBadge;
+
+  // ── Reset Stat ────────────────────────────────────────────────────────────
+
+  function resetStat(field) {
+    if (!window._udPlayer) return;
+    if (!confirm('Reset ' + field.replace(/_/g, ' ') + ' to zero? This cannot be undone.')) return;
+
+    apiFetch('/api/admin/users/' + window._udPlayer.id + '/reset-stat', {
+      method: 'POST',
+      body: JSON.stringify({ field: field })
+    }).then(function(result) {
+      if (result.ok) {
+        openUserDetail(window._udPlayer.id);
+        showToast(field.replace(/_/g, ' ') + ' reset to 0', 'success');
+      } else {
+        showToast(result.data.error || 'Failed', 'error');
+      }
+    });
+  }
+  window.resetStat = resetStat;
+
+  // ── Courses ────────────────────────────────────────────────────────────────
+
+  var coursesState = {
+    page: 1,
+    limit: 50,
+    search: '',
+    state: '',
+    sort: 'name',
+    dir: 'asc',
+    total: 0,
+    pages: 0,
+    loading: false,
+    stateCounts: [],
+  };
+  var deleteCourseTargetId = null;
+  var deleteCourseTargetName = '';
+  var courseSearchTimer = null;
+
+  function loadCourses() {
+    coursesState.loading = true;
+    var tbody = document.getElementById('coursesTableBody');
+    tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-500"><div class="spinner mx-auto mb-2"></div><p>Loading courses...</p></td></tr>';
+
+    var qs = '?page=' + coursesState.page + '&limit=' + coursesState.limit
+      + '&sort=' + coursesState.sort + '&dir=' + coursesState.dir;
+    if (coursesState.search) qs += '&search=' + encodeURIComponent(coursesState.search);
+    if (coursesState.state) qs += '&state=' + encodeURIComponent(coursesState.state);
+
+    apiFetch('/api/admin/courses' + qs).then(function(result) {
+      coursesState.loading = false;
+      if (!result.ok) {
+        tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-red-400">Failed to load courses.</td></tr>';
+        return;
+      }
+      var d = result.data;
+      coursesState.total = d.total;
+      coursesState.pages = d.pages;
+      coursesState.stateCounts = d.state_counts || [];
+
+      // Populate state dropdown
+      populateStateDropdown(d.state_counts || []);
+      renderCourseSummary(d.total, d.state_counts || []);
+      renderCoursesTable(d.courses);
+      renderCoursesPagination(d.total, d.page, d.pages);
+      updateCourseSortIndicators();
+    }).catch(function() {
+      coursesState.loading = false;
+      var tbody2 = document.getElementById('coursesTableBody');
+      tbody2.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-red-400">Failed to load courses.</td></tr>';
+    });
+  }
+
+  function populateStateDropdown(stateCounts) {
+    var sel = document.getElementById('courseStateFilter');
+    var current = coursesState.state;
+    var html = '<option value="">All States (' + stateCounts.reduce(function(s, r) { return s + parseInt(r.count); }, 0) + ')</option>';
+    stateCounts.forEach(function(r) {
+      var selected = r.state === current ? ' selected' : '';
+      html += '<option value="' + escHtml(r.state) + '"' + selected + '>' + escHtml(r.state) + ' (' + r.count + ')</option>';
+    });
+    sel.innerHTML = html;
+  }
+
+  function renderCourseSummary(total, stateCounts) {
+    document.getElementById('courseTotalCount').textContent = total.toLocaleString() + ' courses total';
+    var stateEl = document.getElementById('courseStateCount');
+    if (coursesState.state) {
+      var found = stateCounts.find(function(r) { return r.state === coursesState.state; });
+      stateEl.textContent = (found ? found.count : 0) + ' in ' + coursesState.state;
+    } else {
+      stateEl.textContent = stateCounts.length + ' states';
+    }
+  }
+
+  function terrainBadge(t) {
+    if (!t) return '<span class="text-slate-600 text-xs">—</span>';
+    var colors = { wooded: 'text-emerald-400', open: 'text-sky-400', mixed: 'text-purple-400', hilly: 'text-amber-400', flat: 'text-slate-300' };
+    return '<span class="text-xs font-medium ' + (colors[t] || 'text-slate-400') + '">' + t + '</span>';
+  }
+
+  function difficultyBadge(d) {
+    if (!d) return '<span class="text-slate-600 text-xs">—</span>';
+    var colors = { beginner: 'text-green-400', intermediate: 'text-yellow-400', advanced: 'text-orange-400', pro: 'text-red-400' };
+    return '<span class="text-xs font-medium ' + (colors[d] || 'text-slate-400') + '">' + d + '</span>';
+  }
+
+  function sourceBadge(s) {
+    if (!s || s === 'manual') return '<span class="text-slate-500 text-xs">manual</span>';
+    return '<span class="text-xs font-medium text-blue-400">PDGA</span>';
+  }
+
+  function renderCoursesTable(courses) {
+    var tbody = document.getElementById('coursesTableBody');
+    if (!courses || courses.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-500">No courses found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = courses.map(function(c) {
+      return '<tr class="table-row border-t border-slate-700">' +
+        '<td class="px-4 py-2 text-white font-medium">' +
+          '<span class="block truncate max-w-xs" title="' + escHtml(c.name) + '">' + escHtml(c.name) + '</span>' +
+          (!c.is_active ? '<span class="text-xs text-red-400 font-normal"> (inactive)</span>' : '') +
+        '</td>' +
+        '<td class="px-4 py-2 text-slate-400 text-sm hidden sm:table-cell">' + escHtml(c.city || '—') + '</td>' +
+        '<td class="px-4 py-2 text-slate-400 text-sm hidden md:table-cell">' + escHtml(c.state || '—') + '</td>' +
+        '<td class="px-4 py-2 text-right text-slate-300">' + (c.holes || '—') + '</td>' +
+        '<td class="px-4 py-2 text-right text-slate-300 hidden sm:table-cell">' + (c.par || '—') + '</td>' +
+        '<td class="px-4 py-2 hidden lg:table-cell">' + terrainBadge(c.terrain) + '</td>' +
+        '<td class="px-4 py-2 hidden lg:table-cell">' + difficultyBadge(c.difficulty) + '</td>' +
+        '<td class="px-4 py-2 hidden xl:table-cell">' + sourceBadge(c.source) + '</td>' +
+        '<td class="px-4 py-2 text-right" onclick="event.stopPropagation()">' +
+          '<button class="text-green-500 hover:text-green-400 text-xs font-semibold px-2 py-1 rounded border border-slate-700 hover:border-green-800 transition-colors mr-1" onclick="openLayoutEditor(' + c.id + ', \'' + escHtml(c.name).replace(/'/g, "\\'") + '\')">' +
+            '&#9635; Layouts' +
+          '</button>' +
+          '<button class="text-blue-400 hover:text-blue-300 text-xs font-semibold px-2 py-1 rounded border border-slate-700 hover:border-blue-800 transition-colors mr-1" onclick="openEditCourseModal(' + c.id + ')">' +
+            'Edit' +
+          '</button>' +
+          '<button class="text-red-400 hover:text-red-300 text-xs font-semibold px-2 py-1 rounded border border-slate-700 hover:border-red-800 transition-colors" onclick="openDeleteCourseModal(' + c.id + ', \'' + escHtml(c.name).replace(/'/g, "\\'") + '\')">' +
+            'Del' +
+          '</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function renderCoursesPagination(total, page, pages) {
+    var pag = document.getElementById('coursesPagination');
+    var info = document.getElementById('coursesPaginationInfo');
+    var btns = document.getElementById('coursesPaginationBtns');
+
+    if (pages <= 1 && total <= coursesState.limit) {
+      pag.style.cssText = 'display:none!important';
+      return;
+    }
+
+    pag.style.cssText = '';
+    var start = (page - 1) * coursesState.limit + 1;
+    var end = Math.min(page * coursesState.limit, total);
+    info.textContent = start + '–' + end + ' of ' + total.toLocaleString() + ' courses';
+
+    var html = '';
+    html += '<button class="page-btn" onclick="goToCoursePage(' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>&larr;</button>';
+    var startPage = Math.max(1, page - 2);
+    var endPage = Math.min(pages, page + 2);
+    if (startPage > 1) html += '<button class="page-btn" onclick="goToCoursePage(1)">1</button>';
+    if (startPage > 2) html += '<span class="text-slate-600 px-1">…</span>';
+    for (var i = startPage; i <= endPage; i++) {
+      html += '<button class="page-btn ' + (i === page ? 'current' : '') + '" onclick="goToCoursePage(' + i + ')">' + i + '</button>';
+    }
+    if (endPage < pages - 1) html += '<span class="text-slate-600 px-1">…</span>';
+    if (endPage < pages) html += '<button class="page-btn" onclick="goToCoursePage(' + pages + ')">' + pages + '</button>';
+    html += '<button class="page-btn" onclick="goToCoursePage(' + (page + 1) + ')" ' + (page >= pages ? 'disabled' : '') + '>&rarr;</button>';
+    btns.innerHTML = html;
+  }
+
+  function goToCoursePage(p) {
+    if (p < 1 || p > coursesState.pages) return;
+    coursesState.page = p;
+    loadCourses();
+  }
+  window.goToCoursePage = goToCoursePage;
+
+  function sortCourseBy(field) {
+    if (coursesState.sort === field) {
+      coursesState.dir = coursesState.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      coursesState.sort = field;
+      coursesState.dir = ['name', 'city', 'state', 'terrain', 'difficulty', 'source'].includes(field) ? 'asc' : 'desc';
+    }
+    coursesState.page = 1;
+    updateCourseSortIndicators();
+    loadCourses();
+  }
+  window.sortCourseBy = sortCourseBy;
+
+  function updateCourseSortIndicators() {
+    var fields = ['name', 'city', 'state', 'holes', 'par', 'terrain', 'difficulty', 'source'];
+    fields.forEach(function(f) {
+      var el = document.getElementById('csort_' + f);
+      if (!el) return;
+      if (coursesState.sort === f) {
+        el.textContent = coursesState.dir === 'asc' ? '▲' : '▼';
+        el.className = 'sort-btn active-sort';
+      } else {
+        el.textContent = '⇅';
+        el.className = 'sort-btn';
+      }
+    });
+  }
+
+  function debounceCourseSearch() {
+    clearTimeout(courseSearchTimer);
+    courseSearchTimer = setTimeout(function() {
+      coursesState.search = document.getElementById('courseSearch').value.trim();
+      coursesState.page = 1;
+      loadCourses();
+    }, 300);
+  }
+  window.debounceCourseSearch = debounceCourseSearch;
+
+  function onStateFilterChange() {
+    coursesState.state = document.getElementById('courseStateFilter').value;
+    coursesState.page = 1;
+    loadCourses();
+  }
+  window.onStateFilterChange = onStateFilterChange;
+
+  // ── Add Course Modal ────────────────────────────────────────────────────────
+
+  function openAddCourseModal() {
+    var form = document.getElementById('addCourseForm');
+    form.reset();
+    document.getElementById('ac_source').value = 'manual';
+    document.getElementById('ac_is_active').value = 'true';
+    document.getElementById('addCourseError').classList.add('hidden');
+    document.getElementById('addCourseSubmitBtn').textContent = 'Create Course';
+    document.getElementById('addCourseSubmitBtn').disabled = false;
+    document.getElementById('addCourseModal').style.cssText = '';
+    document.getElementById('addCourseModal').classList.add('open');
+  }
+  window.openAddCourseModal = openAddCourseModal;
+
+  function closeAddCourseModal() {
+    document.getElementById('addCourseModal').classList.remove('open');
+    document.getElementById('addCourseModal').style.cssText = 'display:none!important';
+  }
+  window.closeAddCourseModal = closeAddCourseModal;
+
+  document.getElementById('addCourseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var errEl = document.getElementById('addCourseError');
+    errEl.classList.add('hidden');
+    var btn = document.getElementById('addCourseSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Creating...';
+
+    var body = {
+      name: document.getElementById('ac_name').value,
+      city: document.getElementById('ac_city').value,
+      state: document.getElementById('ac_state').value,
+      holes: parseInt(document.getElementById('ac_holes').value) || null,
+      par: parseInt(document.getElementById('ac_par').value) || null,
+      lat: parseFloat(document.getElementById('ac_lat').value) || null,
+      lng: parseFloat(document.getElementById('ac_lng').value) || null,
+      terrain: document.getElementById('ac_terrain').value || null,
+      difficulty: document.getElementById('ac_difficulty').value || null,
+      source: document.getElementById('ac_source').value,
+      is_active: document.getElementById('ac_is_active').value === 'true',
+      pdga_rating: parseFloat(document.getElementById('ac_pdga_rating').value) || null,
+      dgcoursereview_rating: parseFloat(document.getElementById('ac_dgcr_rating').value) || null,
+      year_established: parseInt(document.getElementById('ac_year').value) || null,
+      designer: document.getElementById('ac_designer').value || null,
+      course_length_ft: parseInt(document.getElementById('ac_length').value) || null,
+      elevation_change_ft: parseInt(document.getElementById('ac_elevation').value) || null,
+      fees: document.getElementById('ac_fees').value || null,
+      notable_features: document.getElementById('ac_notable').value || null,
+    };
+
+    // Remove null optional fields (keep required ones even if null for server validation)
+    ['terrain','difficulty','pdga_rating','dgcoursereview_rating','year_established',
+     'designer','course_length_ft','elevation_change_ft','fees','notable_features'
+    ].forEach(function(k) { if (body[k] === null) delete body[k]; });
+
+    apiFetch('/api/admin/courses', { method: 'POST', body: JSON.stringify(body) }).then(function(result) {
+      if (result.ok) {
+        closeAddCourseModal();
+        // Reset to page 1 and reload
+        coursesState.page = 1;
+        loadCourses();
+      } else {
+        errEl.textContent = result.data.error || 'Failed to create course';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Create Course';
+        btn.disabled = false;
+      }
+    }).catch(function() {
+      errEl.textContent = 'Network error. Try again.';
+      errEl.classList.remove('hidden');
+      btn.textContent = 'Create Course';
+      btn.disabled = false;
+    });
+  });
+
+  // ── Edit Course Modal ──────────────────────────────────────────────────────
+
+  // Track hole details state for the edit modal
+  var ecHoleDetailsData = []; // [{hole, par, distance_ft}]
+
+  function openEditCourseModal(courseId) {
+    // Fetch full course data
+    apiFetch('/api/admin/courses/' + courseId).then(function(result) {
+      if (!result.ok) { alert('Failed to load course data.'); return; }
+      var c = result.data.course;
+      document.getElementById('ec_id').value = c.id;
+      document.getElementById('ec_name').value = c.name || '';
+      document.getElementById('ec_city').value = c.city || '';
+      document.getElementById('ec_state').value = c.state || '';
+      document.getElementById('ec_holes').value = c.holes || '';
+      document.getElementById('ec_par').value = c.par || '';
+      document.getElementById('ec_lat').value = c.lat || '';
+      document.getElementById('ec_lng').value = c.lng || '';
+      document.getElementById('ec_terrain').value = c.terrain || '';
+      document.getElementById('ec_difficulty').value = c.difficulty || '';
+      document.getElementById('ec_source').value = c.source || 'manual';
+      document.getElementById('ec_is_active').value = c.is_active !== false ? 'true' : 'false';
+      document.getElementById('ec_pdga_rating').value = c.pdga_rating || '';
+      document.getElementById('ec_dgcr_rating').value = c.dgcoursereview_rating || '';
+      document.getElementById('ec_year').value = c.year_established || '';
+      document.getElementById('ec_designer').value = c.designer || '';
+      document.getElementById('ec_length').value = c.course_length_ft || '';
+      document.getElementById('ec_elevation').value = c.elevation_change_ft || '';
+      document.getElementById('ec_fees').value = c.fees || '';
+      document.getElementById('ec_notable').value = c.notable_features || '';
+      document.getElementById('editCourseError').classList.add('hidden');
+      document.getElementById('editCourseSubmitBtn').textContent = 'Save Changes';
+      document.getElementById('editCourseSubmitBtn').disabled = false;
+      // Reset hole details panel
+      document.getElementById('ec_hole_details_panel').style.display = 'none';
+      document.getElementById('ec_toggle_holes_icon').textContent = '▶';
+      document.getElementById('ec_holes_msg').classList.add('hidden');
+      // Populate hole details from course data or generate from holes/par
+      var holeCount = parseInt(c.holes) || 18;
+      var totalPar = parseInt(c.par) || (holeCount * 3);
+      if (c.hole_details && Array.isArray(c.hole_details) && c.hole_details.length > 0) {
+        ecHoleDetailsData = c.hole_details.map(function(h) {
+          return { hole: parseInt(h.hole), label: h.label || '', par: parseInt(h.par) || 3, distance_ft: h.distance_ft || null };
+        });
+      } else {
+        // Generate placeholders from course-level data
+        var avgPar = totalPar / holeCount;
+        var basePar = avgPar <= 3.3 ? 3 : avgPar <= 4.3 ? 4 : 5;
+        ecHoleDetailsData = [];
+        for (var h = 1; h <= holeCount; h++) {
+          ecHoleDetailsData.push({ hole: h, label: '', par: basePar, distance_ft: null });
+        }
+      }
+      renderHoleRows();
+      document.getElementById('editCourseModal').style.cssText = '';
+      document.getElementById('editCourseModal').classList.add('open');
+    });
+  }
+  window.openEditCourseModal = openEditCourseModal;
+
+  // ── Hole Details panel ───────────────────────────────────────────────────
+
+  function toggleHoleDetails() {
+    var panel = document.getElementById('ec_hole_details_panel');
+    var icon = document.getElementById('ec_toggle_holes_icon');
+    if (panel.style.display === 'none') {
+      panel.style.display = 'block';
+      icon.textContent = '▼';
+      // Sync rows in case holes count changed
+      syncHoleRows();
+    } else {
+      panel.style.display = 'none';
+      icon.textContent = '▶';
+    }
+  }
+  window.toggleHoleDetails = toggleHoleDetails;
+
+  // Re-sync ecHoleDetailsData length if the holes input changed
+  function syncHoleRows() {
+    var holeCount = parseInt(document.getElementById('ec_holes').value) || ecHoleDetailsData.length;
+    if (holeCount === ecHoleDetailsData.length) { renderHoleRows(); return; }
+    // Add or trim
+    if (holeCount > ecHoleDetailsData.length) {
+      for (var h = ecHoleDetailsData.length + 1; h <= holeCount; h++) {
+        ecHoleDetailsData.push({ hole: h, label: '', par: 3, distance_ft: null });
+      }
+    } else {
+      ecHoleDetailsData = ecHoleDetailsData.slice(0, holeCount);
+    }
+    renderHoleRows();
+  }
+
+  function renderHoleRows() {
+    var container = document.getElementById('ec_hole_rows');
+    var html = '';
+    for (var i = 0; i < ecHoleDetailsData.length; i++) {
+      var h = ecHoleDetailsData[i];
+      var labelVal = h.label || '';
+      html += '<div class="grid items-center gap-1" style="grid-template-columns:48px 72px 1fr 1fr;">' +
+        '<div class="text-center text-sm font-bold text-slate-300">' + h.hole + '</div>' +
+        '<input type="text" maxlength="6" class="input-field py-1 text-sm text-center" id="ec_h_label_' + h.hole + '"' +
+          ' value="' + escHtml(labelVal) + '"' +
+          ' placeholder="' + h.hole + '" title="Display label (e.g. 8A, 26A). Leave blank to use hole number." />' +
+        '<select class="input-field py-1 text-sm" id="ec_h_par_' + h.hole + '" onchange="ecHolePar(' + h.hole + ', this.value)">' +
+          '<option value="3"' + (h.par === 3 ? ' selected' : '') + '>3</option>' +
+          '<option value="4"' + (h.par === 4 ? ' selected' : '') + '>4</option>' +
+          '<option value="5"' + (h.par === 5 ? ' selected' : '') + '>5</option>' +
+        '</select>' +
+        '<input type="number" min="0" max="9999" class="input-field py-1 text-sm" id="ec_h_dist_' + h.hole + '"' +
+          ' value="' + (h.distance_ft != null ? h.distance_ft : '') + '"' +
+          ' placeholder="—" onchange="ecHoleDist(' + h.hole + ', this.value)" />' +
+      '</div>';
+    }
+    container.innerHTML = html;
+  }
+
+  function ecHolePar(holeNum, val) {
+    for (var i = 0; i < ecHoleDetailsData.length; i++) {
+      if (ecHoleDetailsData[i].hole === holeNum) {
+        ecHoleDetailsData[i].par = parseInt(val) || 3;
+        break;
+      }
+    }
+  }
+  window.ecHolePar = ecHolePar;
+
+  function ecHoleDist(holeNum, val) {
+    for (var i = 0; i < ecHoleDetailsData.length; i++) {
+      if (ecHoleDetailsData[i].hole === holeNum) {
+        ecHoleDetailsData[i].distance_ft = val !== '' && val != null ? parseInt(val) : null;
+        break;
+      }
+    }
+  }
+  window.ecHoleDist = ecHoleDist;
+
+  function ecSetAllPar(parVal) {
+    for (var i = 0; i < ecHoleDetailsData.length; i++) {
+      ecHoleDetailsData[i].par = parVal;
+    }
+    renderHoleRows();
+  }
+  window.ecSetAllPar = ecSetAllPar;
+
+  function ecResetHoles() {
+    for (var i = 0; i < ecHoleDetailsData.length; i++) {
+      ecHoleDetailsData[i].distance_ft = null;
+    }
+    renderHoleRows();
+  }
+  window.ecResetHoles = ecResetHoles;
+
+  function saveHoleDetails() {
+    var courseId = document.getElementById('ec_id').value;
+    if (!courseId) { return; }
+    var btn = document.getElementById('ec_save_holes_btn');
+    var msgEl = document.getElementById('ec_holes_msg');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Saving...';
+    msgEl.classList.add('hidden');
+    // Read current DOM values before saving (in case user typed without triggering onchange)
+    for (var i = 0; i < ecHoleDetailsData.length; i++) {
+      var h = ecHoleDetailsData[i];
+      var parSel = document.getElementById('ec_h_par_' + h.hole);
+      var distIn = document.getElementById('ec_h_dist_' + h.hole);
+      var labelIn = document.getElementById('ec_h_label_' + h.hole);
+      if (parSel) h.par = parseInt(parSel.value) || 3;
+      if (distIn) h.distance_ft = distIn.value !== '' ? parseInt(distIn.value) : null;
+      if (labelIn) h.label = labelIn.value.trim();
+    }
+    apiFetch('/api/admin/courses/' + courseId + '/holes', {
+      method: 'PUT',
+      body: JSON.stringify({ holes: ecHoleDetailsData })
+    }).then(function(result) {
+      btn.disabled = false;
+      btn.textContent = '💾 Save Hole Details';
+      msgEl.classList.remove('hidden');
+      if (result.ok) {
+        msgEl.style.color = '#7ed957';
+        msgEl.textContent = '✓ Hole details saved!';
+      } else {
+        msgEl.style.color = '#fc8181';
+        msgEl.textContent = result.data.error || 'Failed to save';
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = '💾 Save Hole Details';
+      msgEl.classList.remove('hidden');
+      msgEl.style.color = '#fc8181';
+      msgEl.textContent = 'Network error. Try again.';
+    });
+  }
+  window.saveHoleDetails = saveHoleDetails;
+
+  function closeEditCourseModal() {
+    document.getElementById('editCourseModal').classList.remove('open');
+    document.getElementById('editCourseModal').style.cssText = 'display:none!important';
+  }
+  window.closeEditCourseModal = closeEditCourseModal;
+
+  document.getElementById('editCourseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var errEl = document.getElementById('editCourseError');
+    errEl.classList.add('hidden');
+    var btn = document.getElementById('editCourseSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Saving...';
+
+    var courseId = document.getElementById('ec_id').value;
+    var body = {
+      name: document.getElementById('ec_name').value,
+      city: document.getElementById('ec_city').value,
+      state: document.getElementById('ec_state').value,
+      holes: parseInt(document.getElementById('ec_holes').value) || null,
+      par: parseInt(document.getElementById('ec_par').value) || null,
+      lat: parseFloat(document.getElementById('ec_lat').value) || null,
+      lng: parseFloat(document.getElementById('ec_lng').value) || null,
+      terrain: document.getElementById('ec_terrain').value || null,
+      difficulty: document.getElementById('ec_difficulty').value || null,
+      source: document.getElementById('ec_source').value,
+      is_active: document.getElementById('ec_is_active').value === 'true',
+      pdga_rating: parseFloat(document.getElementById('ec_pdga_rating').value) || null,
+      dgcoursereview_rating: parseFloat(document.getElementById('ec_dgcr_rating').value) || null,
+      year_established: parseInt(document.getElementById('ec_year').value) || null,
+      designer: document.getElementById('ec_designer').value || null,
+      course_length_ft: parseInt(document.getElementById('ec_length').value) || null,
+      elevation_change_ft: parseInt(document.getElementById('ec_elevation').value) || null,
+      fees: document.getElementById('ec_fees').value || null,
+      notable_features: document.getElementById('ec_notable').value || null,
+    };
+
+    // Remove null values to avoid overwriting valid data with null on partial edits
+    Object.keys(body).forEach(function(k) {
+      if (body[k] === null) delete body[k];
+    });
+
+    apiFetch('/api/admin/courses/' + courseId, { method: 'PUT', body: JSON.stringify(body) }).then(function(result) {
+      if (result.ok) {
+        closeEditCourseModal();
+        loadCourses();
+      } else {
+        errEl.textContent = result.data.error || 'Failed to update course';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Save Changes';
+        btn.disabled = false;
+      }
+    }).catch(function() {
+      errEl.textContent = 'Network error. Try again.';
+      errEl.classList.remove('hidden');
+      btn.textContent = 'Save Changes';
+      btn.disabled = false;
+    });
+  });
+
+  // ── Delete Course Modal ────────────────────────────────────────────────────
+
+  function openDeleteCourseModal(id, name) {
+    deleteCourseTargetId = id;
+    deleteCourseTargetName = name;
+    document.getElementById('deleteCourseName').textContent = name;
+    document.getElementById('deleteCourseError').classList.add('hidden');
+    document.getElementById('deleteCourseConfirmBtn').textContent = 'Delete';
+    document.getElementById('deleteCourseConfirmBtn').disabled = false;
+    var warn = document.getElementById('deleteCourseCheckinWarning');
+    warn.classList.add('hidden');
+    // Fetch checkin count to show warning
+    apiFetch('/api/admin/courses/' + id).then(function(result) {
+      if (result.ok && result.data.course) {
+        var count = parseInt(result.data.course.checkin_count) || 0;
+        if (count > 0) {
+          warn.textContent = 'Warning: ' + count + ' check-in' + (count === 1 ? '' : 's') + ' will also be deleted.';
+          warn.classList.remove('hidden');
+        }
+      }
+    });
+    document.getElementById('deleteCourseModal').style.cssText = '';
+    document.getElementById('deleteCourseModal').classList.add('open');
+  }
+  window.openDeleteCourseModal = openDeleteCourseModal;
+
+  function closeDeleteCourseModal() {
+    document.getElementById('deleteCourseModal').classList.remove('open');
+    document.getElementById('deleteCourseModal').style.cssText = 'display:none!important';
+    deleteCourseTargetId = null;
+  }
+  window.closeDeleteCourseModal = closeDeleteCourseModal;
+
+  function confirmDeleteCourse() {
+    if (!deleteCourseTargetId) return;
+    var btn = document.getElementById('deleteCourseConfirmBtn');
+    var errEl = document.getElementById('deleteCourseError');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Deleting...';
+    errEl.classList.add('hidden');
+
+    apiFetch('/api/admin/courses/' + deleteCourseTargetId, { method: 'DELETE' }).then(function(result) {
+      if (result.ok) {
+        closeDeleteCourseModal();
+        loadCourses();
+      } else {
+        errEl.textContent = result.data.error || 'Failed to delete course';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Delete';
+        btn.disabled = false;
+      }
+    }).catch(function() {
+      errEl.textContent = 'Network error. Try again.';
+      errEl.classList.remove('hidden');
+      btn.textContent = 'Delete';
+      btn.disabled = false;
+    });
+  }
+  window.confirmDeleteCourse = confirmDeleteCourse;
+
+  // ── Scorecard Preview ──────────────────────────────────────────────────────
+
+  var previewState = {
+    courseId: null,
+    courseName: null,
+    courseCity: null,
+    courseState: null,
+    courseHoles: 18,
+    selectedHoles: 18,
+    courses: [],
+    loaded: false,
+  };
+
+  function initPreviewCourseSearch() {
+    var searchEl = document.getElementById('previewCourseSearch');
+    var dropdown = document.getElementById('previewCourseDropdown');
+    var selected = document.getElementById('previewCourseSelected');
+    var picker = document.getElementById('previewHolesPicker');
+    var launchBtn = document.getElementById('previewLaunchBtn');
+    var debounceTimer = null;
+
+    searchEl.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      var q = searchEl.value.trim();
+      if (q.length < 2) { dropdown.style.display = 'none'; return; }
+      debounceTimer = setTimeout(function() {
+        apiFetch('/api/admin/courses?search=' + encodeURIComponent(q) + '&limit=20')
+          .then(function(resp) {
+            var courses = (resp.data && resp.data.courses) || [];
+            if (courses.length === 0) {
+              dropdown.innerHTML = '<div style="padding:10px 14px; color:#555577; font-size:0.85rem;">No courses found</div>';
+            } else {
+              dropdown.innerHTML = courses.map(function(c) {
+                return '<div class="preview-course-item" data-id="' + c.id + '" data-name="' + (c.name||'').replace(/"/g,'&quot;') + '" data-city="' + (c.city||'').replace(/"/g,'&quot;') + '" data-state="' + (c.state||'').replace(/"/g,'&quot;') + '" data-holes="' + (c.hole_count||c.holes||18) + '" style="padding:10px 14px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.875rem;">'
+                  + '<div style="font-weight:600; color:#f2f2f5;">' + escHtml(c.name) + '</div>'
+                  + '<div style="font-size:0.78rem; color:#555577; margin-top:2px;">' + escHtml(c.city || '') + (c.state ? ', ' + escHtml(c.state) : '') + ' &bull; ' + (c.hole_count||c.holes||18) + ' holes</div>'
+                  + '</div>';
+              }).join('');
+            }
+            dropdown.style.display = 'block';
+
+            dropdown.querySelectorAll('.preview-course-item').forEach(function(item) {
+              item.addEventListener('mouseenter', function() { item.style.background = 'rgba(76,223,60,0.08)'; });
+              item.addEventListener('mouseleave', function() { item.style.background = ''; });
+              item.addEventListener('click', function() {
+                previewState.courseId = parseInt(item.dataset.id);
+                previewState.courseName = item.dataset.name;
+                previewState.courseCity = item.dataset.city;
+                previewState.courseState = item.dataset.state;
+                previewState.courseHoles = parseInt(item.dataset.holes) || 18;
+                searchEl.value = item.dataset.name;
+                dropdown.style.display = 'none';
+                selected.style.display = 'block';
+                selected.textContent = '✅ ' + item.dataset.name + (item.dataset.city ? ' — ' + item.dataset.city + (item.dataset.state ? ', ' + item.dataset.state : '') : '') + ' · ' + previewState.courseHoles + ' holes';
+                renderPreviewHolesPicker();
+                launchBtn.disabled = false;
+                launchBtn.style.opacity = '';
+                launchBtn.style.cursor = '';
+              });
+            });
+          }).catch(function() {
+            dropdown.innerHTML = '<div style="padding:10px 14px; color:#555577; font-size:0.85rem;">Search failed</div>';
+            dropdown.style.display = 'block';
+          });
+      }, 250);
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!searchEl.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+  }
+
+  function renderPreviewHolesPicker() {
+    var picker = document.getElementById('previewHolesPicker');
+    var total = previewState.courseHoles;
+    var options = [];
+    for (var h = 9; h < total; h += 9) options.push(h);
+    options.push(total);
+    var seen = new Set();
+    var deduped = options.filter(function(h) { if (seen.has(h)) return false; seen.add(h); return true; });
+
+    previewState.selectedHoles = deduped[0];
+    picker.innerHTML = deduped.map(function(h, i) {
+      var label = h === total ? (total === 9 ? 'Front 9' : total === 18 ? 'Full Round' : 'Full Course') : (h === 9 ? 'Front 9' : h === 18 ? '18 Holes' : h + ' Holes');
+      return '<button class="preview-holes-opt" data-holes="' + h + '" style="padding:0.65rem 1rem; background:' + (i===0?'rgba(76,223,60,0.15)':'rgba(255,255,255,0.04)') + '; border:2px solid ' + (i===0?'#7ed957':'rgba(255,255,255,0.07)') + '; border-radius:10px; cursor:pointer; font-family:\'Space Grotesk\',sans-serif; font-weight:700; color:' + (i===0?'#7ed957':'#f2f2f5') + '; font-size:0.95rem; transition:all 0.15s;">'
+        + h + '<div style="font-size:0.7rem; color:#8888aa; font-weight:400; margin-top:2px;">' + label + '</div></button>';
+    }).join('');
+
+    picker.querySelectorAll('.preview-holes-opt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        picker.querySelectorAll('.preview-holes-opt').forEach(function(b) {
+          b.style.background = 'rgba(255,255,255,0.04)';
+          b.style.borderColor = 'rgba(255,255,255,0.07)';
+          b.style.color = '#f2f2f5';
+        });
+        btn.style.background = 'rgba(76,223,60,0.15)';
+        btn.style.borderColor = '#7ed957';
+        btn.style.color = '#7ed957';
+        previewState.selectedHoles = parseInt(btn.dataset.holes);
+      });
+    });
+  }
+
+  function launchScorecardPreview() {
+    if (!previewState.courseId) return;
+    var params = new URLSearchParams({
+      preview: '1',
+      course_id: previewState.courseId,
+      course_name: previewState.courseName || '',
+      course_city: previewState.courseCity || '',
+      course_state: previewState.courseState || '',
+      holes: previewState.selectedHoles,
+    });
+    window.open('/scorecard?' + params.toString(), '_blank');
+  }
+  window.launchScorecardPreview = launchScorecardPreview;
+
+  // Init preview search after dashboard shows
+  var previewInitialized = false;
+  var origLoadAll = typeof loadAll === 'function' ? loadAll : null;
+  // We hook into showDashboard to init preview search
+  function initPreviewIfNeeded() {
+    if (!previewInitialized) {
+      previewInitialized = true;
+      initPreviewCourseSearch();
+    }
+  }
+
+  // ── Login ─────────────────────────────────────────────────────────────────
+
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var pw = document.getElementById('passwordInput').value;
+    var errEl = document.getElementById('loginError');
+    errEl.classList.add('hidden');
+
+    fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    }).then(function(r) {
+      return r.json().then(function(data) { return { ok: r.ok, data: data }; });
+    }).then(function(result) {
+      if (result.ok) {
+        setToken(result.data.token);
+        showDashboard();
+        loadAll();
+        updateSortIndicators();
+      } else {
+        errEl.classList.remove('hidden');
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('passwordInput').focus();
+      }
+    }).catch(function() {
+      errEl.classList.remove('hidden');
+    });
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  token = getToken();
+  if (token) {
+    showDashboard();
+    loadAll();
+    updateSortIndicators();
+  } else {
+    showLogin();
+  }
+})();
+</script>
+
+<!-- Layout Editor JS -->
+<script>
+(function() {
+  // ─── State ────────────────────────────────────────────────────────────────
+  var leState = {
+    courseId: null,
+    courseName: '',
+    layouts: [],          // [{id, name, hole_count, is_default}]
+    activeLayoutId: null,
+    holes: [],            // [{hole_number, par, distance_ft, notes}] — in-memory editable copy
+    nameModalMode: 'create', // 'create' | 'edit'
+  };
+
+  // ─── Open / Close ─────────────────────────────────────────────────────────
+  function openLayoutEditor(courseId, courseName) {
+    leState.courseId = courseId;
+    leState.courseName = courseName || ('Course #' + courseId);
+    leState.layouts = [];
+    leState.activeLayoutId = null;
+    leState.holes = [];
+
+    document.getElementById('leCourseName').textContent = leState.courseName + ' — Layouts';
+    leShowEmpty();
+    document.getElementById('layoutEditorPanel').style.cssText = '';
+    document.body.style.overflow = 'hidden';
+
+    leLoadLayouts();
+  }
+  window.openLayoutEditor = openLayoutEditor;
+
+  function closeLayoutEditor() {
+    document.getElementById('layoutEditorPanel').style.cssText = 'display:none!important';
+    document.body.style.overflow = '';
+  }
+  window.closeLayoutEditor = closeLayoutEditor;
+
+  // ─── API helpers (use admin token via apiFetch) ───────────────────────────
+  function leAdminFetch(path, opts) {
+    // apiFetch is defined in the main script scope and available globally
+    return apiFetch(path, opts);
+  }
+
+  // ─── Load layouts list ────────────────────────────────────────────────────
+  function leLoadLayouts() {
+    var tabs = document.getElementById('leLayoutTabs');
+    tabs.innerHTML = '<span class="text-xs" style="color:var(--text3)"><div class="spinner-sm" style="display:inline-block;margin-right:6px"></div>Loading...</span>';
+
+    leAdminFetch('/api/admin/courses/' + leState.courseId + '/layouts').then(function(r) {
+      if (!r.ok) { tabs.innerHTML = '<span class="text-red-400 text-xs">Failed to load layouts</span>'; return; }
+      leState.layouts = r.data || [];
+      leRenderLayoutTabs();
+
+      // Auto-select default layout
+      var def = leState.layouts.find(function(l) { return l.is_default; });
+      if (def) leSelectLayout(def.id);
+      else if (leState.layouts.length > 0) leSelectLayout(leState.layouts[0].id);
+    }).catch(function() {
+      tabs.innerHTML = '<span class="text-red-400 text-xs">Error loading layouts</span>';
+    });
+  }
+
+  function leRenderLayoutTabs() {
+    var tabs = document.getElementById('leLayoutTabs');
+    if (!leState.layouts.length) {
+      tabs.innerHTML = '<span class="text-xs" style="color:var(--text3)">No layouts yet — create one</span>';
+      return;
+    }
+    tabs.innerHTML = leState.layouts.map(function(l) {
+      var active = l.id === leState.activeLayoutId ? ' active' : '';
+      var defMark = l.is_default ? ' &#x2605;' : '';
+      return '<button class="le-layout-tab' + active + '" onclick="leSelectLayout(' + l.id + ')">' + escHtml(l.name) + defMark + '</button>';
+    }).join('');
+  }
+
+  // ─── Select a layout ─────────────────────────────────────────────────────
+  function leSelectLayout(layoutId) {
+    leState.activeLayoutId = layoutId;
+    leRenderLayoutTabs();
+
+    var layout = leState.layouts.find(function(l) { return l.id === layoutId; });
+    if (!layout) return;
+
+    // Update metadata bar
+    document.getElementById('leLayoutMeta').style.display = '';
+    document.getElementById('leLayoutNameDisplay').textContent = layout.name;
+    document.getElementById('leLayoutHoleCount').textContent = (layout.hole_count || '?') + ' holes';
+    var defBadge = document.getElementById('leDefaultBadge');
+    var setDefBtn = document.getElementById('leSetDefaultBtn');
+    var delBtn = document.getElementById('leDeleteBtn');
+    defBadge.style.display = layout.is_default ? '' : 'none';
+    setDefBtn.style.display = layout.is_default ? 'none' : '';
+    delBtn.style.display = layout.is_default ? 'none' : '';
+
+    // Show loading state
+    document.getElementById('leEmptyState').style.display = 'none';
+    document.getElementById('leLoadingState').style.display = '';
+    document.getElementById('leHoleToolbar').style.display = 'none';
+    document.getElementById('leHoleTableWrap').style.display = 'none';
+    document.getElementById('leSaveRow').style.display = 'none';
+    document.getElementById('leIncompleteWarning').style.display = 'none';
+
+    leAdminFetch('/api/admin/layouts/' + layoutId + '/holes').then(function(r) {
+      document.getElementById('leLoadingState').style.display = 'none';
+      if (!r.ok) {
+        leShowToast('Failed to load holes', 'error');
+        return;
+      }
+      var data = r.data;
+      var layout = data.layout;
+      var holes = data.holes || [];
+
+      // Build hole_count-sized in-memory array
+      var holeCount = layout.hole_count || holes.length || 18;
+
+      // Merge existing DB holes into array indexed by hole_number
+      var byNum = {};
+      holes.forEach(function(h) { byNum[h.hole_number] = h; });
+
+      leState.holes = [];
+      for (var i = 1; i <= holeCount; i++) {
+        var existing = byNum[i];
+        leState.holes.push({
+          hole_number: i,
+          par: existing ? parseInt(existing.par) : null,
+          distance_ft: existing ? (existing.distance_ft ? parseInt(existing.distance_ft) : null) : null,
+          notes: existing ? (existing.notes || '') : '',
+        });
+      }
+
+      lePopulateGenDropdown(holeCount);
+      leRenderHoleTable();
+      document.getElementById('leHoleToolbar').style.display = '';
+      document.getElementById('leHoleTableWrap').style.display = '';
+      document.getElementById('leSaveRow').style.display = '';
+      leValidateHoles();
+    }).catch(function() {
+      document.getElementById('leLoadingState').style.display = 'none';
+      leShowToast('Error loading holes', 'error');
+    });
+  }
+  window.leSelectLayout = leSelectLayout;
+
+  // ─── Render hole table ────────────────────────────────────────────────────
+  function leRenderHoleTable() {
+    var tbody = document.getElementById('leHoleTableBody');
+    tbody.innerHTML = leState.holes.map(function(h, idx) {
+      var missingPar = h.par === null || h.par === undefined || isNaN(h.par);
+      var rowClass = 'le-hole-row' + (missingPar ? ' missing-par' : '');
+      var parVal = missingPar ? '' : h.par;
+      var distVal = h.distance_ft ? h.distance_ft : '';
+      var notesVal = h.notes || '';
+      // Tab order: par → dist → notes → next row par
+      var tabBase = idx * 3;
+      return '<tr class="' + rowClass + '" id="leRow' + idx + '">' +
+        '<td class="text-center text-sm font-semibold" style="color:var(--text2);width:48px">' + h.hole_number + '</td>' +
+        '<td style="width:80px">' +
+          '<input type="number" min="1" max="9" class="le-hole-input" value="' + parVal + '" ' +
+            'tabindex="' + (tabBase + 1) + '" ' +
+            'oninput="leUpdateHole(' + idx + ',\'par\',this.value)" ' +
+            'onblur="leValidateHoles()" ' +
+            'placeholder="—" />' +
+        '</td>' +
+        '<td style="width:110px">' +
+          '<input type="number" min="0" max="9999" class="le-hole-input" value="' + distVal + '" ' +
+            'tabindex="' + (tabBase + 2) + '" ' +
+            'oninput="leUpdateHole(' + idx + ',\'distance_ft\',this.value)" ' +
+            'placeholder="—" />' +
+        '</td>' +
+        '<td>' +
+          '<input type="text" class="le-notes-input" value="' + escHtml(notesVal) + '" ' +
+            'tabindex="' + (tabBase + 3) + '" ' +
+            'maxlength="200" ' +
+            'oninput="leUpdateHole(' + idx + ',\'notes\',this.value)" ' +
+            'placeholder="optional" />' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function leUpdateHole(idx, field, value) {
+    if (!leState.holes[idx]) return;
+    if (field === 'par') {
+      var v = parseInt(value);
+      leState.holes[idx].par = isNaN(v) || value === '' ? null : v;
+    } else if (field === 'distance_ft') {
+      var v2 = parseInt(value);
+      leState.holes[idx].distance_ft = isNaN(v2) || value === '' ? null : v2;
+    } else if (field === 'notes') {
+      leState.holes[idx].notes = value;
+    }
+  }
+  window.leUpdateHole = leUpdateHole;
+
+  function leValidateHoles() {
+    var hasIncomplete = leState.holes.some(function(h) { return h.par === null || h.par === undefined || isNaN(h.par); });
+    document.getElementById('leIncompleteWarning').style.display = hasIncomplete ? '' : 'none';
+    // Re-color rows
+    leState.holes.forEach(function(h, idx) {
+      var row = document.getElementById('leRow' + idx);
+      if (!row) return;
+      var missing = h.par === null || h.par === undefined || isNaN(h.par);
+      row.classList.toggle('missing-par', missing);
+    });
+    return !hasIncomplete;
+  }
+
+  // ─── Bulk actions ─────────────────────────────────────────────────────────
+  function leSetAllPars(parValue) {
+    leState.holes.forEach(function(h) { h.par = parValue; });
+    leRenderHoleTable();
+    leValidateHoles();
+  }
+  window.leSetAllPars = leSetAllPars;
+
+  function leClearDistances() {
+    leState.holes.forEach(function(h) { h.distance_ft = null; });
+    leRenderHoleTable();
+  }
+  window.leClearDistances = leClearDistances;
+
+  function lePopulateGenDropdown(currentCount) {
+    var sel = document.getElementById('leGenHoleCount');
+    sel.innerHTML = '<option value="">Auto-generate holes...</option>';
+    [9, 18, 27, 36].concat(currentCount && [9,18,27,36].indexOf(currentCount) === -1 ? [currentCount] : []).sort(function(a,b){return a-b;}).forEach(function(n) {
+      sel.innerHTML += '<option value="' + n + '">' + n + ' holes</option>';
+    });
+  }
+
+  function leGenerateHoles() {
+    var sel = document.getElementById('leGenHoleCount');
+    var n = parseInt(sel.value);
+    if (isNaN(n) || n < 1) return;
+    sel.value = '';
+
+    // Grow or trim the holes array
+    if (n > leState.holes.length) {
+      for (var i = leState.holes.length + 1; i <= n; i++) {
+        leState.holes.push({ hole_number: i, par: null, distance_ft: null, notes: '' });
+      }
+    } else {
+      leState.holes = leState.holes.slice(0, n).map(function(h, idx) {
+        return Object.assign({}, h, { hole_number: idx + 1 });
+      });
+    }
+    leRenderHoleTable();
+    leValidateHoles();
+  }
+  window.leGenerateHoles = leGenerateHoles;
+
+  // ─── Save holes ───────────────────────────────────────────────────────────
+  function leSaveHoles() {
+    if (!leState.activeLayoutId) return;
+    var btn = document.getElementById('leSaveBtn');
+    var status = document.getElementById('leSaveStatus');
+
+    // Read current DOM values before saving (inputs may be modified without triggering oninput)
+    var inputs = document.querySelectorAll('#leHoleTableBody .le-hole-input, #leHoleTableBody .le-notes-input');
+    // We rely on oninput keeping leState.holes current. Just validate.
+    var valid = leValidateHoles();
+    if (!valid) {
+      status.style.color = 'var(--red)';
+      status.textContent = 'Fix missing par values first';
+      return;
+    }
+
+    // Only send holes that have par set
+    var holesPayload = leState.holes
+      .filter(function(h) { return h.par !== null && h.par !== undefined && !isNaN(h.par); })
+      .map(function(h) {
+        var row = { hole_number: h.hole_number, par: parseInt(h.par) };
+        if (h.distance_ft) row.distance_ft = parseInt(h.distance_ft);
+        if (h.notes && h.notes.trim()) row.notes = h.notes.trim();
+        return row;
+      });
+
+    if (holesPayload.length === 0) {
+      status.style.color = 'var(--red)';
+      status.textContent = 'No holes with par to save';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    status.style.color = 'var(--text3)';
+    status.textContent = '';
+
+    leAdminFetch('/api/admin/layouts/' + leState.activeLayoutId + '/holes', {
+      method: 'PUT',
+      body: JSON.stringify({ holes: holesPayload }),
+    }).then(function(r) {
+      btn.disabled = false;
+      btn.textContent = 'Save All Holes';
+      if (r.ok) {
+        status.style.color = 'var(--green)';
+        status.textContent = '&#10003; Saved ' + r.data.saved + ' holes';
+        leShowToast('Holes saved!', 'success');
+        // Refresh layout hole_count badge
+        leLoadLayouts();
+      } else {
+        status.style.color = 'var(--red)';
+        status.textContent = (r.data && r.data.error) || 'Save failed';
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Save All Holes';
+      status.style.color = 'var(--red)';
+      status.textContent = 'Network error';
+    });
+  }
+  window.leSaveHoles = leSaveHoles;
+
+  // ─── Layout metadata actions ───────────────────────────────────────────────
+  function leEditLayoutMeta() {
+    var layout = leState.layouts.find(function(l) { return l.id === leState.activeLayoutId; });
+    if (!layout) return;
+    leState.nameModalMode = 'edit';
+    document.getElementById('leNameModalTitle').textContent = 'Rename Layout';
+    document.getElementById('leNameInput').value = layout.name;
+    document.getElementById('leHoleCountInput').value = layout.hole_count || '';
+    document.getElementById('leNameSubmitBtn').textContent = 'Save';
+    document.getElementById('leNameError').classList.add('hidden');
+    document.getElementById('leNameModal').style.cssText = '';
+    setTimeout(function() { document.getElementById('leNameInput').focus(); }, 50);
+  }
+  window.leEditLayoutMeta = leEditLayoutMeta;
+
+  function leSetDefault() {
+    if (!leState.activeLayoutId) return;
+    leAdminFetch('/api/admin/layouts/' + leState.activeLayoutId, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_default: true }),
+    }).then(function(r) {
+      if (r.ok) {
+        leShowToast('Set as default layout!', 'success');
+        leLoadLayouts();
+      } else {
+        leShowToast((r.data && r.data.error) || 'Failed', 'error');
+      }
+    });
+  }
+  window.leSetDefault = leSetDefault;
+
+  function leDeleteLayout() {
+    var layout = leState.layouts.find(function(l) { return l.id === leState.activeLayoutId; });
+    if (!layout) return;
+    if (!confirm('Delete layout "' + layout.name + '"? This will also delete all its hole data.')) return;
+
+    leAdminFetch('/api/admin/layouts/' + leState.activeLayoutId, { method: 'DELETE' }).then(function(r) {
+      if (r.ok) {
+        leShowToast('Layout deleted', 'success');
+        leState.activeLayoutId = null;
+        leShowEmpty();
+        leLoadLayouts();
+      } else {
+        leShowToast((r.data && r.data.error) || 'Delete failed', 'error');
+      }
+    });
+  }
+  window.leDeleteLayout = leDeleteLayout;
+
+  // ─── New layout modal ─────────────────────────────────────────────────────
+  function leNewLayoutModal() {
+    leState.nameModalMode = 'create';
+    document.getElementById('leNameModalTitle').textContent = 'New Layout';
+    document.getElementById('leNameInput').value = '';
+    document.getElementById('leHoleCountInput').value = '18';
+    document.getElementById('leNameSubmitBtn').textContent = 'Create';
+    document.getElementById('leNameError').classList.add('hidden');
+    document.getElementById('leNameModal').style.cssText = '';
+    setTimeout(function() { document.getElementById('leNameInput').focus(); }, 50);
+  }
+  window.leNewLayoutModal = leNewLayoutModal;
+
+  function leCloseNameModal() {
+    document.getElementById('leNameModal').style.cssText = 'display:none!important';
+  }
+  window.leCloseNameModal = leCloseNameModal;
+
+  function leSubmitNameModal() {
+    var name = document.getElementById('leNameInput').value.trim();
+    var holeCount = parseInt(document.getElementById('leHoleCountInput').value);
+    var errEl = document.getElementById('leNameError');
+    var btn = document.getElementById('leNameSubmitBtn');
+
+    if (!name) { errEl.textContent = 'Name is required'; errEl.classList.remove('hidden'); return; }
+    errEl.classList.add('hidden');
+    btn.disabled = true;
+
+    if (leState.nameModalMode === 'create') {
+      leAdminFetch('/api/admin/courses/' + leState.courseId + '/layouts', {
+        method: 'POST',
+        body: JSON.stringify({ name: name, hole_count: isNaN(holeCount) ? null : holeCount }),
+      }).then(function(r) {
+        btn.disabled = false;
+        if (r.ok) {
+          leCloseNameModal();
+          leShowToast('Layout "' + name + '" created!', 'success');
+          leState.activeLayoutId = r.data.id;
+          leLoadLayouts();
+        } else {
+          errEl.textContent = (r.data && r.data.error) || 'Failed to create layout';
+          errEl.classList.remove('hidden');
+        }
+      }).catch(function() { btn.disabled = false; errEl.textContent = 'Network error'; errEl.classList.remove('hidden'); });
+    } else {
+      // Edit mode
+      leAdminFetch('/api/admin/layouts/' + leState.activeLayoutId, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: name, hole_count: isNaN(holeCount) ? null : holeCount }),
+      }).then(function(r) {
+        btn.disabled = false;
+        if (r.ok) {
+          leCloseNameModal();
+          leShowToast('Layout renamed!', 'success');
+          leLoadLayouts();
+        } else {
+          errEl.textContent = (r.data && r.data.error) || 'Failed to update layout';
+          errEl.classList.remove('hidden');
+        }
+      }).catch(function() { btn.disabled = false; errEl.textContent = 'Network error'; errEl.classList.remove('hidden'); });
+    }
+  }
+  window.leSubmitNameModal = leSubmitNameModal;
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  function leShowEmpty() {
+    document.getElementById('leLayoutMeta').style.display = 'none';
+    document.getElementById('leHoleToolbar').style.display = 'none';
+    document.getElementById('leHoleTableWrap').style.display = 'none';
+    document.getElementById('leSaveRow').style.display = 'none';
+    document.getElementById('leIncompleteWarning').style.display = 'none';
+    document.getElementById('leLoadingState').style.display = 'none';
+    document.getElementById('leEmptyState').style.display = '';
+  }
+
+  function leShowToast(msg, type) {
+    var t = document.createElement('div');
+    t.className = 'admin-toast ' + (type || 'success');
+    t.innerHTML = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 2800);
+  }
+
+  // escHtml is defined in the main script — expose it to this IIFE
+  // (it's already window-accessible because of the main IIFE using var escHtml)
+})();
+</script>
+    
+        <!-- Contact mini-footer -->
+        <div class="contact-footer">
+            <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+            <div class="cf-socials">
+                <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                </a>
+                <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                </a>
+
+                <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+            </div>
+            <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+        </div>
+        <footer class="page-footer">
+        <p>Disc Golf Go &nbsp;&middot;&nbsp; <a href="/privacy">Privacy</a> &nbsp;&middot;&nbsp; <a href="/delete-account">Delete Account</a></p>
+    </footer>
+
+<script>
+// Dark mode
+(function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+})();
+(function() {
+    var btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        this.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+})();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    if (!localStorage.getItem('dggo_theme')) {
+        var next = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        var btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+});
+
+// Polsia Analytics
+(function() {
+    var slug = 'disc-golf-go';
+    var vid = localStorage.getItem('polsia_vid');
+    if (!vid) {
+        vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        localStorage.setItem('polsia_vid', vid);
+    }
+    new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+})();
+</script>
+</body>
+</html>

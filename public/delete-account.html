@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Delete Account — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>
+/* Delete account page specific styles */
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.4rem;
+    line-height: 1.1;
+}
+
+.page-label {
+    color: var(--red);
+}
+
+.page-label::before {
+    background: var(--red);
+}
+
+.subtitle {
+    color: var(--text3);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all var(--transition);
+}
+
+.warning-card {
+    background: rgba(224,64,64,0.05);
+    border: 1px solid rgba(224,64,64,0.15);
+    border-radius: var(--radius-card);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.warning-card p {
+    font-size: 0.88rem;
+    color: var(--text2);
+    line-height: 1.6;
+}
+
+.warning-card strong {
+    color: var(--red);
+}
+
+.warning-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.warning-card ul li {
+    font-size: 0.85rem;
+    color: var(--text2);
+    padding: 0.2rem 0 0.2rem 1rem;
+    position: relative;
+}
+
+.warning-card ul li::before {
+    content: '\2022';
+    position: absolute;
+    left: 0;
+    color: var(--red);
+}
+
+.card h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card h2 .icon {
+    width: 32px;
+    height: 32px;
+    background: var(--green-glow);
+    border: 1px solid rgba(60,168,60,0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.card-danger h2 .icon {
+    background: rgba(224,64,64,0.08);
+    border-color: rgba(224,64,64,0.2);
+}
+
+.data-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+}
+
+.data-list li {
+    font-size: 0.85rem;
+    color: var(--text2);
+    line-height: 1.6;
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    position: relative;
+}
+
+.data-list li::before {
+    content: '\203A';
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 700;
+}
+
+.confirm-step {
+    display: none;
+    margin-top: 1.25rem;
+}
+
+.confirm-step.visible {
+    display: block;
+}
+
+.confirm-label {
+    font-size: 0.85rem;
+    color: var(--text2);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.confirm-label strong {
+    color: var(--text);
+}
+
+.btn-show-confirm {
+    width: 100%;
+    padding: 0.9rem;
+    border-radius: 12px;
+    background: rgba(224,64,64,0.06);
+    border: 1px solid rgba(224,64,64,0.2);
+    color: var(--red);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-show-confirm:hover:not(:disabled) {
+    background: rgba(224,64,64,0.12);
+}
+
+.btn-delete {
+    width: 100%;
+    padding: 0.9rem;
+    border-radius: 12px;
+    background: var(--red);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    opacity: 0.4;
+    cursor: not-allowed;
+    transition: all var(--transition);
+    border: none;
+}
+
+.btn-delete.ready {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.btn-delete.ready:hover {
+    opacity: 0.9;
+}
+
+.btn-cancel {
+    width: 100%;
+    padding: 0.9rem;
+    border-radius: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 0.6rem;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-cancel:hover {
+    border-color: var(--green);
+    color: var(--text);
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 0.9rem;
+    border-radius: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-submit:hover:not(:disabled) {
+    border-color: var(--green);
+}
+
+.confirm-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    outline: none;
+    transition: border-color var(--transition), background var(--transition);
+    margin-bottom: 1rem;
+}
+
+.confirm-input:focus {
+    border-color: rgba(224,64,64,0.5);
+    background: var(--surface);
+}
+
+.confirm-input::placeholder {
+    color: var(--text3);
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+.form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.form-input:focus {
+    border-color: var(--green);
+    background: var(--surface);
+}
+
+.form-input::placeholder {
+    color: var(--text3);
+}
+
+.status-msg {
+    display: none;
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-top: 1rem;
+}
+
+.status-msg.visible {
+    display: block;
+}
+
+.status-msg.success {
+    background: var(--green-glow);
+    border: 1px solid rgba(60,168,60,0.25);
+    color: var(--green);
+}
+
+.status-msg.error {
+    background: rgba(224,64,64,0.06);
+    border: 1px solid rgba(224,64,64,0.2);
+    color: var(--red);
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+<header class="top-header">
+    <a href="/" class="header-logo">
+        <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+        Disc Golf <span class="go">Go</span>
+    </a>
+    <div class="header-actions">
+        <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+    </div>
+</header>
+
+        <div class="page-wrap">
+            <div class="page-label">Account</div>
+            <h1>Delete Account</h1>
+            <p class="subtitle">Permanently delete your Disc Golf Go account and all associated data.</p>
+
+            <!-- LOGGED-IN VIEW -->
+            <div id="loggedInView" style="display:none">
+                <div class="card card-danger">
+                    <h2><span class="icon">⚠️</span> Delete My Account</h2>
+
+                    <div class="warning-card">
+                        <p><strong>This cannot be undone.</strong> Deleting your account will permanently remove all of your data from Disc Golf Go, including:</p>
+                    </div>
+
+                    <ul class="data-list">
+                        <li>Your profile (username, display name, avatar)</li>
+                        <li>All round scores and scorecard history</li>
+                        <li>XP, level, and gold balance</li>
+                        <li>All earned achievements and badges</li>
+                        <li>Battle and challenge history</li>
+                        <li>GPS path tracking data</li>
+                        <li>Vault purchases and inventory items</li>
+                        <li>All other account-linked data</li>
+                    </ul>
+
+                    <!-- Step 1: Show confirm input -->
+                    <button class="btn btn-show-confirm" id="btnShowConfirm" onclick="showConfirmStep()">
+                        Delete My Account
+                    </button>
+
+                    <!-- Step 2: Type DELETE to confirm -->
+                    <div class="confirm-step" id="confirmStep">
+                        <label class="confirm-label" for="confirmInput">
+                            Type <strong>DELETE</strong> to confirm permanent deletion
+                        </label>
+                        <input
+                            class="confirm-input"
+                            id="confirmInput"
+                            type="text"
+                            autocomplete="off"
+                            spellcheck="false"
+                            placeholder="Type DELETE here"
+                            oninput="checkConfirmInput(this.value)"
+                        >
+                        <button class="btn btn-delete" id="btnConfirmDelete" disabled onclick="confirmDelete()">
+                            Permanently Delete My Account
+                        </button>
+                        <button class="btn btn-cancel" onclick="cancelConfirm()">
+                            Cancel — Keep My Account
+                        </button>
+                    </div>
+
+                    <div class="status-msg" id="deleteStatus"></div>
+                </div>
+            </div>
+
+            <!-- LOGGED-OUT VIEW -->
+            <div id="loggedOutView" style="display:none">
+                <div class="card">
+                    <h2><span class="icon">🔐</span> Signed In? Delete Directly</h2>
+                    <p style="font-size:0.9rem;color:var(--text2);line-height:1.6;margin-bottom:1rem;">
+                        If you have an account, <a href="/login" style="color:var(--green)">sign in</a> to delete it immediately — no waiting period.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h2><span class="icon">📧</span> Request Deletion by Email</h2>
+                    <p style="font-size:0.88rem;color:var(--text2);line-height:1.6;margin-bottom:1.25rem;">
+                        Enter the email address associated with your account. We'll process your deletion request within 48 hours.
+                    </p>
+
+                    <form id="emailForm" onsubmit="submitEmailRequest(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="emailInput">Email address</label>
+                            <input
+                                class="form-input"
+                                id="emailInput"
+                                type="email"
+                                autocomplete="email"
+                                placeholder="you@example.com"
+                                required
+                            >
+                        </div>
+                        <button class="btn btn-submit" type="submit" id="btnEmailSubmit">
+                            Request Account Deletion
+                        </button>
+                    </form>
+
+                    <div class="status-msg" id="emailStatus"></div>
+                </div>
+            </div>
+
+            <!-- LOADING STATE -->
+            <div id="loadingView">
+                <div class="card" style="text-align:center;padding:3rem 2rem;">
+                    <div class="spinner" style="margin:0 auto;width:24px;height:24px;border-width:3px;"></div>
+                    <p style="margin-top:1rem;color:var(--text3);font-size:0.9rem;">Loading…</p>
+                </div>
+            </div>
+
+        </div><!-- /.page-wrap -->
+
+
+        <!-- Contact mini-footer -->
+        <div class="contact-footer">
+            <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+            <div class="cf-socials">
+                <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                </a>
+                <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                </a>
+
+                <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+            </div>
+            <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+        </div>
+        <footer class="page-footer">
+    <p>Disc Golf Go &nbsp;&middot;&nbsp; <a href="/privacy">Privacy</a> &nbsp;&middot;&nbsp; <a href="/delete-account">Delete Account</a></p>
+</footer>
+
+<script>
+(function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+})();
+document.getElementById('themeToggle').addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('dggo_theme', next);
+    this.textContent = next === 'dark' ? '☀️' : '🌙';
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    if (!localStorage.getItem('dggo_theme')) {
+        var next = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+});
+</script>
+
+<script>
+    (function() {
+        var token = localStorage.getItem('dggo_token');
+        var loadingView  = document.getElementById('loadingView');
+        var loggedInView = document.getElementById('loggedInView');
+        var loggedOutView = document.getElementById('loggedOutView');
+
+        loadingView.style.display = 'none';
+
+        if (token) {
+            loggedInView.style.display = 'block';
+        } else {
+            loggedOutView.style.display = 'block';
+        }
+    })();
+
+    function showConfirmStep() {
+        document.getElementById('btnShowConfirm').style.display = 'none';
+        document.getElementById('confirmStep').classList.add('visible');
+        document.getElementById('confirmInput').focus();
+    }
+
+    function cancelConfirm() {
+        document.getElementById('confirmStep').classList.remove('visible');
+        document.getElementById('confirmInput').value = '';
+        document.getElementById('btnConfirmDelete').disabled = true;
+        document.getElementById('btnConfirmDelete').classList.remove('ready');
+        document.getElementById('btnShowConfirm').style.display = '';
+        document.getElementById('deleteStatus').className = 'status-msg';
+        document.getElementById('deleteStatus').textContent = '';
+    }
+
+    function checkConfirmInput(val) {
+        var btn = document.getElementById('btnConfirmDelete');
+        if (val.trim().toUpperCase() === 'DELETE') {
+            btn.disabled = false;
+            btn.classList.add('ready');
+        } else {
+            btn.disabled = true;
+            btn.classList.remove('ready');
+        }
+    }
+
+    function confirmDelete() {
+        var btn = document.getElementById('btnConfirmDelete');
+        var status = document.getElementById('deleteStatus');
+        var token = localStorage.getItem('dggo_token');
+
+        if (!token) {
+            status.className = 'status-msg error visible';
+            status.textContent = 'No active session found. Please sign in and try again.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Deleting…';
+        status.className = 'status-msg';
+
+        fetch('/api/delete-account', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                // Clear all local storage auth tokens
+                localStorage.removeItem('dggo_token');
+                localStorage.removeItem('dggo_player');
+                localStorage.removeItem('dgg_admin_token');
+
+                // Show success, then redirect
+                status.className = 'status-msg success visible';
+                status.textContent = '✓ Your account has been permanently deleted.';
+                document.getElementById('confirmStep').style.display = 'none';
+                document.getElementById('btnShowConfirm').style.display = 'none';
+
+                setTimeout(function() {
+                    window.location.href = '/?deleted=1';
+                }, 2000);
+            } else {
+                btn.disabled = false;
+                btn.classList.add('ready');
+                btn.innerHTML = 'Permanently Delete My Account';
+                status.className = 'status-msg error visible';
+                status.textContent = (result.data && result.data.error) || 'Deletion failed. Please try again.';
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.classList.add('ready');
+            btn.innerHTML = 'Permanently Delete My Account';
+            status.className = 'status-msg error visible';
+            status.textContent = 'Network error. Please check your connection and try again.';
+        });
+    }
+
+    function submitEmailRequest(e) {
+        e.preventDefault();
+        var email = document.getElementById('emailInput').value.trim();
+        var btn = document.getElementById('btnEmailSubmit');
+        var status = document.getElementById('emailStatus');
+
+        if (!email) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Submitting…';
+        status.className = 'status-msg';
+
+        fetch('/api/delete-account/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email }),
+        })
+        .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
+        .then(function(result) {
+            btn.disabled = false;
+            btn.innerHTML = 'Request Account Deletion';
+
+            if (result.ok && result.data.success) {
+                status.className = 'status-msg success visible';
+                status.textContent = 'Request received. If an account exists with this email, we\'ll process your deletion within 48 hours.';
+                document.getElementById('emailForm').reset();
+            } else {
+                status.className = 'status-msg error visible';
+                status.textContent = (result.data && result.data.error) || 'Request failed. Please try again.';
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.innerHTML = 'Request Account Deletion';
+            status.className = 'status-msg error visible';
+            status.textContent = 'Network error. Please check your connection and try again.';
+        });
+    }
+</script>
+<script>
+(function() {
+    var slug = 'disc-golf-go';
+    var vid = localStorage.getItem('polsia_vid');
+    if (!vid) {
+        vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        localStorage.setItem('polsia_vid', vid);
+    }
+    new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+})();
+</script>
+</body>
+</html>

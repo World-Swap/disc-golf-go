@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Course Map — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <style>        .theme-btn:hover { background: var(--surface); border-color: var(--green); }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            position: fixed;
+            top: calc(var(--safe-t) + 57px); left: 0; right: 0;
+            z-index: 1050;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            padding: 0.55rem 1rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            display: flex; align-items: center; gap: 0.3rem;
+            white-space: nowrap;
+            padding: 0.35rem 0.75rem;
+            border-radius: 100px;
+            border: 1.5px solid var(--border2);
+            background: var(--surface2);
+            font-size: 0.78rem; font-weight: 600;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all var(--transition);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .filter-chip.active { background: var(--green); border-color: var(--green); color: #fff; }
+        .filter-chip select {
+            background: none; border: none; outline: none;
+            font-family: inherit; font-size: inherit; font-weight: inherit;
+            color: inherit; cursor: pointer;
+            appearance: none; -webkit-appearance: none;
+            padding: 0; margin: 0;
+        }
+        .filter-chip.has-select { padding-right: 0.5rem; }
+        .near-me-btn {
+            display: flex; align-items: center; gap: 0.35rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 100px;
+            border: 1.5px solid var(--green);
+            background: var(--green-glow);
+            color: var(--green);
+            font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; white-space: nowrap;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .near-me-btn:active { background: var(--green); color: #fff; }
+
+        /* ── MAP ── */
+        #map {
+            position: fixed;
+            top: calc(var(--safe-t) + 57px + 46px);
+            left: 0; right: 0;
+            bottom: calc(var(--tab-h) + var(--safe-b));
+        }
+
+        /* ── COUNTER BADGE ── */
+        .map-counter {
+            position: fixed;
+            bottom: calc(var(--tab-h) + var(--safe-b) + 12px);
+            left: 50%; transform: translateX(-50%);
+            z-index: 1050;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 100px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.78rem; font-weight: 600;
+            color: var(--text2);
+            box-shadow: var(--shadow-card);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* ── BOTTOM TAB BAR ── */
+        /* ── CUSTOM LEAFLET POPUP ── */
+        .leaflet-popup-content-wrapper {
+            border-radius: 16px !important;
+            box-shadow: var(--shadow-lg) !important;
+            border: 1px solid var(--border) !important;
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            font-family: 'Space Grotesk', system-ui, sans-serif !important;
+            padding: 0 !important;
+        }
+        .leaflet-popup-content { margin: 0 !important; width: auto !important; min-width: 220px; }
+        .leaflet-popup-tip { background: var(--surface) !important; }
+        .leaflet-popup-close-button { color: var(--text2) !important; font-size: 1.1rem !important; top: 6px !important; right: 8px !important; }
+
+        .pin-popup {
+            padding: 1rem 1.1rem 0.85rem;
+        }
+        .pin-popup-status {
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            margin-bottom: 0.3rem;
+        }
+        .pin-popup-status.visited { color: var(--green); }
+        .pin-popup-status.unvisited { color: var(--text3); }
+        .pin-popup-name {
+            font-size: 1rem; font-weight: 700;
+            line-height: 1.2; margin-bottom: 0.2rem;
+            color: var(--text);
+        }
+        .pin-popup-loc {
+            font-size: 0.8rem; color: var(--text2);
+            margin-bottom: 0.55rem;
+        }
+        .pin-popup-stats {
+            display: flex; gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .pin-stat {
+            display: flex; flex-direction: column;
+            font-size: 0.75rem;
+        }
+        .pin-stat strong { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+        .pin-stat span { color: var(--text3); }
+        .pin-popup-dist {
+            font-size: 0.75rem; color: var(--green);
+            font-weight: 600; margin-bottom: 0.65rem;
+        }
+        .pin-popup-btn {
+            display: block;
+            text-align: center;
+            background: var(--green);
+            color: #fff;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            font-weight: 700; font-size: 0.88rem;
+            text-decoration: none;
+            transition: opacity 0.15s;
+        }
+        .pin-popup-btn:hover { opacity: 0.88; }
+
+        /* ── LOADING OVERLAY ── */
+        .map-loading {
+            position: fixed;
+            top: calc(var(--safe-t) + 57px + 46px);
+            left: 0; right: 0;
+            bottom: calc(var(--tab-h) + var(--safe-b));
+            background: var(--bg);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 1rem; z-index: 900;
+            transition: opacity 0.3s;
+        }
+        .map-loading.hidden { opacity: 0; pointer-events: none; }
+        .loader-disc {
+            font-size: 2.5rem; animation: spin 1.2s linear infinite;
+        }
+        .loader-text { font-size: 0.9rem; color: var(--text2); font-weight: 500; }
+
+        /* ── LEGEND ── */
+        .map-legend {
+            position: fixed;
+            top: calc(var(--safe-t) + 57px + 46px + 12px);
+            right: 12px;
+            z-index: 1050;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            padding: 0.5rem 0.7rem;
+            box-shadow: var(--shadow-card);
+            font-size: 0.72rem; font-weight: 600;
+            color: var(--text2);
+        }
+        .legend-row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
+        .legend-row:last-child { margin-bottom: 0; }
+        .legend-dot {
+            width: 11px; height: 11px; border-radius: 50%;
+            border: 2px solid rgba(0,0,0,0.15); flex-shrink: 0;
+        }
+        .legend-dot.green { background: #3ca83c; }
+        .legend-dot.gray { background: #8a8a86; }
+
+        /* ── MY LOCATION FLOATING BUTTON ── */
+        .my-location-btn {
+            position: fixed;
+            bottom: calc(var(--tab-h) + var(--safe-b) + 56px); /* above counter badge */
+            right: 14px;
+            z-index: 1050;
+            width: 46px; height: 46px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1.5px solid var(--border2);
+            box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: all var(--transition);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .my-location-btn:active { transform: scale(0.92); }
+        .my-location-btn.locating { opacity: 0.6; pointer-events: none; }
+        .my-location-btn.located { border-color: var(--green); background: var(--green-glow); }
+
+        /* ── TOAST NOTIFICATION ── */
+        .map-toast {
+            position: fixed;
+            bottom: calc(var(--tab-h) + var(--safe-b) + 110px);
+            left: 50%; transform: translateX(-50%);
+            z-index: 1200;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            padding: 0.6rem 1.1rem;
+            font-size: 0.82rem; font-weight: 600;
+            color: var(--text);
+            box-shadow: var(--shadow-lg);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.25s;
+            pointer-events: none;
+        }
+        .map-toast.show { opacity: 1; }
+        .map-toast.error { border-color: var(--red); color: var(--red); }
+        .map-toast.success { border-color: var(--green); color: var(--green); }
+    </style>
+</head>
+<body>
+
+<!-- ── TOP HEADER ── -->
+<header class="top-header">
+    <a class="header-logo" href="/">
+        <img src="/logo.png?v=3" alt="Disc Golf Go logo">
+        Disc Golf <span class="go">Go</span>
+    </a>
+    <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+</header>
+
+<!-- ── FILTER BAR ── -->
+<div class="filter-bar">
+    <button class="near-me-btn" id="nearMeBtn" onclick="centerOnMe()">📍 Near Me</button>
+
+    <!-- State filter -->
+    <div class="filter-chip has-select" id="stateChip">
+        <span>🗺</span>
+        <select id="stateFilter" onchange="applyFilters()">
+            <option value="">All States</option>
+        </select>
+    </div>
+
+    <!-- Holes filter -->
+    <div class="filter-chip has-select" id="holesChip">
+        <span>⛳</span>
+        <select id="holesFilter" onchange="applyFilters()">
+            <option value="">Any holes</option>
+            <option value="9">9 holes</option>
+            <option value="18">18 holes</option>
+            <option value="18+">18+ holes</option>
+        </select>
+    </div>
+
+    <!-- Visited filter -->
+    <div class="filter-chip" id="visitedChip" onclick="toggleVisitedFilter()">
+        ✅ Visited
+    </div>
+    <div class="filter-chip" id="unvisitedChip" onclick="toggleUnvisitedFilter()">
+        ⬜ Unvisited
+    </div>
+</div>
+
+<!-- ── LOADING OVERLAY ── -->
+<div class="map-loading" id="mapLoading">
+    <div class="loader-disc">🥏</div>
+    <div class="loader-text">Loading courses…</div>
+</div>
+
+<!-- ── MAP ── -->
+<div id="map"></div>
+
+<!-- ── LEGEND ── -->
+<div class="map-legend">
+    <div class="legend-row"><div class="legend-dot green"></div> Visited</div>
+    <div class="legend-row"><div class="legend-dot gray"></div> Not visited</div>
+</div>
+
+<!-- ── MY LOCATION FLOATING BUTTON ── -->
+<button class="my-location-btn" id="myLocationBtn" onclick="centerOnMe()" aria-label="My location" title="Center on my location">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green)">
+        <circle cx="12" cy="12" r="3"/>
+        <line x1="12" y1="2" x2="12" y2="6"/>
+        <line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="2" y1="12" x2="6" y2="12"/>
+        <line x1="18" y1="12" x2="22" y2="12"/>
+    </svg>
+</button>
+
+<!-- ── TOAST ── -->
+<div class="map-toast" id="mapToast"></div>
+
+<!-- ── COURSE COUNT ── -->
+<div class="map-counter" id="mapCounter">Loading…</div>
+
+<!-- ── BOTTOM TAB BAR ── -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item active" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+<script>
+// ── DARK MODE ──────────────────────────────────────────────────────
+(function() {
+    const saved = localStorage.getItem('dggo_theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = saved || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+})();
+document.getElementById('themeToggle').addEventListener('click', function() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('dggo_theme', next);
+    this.textContent = next === 'dark' ? '☀️' : '🌙';
+});
+
+// ── STATE ──────────────────────────────────────────────────────────
+const dggoToken = localStorage.getItem('dggo_token');
+const dggoUuid = localStorage.getItem('dggo_player_uuid');
+
+let allCourses = [];
+let markers = [];
+let map = null;
+let playerLat = null, playerLng = null;
+let filterVisited = null;   // null = both, 'visited', 'unvisited'
+let filterState = '';
+let filterHoles = '';
+
+// ── INIT MAP ───────────────────────────────────────────────────────
+function initMap() {
+    // Center on continental US by default
+    map = L.map('map', {
+        center: [39.5, -98.35],
+        zoom: 4,
+        zoomControl: true,
+        attributionControl: true
+    });
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    addTileLayer(isDark);
+
+    // Re-tile on theme change
+    const observer = new MutationObserver(() => {
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        addTileLayer(dark);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+let currentTileLayer = null;
+function addTileLayer(dark) {
+    if (currentTileLayer) { map.removeLayer(currentTileLayer); }
+    if (dark) {
+        // Dark OSM tile — CartoDB dark matter
+        currentTileLayer = L.tileLayer(
+            'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            { attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 19 }
+        );
+    } else {
+        currentTileLayer = L.tileLayer(
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            { attribution: '© OpenStreetMap contributors', maxZoom: 19 }
+        );
+    }
+    currentTileLayer.addTo(map);
+}
+
+// ── FETCH COURSES ──────────────────────────────────────────────────
+async function loadCourses() {
+    const headers = {};
+    if (dggoToken) headers['Authorization'] = 'Bearer ' + dggoToken;
+    else if (dggoUuid) headers['X-Player-Id'] = dggoUuid;
+
+    try {
+        const res = await fetch('/api/courses/map-pins', { headers });
+        if (!res.ok) throw new Error('fetch failed');
+        allCourses = await res.json();
+    } catch (e) {
+        allCourses = [];
+    }
+
+    // Populate state dropdown
+    const states = [...new Set(allCourses.map(c => c.state).filter(Boolean))].sort();
+    const sel = document.getElementById('stateFilter');
+    for (const s of states) {
+        const opt = document.createElement('option');
+        opt.value = s; opt.textContent = s;
+        sel.appendChild(opt);
+    }
+
+    applyFilters();
+    document.getElementById('mapLoading').classList.add('hidden');
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────
+function toggleVisitedFilter() {
+    filterVisited = filterVisited === 'visited' ? null : 'visited';
+    document.getElementById('visitedChip').classList.toggle('active', filterVisited === 'visited');
+    document.getElementById('unvisitedChip').classList.remove('active');
+    applyFilters();
+}
+function toggleUnvisitedFilter() {
+    filterVisited = filterVisited === 'unvisited' ? null : 'unvisited';
+    document.getElementById('unvisitedChip').classList.toggle('active', filterVisited === 'unvisited');
+    document.getElementById('visitedChip').classList.remove('active');
+    applyFilters();
+}
+
+function applyFilters() {
+    filterState = document.getElementById('stateFilter').value;
+    filterHoles = document.getElementById('holesFilter').value;
+
+    // Update chip active state for select-based filters
+    document.getElementById('stateChip').classList.toggle('active', !!filterState);
+    document.getElementById('holesChip').classList.toggle('active', !!filterHoles);
+
+    const visible = allCourses.filter(c => {
+        if (filterState && c.state !== filterState) return false;
+        if (filterHoles === '9' && c.holes !== 9) return false;
+        if (filterHoles === '18' && c.holes !== 18) return false;
+        if (filterHoles === '18+' && (c.holes == null || c.holes < 19)) return false;
+        if (filterVisited === 'visited' && !c.visited) return false;
+        if (filterVisited === 'unvisited' && c.visited) return false;
+        return true;
+    });
+
+    renderMarkers(visible);
+    updateCounter(visible.length, allCourses.length);
+}
+
+// ── MARKERS ───────────────────────────────────────────────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function makeIcon(visited) {
+    const color = visited ? '#3ca83c' : '#8a8a86';
+    const border = visited ? '#2d7a20' : '#5a5a58';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">
+      <path d="M11 0C4.925 0 0 4.925 0 11c0 8.25 11 19 11 19S22 19.25 22 11C22 4.925 17.075 0 11 0z"
+            fill="${color}" stroke="${border}" stroke-width="1.5"/>
+      <circle cx="11" cy="11" r="4.5" fill="rgba(255,255,255,0.85)"/>
+    </svg>`;
+    return L.divIcon({
+        html: svg,
+        className: '',
+        iconSize: [22, 30],
+        iconAnchor: [11, 30],
+        popupAnchor: [0, -32]
+    });
+}
+
+function renderMarkers(courses) {
+    // Remove old markers
+    for (const m of markers) { map.removeLayer(m); }
+    markers = [];
+
+    for (const c of courses) {
+        if (!c.lat || !c.lng) continue;
+        const marker = L.marker([c.lat, c.lng], { icon: makeIcon(c.visited) });
+
+        marker.bindPopup(() => buildPopup(c), {
+            maxWidth: 280,
+            className: 'dggo-popup'
+        });
+
+        marker.addTo(map);
+        markers.push(marker);
+    }
+}
+
+function buildPopup(c) {
+    const dist = (playerLat && playerLng)
+        ? haversineKm(playerLat, playerLng, c.lat, c.lng)
+        : null;
+
+    const distStr = dist != null
+        ? (dist < 1 ? Math.round(dist * 1000) + 'm away' : dist.toFixed(1) + 'km away')
+        : '';
+
+    return `<div class="pin-popup">
+        <div class="pin-popup-status ${c.visited ? 'visited' : 'unvisited'}">
+            ${c.visited ? '✅ Visited' : '⬜ Not visited'}
+        </div>
+        <div class="pin-popup-name">${escHtml(c.name)}</div>
+        <div class="pin-popup-loc">${escHtml([c.city, c.state].filter(Boolean).join(', '))}</div>
+        <div class="pin-popup-stats">
+            ${c.holes ? `<div class="pin-stat"><strong>${c.holes}</strong><span>holes</span></div>` : ''}
+            ${c.par ? `<div class="pin-stat"><strong>${c.par}</strong><span>par</span></div>` : ''}
+        </div>
+        ${distStr ? `<div class="pin-popup-dist">📍 ${distStr}</div>` : ''}
+        <a class="pin-popup-btn" href="/course/${c.id}">View Course →</a>
+    </div>`;
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateCounter(shown, total) {
+    const el = document.getElementById('mapCounter');
+    if (shown === total) {
+        el.textContent = total.toLocaleString() + ' courses';
+    } else {
+        el.textContent = shown.toLocaleString() + ' of ' + total.toLocaleString() + ' courses';
+    }
+}
+
+// ── TOAST HELPER ──────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = '') {
+    const el = document.getElementById('mapToast');
+    el.textContent = msg;
+    el.className = 'map-toast' + (type ? ' ' + type : '');
+    // Force reflow then show
+    void el.offsetWidth;
+    el.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3200);
+}
+
+// ── NEAR ME / MY LOCATION ─────────────────────────────────────────
+let playerMarker = null;
+function centerOnMe() {
+    if (!navigator.geolocation) {
+        showToast('Geolocation not supported by your browser.', 'error');
+        return;
+    }
+
+    const floatBtn = document.getElementById('myLocationBtn');
+    const filterBtn = document.getElementById('nearMeBtn');
+    floatBtn.classList.add('locating');
+    if (filterBtn) { filterBtn.textContent = '⏳ Locating…'; filterBtn.style.pointerEvents = 'none'; }
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            playerLat = pos.coords.latitude;
+            playerLng = pos.coords.longitude;
+
+            // Zoom 7 ≈ 150-mile radius view
+            map.setView([playerLat, playerLng], 7, { animate: true });
+
+            // Remove previous player marker if any
+            if (playerMarker) { map.removeLayer(playerMarker); }
+            playerMarker = L.circleMarker([playerLat, playerLng], {
+                radius: 9, fillColor: '#3ca83c', color: '#fff',
+                weight: 2.5, fillOpacity: 1, zIndexOffset: 1000
+            }).addTo(map).bindPopup('📍 You are here');
+
+            floatBtn.classList.remove('locating');
+            floatBtn.classList.add('located');
+            if (filterBtn) { filterBtn.textContent = '📍 Near Me'; filterBtn.style.pointerEvents = ''; }
+
+            showToast('Showing courses near you', 'success');
+            // Re-render popups to show distances
+            applyFilters();
+        },
+        _err => {
+            floatBtn.classList.remove('locating');
+            if (filterBtn) { filterBtn.textContent = '📍 Near Me'; filterBtn.style.pointerEvents = ''; }
+            showToast('Enable location access to find courses near you.', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────
+initMap();
+loadCourses();
+
+// Center on user's GPS location on load; fall back to continental US view if denied
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            // Zoom 11 shows a ~20-mile radius — nearby courses visible without being cluttered
+            map.setView([pos.coords.latitude, pos.coords.longitude], 11, { animate: false });
+        },
+        () => { /* denied or unavailable — stay on continental US default */ },
+        { timeout: 5000, maximumAge: 60000 }
+    );
+}
+
+// Fix map size after fonts/layout settle
+setTimeout(() => { if (map) map.invalidateSize(); }, 400);
+</script>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+  var currentNotifId = null;
+  function dismiss() {
+    document.getElementById('notifPopup').style.display='none';
+    document.getElementById('notifPopupOverlay').style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+  document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+  document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+  fetch('/api/notifications/active', { headers: headers })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.notification) return;
+      currentNotifId = d.notification.id;
+      document.getElementById('notifPopupTitle').textContent = d.notification.title;
+      document.getElementById('notifPopupMsg').textContent = d.notification.message;
+      document.getElementById('notifPopup').style.display = 'block';
+      document.getElementById('notifPopupOverlay').style.display = 'flex';
+    })
+    .catch(function(){});
+})();
+</script>
+</body>
+</html>

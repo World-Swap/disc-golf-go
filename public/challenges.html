@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Quests — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>        button { font-family: inherit; cursor: pointer; }
+        a { color: inherit; text-decoration: none; }
+
+        .header-logo span { color: var(--green); }
+        /* ── Page layout ──────────────────────────────────────────────── */
+        .page-wrap {
+            max-width: 640px; margin: 0 auto;
+            padding: 1.25rem 1rem calc(var(--tab-h) + var(--safe-b) + 1.5rem);
+        }
+
+        /* ── Page header ──────────────────────────────────────────────── */
+        .page-header { margin-bottom: 1.25rem; }
+        .page-title { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.2rem; }
+        .page-sub { color: var(--text3); font-size: 0.9rem; }
+
+        /* ── Info banner ──────────────────────────────────────────────── */
+        .info-banner {
+            display: flex; align-items: flex-start; gap: 0.6rem;
+            padding: 0.75rem 0.9rem;
+            background: var(--monthly-bg);
+            border: 1px solid rgba(245,158,11,0.18);
+            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            font-size: 0.83rem; color: var(--text2); line-height: 1.4;
+        }
+        [data-theme="dark"] .info-banner {
+            border-color: rgba(251,191,36,0.18);
+        }
+        .info-banner .banner-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+        .info-banner a { color: var(--green); text-decoration: underline; }
+
+        /* ── Tabs ─────────────────────────────────────────────────────── */
+        .tabs {
+            display: flex; gap: 0.35rem; margin-bottom: 1rem;
+            background: var(--surface2);
+            border-radius: 12px; padding: 0.3rem;
+            border: 1px solid var(--border);
+        }
+        .tab {
+            flex: 1; padding: 0.55rem 0.4rem; border-radius: 9px;
+            border: none; background: transparent;
+            color: var(--text3); font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.18s; text-align: center;
+            white-space: nowrap;
+        }
+        .tab.active {
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: var(--shadow-card);
+        }
+        .tab[data-tab="daily"].active { color: var(--daily); }
+        .tab[data-tab="weekly"].active { color: var(--weekly); }
+        .tab[data-tab="monthly"].active { color: var(--monthly); }
+        .tab[data-tab="permanent"].active { color: var(--green); }
+
+        /* ── Timer strip ──────────────────────────────────────────────── */
+        .timer-strip {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem 0.9rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-size: 0.83rem; color: var(--text3);
+            box-shadow: var(--shadow-card);
+        }
+        .timer-icon { font-size: 0.95rem; }
+        .timer-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem; font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ── Section titles ───────────────────────────────────────────── */
+        .section-title {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+            color: var(--text3); font-weight: 600;
+            margin-bottom: 0.6rem; padding: 0 0.1rem;
+        }
+
+        /* ── Challenge list ───────────────────────────────────────────── */
+        .challenges-list { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.5rem; }
+
+        /* ── Challenge card ───────────────────────────────────────────── */
+        .challenge-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1rem 1.1rem;
+            box-shadow: var(--shadow-card);
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .challenge-card:hover { border-color: var(--border2); }
+        .challenge-card.completed {
+            border-color: var(--green-border);
+            background: linear-gradient(135deg, var(--green-bg), var(--surface));
+        }
+        .challenge-card.claimed {
+            opacity: 0.55;
+        }
+
+        .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.65rem; }
+        .card-info { flex: 1; min-width: 0; }
+        .card-title { font-size: 0.97rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .card-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.35; }
+
+        .card-right { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; }
+        .xp-pill {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.28rem 0.6rem;
+            background: var(--green-bg);
+            border: 1px solid var(--green-border);
+            border-radius: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem; font-weight: 700;
+            color: var(--green);
+            white-space: nowrap;
+        }
+        .diff-badge {
+            display: inline-block; padding: 0.18rem 0.45rem;
+            border-radius: 6px; font-size: 0.68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .diff-easy { background: rgba(104,211,145,0.12); color: #3d9970; border: 1px solid rgba(104,211,145,0.22); }
+        .diff-medium { background: var(--daily-bg); color: var(--daily); border: 1px solid rgba(59,130,246,0.2); }
+        .diff-hard { background: var(--monthly-bg); color: var(--monthly); border: 1px solid rgba(245,158,11,0.2); }
+        .diff-legendary { background: rgba(252,129,129,0.10); color: #e53e3e; border: 1px solid rgba(252,129,129,0.22); }
+        [data-theme="dark"] .diff-easy { color: #68d391; }
+        [data-theme="dark"] .diff-legendary { color: #fc8181; }
+
+        /* ── Progress bar ─────────────────────────────────────────────── */
+        .progress-wrap { margin-top: 0; }
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+        .progress-label { font-size: 0.78rem; color: var(--text3); }
+        .progress-count { font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700; color: var(--text2); }
+        .progress-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+        .progress-fill.daily { background: linear-gradient(90deg, #2563eb, var(--daily)); }
+        .progress-fill.weekly { background: linear-gradient(90deg, #7c3aed, var(--weekly)); }
+        .progress-fill.monthly { background: linear-gradient(90deg, #d97706, var(--monthly)); }
+        .progress-fill.done,
+        .progress-fill.permanent { background: linear-gradient(90deg, #2d8a22, var(--green)); }
+
+        /* ── Completed state ──────────────────────────────────────────── */
+        .card-complete-row { display: flex; align-items: center; justify-content: space-between; margin-top: 0.65rem; }
+        .complete-badge { display: flex; align-items: center; gap: 0.35rem; color: var(--green); font-weight: 700; font-size: 0.87rem; }
+        .btn-claim {
+            display: flex; align-items: center; gap: 0.35rem;
+            padding: 0.52rem 1.1rem;
+            background: var(--green);
+            color: #fff;
+            border: none; border-radius: 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.82rem; font-weight: 700;
+            cursor: pointer; transition: opacity 0.18s, transform 0.15s;
+            box-shadow: 0 3px 10px rgba(60,168,60,0.35);
+            min-height: 44px;
+        }
+        .btn-claim:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 5px 14px rgba(60,168,60,0.4); }
+        .btn-claim:active { transform: translateY(0); }
+        .btn-claim .claim-reward { font-family: 'Space Mono', monospace; font-size: 0.78rem; }
+        .claimed-badge { font-size: 0.82rem; color: var(--text3); }
+
+        /* ── Reward strip ─────────────────────────────────────────────── */
+        .reward-strip {
+            display: flex; align-items: center; gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .gold-pill {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.28rem 0.6rem;
+            background: var(--gold-bg);
+            border: 1px solid rgba(245,166,35,0.25);
+            border-radius: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem; font-weight: 700;
+            color: var(--gold);
+        }
+        [data-theme="dark"] .gold-pill {
+            border-color: rgba(251,191,36,0.25);
+        }
+
+        /* ── Expiry countdown on card ─────────────────────────────────── */
+        .card-expiry {
+            display: flex; align-items: center; gap: 0.3rem;
+            font-size: 0.72rem; color: var(--text3);
+            margin-top: 0.5rem;
+            font-family: 'Space Mono', monospace;
+        }
+        .card-expiry.urgent { color: var(--monthly); font-weight: 700; }
+        .card-expiry.soon { color: var(--daily); font-weight: 600; }
+
+        /* ── Loading ──────────────────────────────────────────────────── */
+        .loading-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+        /* ── Empty state ──────────────────────────────────────────────── */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-title { font-size: 1rem; font-weight: 700; color: var(--text2); margin-bottom: 0.3rem; }
+        .empty-sub { font-size: 0.85rem; color: var(--text3); margin-bottom: 1.1rem; line-height: 1.4; }
+        .empty-cta {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: var(--green); color: #fff;
+            border: none; border-radius: 12px; padding: 0.65rem 1.2rem;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; transition: opacity 0.18s;
+            box-shadow: 0 4px 14px rgba(60,168,60,0.3);
+            text-decoration: none;
+        }
+        .empty-cta:hover { opacity: 0.88; }
+
+        /* ── Claim modal ──────────────────────────────────────────────── */
+        .claim-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.55);
+            display: none; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .claim-overlay.show { display: flex; }
+        .claim-modal {
+            background: var(--surface);
+            border: 1px solid var(--green-border);
+            border-radius: 24px;
+            padding: 2rem 1.75rem;
+            max-width: 340px; width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-modal);
+            animation: popIn 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .claim-icon { font-size: 3rem; margin-bottom: 0.65rem; display: block; }
+        .claim-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; }
+        .claim-xp {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.05rem; color: var(--green); font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        #modal-gold {
+            display: none;
+            background: var(--gold-bg);
+            border: 1px solid rgba(245,166,35,0.25);
+            border-radius: 10px;
+            padding: 0.4rem 0.9rem;
+            margin: 0 0 0.75rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem; font-weight: 700; color: var(--gold);
+        }
+
+        /* ── Item reward in modal ─────────────────────────────────────── */
+        .modal-item-reward {
+            display: none; margin: 0 0 1rem;
+            background: rgba(139,92,246,0.07);
+            border: 1px solid rgba(139,92,246,0.25);
+            border-radius: 12px;
+            padding: 0.75rem 0.9rem; text-align: left;
+        }
+        .modal-item-reward.show { display: flex; align-items: center; gap: 0.65rem; }
+        .modal-item-icon { font-size: 1.75rem; flex-shrink: 0; }
+        .modal-item-info { flex: 1; min-width: 0; }
+        .modal-item-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--weekly); font-weight: 700; margin-bottom: 0.1rem; }
+        .modal-item-name { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.1rem; }
+        .modal-item-desc { font-size: 0.75rem; color: var(--text2); }
+        .modal-item-rarity { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.45rem; border-radius: 5px; flex-shrink: 0; align-self: flex-start; }
+        .rarity-common { background: rgba(150,150,150,0.12); color: var(--text3); border: 1px solid var(--border2); }
+        .rarity-uncommon { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+        .rarity-rare { background: var(--daily-bg); color: var(--daily); border: 1px solid rgba(59,130,246,0.22); }
+        .rarity-epic { background: rgba(139,92,246,0.10); color: var(--weekly); border: 1px solid rgba(139,92,246,0.25); }
+        .rarity-legendary { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(245,166,35,0.25); }
+
+        #modal-badges { margin-bottom: 1rem; font-size: 0.83rem; color: var(--text2); }
+
+        .btn-dismiss {
+            padding: 0.65rem 1.75rem;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            color: var(--text); font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: background 0.15s;
+            width: 100%;
+        }
+        .btn-dismiss:hover { background: var(--surface3); }
+        .modal-lb-link {
+            display: inline-block; margin-top: 0.85rem;
+            font-size: 0.83rem; color: var(--green); font-weight: 600;
+        }
+        .modal-rank-text { font-size: 0.75rem; color: var(--text3); margin-top: 0.25rem; }
+
+        /* ── Toast ────────────────────────────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--tab-h) + var(--safe-b) + 0.75rem);
+            left: 50%; transform: translateX(-50%) translateY(80px);
+            background: var(--text);
+            color: var(--bg);
+            border-radius: 10px;
+            padding: 0.65rem 1.15rem; font-size: 0.88rem; font-weight: 500;
+            z-index: 201; transition: transform 0.25s, opacity 0.25s; pointer-events: none; white-space: nowrap;
+            box-shadow: var(--shadow-modal);
+            opacity: 0;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* ── Bottom tab bar ───────────────────────────────────────────── */
+        /* ── Responsive ───────────────────────────────────────────────── */
+        @media (max-width: 400px) {
+            .tab { font-size: 0.72rem; padding: 0.5rem 0.25rem; }
+            }
+    
+/* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.22s;
+}
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.contact-footer .cf-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.contact-footer .cf-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    transition: all 0.22s;
+}
+.contact-footer .cf-socials a:hover {
+    border-color: var(--green);
+    background: var(--surface);
+    color: var(--green);
+}
+.contact-footer .cf-socials svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.contact-footer .cf-site {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+
+<!-- Top header -->
+<header class="top-header">
+    <a href="/" class="header-logo">
+        <img src="/logo.png?v=3" width="30" height="30" loading="eager" alt="Disc Golf Go logo">
+        Disc Golf <span>Go</span>
+    </a>
+    <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+        <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+    </div>
+</header>
+
+<div class="page-wrap">
+    <div class="page-header">
+        <h1 class="page-title">⚡ Quests</h1>
+        <p class="page-sub">Complete quests to earn XP. New ones rotate every day, week, and month.</p>
+    </div>
+
+    <a href="/story" style="display:flex;align-items:center;gap:0.75rem;background:var(--surface);border:1px solid var(--green);border-radius:var(--radius-card);padding:0.85rem 1.1rem;margin-bottom:0.75rem;text-decoration:none;box-shadow:var(--shadow-card)">
+        <span style="font-size:1.5rem">📖</span>
+        <div style="flex:1">
+            <div style="font-weight:700;font-size:0.92rem;color:var(--text)">Career Mode</div>
+            <div style="font-size:0.78rem;color:var(--text3)">8 chapters · 44 quests · Your journey from first round to legend</div>
+        </div>
+        <span style="color:var(--green);font-size:0.85rem;font-weight:700">→</span>
+    </a>
+
+    <div class="info-banner">
+        <span class="banner-icon">📍</span>
+        <span>You must <a href="/checkin">check in</a> at a course before starting rounds to earn XP, achievements, and rewards toward these quests.</span>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="daily">⚡ Daily</button>
+        <button class="tab" data-tab="weekly">📅 Weekly</button>
+        <button class="tab" data-tab="monthly">🏆 Monthly</button>
+        <button class="tab" data-tab="permanent">⭐ All-Time</button>
+    </div>
+
+    <div class="timer-strip" id="timer-strip">
+        <span class="timer-icon">⏱</span>
+        <span style="color:var(--text2)">Resets in:</span>
+        <span class="timer-val" id="timer-val">—</span>
+    </div>
+
+    <div id="tab-content"></div>
+</div>
+
+<!-- Claim modal -->
+<div class="claim-overlay" id="claim-overlay">
+    <div class="claim-modal">
+        <span class="claim-icon">🎉</span>
+        <h3 class="claim-title">Quest Complete!</h3>
+        <p class="claim-xp" id="modal-xp"></p>
+        <div id="modal-gold"></div>
+        <div class="modal-item-reward" id="modal-item-reward">
+            <div class="modal-item-icon" id="modal-item-icon">📦</div>
+            <div class="modal-item-info">
+                <div class="modal-item-label">Item Earned</div>
+                <div class="modal-item-name" id="modal-item-name"></div>
+                <div class="modal-item-desc" id="modal-item-desc"></div>
+            </div>
+            <div class="modal-item-rarity" id="modal-item-rarity"></div>
+        </div>
+        <div id="modal-badges"></div>
+        <button class="btn-dismiss" id="btn-dismiss">Awesome!</button>
+        <a href="/leaderboard" class="modal-lb-link" id="modal-lb-link">🏆 Check Your Rank →</a>
+        <div class="modal-rank-text" id="modal-rank-text"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<!-- Contact mini-footer -->
+<div class="contact-footer">
+    <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+    <div class="cf-socials">
+        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+
+        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+    </div>
+    <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+</div>
+<footer class="page-footer">
+    <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
+</footer>
+
+<!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item active" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+<script>
+// ── Dark mode toggle ──────────────────────────────────────────────────────────
+(function() {
+    var btn = document.getElementById('themeToggle');
+    function update() {
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        btn.textContent = dark ? '☀️' : '🌙';
+    }
+    update();
+    btn.addEventListener('click', function() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        var next = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        update();
+    });
+})();
+</script>
+
+<script>
+const token = localStorage.getItem('dggo_token');
+if (!token) window.location.href = '/login';
+
+let boardData = null;
+let activeTab = 'daily';
+let timerInterval = null;
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+async function init() {
+    await loadBoard();
+    setupTabs();
+    document.getElementById('tab-content').style.display = 'block';
+    renderTab(activeTab);
+    startTimer(activeTab);
+}
+
+async function loadBoard() {
+    try {
+        const res = await fetch('/api/challenges/board', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        boardData = await res.json();
+    } catch(e) {
+        showToast('Failed to load quests');
+    }
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────────
+function setupTabs() {
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            activeTab = tab.dataset.tab;
+            renderTab(activeTab);
+            startTimer(activeTab);
+        });
+    });
+}
+
+// ── Timer ──────────────────────────────────────────────────────────────────────
+function startTimer(tab) {
+    if (timerInterval) clearInterval(timerInterval);
+    const strip = document.getElementById('timer-strip');
+
+    if (tab === 'permanent') {
+        strip.style.display = 'none';
+        return;
+    }
+    strip.style.display = 'flex';
+    updateTimer(tab);
+    timerInterval = setInterval(() => updateTimer(tab), 1000);
+}
+
+function updateTimer(tab) {
+    const now = new Date();
+    let end;
+
+    if (tab === 'daily') {
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    } else if (tab === 'weekly') {
+        const dow = now.getUTCDay();
+        const daysSinceMonday = (dow + 6) % 7;
+        const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMonday + 7));
+        end = monday;
+    } else if (tab === 'monthly') {
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+    }
+
+    const diff = end - now;
+    if (diff <= 0) { document.getElementById('timer-val').textContent = 'Resetting...'; return; }
+
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+
+    let label = '';
+    if (tab === 'daily') {
+        label = `${pad(h)}:${pad(m)}:${pad(s)}`;
+    } else if (tab === 'weekly') {
+        const days = Math.floor(diff / 86400000);
+        const hrs = Math.floor((diff % 86400000) / 3600000);
+        label = `${days}d ${pad(hrs)}h ${pad(m)}m`;
+    } else {
+        const days = Math.floor(diff / 86400000);
+        label = `${days} day${days !== 1 ? 's' : ''}`;
+    }
+
+    document.getElementById('timer-val').textContent = label;
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+function renderTab(tab) {
+    if (!boardData) return;
+    const container = document.getElementById('tab-content');
+
+    const challenges = boardData[tab] || [];
+    if (challenges.length === 0) {
+        const emptyMsgs = {
+            daily: { icon: '⚡', title: 'No daily quests yet', sub: 'Check in at a course to unlock quests.' },
+            weekly: { icon: '📅', title: 'No weekly quests', sub: 'Play more rounds to unlock weekly quests.' },
+            monthly: { icon: '🏆', title: 'No monthly quests', sub: 'Big monthly quests unlock after a few rounds.' },
+            permanent: { icon: '⭐', title: 'No all-time quests', sub: 'Long-term goals unlock as you grow.' },
+        };
+        const msg = emptyMsgs[tab] || { icon: '🥏', title: 'No quests yet', sub: 'Check back soon!' };
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">${msg.icon}</div>
+                <div class="empty-title">${msg.title}</div>
+                <div class="empty-sub">${msg.sub}</div>
+                <a href="/checkin" class="empty-cta">📍 Check In at a Course</a>
+            </div>`;
+        return;
+    }
+
+    const completed = challenges.filter(c => c.completed && !c.claimed);
+    const inProgress = challenges.filter(c => !c.completed);
+    const done = challenges.filter(c => c.claimed);
+
+    let html = '';
+
+    if (completed.length > 0) {
+        html += `<p class="section-title">✅ Ready to Claim</p><div class="challenges-list">`;
+        completed.forEach(c => { html += renderCard(c, tab, 'completed'); });
+        html += `</div>`;
+    }
+
+    if (inProgress.length > 0) {
+        html += `<p class="section-title">In Progress</p><div class="challenges-list">`;
+        inProgress.forEach(c => { html += renderCard(c, tab, 'active'); });
+        html += `</div>`;
+    }
+
+    if (done.length > 0) {
+        html += `<p class="section-title">Completed</p><div class="challenges-list">`;
+        done.forEach(c => { html += renderCard(c, tab, 'claimed'); });
+        html += `</div>`;
+    }
+
+    container.innerHTML = html;
+
+    // Bind claim buttons
+    container.querySelectorAll('.btn-claim').forEach(btn => {
+        btn.addEventListener('click', () => claimChallenge(btn.dataset.slotId));
+    });
+}
+
+function renderCard(c, tab, state) {
+    const progress = Math.min(c.progress || 0, c.target_value);
+    const pct = Math.round((progress / c.target_value) * 100);
+    const isSlot = c.slot_id !== undefined;
+    const isPermanent = tab === 'permanent';
+
+    let cardClass = 'challenge-card';
+    if (state === 'completed') cardClass += ' completed';
+    if (state === 'claimed') cardClass += ' claimed';
+
+    const barClass = isPermanent ? 'permanent' : tab;
+
+    // Gold pill (if reward has gold)
+    const goldPill = (c.gold_reward && c.gold_reward > 0)
+        ? `<div class="gold-pill">💰 ${c.gold_reward.toLocaleString()}</div>`
+        : '';
+
+    // Expiry countdown label (show on daily/weekly/monthly in-progress)
+    let expiryHtml = '';
+    if (state === 'active' && tab !== 'permanent' && c.time_remaining) {
+        const tr = c.time_remaining;
+        // Determine urgency: anything with "h" only = urgent, "d" = soon
+        const isUrgent = /^\d+h/.test(tr) || /^\d+m/.test(tr);
+        const isSoon = /^\d+d/.test(tr) && parseInt(tr) <= 2;
+        const cls = isUrgent ? 'urgent' : isSoon ? 'soon' : '';
+        expiryHtml = `<div class="card-expiry ${cls}">⏱ ${tr} left</div>`;
+    }
+
+    let bottomHtml = '';
+    if (state === 'claimed') {
+        bottomHtml = `
+            <div class="progress-wrap">
+                <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+            </div>
+            <div class="card-complete-row">
+                <div class="complete-badge">✅ Completed</div>
+                <span class="claimed-badge">Claimed</span>
+            </div>`;
+    } else if (state === 'completed' && isSlot) {
+        const claimGoldLabel = (c.gold_reward && c.gold_reward > 0)
+            ? ` + ${c.gold_reward.toLocaleString()} 💰`
+            : '';
+        bottomHtml = `
+            <div class="progress-wrap">
+                <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+            </div>
+            <div class="card-complete-row">
+                <div class="complete-badge">🎉 Complete!</div>
+                <button class="btn-claim" data-slot-id="${c.slot_id}">
+                    Claim
+                    <span class="claim-reward">+${c.xp_reward} XP${claimGoldLabel}</span>
+                </button>
+            </div>`;
+    } else if (state === 'completed' && !isSlot) {
+        bottomHtml = `
+            <div class="progress-wrap">
+                <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+            </div>
+            <div class="card-complete-row">
+                <div class="complete-badge">✅ Completed</div>
+            </div>`;
+    } else {
+        bottomHtml = `
+            <div class="progress-wrap">
+                <div class="progress-row">
+                    <span class="progress-label">Progress</span>
+                    <span class="progress-count">${progress} / ${c.target_value}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${barClass}" style="width:${pct}%"></div>
+                </div>
+            </div>
+            ${expiryHtml}`;
+    }
+
+    return `
+        <div class="${cardClass}">
+            <div class="card-top">
+                <div class="card-info">
+                    <div class="card-title">${c.title}</div>
+                    <div class="card-desc">${c.description || ''}</div>
+                </div>
+                <div class="card-right">
+                    <div class="reward-strip">
+                        <div class="xp-pill">⭐ ${c.xp_reward}</div>
+                        ${goldPill}
+                    </div>
+                    <span class="diff-badge diff-${c.difficulty}">${c.difficulty}</span>
+                </div>
+            </div>
+            ${bottomHtml}
+        </div>`;
+}
+
+// ── Claim ──────────────────────────────────────────────────────────────────────
+async function claimChallenge(slotId) {
+    try {
+        const res = await fetch(`/api/challenges/slots/${slotId}/claim`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'Claim failed'); return; }
+
+        // Show modal
+        document.getElementById('modal-xp').textContent = `+${data.xp_granted} XP earned!`;
+        const mgold = document.getElementById('modal-gold');
+        if (mgold && data.gold_earned > 0) {
+            mgold.textContent = `+${data.gold_earned.toLocaleString()} 💰 Gold earned!`;
+            mgold.style.display = 'block';
+        } else if (mgold) {
+            mgold.style.display = 'none';
+        }
+        // Item reward
+        const itemRewardEl = document.getElementById('modal-item-reward');
+        if (data.item_reward && itemRewardEl) {
+            document.getElementById('modal-item-icon').textContent = data.item_reward.icon || '📦';
+            document.getElementById('modal-item-name').textContent = data.item_reward.name;
+            document.getElementById('modal-item-desc').textContent = data.item_reward.description || '';
+            const rarityEl = document.getElementById('modal-item-rarity');
+            rarityEl.textContent = data.item_reward.rarity;
+            rarityEl.className = 'modal-item-rarity rarity-' + data.item_reward.rarity;
+            itemRewardEl.classList.add('show');
+        } else if (itemRewardEl) {
+            itemRewardEl.classList.remove('show');
+        }
+        if (data.new_badges && data.new_badges.length > 0) {
+            document.getElementById('modal-badges').textContent = `🏅 New badge${data.new_badges.length > 1 ? 's' : ''}!`;
+        } else {
+            document.getElementById('modal-badges').textContent = '';
+        }
+        document.getElementById('claim-overlay').classList.add('show');
+
+        // Fetch rank to show nudge
+        fetchClaimRank();
+
+        // Refresh board data
+        await loadBoard();
+    } catch(e) { showToast('Failed to claim'); }
+}
+
+document.getElementById('btn-dismiss').addEventListener('click', () => {
+    document.getElementById('claim-overlay').classList.remove('show');
+    renderTab(activeTab);
+});
+
+async function fetchClaimRank() {
+    try {
+        document.getElementById('modal-rank-text').textContent = '';
+        const pid = localStorage.getItem('dggo_player_id');
+        const res = await fetch('/api/leaderboard?category=overall');
+        if (!res.ok) return;
+        const list = await res.json();
+        const entry = list.find(p => String(p.player_id) === String(pid));
+        if (entry) {
+            const rank = entry.rank;
+            const suffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
+            document.getElementById('modal-rank-text').textContent = `You're currently ranked #${rank}${suffix} overall`;
+        }
+    } catch {}
+}
+
+// ── Toast ───────────────────────────────────────────────────────────────────────
+function showToast(msg, duration = 2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duration);
+}
+
+init();
+</script>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+  var currentNotifId = null;
+  function dismiss() {
+    document.getElementById('notifPopup').style.display='none';
+    document.getElementById('notifPopupOverlay').style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+  document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+  document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+  fetch('/api/notifications/active', { headers: headers })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.notification) return;
+      currentNotifId = d.notification.id;
+      document.getElementById('notifPopupTitle').textContent = d.notification.title;
+      document.getElementById('notifPopupMsg').textContent = d.notification.message;
+      document.getElementById('notifPopup').style.display = 'block';
+      document.getElementById('notifPopupOverlay').style.display = 'flex';
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

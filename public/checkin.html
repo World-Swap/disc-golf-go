@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Check In — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>        /* ── PAGE CONTENT ── */
+        .page-content {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem 1.5rem;
+        }
+
+        /* ── STATE VIEWS ── */
+        .state-view { display: none; }
+        .state-view.active { display: block; }
+
+        /* ── GPS PROMPT ── */
+        .gps-prompt {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+        }
+        .gps-icon-wrap {
+            width: 96px; height: 96px;
+            background: var(--green-glow);
+            border: 2px solid rgba(60,168,60,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+            transition: background var(--transition);
+        }
+        [data-theme="dark"] .gps-icon-wrap { border-color: rgba(76,223,60,0.2); }
+
+        .gps-prompt h2 {
+            font-size: 1.6rem; font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+        .gps-prompt p {
+            color: var(--text2);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-width: 320px;
+            margin: 0 auto 2rem;
+        }
+
+        /* ── SEARCHING ── */
+        .searching {
+            text-align: center;
+            padding: 4rem 1rem;
+        }
+        .searching h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .searching p { color: var(--text3); font-size: 0.9rem; }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            margin-bottom: 1rem;
+        }
+        .page-header h2 {
+            font-size: 1.4rem; font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text);
+        }
+        .page-header p { color: var(--text3); font-size: 0.85rem; margin-top: 0.2rem; }
+
+        /* ── COURSES LIST ── */
+        .courses-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+        .course-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1rem 1.1rem;
+            cursor: pointer;
+            transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 0.75rem;
+        }
+        .course-card:hover, .course-card:active {
+            border-color: rgba(60,168,60,0.4);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        [data-theme="dark"] .course-card:hover { border-color: rgba(76,223,60,0.35); }
+
+        .course-info { flex: 1; min-width: 0; }
+        .course-name {
+            font-size: 0.98rem; font-weight: 600;
+            color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 0.3rem;
+        }
+        .course-meta {
+            font-size: 0.78rem; color: var(--text3);
+            display: flex; gap: 0.6rem; flex-wrap: wrap;
+            align-items: center;
+        }
+        .course-meta .rating { color: var(--gold); }
+
+        .course-right {
+            display: flex; flex-direction: column;
+            align-items: flex-end; gap: 0.4rem;
+            flex-shrink: 0;
+        }
+        .course-dist {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.82rem; font-weight: 700;
+            color: var(--green);
+        }
+        .course-dist.far { color: var(--text3); }
+
+        .details-link {
+            font-size: 0.68rem; color: var(--text3);
+            text-decoration: none;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            padding: 0.18rem 0.45rem;
+            white-space: nowrap;
+            transition: color var(--transition), border-color var(--transition);
+        }
+        .details-link:hover { color: var(--green); border-color: rgba(60,168,60,0.3); }
+
+        .diff-badge {
+            display: inline-block;
+            font-size: 0.7rem; font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: 100px;
+            text-transform: capitalize;
+        }
+        .diff-beginner  { background: rgba(60,168,60,0.1);  color: #2e8b2e; }
+        .diff-intermediate { background: rgba(224,165,0,0.12); color: #9a6e00; }
+        .diff-advanced  { background: rgba(232,96,32,0.12);  color: #c04800; }
+        .diff-pro       { background: rgba(224,32,32,0.12);  color: #b01c1c; }
+        [data-theme="dark"] .diff-beginner  { color: #7ed957; background: rgba(76,223,60,0.12); }
+        [data-theme="dark"] .diff-intermediate { color: #ffd050; background: rgba(255,208,80,0.12); }
+        [data-theme="dark"] .diff-advanced  { color: #ff8c42; background: rgba(255,140,66,0.12); }
+        [data-theme="dark"] .diff-pro       { color: #fc8181; background: rgba(252,129,129,0.12); }
+
+        .no-courses {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text3);
+        }
+        .no-courses .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .no-courses h3 { font-size: 1.1rem; font-weight: 600; color: var(--text2); margin-bottom: 0.5rem; }
+
+        /* ── BUTTONS ── */
+        .btn-primary {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 0.5rem;
+            background: var(--green);
+            color: #fff;
+            border: none; border-radius: 14px;
+            padding: 0.9rem 1.75rem;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 0.95rem; font-weight: 700;
+            cursor: pointer;
+            transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+            box-shadow: 0 4px 16px rgba(60,168,60,0.3);
+            text-decoration: none;
+        }
+        [data-theme="dark"] .btn-primary { box-shadow: 0 4px 20px rgba(76,223,60,0.25); }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(60,168,60,0.4); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-primary.block { width: 100%; }
+
+        .btn-cancel {
+            flex: 1;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 14px; padding: 0.9rem;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 0.95rem; font-weight: 600;
+            color: var(--text2); cursor: pointer;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .btn-cancel:hover { background: var(--surface); border-color: var(--border2); }
+
+        /* ── ERROR BANNER ── */
+        .error-banner {
+            background: rgba(224,64,64,0.07);
+            border: 1px solid rgba(224,64,64,0.2);
+            border-radius: 12px; padding: 1rem 1.1rem;
+            margin-bottom: 1rem;
+        }
+        .error-banner h4 { color: var(--red); font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .error-banner p { font-size: 0.82rem; color: var(--text2); line-height: 1.5; }
+        [data-theme="dark"] .error-banner { background: rgba(252,129,129,0.08); border-color: rgba(252,129,129,0.2); }
+
+        /* ── RESULT VIEW ── */
+        .result-view {
+            text-align: center;
+            padding: 2rem 0.5rem;
+        }
+        .result-icon-wrap {
+            width: 88px; height: 88px;
+            background: var(--green-glow);
+            border: 2px solid rgba(60,168,60,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.4rem;
+            margin: 0 auto 1.25rem;
+            animation: pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        [data-theme="dark"] .result-icon-wrap { border-color: rgba(76,223,60,0.22); }
+        @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .result-view h2 {
+            font-size: 1.6rem; font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.4rem;
+        }
+        .result-view > p {
+            color: var(--text2); font-size: 0.95rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .xp-earned-badge {
+            display: inline-block;
+            background: var(--green);
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.6rem; font-weight: 700;
+            padding: 0.6rem 2rem;
+            border-radius: 100px;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 20px rgba(60,168,60,0.3);
+            animation: pop 0.5s 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+
+        .result-gold {
+            display: none;
+            background: rgba(224,165,0,0.12);
+            border: 1px solid rgba(224,165,0,0.25);
+            border-radius: 10px;
+            padding: 0.5rem 1.25rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem; font-weight: 700;
+            color: var(--gold);
+            margin: 0.25rem auto;
+            max-width: fit-content;
+        }
+
+        .xp-breakdown {
+            display: none;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin: 0.75rem 0;
+            text-align: left;
+        }
+
+        .level-up-banner {
+            display: none;
+            background: linear-gradient(135deg, rgba(232,96,32,0.1), rgba(224,165,0,0.07));
+            border: 1px solid rgba(232,96,32,0.25);
+            border-radius: 12px;
+            padding: 0.9rem 1.1rem;
+            margin: 0.75rem 0;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .level-up-banner strong { color: var(--orange); }
+
+        .new-badges {
+            display: flex; gap: 0.6rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 0.75rem 0;
+        }
+        .new-badge {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 10px; padding: 0.6rem 0.9rem;
+            font-size: 0.82rem;
+            display: flex; align-items: center; gap: 0.45rem;
+            color: var(--text2);
+        }
+
+        .result-actions {
+            display: flex; gap: 0.6rem;
+            flex-wrap: wrap; justify-content: center;
+            margin-top: 1.25rem;
+        }
+
+        .btn-outline {
+            display: inline-flex; align-items: center;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 14px; padding: 0.75rem 1.25rem;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 0.88rem; font-weight: 600;
+            color: var(--text2); cursor: pointer;
+            text-decoration: none;
+            transition: border-color var(--transition), color var(--transition), background var(--transition);
+        }
+        .btn-outline:hover { border-color: var(--green); color: var(--green); background: var(--green-glow); }
+
+        /* ── NEXT STEPS GRID ── */
+        .next-steps {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+        .next-steps-title {
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--text3); margin-bottom: 0.75rem;
+        }
+        .next-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        .next-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem 0.9rem;
+            text-align: center;
+            text-decoration: none;
+            transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+            display: flex; flex-direction: column;
+            align-items: center; gap: 0.4rem;
+        }
+        .next-card:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: var(--shadow-card); }
+        .next-card.primary { border-color: rgba(60,168,60,0.3); background: linear-gradient(135deg, var(--green-glow) 0%, var(--surface) 100%); }
+        [data-theme="dark"] .next-card.primary { border-color: rgba(76,223,60,0.25); }
+        .next-card.primary:hover { border-color: rgba(60,168,60,0.5); }
+        .next-card.span-2 { grid-column: 1 / -1; flex-direction: row; text-align: left; padding: 1rem 1.1rem; }
+        .next-card-icon { font-size: 1.6rem; line-height: 1; }
+        .next-card-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+        .next-card-sub { font-size: 0.72rem; color: var(--text3); }
+        .next-card.span-2 .next-card-icon { font-size: 2rem; }
+        .next-card.span-2 .next-card-text { flex: 1; }
+
+        /* ── BOTTOM TAB BAR ── */
+        /* ── Contact mini-footer ─────────────────────────────────────── */
+.contact-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text3);
+    font-family: 'Space Grotesk', sans-serif;
+}
+.contact-footer a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.22s;
+}
+.contact-footer a:hover { color: var(--green); }
+.contact-footer .cf-email {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.contact-footer .cf-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.contact-footer .cf-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    transition: all 0.22s;
+}
+.contact-footer .cf-socials a:hover {
+    border-color: var(--green);
+    background: var(--surface);
+    color: var(--green);
+}
+.contact-footer .cf-socials svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.contact-footer .cf-site {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header class="top-header">
+        <a href="/" class="header-logo">
+            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            Disc Golf <span class="go">Go</span>
+        </a>
+        <div class="header-actions">
+            <a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+            <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+            <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌓</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-content">
+
+            <!-- State: GPS prompt -->
+            <div class="state-view active" id="state-gps">
+                <div class="gps-prompt">
+                    <div class="gps-icon-wrap">📍</div>
+                    <h2>Check In</h2>
+                    <p>Share your location — if you're at a course, you'll check in instantly. Otherwise you'll see nearby courses to choose from.</p>
+                    <button class="btn-primary" id="gps-btn" onclick="requestLocation()">Check In</button>
+                </div>
+            </div>
+
+            <!-- State: Searching -->
+            <div class="state-view" id="state-searching">
+                <div class="searching">
+                    <div class="spinner"></div>
+                    <h2>Finding courses…</h2>
+                    <p>Scanning within 50km of your location</p>
+                </div>
+            </div>
+
+            <!-- State: Courses list (fallback — shown when no course is within 500m check-in range) -->
+            <div class="state-view" id="state-courses">
+                <div class="page-header">
+                    <h2 id="courses-list-title">Nearby Courses</h2>
+                    <p id="courses-count">Loading…</p>
+                </div>
+                <div id="error-container"></div>
+                <div class="courses-list" id="courses-list"></div>
+                <div class="no-courses" id="no-courses" style="display:none;">
+                    <div class="empty-icon">🗺️</div>
+                    <h3>No courses nearby</h3>
+                    <p>Try a larger radius or head to California!</p>
+                </div>
+            </div>
+
+            <!-- State: Result -->
+            <div class="state-view" id="state-result">
+                <div class="result-view">
+                    <div class="result-icon-wrap" id="result-icon">🥏</div>
+                    <h2 id="result-title">Checked in!</h2>
+                    <p id="result-subtitle"></p>
+                    <div class="xp-earned-badge" id="result-xp"></div>
+                    <div class="result-gold" id="result-gold"></div>
+                    <div class="xp-breakdown" id="result-xp-breakdown"></div>
+                    <div class="level-up-banner" id="result-levelup"></div>
+                    <div class="new-badges" id="result-badges"></div>
+                    <div class="result-actions">
+                        <a href="/profile" class="btn-outline">View Profile</a>
+                        <button class="btn-primary" onclick="showCourses()">Check In Again</button>
+                    </div>
+
+                    <!-- Next steps -->
+                    <div class="next-steps">
+                        <div class="next-steps-title">What's next?</div>
+                        <div class="next-grid">
+                            <a href="/challenges" class="next-card primary span-2">
+                                <span class="next-card-icon">🎯</span>
+                                <div class="next-card-text">
+                                    <div class="next-card-title" style="color:var(--green)">Check Your Quests!</div>
+                                    <div class="next-card-sub">Your progress just updated</div>
+                                </div>
+                                <span style="color:var(--text3);font-size:0.85rem;margin-left:auto;">→</span>
+                            </a>
+                            <a href="/scorecard" class="next-card">
+                                <span class="next-card-icon">🥏</span>
+                                <div class="next-card-title">Play a Round</div>
+                                <div class="next-card-sub">Track your score</div>
+                            </a>
+                            <a href="/leaderboard" class="next-card">
+                                <span class="next-card-icon">🏆</span>
+                                <div class="next-card-title">Leaderboard</div>
+                                <div class="next-card-sub">See where you rank</div>
+                            </a>
+                            <a href="/battles" class="next-card">
+                                <span class="next-card-icon">⚔️</span>
+                                <div class="next-card-title">Battles</div>
+                                <div class="next-card-sub">PvP challenges</div>
+                            </a>
+                            <a href="/vault" class="next-card">
+                                <span class="next-card-icon">🏪</span>
+                                <div class="next-card-title">Vault</div>
+                                <div class="next-card-sub">Items &amp; boosts</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    
+    
+<!-- Contact mini-footer -->
+<div class="contact-footer">
+    <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+    <div class="cf-socials">
+        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+
+        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+    </div>
+    <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+</div>
+<footer class="page-footer">
+    <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
+</footer>
+
+<!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+    <nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+    <script>
+    // ── DARK MODE ────────────────────────────────────────────────
+    (function() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+    })();
+    document.getElementById('themeToggle').addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        this.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('dggo_theme')) {
+            var next = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        }
+    });
+
+    // ── APP LOGIC ────────────────────────────────────────────────
+    let playerLat = null, playerLng = null;
+    let selectedCourse = null;
+    let allCourses = [];
+
+    // Redirect if not authenticated
+    const dggoToken = localStorage.getItem('dggo_token');
+    const dggoLegacyUuid = localStorage.getItem('dggo_player_uuid');
+    if (!dggoToken && !dggoLegacyUuid) {
+        window.location.href = '/login';
+    }
+
+    function authHeaders() {
+        const h = { 'Content-Type': 'application/json' };
+        if (dggoToken) h['Authorization'] = 'Bearer ' + dggoToken;
+        else if (dggoLegacyUuid) h['X-Player-Id'] = dggoLegacyUuid;
+        return h;
+    }
+
+    function showState(id) {
+        document.querySelectorAll('.state-view').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function showCourses() { showState('state-courses'); }
+
+    function formatDistance(meters) {
+        if (meters < 1000) return meters + 'm away';
+        return (meters / 1000).toFixed(1) + 'km away';
+    }
+
+    function requestLocation() {
+        const btn = document.getElementById('gps-btn');
+        btn.disabled = true;
+        btn.textContent = 'Getting location…';
+
+        if (!navigator.geolocation) {
+            alert('GPS not supported on this device. Try a different browser.');
+            btn.disabled = false;
+            btn.textContent = 'Continue';
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                playerLat = pos.coords.latitude;
+                playerLng = pos.coords.longitude;
+                showState('state-searching');
+                loadNearbyCourses();
+            },
+            (err) => {
+                btn.disabled = false;
+                btn.textContent = 'Continue';
+                let msg = 'Location access denied.';
+                if (err.code === 1) msg = 'Location access was denied. Please allow location access in your browser settings.';
+                if (err.code === 2) msg = 'Location unavailable. Try again in a moment.';
+                if (err.code === 3) msg = 'Location request timed out. Try again.';
+                const container = document.querySelector('#state-gps .gps-prompt');
+                const existing = container.querySelector('.error-banner');
+                if (existing) existing.remove();
+                const err_div = document.createElement('div');
+                err_div.className = 'error-banner';
+                err_div.style.marginTop = '1rem';
+                err_div.innerHTML = '<h4>Location Error</h4><p>' + msg + '</p>';
+                container.appendChild(err_div);
+            },
+            { timeout: 10000, enableHighAccuracy: true }
+        );
+    }
+
+    // On page load: if location permission is already granted, skip the prompt and go straight to searching.
+    // This prevents the permission re-prompt loop on Android after the first successful check-in.
+    (function autoStartIfPermitted() {
+        if (!navigator.permissions || !navigator.geolocation) return;
+        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+            if (result.state === 'granted') {
+                // Permission already granted — skip the enable-location screen
+                requestLocation();
+            }
+            // 'prompt' → show the button (default state, nothing to do)
+            // 'denied' → user must fix in settings; button press will surface the error naturally
+        }).catch(function() {
+            // permissions API not available on this platform — leave default state
+        });
+    })();
+
+    async function loadNearbyCourses() {
+        try {
+            // First try the checkin_only fast path — only courses within 500m
+            const res = await fetch(
+                '/api/courses/nearby?lat=' + playerLat + '&lng=' + playerLng + '&checkin_only=true'
+            );
+            const data = await res.json();
+            allCourses = data;
+
+            // GPS check-in: if a course is within 500m, skip the course list and
+            // open the confirm sheet directly. Show the list only as fallback.
+            const inRange = data.filter(c => c.distance_meters != null && c.distance_meters <= 500);
+            if (inRange.length > 0) {
+                inRange.sort((a, b) => a.distance_meters - b.distance_meters);
+                selectCourse(inRange[0]);  // immediately open confirm sheet (no list flash)
+            } else {
+                // Fallback: fetch all nearby courses for the manual selection list
+                const listRes = await fetch(
+                    '/api/courses/nearby?lat=' + playerLat + '&lng=' + playerLng + '&radius=50000'
+                );
+                const listData = await listRes.json();
+                allCourses = listData;
+                renderCourses(listData);
+            }
+        } catch (err) {
+            showState('state-courses');
+            document.getElementById('error-container').innerHTML =
+                '<div class="error-banner"><h4>Failed to load courses</h4><p>Check your connection and try again.</p></div>';
+        }
+    }
+
+    function renderCourses(courses) {
+        showState('state-courses');
+        const list = document.getElementById('courses-list');
+        const noCoursesEl = document.getElementById('no-courses');
+        const countEl = document.getElementById('courses-count');
+        const titleEl = document.getElementById('courses-list-title');
+
+        // Check if any course is within the 500m check-in radius
+        const hasInRange = courses.some(c => c.distance_meters != null && c.distance_meters <= 500);
+        if (hasInRange) {
+            // This branch only shows briefly before the confirm sheet opens automatically
+            titleEl.textContent = 'Nearby Courses';
+            countEl.textContent = courses.length + ' course' + (courses.length !== 1 ? 's' : '') + ' found within 50km';
+        } else {
+            // Fallback: no course within range — user must select manually
+            titleEl.textContent = 'No course detected nearby';
+            countEl.textContent = 'Not within 500m of any course — tap a course below to check in anyway.';
+        }
+
+        if (courses.length === 0) {
+            list.innerHTML = '';
+            noCoursesEl.style.display = 'block';
+            return;
+        }
+        noCoursesEl.style.display = 'none';
+        list.innerHTML = '';
+
+        for (const c of courses) {
+            const card = document.createElement('div');
+            card.className = 'course-card';
+            const isFar = c.distance_meters != null && c.distance_meters > 500;
+            const distStr = c.distance_meters != null ? formatDistance(c.distance_meters) : 'Unknown';
+
+            // Rating
+            const rating = c.pdga_rating || c.dgcoursereview_rating;
+            const ratingHtml = rating
+                ? '<span class="rating">★ ' + parseFloat(rating).toFixed(1) + '</span>'
+                : '';
+
+            // Terrain
+            const terrainMap = {wooded:'🌲 Wooded',open:'🌾 Open',mixed:'🌳 Mixed',hilly:'⛰️ Hilly',flat:'➖ Flat'};
+            const terrainHtml = c.terrain ? '<span>' + (terrainMap[c.terrain] || c.terrain) + '</span>' : '';
+
+            // Difficulty badge
+            const diffHtml = c.difficulty
+                ? '<span class="diff-badge diff-' + c.difficulty + '">' + c.difficulty.charAt(0).toUpperCase() + c.difficulty.slice(1) + '</span>'
+                : '';
+
+            // Fees
+            const feesHtml = c.fees
+                ? '<span style="color:' + (c.fees.toLowerCase()==='free' ? 'var(--green)' : 'var(--orange)') + '">' + (c.fees.toLowerCase()==='free' ? '✓ Free' : '💲 Fee') + '</span>'
+                : '';
+
+            card.innerHTML =
+                '<div class="course-info">' +
+                  '<div class="course-name">' + c.name + '</div>' +
+                  '<div class="course-meta">' +
+                    '<span>📍 ' + c.city + '</span>' +
+                    '<span>⛳ ' + c.holes + ' holes</span>' +
+                    '<span>Par ' + c.par + '</span>' +
+                    (ratingHtml ? ratingHtml : '') +
+                    terrainHtml +
+                    diffHtml +
+                    feesHtml +
+                  '</div>' +
+                '</div>' +
+                '<div class="course-right">' +
+                  '<div class="course-dist' + (isFar ? ' far' : '') + '">' + distStr + '</div>' +
+                  '<a href="/course/' + c.id + '" onclick="event.stopPropagation()" class="details-link">Details ↗</a>' +
+                '</div>';
+
+            card.addEventListener('click', () => selectCourse(c));
+            list.appendChild(card);
+        }
+    }
+
+    function selectCourse(course) {
+        selectedCourse = course;
+        performCheckin();
+    }
+
+    async function performCheckin() {
+        if (!selectedCourse) return;
+        const course = selectedCourse;
+
+        try {
+            const res = await fetch('/api/checkins', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({
+                    course_id: course.id,
+                    player_lat: playerLat,
+                    player_lng: playerLng,
+                    is_round_complete: false,
+                    weather_condition: null,
+                })
+            });
+
+            const data = await res.json();
+            const courseName = course.name;
+
+            if (!res.ok) {
+                // Show error and re-render the course list so user can try another course
+                const container = document.getElementById('error-container');
+                container.innerHTML =
+                    '<div class="error-banner" style="margin-bottom:1rem;">' +
+                    '<h4>Check-in failed</h4>' +
+                    '<p>' + (data.error || 'Something went wrong') +
+                    (data.distance_meters ? '. You are ' + formatDistance(data.distance_meters) + ' from ' + courseName + '.' : '') +
+                    '</p></div>';
+                window.scrollTo(0, 0);
+                // Re-show the course list so they can try another course
+                renderCourses(allCourses);
+            } else {
+                showResult(data);
+            }
+        } catch (err) {
+            alert('Check-in failed. Please try again.');
+        }
+    }
+
+    function showResult(data) {
+        const isNew = data.is_new_course;
+        const isTrail = data.is_trailblazer;
+
+        document.getElementById('result-icon').textContent = isTrail ? '🚀' : (isNew ? '🌟' : '🥏');
+        document.getElementById('result-title').textContent = isTrail ? 'Trailblazer!' : (isNew ? 'New Course!' : 'Checked In!');
+        document.getElementById('result-subtitle').textContent =
+            (isTrail ? '🚀 First player ever at ' : isNew ? 'First visit to ' : 'Back at ') +
+            data.course_name + (data.city ? ' in ' + data.city : '');
+        document.getElementById('result-xp').textContent = '+' + data.xp_earned + ' XP';
+
+        const goldEl = document.getElementById('result-gold');
+        if (data.gold_earned > 0) {
+            goldEl.textContent = '+' + data.gold_earned.toLocaleString() + ' 💰 Gold';
+            goldEl.style.display = 'block';
+        } else { goldEl.style.display = 'none'; }
+
+        const breakdownEl = document.getElementById('result-xp-breakdown');
+        if (data.xp_breakdown && data.xp_breakdown.length > 1) {
+            breakdownEl.innerHTML = data.xp_breakdown.map(e =>
+                '<div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text2);margin-bottom:0.3rem;">' +
+                '<span>' + e.label + '</span><span style="color:var(--green);font-weight:700;">+' + e.amount + '</span></div>'
+            ).join('');
+            breakdownEl.style.display = 'block';
+        } else { breakdownEl.style.display = 'none'; }
+
+        const lvlEl = document.getElementById('result-levelup');
+        if (data.leveled_up) {
+            lvlEl.style.display = 'block';
+            lvlEl.innerHTML = '🎉 <strong>Level Up!</strong> You are now Level ' + data.new_level + ' · ' + (data.level_title_icon||'') + ' ' + (data.level_title||'');
+        } else { lvlEl.style.display = 'none'; }
+
+        const badgesEl = document.getElementById('result-badges');
+        badgesEl.innerHTML = '';
+        const newBadges = data.new_badges || data.new_achievements || [];
+        for (const b of newBadges) {
+            const div = document.createElement('div');
+            div.className = 'new-badge';
+            div.innerHTML = '<span>' + (b.icon || '🏅') + '</span><span>' + (b.label || b.name || 'Badge') + ' unlocked!</span>';
+            badgesEl.appendChild(div);
+        }
+
+        showState('state-result');
+
+        if (data.leveled_up) {
+            setTimeout(() => {
+                window.location.href = '/profile?levelup=' + data.new_level + '&title=' + encodeURIComponent(data.level_title || '');
+            }, 3500);
+        }
+    }
+    </script>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+
+  // ── Notification Bell (dropdown) ────────────────────────────────────────────
+  var bell = document.getElementById('notifBell');
+  var badge = document.getElementById('notifBadge');
+  var panel = document.getElementById('notifPanel');
+  var list = document.getElementById('notifList');
+  var closeBtn = document.getElementById('notifClose');
+
+  function fmtTime(iso) {
+    var d = new Date(iso);
+    var now = new Date();
+    var diff = (now - d) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  function updateBadge(count) {
+    if (!badge) return;
+    if (!count) { badge.hidden = true; return; }
+    badge.hidden = false;
+    badge.classList.toggle('dot', count > 9);
+    badge.textContent = count > 9 ? '' : String(count);
+  }
+
+  var notifs = [];
+  function loadNotifs() {
+    if (!bell) return;
+    fetch('/api/notifications/all', { headers: headers })
+      .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+      .then(function(data) {
+        notifs = data.notifications || [];
+        updateBadge(notifs.length);
+      })
+      .catch(function() {});
+  }
+
+  function renderPanel() {
+    if (!list) return;
+    if (!notifs.length) {
+      list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+      return;
+    }
+    list.innerHTML = notifs.map(function(n) {
+      return '<div class="notif-item" data-id="' + n.id + '">' +
+        '<div class="notif-item-title">' + n.title + '</div>' +
+        '<div class="notif-item-body">' + n.message + '</div>' +
+        '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+        '</div>';
+    }).join('');
+    list.querySelectorAll('.notif-item').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var id = el.getAttribute('data-id');
+        el.classList.add('read');
+        fetch('/api/notifications/' + id + '/dismiss', {
+          method: 'POST', headers: headers
+        }).catch(function() {});
+        notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+        updateBadge(notifs.length);
+        setTimeout(function() {
+          el.remove();
+          if (!list.querySelectorAll('.notif-item').length) renderPanel();
+        }, 350);
+      });
+    });
+  }
+
+  if (bell) {
+    bell.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = panel.classList.contains('open');
+      panel.classList.toggle('open', !isOpen);
+      if (!isOpen) renderPanel();
+    });
+  }
+  if (closeBtn) closeBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    panel.classList.remove('open');
+  });
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('notifWrap');
+    if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+  });
+  loadNotifs();
+
+  // ── Notification Popup (overlay) ───────────────────────────────────────────
+  var currentNotifId = null;
+  function dismissPopup() {
+    var popup = document.getElementById('notifPopup');
+    var overlay = document.getElementById('notifPopupOverlay');
+    if (popup) popup.style.display='none';
+    if (overlay) overlay.style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  var popupClose = document.getElementById('notifPopupClose');
+  var popupDismissBtn = document.getElementById('notifPopupDismissBtn');
+  var popupOverlay = document.getElementById('notifPopupOverlay');
+  if (popupClose) popupClose.addEventListener('click', dismissPopup);
+  if (popupDismissBtn) popupDismissBtn.addEventListener('click', dismissPopup);
+  if (popupOverlay) popupOverlay.addEventListener('click', dismissPopup);
+  fetch('/api/notifications/active', { headers: headers })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.notification) return;
+      currentNotifId = d.notification.id;
+      var titleEl = document.getElementById('notifPopupTitle');
+      var msgEl = document.getElementById('notifPopupMsg');
+      var popup = document.getElementById('notifPopup');
+      var overlay = document.getElementById('notifPopupOverlay');
+      if (titleEl) titleEl.textContent = d.notification.title;
+      if (msgEl) msgEl.textContent = d.notification.message;
+      if (popup) popup.style.display = 'block';
+      if (overlay) overlay.style.display = 'flex';
+    })
+    .catch(function(){});
+})();
+</script>
+</body>
+</html>

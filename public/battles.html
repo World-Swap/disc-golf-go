@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Battles — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>        /* ── PAGE CONTENT ── */
+        .page-content {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 1rem 1rem 1.5rem;
+        }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 0.75rem;
+        }
+        .page-title {
+            font-weight: 800;
+        }
+
+        /* ── NOTICE BANNER ── */
+        .notice-banner {
+            display: flex; align-items: flex-start; gap: 0.65rem;
+            padding: 0.7rem 0.9rem;
+            background: rgba(232,160,0,0.08);
+            border: 1px solid rgba(232,160,0,0.2);
+            border-radius: var(--radius-card);
+            margin-bottom: 1rem;
+            font-size: 0.82rem;
+            color: var(--text2);
+            line-height: 1.4;
+        }
+        [data-theme="dark"] .notice-banner {
+            background: rgba(255,200,0,0.07);
+            border-color: rgba(255,200,0,0.18);
+        }
+        .notice-banner a { color: var(--green); text-decoration: underline; }
+        .notice-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+        /* ── TABS ── */
+        .tabs {
+            display: flex; gap: 0.35rem;
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 0.3rem;
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--border);
+        }
+        .tab {
+            flex: 1; padding: 0.55rem 0.4rem;
+            border-radius: 14px; border: none;
+            background: transparent;
+            color: var(--text3);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            position: relative;
+        }
+        .tab.active {
+            background: var(--bg2);
+            color: var(--green);
+            box-shadow: var(--shadow-card);
+        }
+        .tab .badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--green); color: #fff; border-radius: 100px;
+            font-size: 0.55rem; font-weight: 800; min-width: 14px; height: 14px;
+            padding: 0 3px; position: absolute; top: 3px; right: 3px;
+        }
+
+        /* ── LOADING / EMPTY ── */
+        .loading-state { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+        .empty-state { text-align: center; padding: 3rem 1rem; }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text2); }
+        .empty-sub { font-size: 0.85rem; color: var(--text3); margin-bottom: 1.25rem; }
+        .empty-cta {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: var(--green); color: #fff;
+            border: none; border-radius: 16px; padding: 0.65rem 1.2rem;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(60,168,60,0.3);
+        }
+        [data-theme="dark"] .empty-cta { box-shadow: 0 0 20px rgba(76,223,60,0.25), 0 4px 14px rgba(76,223,60,0.15); }
+        .empty-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+        [data-theme="dark"] .empty-cta:hover { box-shadow: 0 0 32px rgba(76,223,60,0.35), 0 4px 16px rgba(76,223,60,0.2); }
+        .empty-cta:hover { opacity: 0.88; }
+
+        /* ── BATTLE CARDS ── */
+        .battles-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+        .battle-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 1.1rem 1.15rem;
+            box-shadow: var(--shadow-card);
+            transition: border-color var(--transition), transform 0.15s, box-shadow 0.2s;
+        }
+        .battle-card:active { transform: scale(0.99); }
+        [data-theme="dark"] .battle-card:hover { border-color: rgba(76,223,60,0.18); box-shadow: var(--shadow-card), 0 0 24px rgba(76,223,60,0.06); }
+        .battle-card.winning { border-color: rgba(60,168,60,0.4); background: linear-gradient(135deg, rgba(60,168,60,0.03), var(--surface)); }
+        [data-theme="dark"] .battle-card.winning { border-color: rgba(76,223,60,0.35); background: linear-gradient(135deg, rgba(76,223,60,0.04), var(--surface)); }
+        .battle-card.losing { border-color: rgba(224,64,64,0.3); }
+        [data-theme="dark"] .battle-card.losing { border-color: rgba(252,129,129,0.25); }
+
+        .card-meta { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; }
+
+        .type-badge {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            font-size: 0.7rem; font-weight: 700;
+            padding: 0.18rem 0.55rem; border-radius: var(--radius-pill);
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .type-daily   { background: rgba(96,165,250,0.1);  color: var(--daily);   border: 1px solid rgba(96,165,250,0.2); }
+        .type-weekly  { background: rgba(167,139,250,0.1); color: var(--weekly);  border: 1px solid rgba(167,139,250,0.2); }
+        .type-monthly { background: rgba(245,158,11,0.1);  color: var(--monthly); border: 1px solid rgba(245,158,11,0.2); }
+
+        .metric-badge {
+            font-size: 0.7rem; color: var(--text3);
+            background: var(--surface2); border: 1px solid var(--border);
+            padding: 0.18rem 0.5rem; border-radius: var(--radius-pill);
+        }
+        .time-badge {
+            margin-left: auto; font-family: 'Space Mono', monospace;
+            font-size: 0.72rem; font-weight: 700; color: var(--text3);
+        }
+        .time-badge.urgent { color: var(--green); }
+
+        /* ── STATUS INDICATOR ── */
+        .status-indicator {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.68rem; font-weight: 700;
+            padding: 0.15rem 0.5rem; border-radius: var(--radius-pill);
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .status-winning { background: rgba(60,168,60,0.12); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+        [data-theme="dark"] .status-winning { background: rgba(76,223,60,0.1); border-color: rgba(76,223,60,0.25); }
+        .status-losing { background: rgba(224,64,64,0.08); color: var(--red); border: 1px solid rgba(224,64,64,0.2); }
+        [data-theme="dark"] .status-losing { background: rgba(252,129,129,0.07); border-color: rgba(252,129,129,0.2); }
+        .status-tied { background: var(--surface2); color: var(--text3); border: 1px solid var(--border2); }
+
+        /* ── AVATAR ── */
+        .avatar {
+            width: 40px; height: 40px;
+            border-radius: var(--radius-card);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem; font-weight: 700;
+            flex-shrink: 0;
+            letter-spacing: -0.02em;
+        }
+        .avatar-me {
+            background: linear-gradient(135deg, rgba(60,168,60,0.15), rgba(60,168,60,0.08));
+            color: var(--green);
+            border: 1px solid rgba(60,168,60,0.25);
+        }
+        [data-theme="dark"] .avatar-me {
+            background: linear-gradient(135deg, rgba(76,223,60,0.12), rgba(76,223,60,0.06));
+            border-color: rgba(76,223,60,0.2);
+        }
+        .avatar-opp {
+            background: var(--surface2);
+            color: var(--text2);
+            border: 1px solid var(--border2);
+        }
+
+        /* ── VS LAYOUT ── */
+        .vs-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.65rem; align-items: center; }
+
+        .player-side { }
+        .player-side.right { text-align: right; }
+        .player-side.right .player-avatar-row { flex-direction: row-reverse; }
+
+        .player-avatar-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.45rem;
+        }
+        .player-info { min-width: 0; }
+        .player-name {
+            font-size: 0.82rem; font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: var(--text2);
+        }
+        .player-name.me { color: var(--green); }
+        .player-meta {
+            font-size: 0.68rem; color: var(--text3);
+            white-space: nowrap;
+        }
+        .player-score {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.8rem; font-weight: 700;
+            line-height: 1; color: var(--text);
+        }
+        .player-score.leading { color: var(--green); }
+        .player-score.trailing { color: var(--text3); }
+        .player-score.no-score { font-size: 1.1rem; color: var(--text3); }
+        .player-rounds { font-size: 0.7rem; color: var(--text3); margin-top: 0.2rem; }
+        .vs-divider { text-align: center; }
+        .vs-text { font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700; color: var(--text3); letter-spacing: 0.04em; display: block; }
+        .leading-indicator { font-size: 0.7rem; margin-top: 0.3rem; }
+
+        /* ── SCORES SECTION ── */
+        .scores-section {
+            margin-top: 0.8rem;
+        }
+        .scores-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        .score-block {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 0.55rem 0.65rem;
+            text-align: center;
+        }
+        .score-block.winning-block {
+            background: rgba(60,168,60,0.06);
+            border-color: rgba(60,168,60,0.2);
+        }
+        [data-theme="dark"] .score-block.winning-block {
+            background: rgba(76,223,60,0.05);
+            border-color: rgba(76,223,60,0.18);
+        }
+        .score-block-label { font-size: 0.65rem; color: var(--text3); margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .score-block-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.35rem; font-weight: 700;
+            line-height: 1; color: var(--text);
+        }
+        .score-block-val.win-val { color: var(--green); }
+        .score-block-sub { font-size: 0.65rem; color: var(--text3); margin-top: 0.15rem; }
+
+        /* History card */
+        .history-card {
+            display: flex; align-items: center; gap: 0.85rem;
+            background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius-card);
+            padding: 0.9rem 1rem;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.15s, border-color 0.2s;
+        }
+        [data-theme="dark"] .history-card:hover { border-color: rgba(76,223,60,0.15); box-shadow: var(--shadow-card), 0 0 20px rgba(76,223,60,0.04); }
+        .history-card:active { transform: scale(0.99); }
+        .result-badge {
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: var(--radius-card);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800;
+        }
+        .result-w { background: rgba(60,168,60,0.1); border: 1px solid rgba(60,168,60,0.35); color: var(--green); }
+        .result-l { background: rgba(224,64,64,0.08); border: 1px solid rgba(224,64,64,0.25); color: var(--red); }
+        .result-t { background: rgba(224,165,0,0.08); border: 1px solid rgba(224,165,0,0.2); color: var(--gold); }
+        [data-theme="dark"] .result-w { background: rgba(76,223,60,0.1); border-color: rgba(76,223,60,0.3); }
+
+        .history-info { flex: 1; min-width: 0; }
+        .history-opponent { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.12rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+        .history-meta { font-size: 0.75rem; color: var(--text3); }
+        .history-scores { text-align: right; flex-shrink: 0; }
+        .history-score-val { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; }
+        .history-score-val.won { color: var(--green); }
+        .history-score-val.lost { color: var(--red); }
+        .history-score-label { font-size: 0.7rem; color: var(--text3); }
+
+        /* Challenge (incoming/outgoing) card */
+        .challenge-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 1rem 1.1rem;
+            box-shadow: var(--shadow-card);
+            transition: border-color 0.2s;
+        }
+        [data-theme="dark"] .challenge-card:hover { border-color: rgba(76,223,60,0.15); box-shadow: var(--shadow-card), 0 0 20px rgba(76,223,60,0.04); }
+        .challenge-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.65rem; }
+        .challenge-from { font-size: 0.92rem; font-weight: 700; margin-bottom: 0.12rem; color: var(--text); }
+        .challenge-from .challenger-label { font-size: 0.75rem; color: var(--text3); font-weight: 400; }
+        .challenge-actions { display: flex; gap: 0.45rem; flex-shrink: 0; }
+        .challenge-info { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.3rem; }
+
+        .btn-accept {
+            padding: 0.5rem 1rem; background: var(--green);
+            color: #fff; border: none; border-radius: 16px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            min-height: 44px;
+        }
+        [data-theme="dark"] .btn-accept { box-shadow: 0 0 16px rgba(76,223,60,0.25); }
+        .btn-accept:hover { opacity: 0.85; transform: translateY(-1px); }
+        [data-theme="dark"] .btn-accept:hover { box-shadow: 0 0 28px rgba(76,223,60,0.35); }
+        .btn-decline {
+            padding: 0.5rem 0.85rem; background: transparent;
+            border: 1px solid rgba(224,64,64,0.3); color: var(--red); border-radius: 16px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            min-height: 44px;
+        }
+        .btn-decline:hover { border-color: rgba(224,64,64,0.6); background: rgba(224,64,64,0.05); transform: translateY(-1px); }
+        .challenge-pending-label { font-size: 0.75rem; color: var(--text3); }
+
+        /* Open challenge card */
+        .open-card {
+            background: var(--surface);
+            border: 1px solid rgba(167,139,250,0.25); border-radius: var(--radius-card); padding: 1rem 1.1rem;
+            box-shadow: var(--shadow-card);
+            transition: border-color 0.2s;
+        }
+        [data-theme="dark"] .open-card:hover { border-color: rgba(167,139,250,0.4); box-shadow: var(--shadow-card), 0 0 20px rgba(139,92,246,0.1); }
+        .btn-jump-in {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--weekly), #7c3aed);
+            color: #fff; border: none; border-radius: 16px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            min-height: 44px;
+        }
+        .btn-jump-in:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(139,92,246,0.3); }
+
+        /* Challenge button */
+        .btn-challenge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: var(--green);
+            color: #fff; border: none; border-radius: 16px; padding: 0.7rem 1.2rem;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(60,168,60,0.3);
+        }
+        [data-theme="dark"] .btn-challenge { box-shadow: 0 0 20px rgba(76,223,60,0.3), 0 4px 14px rgba(76,223,60,0.15); }
+        .btn-challenge:hover { opacity: 0.88; transform: translateY(-1px); }
+        [data-theme="dark"] .btn-challenge:hover { box-shadow: 0 0 32px rgba(76,223,60,0.4), 0 4px 16px rgba(76,223,60,0.2); }
+        .btn-challenge:hover { opacity: 0.88; }
+
+        /* Section labels */
+        .section-label {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text3);
+            margin-bottom: 0.55rem; margin-top: 1.1rem;
+        }
+        .section-label:first-child { margin-top: 0; }
+
+        /* ── CHALLENGE MODAL ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: 0; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border2); border-bottom: none;
+            border-radius: 24px 24px 0 0; width: 100%; max-width: 520px;
+            padding: 1.5rem 1.5rem calc(1.5rem + var(--safe-b));
+            transform: translateY(30px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-overlay.open .modal { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+        .modal-close {
+            background: var(--surface2); border: 1px solid var(--border); color: var(--text3);
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition);
+        }
+        .modal-close:hover { border-color: var(--green); color: var(--green); }
+
+        .form-section { margin-bottom: 1.1rem; }
+        .form-label {
+            font-size: 0.72rem; font-weight: 700; color: var(--text3);
+            text-transform: uppercase; letter-spacing: 0.07em;
+            margin-bottom: 0.45rem; display: block;
+        }
+
+        /* Search input */
+        .search-wrap { position: relative; }
+        .search-input {
+            width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: var(--radius-input); padding: 0.7rem 1rem; color: var(--text);
+            font-size: 0.9rem; font-family: 'Space Grotesk', sans-serif;
+            outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--green); }
+        .search-input::placeholder { color: var(--text3); }
+        .search-results {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10;
+            background: var(--surface);
+            border: 1px solid var(--border2); border-radius: var(--radius-input);
+            overflow: hidden; display: none;
+            box-shadow: var(--shadow-lg);
+        }
+        .search-results.show { display: block; }
+        .search-result-item {
+            padding: 0.7rem 1rem; cursor: pointer; transition: background 0.15s;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .search-result-item:hover { background: var(--surface2); }
+        .search-result-item.selected { background: var(--surface2); }
+        .sr-name { font-weight: 600; font-size: 0.88rem; color: var(--text); }
+        .sr-meta { font-size: 0.75rem; color: var(--text3); }
+
+        /* Open challenge toggle */
+        .toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: var(--radius-input); padding: 0.7rem 1rem; cursor: pointer;
+        }
+        .toggle-label { font-size: 0.88rem; color: var(--text); }
+        .toggle-sub { font-size: 0.75rem; color: var(--text3); }
+        .toggle-switch { position: relative; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0;
+            background: var(--border2); border-radius: 12px; transition: 0.2s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute; height: 16px; width: 16px; left: 4px; bottom: 4px;
+            background: var(--bg2); border-radius: 50%; transition: 0.2s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: var(--green); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        /* Option grid */
+        .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .option-btn {
+            padding: 0.65rem 0.7rem; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: var(--radius-input);
+            cursor: pointer; transition: all 0.15s;
+            font-family: 'Space Grotesk', sans-serif; text-align: left;
+        }
+        .option-btn:hover { border-color: var(--border2); }
+        .option-btn.selected { border-color: var(--green); background: rgba(60,168,60,0.07); }
+        [data-theme="dark"] .option-btn.selected { background: rgba(76,223,60,0.08); }
+        .option-btn.selected.daily { border-color: rgba(96,165,250,0.6); background: rgba(96,165,250,0.08); }
+        .option-btn.selected.weekly { border-color: rgba(167,139,250,0.6); background: rgba(167,139,250,0.08); }
+        .option-btn.selected.monthly { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.07); }
+        .option-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.12rem; color: var(--text); }
+        .option-sub { font-size: 0.72rem; color: var(--text3); }
+
+        /* XP preview */
+        .xp-preview {
+            background: rgba(60,168,60,0.07); border: 1px solid rgba(60,168,60,0.2);
+            border-radius: var(--radius-input); padding: 0.65rem 1rem;
+            display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem;
+            color: var(--text2);
+        }
+        [data-theme="dark"] .xp-preview { background: rgba(76,223,60,0.06); border-color: rgba(76,223,60,0.18); }
+        .xp-preview-val { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--green); }
+
+        /* Confirm button */
+        .btn-confirm {
+            width: 100%; padding: 0.85rem;
+            background: var(--green);
+            color: #fff; border: none; border-radius: 16px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: all var(--transition); margin-top: 1rem;
+            box-shadow: 0 4px 14px rgba(60,168,60,0.3);
+        }
+        [data-theme="dark"] .btn-confirm { box-shadow: 0 0 24px rgba(76,223,60,0.3), 0 4px 14px rgba(76,223,60,0.15); }
+        .btn-confirm:hover { opacity: 0.9; transform: translateY(-1px); }
+        [data-theme="dark"] .btn-confirm:hover { box-shadow: 0 0 36px rgba(76,223,60,0.4), 0 4px 20px rgba(76,223,60,0.2); }
+        .btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        /* ── BATTLE ITEM CHOICE MODAL ── */
+        .item-choice-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 150;
+            display: none; align-items: center; justify-content: center; padding: 1.5rem;
+            backdrop-filter: blur(4px);
+        }
+        .item-choice-overlay.show { display: flex; }
+        .item-choice-modal {
+            background: var(--surface);
+            border: 1px solid rgba(160,80,255,0.3); border-radius: var(--radius-card);
+            padding: 2rem 1.5rem 2.5rem; max-width: 400px; width: 100%;
+            animation: choicePopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--shadow-lg);
+        }
+        @keyframes choicePopIn { from { transform: scale(0.75) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .choice-header { text-align: center; margin-bottom: 1.5rem; }
+        .choice-trophy { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .choice-title { font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+        .choice-sub { font-size: 0.85rem; color: var(--text3); }
+        .choice-opp { font-size: 0.85rem; color: var(--purple); font-weight: 600; margin-top: 0.2rem; }
+        .choice-cards { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem; }
+        .choice-item-card {
+            display: flex; align-items: center; gap: 1rem;
+            background: var(--surface2); border: 2px solid var(--border);
+            border-radius: var(--radius-card); padding: 1rem 1.1rem; cursor: pointer;
+            transition: all 0.2s; text-align: left;
+        }
+        .choice-item-card:hover { border-color: rgba(160,80,255,0.5); background: rgba(160,80,255,0.07); transform: translateY(-1px); }
+        .choice-item-card.selecting { opacity: 0.5; pointer-events: none; }
+        .choice-item-card.chosen { border-color: rgba(160,80,255,0.8); background: rgba(160,80,255,0.1); animation: chosenPulse 0.5s ease; }
+        .choice-item-card.unchosen { opacity: 0.25; transform: scale(0.97); }
+        @keyframes chosenPulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
+        .ci-icon { font-size: 2.2rem; flex-shrink: 0; }
+        .ci-info { flex: 1; min-width: 0; }
+        .ci-name { font-size: 0.92rem; font-weight: 700; color: var(--text); margin-bottom: 0.12rem; }
+        .ci-desc { font-size: 0.78rem; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ci-rarity { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 4px; flex-shrink: 0; align-self: flex-start; }
+        .ci-rarity.rarity-common   { background: rgba(138,144,153,0.12); color: var(--text3); border: 1px solid var(--border2); }
+        .ci-rarity.rarity-uncommon { background: rgba(60,168,60,0.1);   color: var(--green); border: 1px solid rgba(60,168,60,0.3); }
+        .ci-rarity.rarity-rare     { background: rgba(59,130,246,0.1);  color: var(--blue);  border: 1px solid rgba(59,130,246,0.3); }
+        .ci-rarity.rarity-epic     { background: rgba(160,80,255,0.1);  color: var(--purple);border: 1px solid rgba(160,80,255,0.3); }
+        .ci-rarity.rarity-legendary{ background: rgba(224,165,0,0.1);   color: var(--gold);  border: 1px solid rgba(224,165,0,0.3); }
+        .choice-dismiss-btn {
+            width: 100%; padding: 0.75rem; background: var(--surface2);
+            border: 1px solid var(--border2); border-radius: 16px; color: var(--text2);
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; display: none;
+        }
+        .choice-dismiss-btn:hover { background: var(--surface); transform: translateY(-1px); }
+        .choice-dismiss-btn:hover { background: var(--surface); }
+        .choice-dismiss-btn.show { display: block; }
+
+        /* ── CONFETTI CANVAS ── */
+        #confetti-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--tab-h) + var(--safe-b) + 0.75rem);
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.88rem;
+            color: var(--text);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 200;
+            min-width: 200px; max-width: 320px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── BOTTOM TAB BAR ── */
+        /* ── FOOTER ── */
+        @media (max-width: 480px) {
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .vs-row { gap: 0.4rem; }
+            .player-score { font-size: 1.5rem; }
+        }
+    
+/* ── Contact mini-footer ── only spacing override; styles live in app.css */
+.contact-footer { margin-top: 1.5rem; }
+</style>
+<!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
+<script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
+</head>
+<body>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- TOP HEADER -->
+<header class="top-header">
+    <a href="/" class="header-logo">
+        <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+        Disc Golf <span class="go">Go</span>
+    </a>
+    <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+        <button class="theme-btn" id="themeToggle" title="Toggle dark mode">🌙</button>
+    </div>
+</header>
+
+<script>
+(function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+    document.getElementById('themeToggle').addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dggo_theme', next);
+        this.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+})();
+</script>
+
+<!-- PAGE CONTENT -->
+<main class="page-content">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">⚔️ Battles</h1>
+        </div>
+        <button class="btn-challenge" onclick="openChallengeModal()">⚔️ Start a Battle</button>
+    </div>
+
+    <div class="notice-banner">
+        <span class="notice-icon">📍</span>
+        <span>You must <a href="/checkin">check in</a> at the battle's course before your rounds count. No check-in = no battle progress.</span>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="active" onclick="switchTab('active')">Active <span class="badge" id="badge-active" style="display:none"></span></button>
+        <button class="tab" data-tab="challenges" onclick="switchTab('challenges')">Battles <span class="badge" id="badge-challenges" style="display:none"></span></button>
+        <button class="tab" data-tab="open" onclick="switchTab('open')">Open</button>
+        <button class="tab" data-tab="history" onclick="switchTab('history')">History</button>
+    </div>
+
+    <div id="tab-active">
+        <div id="active-list"></div>
+    </div>
+    <div id="tab-challenges" style="display:none">
+        <div id="challenges-content"></div>
+    </div>
+    <div id="tab-open" style="display:none">
+        <div id="open-list"></div>
+    </div>
+    <div id="tab-history" style="display:none">
+        <div id="history-list"></div>
+    </div>
+
+    
+        <!-- Contact mini-footer -->
+        <div class="contact-footer">
+            <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
+            <div class="cf-socials">
+                <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                </a>
+                <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                </a>
+
+                <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+            </div>
+            <a href="https://discgolfgo.com" class="cf-site">discgolfgo.com</a>
+        </div>
+        <footer class="page-footer">
+        <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
+    </footer>
+</main>
+
+<!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item active" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+<!-- Battle Item Choice Modal -->
+<div class="item-choice-overlay" id="item-choice-overlay">
+    <div class="item-choice-modal">
+        <div class="choice-header">
+            <div class="choice-trophy">🏆</div>
+            <h2 class="choice-title">Battle Won!</h2>
+            <p class="choice-sub">Choose Your Reward</p>
+            <p class="choice-opp" id="choice-opp-name"></p>
+        </div>
+        <div class="choice-cards" id="choice-cards"></div>
+        <button class="choice-dismiss-btn" id="choice-dismiss-btn" onclick="closeItemChoiceModal()">Done — Check Your Vault</button>
+    </div>
+</div>
+
+<!-- Challenge modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal" id="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">⚔️ New Challenge</h2>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+
+        <!-- Step 1: Course selector (REQUIRED) -->
+        <div class="form-section">
+            <label class="form-label">📍 Course <span style="color:var(--green);font-size:0.72rem;">REQUIRED</span></label>
+            <div class="search-wrap">
+                <input class="search-input" id="course-search" placeholder="Search by name, city, or state…" autocomplete="off" oninput="onCourseSearchInput()" onfocus="onCourseSearchFocus()">
+                <div class="search-results" id="course-search-results"></div>
+            </div>
+            <div id="selected-course-display" style="display:none; margin-top:0.6rem; background:rgba(60,168,60,0.07); border:1px solid rgba(60,168,60,0.25); border-radius:10px; padding:0.55rem 0.8rem;">
+                <div style="font-size:0.88rem; font-weight:700; color:var(--green);" id="selected-course-name"></div>
+                <div style="font-size:0.75rem; color:var(--text3);" id="selected-course-location"></div>
+            </div>
+        </div>
+
+        <!-- Hole count picker -->
+        <div class="form-section" id="hole-count-section" style="display:none">
+            <label class="form-label">⛳ Hole Count</label>
+            <div class="option-grid" id="hole-count-grid" style="gap:0.5rem"></div>
+        </div>
+
+        <!-- Open challenge toggle -->
+        <div class="form-section">
+            <label class="toggle-row" for="open-toggle">
+                <div>
+                    <div class="toggle-label">🌐 Open Challenge</div>
+                    <div class="toggle-sub">Anyone can accept</div>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="open-toggle" onchange="toggleOpenChallenge()">
+                    <span class="toggle-slider"></span>
+                </div>
+            </label>
+        </div>
+
+        <!-- Player search -->
+        <div class="form-section" id="player-search-section">
+            <label class="form-label">Challenge a Player</label>
+            <div class="search-wrap">
+                <input class="search-input" id="player-search" placeholder="Search by name or @username…" autocomplete="off" oninput="onSearchInput()" onfocus="onSearchFocus()">
+                <div class="search-results" id="search-results"></div>
+            </div>
+            <div id="selected-player-display" style="margin-top:0.5rem; font-size:0.85rem; color:var(--green); display:none"></div>
+        </div>
+
+        <!-- Battle type -->
+        <div class="form-section">
+            <label class="form-label">Battle Type</label>
+            <div class="option-grid">
+                <button class="option-btn selected daily" data-type="daily" onclick="selectType('daily')">
+                    <div class="option-title" style="color:var(--daily)">⚡ Daily</div>
+                    <div class="option-sub">Ends at midnight</div>
+                </button>
+                <button class="option-btn weekly" data-type="weekly" onclick="selectType('weekly')">
+                    <div class="option-title" style="color:var(--weekly)">📅 Weekly</div>
+                    <div class="option-sub">Mon–Sun window</div>
+                </button>
+                <button class="option-btn monthly" data-type="monthly" onclick="selectType('monthly')">
+                    <div class="option-title" style="color:var(--monthly)">🏆 Monthly</div>
+                    <div class="option-sub">Entire month</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric -->
+        <div class="form-section">
+            <label class="form-label">Winning Metric</label>
+            <div class="option-grid">
+                <button class="option-btn selected" data-metric="best_score" onclick="selectMetric('best_score')">
+                    <div class="option-title">🎯 Best Score</div>
+                    <div class="option-sub">Lowest score wins</div>
+                </button>
+                <button class="option-btn" data-metric="birdies" onclick="selectMetric('birdies')">
+                    <div class="option-title">🐦 Most Birdies</div>
+                    <div class="option-sub">Total birdies wins</div>
+                </button>
+                <button class="option-btn" data-metric="rounds" onclick="selectMetric('rounds')">
+                    <div class="option-title">🔄 Most Rounds</div>
+                    <div class="option-sub">Grind the most</div>
+                </button>
+                <button class="option-btn" data-metric="average" onclick="selectMetric('average')">
+                    <div class="option-title">📊 Best Average</div>
+                    <div class="option-sub">Lowest avg score</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- XP preview -->
+        <div class="xp-preview" id="xp-preview">
+            <span>🏆 Win XP:</span>
+            <span class="xp-preview-val" id="xp-val">+250 XP</span>
+            <span style="color:var(--text3);font-size:0.78rem;">(+75 XP just for playing)</span>
+        </div>
+
+        <button class="btn-confirm" id="btn-confirm" onclick="submitChallenge()" disabled>Send Challenge</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const token = localStorage.getItem('dggo_token');
+if (!token) window.location.href = '/login';
+
+function authHeaders() { return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }; }
+
+let activeTab = 'active';
+let challengeState = { opponentId: null, opponentName: null, battleType: 'daily', metric: 'best_score', isOpen: false, courseId: null, courseName: null, courseLocation: null, holeCount: null };
+let searchTimeout = null;
+let courseSearchTimeout = null;
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function initials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    ['active','challenges','open','history'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    });
+    activeTab = tab;
+    if (tab === 'active' && !activeBattlesLoaded) loadActiveBattles();
+    if (tab === 'challenges' && !challengesLoaded) loadChallenges();
+    if (tab === 'open' && !openLoaded) loadOpen();
+    if (tab === 'history' && !historyLoaded) loadHistory();
+}
+
+let activeBattlesLoaded = false, challengesLoaded = false, openLoaded = false, historyLoaded = false;
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+
+const METRIC_LABELS = {
+    best_score: '🎯 Best Score',
+    birdies: '🐦 Birdies',
+    rounds: '🔄 Rounds',
+    average: '📊 Avg Score',
+};
+const TYPE_LABELS = { daily: '⚡ Daily', weekly: '📅 Weekly', monthly: '🏆 Monthly' };
+const XP_BY_TYPE = { daily: 250, weekly: 500, monthly: 1000 };
+
+function metricDisplay(metric, value, isNull) {
+    if (isNull || value === null) return '—';
+    if (metric === 'best_score' || metric === 'average') return value + ' strokes';
+    if (metric === 'birdies') return value + ' birdies';
+    if (metric === 'rounds') return value + ' round' + (value !== 1 ? 's' : '');
+    return value;
+}
+
+function timeClass(timeRemaining) {
+    return timeRemaining && timeRemaining.endsWith('m') ? 'urgent' : '';
+}
+
+async function loadActiveBattles() {
+    try {
+        const res = await fetch('/api/battles/active', { headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        document.getElementById('active-list').style.display = 'block';
+        activeBattlesLoaded = true;
+
+        const list = document.getElementById('active-list');
+        if (!data.battles || data.battles.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚔️</div>
+                    <div class="empty-title">No active battles</div>
+                    <div class="empty-sub">Challenge someone to start competing!</div>
+                    <button class="empty-cta" onclick="openChallengeModal()">⚔️ Start a Battle</button>
+                </div>`;
+            return;
+        }
+
+        const badge = document.getElementById('badge-active');
+        badge.textContent = data.battles.length;
+        badge.style.display = 'inline-flex';
+
+        list.innerHTML = '';
+        const battlesList = document.createElement('div');
+        battlesList.className = 'battles-list';
+        for (const b of data.battles) {
+            const card = document.createElement('div');
+            const isWinning = b.leading === 'me';
+            const isLosing = b.leading === 'opp';
+            card.className = 'battle-card' + (isWinning ? ' winning' : isLosing ? ' losing' : '');
+
+            const myScore = b.my_value !== null ? b.my_value : null;
+            const oppScore = b.opp_value !== null ? b.opp_value : null;
+            const myScoreClass = myScore !== null ? (isWinning ? 'leading' : isLosing ? 'trailing' : '') : 'no-score';
+            const oppScoreClass = oppScore !== null ? (!isWinning && b.leading === 'opp' ? 'leading' : isWinning ? 'trailing' : '') : 'no-score';
+
+            const holeInfo = b.course_holes ? ` · ${b.course_holes}h` : '';
+            const parInfo = b.course_par ? ` · Par ${b.course_par}` : '';
+            const courseTag = b.course_name
+                ? `<span style="font-size:0.7rem;color:var(--green);background:rgba(60,168,60,0.08);border:1px solid rgba(60,168,60,0.2);border-radius:100px;padding:0.15rem 0.5rem">📍 ${b.course_name}${b.course_city ? ', ' + b.course_city : ''}${b.course_state ? ', ' + b.course_state : ''}${holeInfo}${parInfo}</span>`
+                : '';
+
+            const statusText = isWinning ? '🟢 Winning' : isLosing ? '🔴 Losing' : '⚪ Tied';
+            const statusClass = isWinning ? 'status-winning' : isLosing ? 'status-losing' : 'status-tied';
+
+            const oppInitials = initials(b.opp_name || '?');
+            const myRounds = b.my_rounds || 0;
+            const oppRounds = b.opp_rounds || 0;
+
+            card.innerHTML = `
+                <div class="card-meta">
+                    <span class="type-badge type-${b.battle_type}">${TYPE_LABELS[b.battle_type]}</span>
+                    <span class="metric-badge">${METRIC_LABELS[b.metric]}</span>
+                    <span class="time-badge ${timeClass(b.time_remaining)}">⏱ ${b.time_remaining}</span>
+                </div>
+                ${courseTag ? '<div style="margin-bottom:0.6rem">' + courseTag + '</div>' : ''}
+                <div class="vs-row">
+                    <div class="player-side">
+                        <div class="player-avatar-row">
+                            <div class="avatar avatar-me">ME</div>
+                            <div class="player-info">
+                                <div class="player-name me">You</div>
+                                <div class="player-meta">${myRounds} round${myRounds !== 1 ? 's' : ''}</div>
+                            </div>
+                        </div>
+                        <div class="player-score ${myScoreClass}">${myScore !== null ? myScore : '—'}</div>
+                    </div>
+                    <div class="vs-divider">
+                        <span class="vs-text">VS</span>
+                        <div class="leading-indicator" style="margin-top:0.5rem">
+                            <span class="status-indicator ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                    <div class="player-side right">
+                        <div class="player-avatar-row">
+                            <div class="player-info">
+                                <div class="player-name">${b.opp_name || '?'}</div>
+                                <div class="player-meta">${oppRounds} round${oppRounds !== 1 ? 's' : ''}</div>
+                            </div>
+                            <div class="avatar avatar-opp">${oppInitials}</div>
+                        </div>
+                        <div class="player-score ${oppScoreClass}" style="text-align:right">${oppScore !== null ? oppScore : '—'}</div>
+                    </div>
+                </div>`;
+            battlesList.appendChild(card);
+        }
+        list.appendChild(battlesList);
+    } catch (e) {
+        document.getElementById('active-list').innerHTML = '<p style="text-align:center;color:var(--text3);padding:2rem;">Failed to load battles</p>';
+    }
+}
+
+async function loadChallenges() {
+    try {
+        const [inRes, outRes] = await Promise.all([
+            fetch('/api/battles/incoming', { headers: { Authorization: 'Bearer ' + token } }),
+            fetch('/api/battles/outgoing', { headers: { Authorization: 'Bearer ' + token } }),
+        ]);
+        const incoming = await inRes.json();
+        const outgoing = await outRes.json();
+        document.getElementById('challenges-content').style.display = 'block';
+        challengesLoaded = true;
+
+        const totalPending = (incoming.challenges?.length || 0) + (outgoing.challenges?.length || 0);
+        if (totalPending > 0) {
+            const badge = document.getElementById('badge-challenges');
+            badge.textContent = totalPending;
+            badge.style.display = 'inline-flex';
+        }
+
+        const container = document.getElementById('challenges-content');
+        container.innerHTML = '';
+
+        if (incoming.challenges?.length > 0) {
+            const label = document.createElement('div');
+            label.className = 'section-label';
+            label.textContent = '📥 Incoming Quests';
+            container.appendChild(label);
+
+            const list = document.createElement('div');
+            list.className = 'battles-list';
+            for (const c of incoming.challenges) {
+                const card = document.createElement('div');
+                card.className = 'challenge-card';
+                const inHoleInfo = c.course_holes ? ` · ${c.course_holes}h` : '';
+                const inParInfo = c.course_par ? ` · Par ${c.course_par}` : '';
+                const inCourseTag = c.course_name
+                    ? `<div style="margin-top:0.4rem;font-size:0.75rem;color:var(--green)">📍 ${c.course_name}${c.course_city ? ', ' + c.course_city : ''}${c.course_state ? ', ' + c.course_state : ''}${inHoleInfo}${inParInfo}</div>`
+                    : '';
+                card.innerHTML = `
+                    <div class="challenge-header">
+                        <div>
+                            <div class="challenge-from">${c.challenger_name} <span class="challenger-label">challenged you</span></div>
+                            <div class="challenge-info">
+                                <span class="type-badge type-${c.battle_type}">${TYPE_LABELS[c.battle_type]}</span>
+                                <span class="metric-badge">${METRIC_LABELS[c.metric]}</span>
+                            </div>
+                            ${inCourseTag}
+                        </div>
+                        <div class="challenge-actions">
+                            <button class="btn-accept" onclick="acceptBattle(${c.id}, this)">Accept</button>
+                            <button class="btn-decline" onclick="declineBattle(${c.id}, this)">✕</button>
+                        </div>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text3)">⏱ ${c.time_remaining} remaining</div>`;
+                list.appendChild(card);
+            }
+            container.appendChild(list);
+        }
+
+        if (outgoing.challenges?.length > 0) {
+            const label = document.createElement('div');
+            label.className = 'section-label';
+            label.textContent = '📤 Sent — Waiting for Response';
+            container.appendChild(label);
+
+            const list = document.createElement('div');
+            list.className = 'battles-list';
+            for (const c of outgoing.challenges) {
+                const card = document.createElement('div');
+                card.className = c.is_open ? 'open-card' : 'challenge-card';
+                const statusLabel = c.is_open
+                    ? '<span style="flex-shrink:0;font-size:0.78rem;color:var(--weekly);font-weight:600">🌐 Open</span>'
+                    : '<span class="challenge-pending-label" style="flex-shrink:0;font-size:0.78rem;color:var(--text3)">Pending</span>';
+                const targetLabel = c.is_open ? 'Open to anyone' : (c.opponent_name || 'Waiting…');
+                const outHoleInfo = c.course_holes ? ` · ${c.course_holes}h` : '';
+                const outParInfo = c.course_par ? ` · Par ${c.course_par}` : '';
+                const outCourseTag = c.course_name
+                    ? `<div style="margin-top:0.35rem;font-size:0.75rem;color:var(--green)">📍 ${c.course_name}${c.course_city ? ', ' + c.course_city : ''}${c.course_state ? ', ' + c.course_state : ''}${outHoleInfo}${outParInfo}</div>`
+                    : '';
+                card.innerHTML = `
+                    <div class="challenge-header" style="margin-bottom:0.4rem">
+                        <div>
+                            <div class="challenge-from">You → ${targetLabel}</div>
+                            <div class="challenge-info">
+                                <span class="type-badge type-${c.battle_type}">${TYPE_LABELS[c.battle_type]}</span>
+                                <span class="metric-badge">${METRIC_LABELS[c.metric]}</span>
+                            </div>
+                            ${outCourseTag}
+                        </div>
+                        ${statusLabel}
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text3)">⏱ Expires in ${c.time_remaining}</div>`;
+                list.appendChild(card);
+            }
+            container.appendChild(list);
+        }
+
+        if (!incoming.challenges?.length && !outgoing.challenges?.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📪</div>
+                    <div class="empty-title">No pending challenges</div>
+                    <div class="empty-sub">Challenge someone to get things going.</div>
+                    <button class="empty-cta" onclick="openChallengeModal()">⚔️ Send a Challenge</button>
+                </div>`;
+        }
+    } catch (e) {
+        document.getElementById('challenges-content').innerHTML = '<p style="text-align:center;color:var(--text3);padding:2rem;">Failed to load</p>';
+    }
+}
+
+async function loadOpen() {
+    try {
+        const res = await fetch('/api/battles/open', { headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        document.getElementById('open-list').style.display = 'block';
+        openLoaded = true;
+
+        const list = document.getElementById('open-list');
+        if (!data.open || data.open.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🌐</div>
+                    <div class="empty-title">No open challenges</div>
+                    <div class="empty-sub">Post one and let anyone join!</div>
+                    <button class="empty-cta" onclick="openChallengeModal()">🌐 Post Open Challenge</button>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = '';
+        const battlesList = document.createElement('div');
+        battlesList.className = 'battles-list';
+        for (const c of data.open) {
+            const card = document.createElement('div');
+            card.className = 'open-card';
+            const openHoleInfo = c.course_holes ? ` · ${c.course_holes}h` : '';
+            const openParInfo = c.course_par ? ` · Par ${c.course_par}` : '';
+            const openCourseTag = c.course_name
+                ? `<div style="margin-top:0.4rem;font-size:0.75rem;color:var(--green);font-weight:600">📍 ${c.course_name}${c.course_city ? ', ' + c.course_city : ''}${c.course_state ? ', ' + c.course_state : ''}${openHoleInfo}${openParInfo}</div>`
+                : '';
+            const chalInitials = initials(c.challenger_name || '?');
+            card.innerHTML = `
+                <div class="challenge-header">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">
+                            <div class="avatar avatar-opp" style="width:32px;height:32px;font-size:0.72rem;border-radius:8px">${chalInitials}</div>
+                            <div class="challenge-from">${c.challenger_name}</div>
+                        </div>
+                        <div class="challenge-info">
+                            <span class="type-badge type-${c.battle_type}">${TYPE_LABELS[c.battle_type]}</span>
+                            <span class="metric-badge">${METRIC_LABELS[c.metric]}</span>
+                        </div>
+                        ${openCourseTag}
+                    </div>
+                    <button class="btn-jump-in" onclick="acceptBattle(${c.id}, this)">Jump In</button>
+                </div>
+                <div style="font-size:0.75rem;color:var(--text3)">⏱ ${c.time_remaining} remaining</div>`;
+            battlesList.appendChild(card);
+        }
+        list.appendChild(battlesList);
+    } catch (e) {
+        document.getElementById('open-list').innerHTML = '<p style="text-align:center;color:var(--text3);padding:2rem;">Failed to load</p>';
+    }
+}
+
+async function loadHistory() {
+    try {
+        const res = await fetch('/api/battles/me', { headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        document.getElementById('history-list').style.display = 'block';
+        historyLoaded = true;
+
+        const list = document.getElementById('history-list');
+        if (!data.battles || data.battles.length === 0) {
+            list.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><div class="empty-title">No battle history yet</div><div class="empty-sub">Completed battles appear here.</div></div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        const container = document.createElement('div');
+        container.className = 'battles-list';
+        for (const b of data.battles) {
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            const resultClass = b.was_tie ? 'result-t' : (b.won ? 'result-w' : 'result-l');
+            const resultText = b.was_tie ? 'TIE' : (b.won ? 'WIN' : 'LOSS');
+            const myDisp = metricDisplay(b.metric, b.my_value, b.my_value === null);
+            const oppDisp = metricDisplay(b.metric, b.opp_value, b.opp_value === null);
+
+            const histHoleInfo = b.course_holes ? ` · ${b.course_holes}h` : '';
+            const histParInfo = b.course_par ? ` · Par ${b.course_par}` : '';
+            const histCourseTag = b.course_name
+                ? `<div style="font-size:0.72rem;color:var(--green);margin-top:0.15rem">📍 ${b.course_name}${histHoleInfo}${histParInfo}</div>`
+                : '';
+
+            card.innerHTML = `
+                <div class="result-badge ${resultClass}">${resultText}</div>
+                <div class="history-info">
+                    <div class="history-opponent">vs ${b.opponent_name || '?'}</div>
+                    <div class="history-meta">${TYPE_LABELS[b.battle_type]} · ${METRIC_LABELS[b.metric]}</div>
+                    ${histCourseTag}
+                </div>
+                <div class="history-scores">
+                    <div class="history-score-val ${b.won ? 'won' : 'lost'}">${myDisp}</div>
+                    <div class="history-score-label">vs ${oppDisp}</div>
+                </div>`;
+            container.appendChild(card);
+        }
+        list.appendChild(container);
+    } catch (e) {
+        document.getElementById('history-list').innerHTML = '<p style="text-align:center;color:var(--text3);padding:2rem;">Failed to load</p>';
+    }
+}
+
+// ── Battle actions ────────────────────────────────────────────────────────────
+
+async function acceptBattle(battleId, btn) {
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+        const res = await fetch('/api/battles/' + battleId + '/accept', {
+            method: 'POST', headers: authHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'Failed to accept'); btn.disabled = false; btn.textContent = 'Accept'; return; }
+        showToast('⚔️ Battle started! Play a round to score.');
+        challengesLoaded = false; activeBattlesLoaded = false; openLoaded = false;
+        setTimeout(() => { switchTab('active'); }, 1000);
+    } catch { showToast('Network error'); btn.disabled = false; }
+}
+
+async function declineBattle(battleId, btn) {
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/battles/' + battleId + '/decline', {
+            method: 'POST', headers: authHeaders(),
+        });
+        if (!res.ok) { showToast('Failed to decline'); return; }
+        showToast('Challenge declined.');
+        challengesLoaded = false;
+        setTimeout(() => loadChallenges(), 300);
+    } catch { showToast('Network error'); }
+}
+
+// ── Challenge modal ───────────────────────────────────────────────────────────
+
+function openChallengeModal() {
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function toggleOpenChallenge() {
+    const isOpen = document.getElementById('open-toggle').checked;
+    challengeState.isOpen = isOpen;
+    document.getElementById('player-search-section').style.display = isOpen ? 'none' : 'block';
+    updateConfirmButton();
+}
+
+function selectType(type) {
+    document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('selected','daily','weekly','monthly'));
+    const btn = document.querySelector(`[data-type="${type}"]`);
+    btn.classList.add('selected', type);
+    challengeState.battleType = type;
+    document.getElementById('xp-val').textContent = '+' + XP_BY_TYPE[type] + ' XP';
+    const partXp = type === 'daily' ? 75 : type === 'weekly' ? 150 : 300;
+    document.querySelector('.xp-preview span:last-child').textContent = '(+' + partXp + ' XP just for playing)';
+}
+
+function selectMetric(metric) {
+    document.querySelectorAll('[data-metric]').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`[data-metric="${metric}"]`).classList.add('selected');
+    challengeState.metric = metric;
+}
+
+function updateConfirmButton() {
+    const hasCourse = challengeState.courseId !== null;
+    const hasHoleCount = challengeState.holeCount !== null;
+    const hasOpponent = challengeState.isOpen || (challengeState.opponentId !== null);
+    const canSubmit = hasCourse && hasHoleCount && hasOpponent;
+    document.getElementById('btn-confirm').disabled = !canSubmit;
+    document.getElementById('btn-confirm').textContent = challengeState.isOpen ? 'Post Open Challenge' : 'Send Challenge';
+}
+
+// Course search
+let courseSearchResults = [];
+
+function onCourseSearchInput() {
+    const q = document.getElementById('course-search').value.trim();
+    if (challengeState.courseId) {
+        challengeState.courseId = null;
+        challengeState.courseName = null;
+        challengeState.courseLocation = null;
+        challengeState.holeCount = null;
+        document.getElementById('selected-course-display').style.display = 'none';
+        document.getElementById('hole-count-section').style.display = 'none';
+        updateConfirmButton();
+    }
+    clearTimeout(courseSearchTimeout);
+    if (q.length < 2) { document.getElementById('course-search-results').classList.remove('show'); return; }
+    courseSearchTimeout = setTimeout(() => doCourseSearch(q), 300);
+}
+
+function onCourseSearchFocus() {
+    const q = document.getElementById('course-search').value.trim();
+    if (q.length >= 2) doCourseSearch(q);
+}
+
+let _cachedCourses = null;
+async function doCourseSearch(q) {
+    try {
+        if (!_cachedCourses) {
+            const res = await fetch('/api/courses', { headers: { Authorization: 'Bearer ' + token } });
+            _cachedCourses = await res.json();
+        }
+        const courses = Array.isArray(_cachedCourses) ? _cachedCourses : (_cachedCourses.courses || []);
+        const lower = q.toLowerCase();
+        const filtered = courses.filter(c =>
+            c.name.toLowerCase().includes(lower) ||
+            (c.city && c.city.toLowerCase().includes(lower)) ||
+            (c.state && c.state.toLowerCase().includes(lower))
+        ).slice(0, 8);
+        const results = document.getElementById('course-search-results');
+        if (filtered.length === 0) {
+            results.innerHTML = '<div style="padding:0.75rem 1rem;color:var(--text3);font-size:0.85rem">No courses found</div>';
+        } else {
+            results.innerHTML = '';
+            for (const c of filtered) {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `<span class="sr-name">${c.name}</span><span class="sr-meta">${c.city ? c.city + ', ' : ''}${c.state || ''}</span>`;
+                item.onclick = () => selectCourse(c);
+                results.appendChild(item);
+            }
+        }
+        results.classList.add('show');
+    } catch {}
+}
+
+function selectCourse(c) {
+    challengeState.courseId = c.id;
+    challengeState.courseName = c.name;
+    challengeState.courseLocation = [c.city, c.state].filter(Boolean).join(', ');
+    challengeState.holeCount = null;
+    document.getElementById('course-search').value = c.name;
+    document.getElementById('course-search-results').classList.remove('show');
+    document.getElementById('selected-course-name').textContent = '📍 ' + c.name;
+    document.getElementById('selected-course-location').textContent = challengeState.courseLocation;
+    document.getElementById('selected-course-display').style.display = 'block';
+    renderBattleHoleOptions(parseInt(c.holes) || 18);
+    updateConfirmButton();
+}
+
+function renderBattleHoleOptions(courseTotal) {
+    const options = [];
+    for (let h = 9; h < courseTotal; h += 9) {
+        options.push({ holes: h, isFull: false });
+    }
+    options.push({ holes: courseTotal, isFull: true });
+
+    const seen = new Set();
+    const deduped = options.filter(o => {
+        if (seen.has(o.holes)) return false;
+        seen.add(o.holes);
+        return true;
+    });
+
+    function holeLabel(o) {
+        if (o.isFull) {
+            if (o.holes === 9) return 'Front 9';
+            if (o.holes === 18) return 'Full Round';
+            return 'Full Course';
+        }
+        if (o.holes === 9) return 'Front 9';
+        if (o.holes === 18) return '18 Holes';
+        return `${o.holes} Holes`;
+    }
+
+    const grid = document.getElementById('hole-count-grid');
+    grid.innerHTML = deduped.map((o, i) =>
+        `<button class="option-btn${i === 0 ? ' selected' : ''}" data-holes="${o.holes}" onclick="selectHoleCount(${o.holes}, this)">
+            <div class="option-title" style="font-size:1.1rem">${o.holes}</div>
+            <div class="option-sub">${holeLabel(o)}</div>
+        </button>`
+    ).join('');
+
+    challengeState.holeCount = deduped[0].holes;
+    document.getElementById('hole-count-section').style.display = 'block';
+}
+
+function selectHoleCount(holes, btn) {
+    document.querySelectorAll('#hole-count-grid .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    challengeState.holeCount = holes;
+    updateConfirmButton();
+}
+
+// Player search
+let searchResults = [];
+let selectedPlayerName = '';
+
+function onSearchInput() {
+    const q = document.getElementById('player-search').value.trim();
+    if (challengeState.opponentId) {
+        challengeState.opponentId = null;
+        document.getElementById('selected-player-display').style.display = 'none';
+        updateConfirmButton();
+    }
+    clearTimeout(searchTimeout);
+    if (q.length < 2) { document.getElementById('search-results').classList.remove('show'); return; }
+    searchTimeout = setTimeout(() => doSearch(q), 300);
+}
+
+function onSearchFocus() {
+    const q = document.getElementById('player-search').value.trim();
+    if (q.length >= 2) doSearch(q);
+}
+
+async function doSearch(q) {
+    try {
+        const res = await fetch('/api/players/search?q=' + encodeURIComponent(q), {
+            headers: { Authorization: 'Bearer ' + token },
+        });
+        const data = await res.json();
+        const results = document.getElementById('search-results');
+        if (!data.players || data.players.length === 0) {
+            results.innerHTML = '<div style="padding:0.75rem 1rem;color:var(--text3);font-size:0.85rem">No players found</div>';
+        } else {
+            results.innerHTML = '';
+            for (const p of data.players) {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `<span class="sr-name">${p.display_name}${p.username ? ' <span style="color:var(--text3)">@' + p.username + '</span>' : ''}</span><span class="sr-meta">Lv${p.level} · ${p.battle_wins}W</span>`;
+                item.onclick = () => selectPlayer(p);
+                results.appendChild(item);
+            }
+        }
+        results.classList.add('show');
+    } catch {}
+}
+
+function selectPlayer(p) {
+    challengeState.opponentId = p.id;
+    challengeState.opponentName = p.display_name;
+    document.getElementById('player-search').value = p.display_name + (p.username ? ' (@' + p.username + ')' : '');
+    document.getElementById('search-results').classList.remove('show');
+    const disp = document.getElementById('selected-player-display');
+    disp.textContent = '✓ Challenging ' + p.display_name;
+    disp.style.display = 'block';
+    updateConfirmButton();
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrap')) {
+        document.getElementById('search-results').classList.remove('show');
+        document.getElementById('course-search-results').classList.remove('show');
+    }
+});
+
+async function submitChallenge() {
+    if (!challengeState.courseId) {
+        showToast('📍 Please select a course first');
+        return;
+    }
+
+    const btn = document.getElementById('btn-confirm');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    if (!challengeState.holeCount) {
+        showToast('⛳ Please select a hole count');
+        return;
+    }
+
+    const body = {
+        battle_type: challengeState.battleType,
+        metric: challengeState.metric,
+        is_open: challengeState.isOpen,
+        course_id: challengeState.courseId,
+        hole_count: challengeState.holeCount,
+    };
+    if (!challengeState.isOpen) body.opponent_id = challengeState.opponentId;
+
+    try {
+        const res = await fetch('/api/battles', {
+            method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Failed to send');
+            btn.disabled = false;
+            btn.textContent = challengeState.isOpen ? 'Post Open Challenge' : 'Send Challenge';
+            return;
+        }
+        closeModal();
+        showToast(challengeState.isOpen ? '🌐 Open challenge posted!' : `⚔️ Challenge sent to ${challengeState.opponentName}!`);
+        challengeState = { opponentId: null, opponentName: null, battleType: 'daily', metric: 'best_score', isOpen: false, courseId: null, courseName: null, courseLocation: null, holeCount: null };
+        document.getElementById('course-search').value = '';
+        document.getElementById('selected-course-display').style.display = 'none';
+        document.getElementById('hole-count-section').style.display = 'none';
+        document.getElementById('player-search').value = '';
+        document.getElementById('selected-player-display').style.display = 'none';
+        document.getElementById('open-toggle').checked = false;
+        document.getElementById('player-search-section').style.display = 'block';
+        document.getElementById('btn-confirm').textContent = 'Send Challenge';
+        challengesLoaded = false; openLoaded = false;
+        switchTab('challenges');
+    } catch {
+        showToast('Network error');
+        btn.disabled = false;
+        btn.textContent = 'Send Challenge';
+    }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+let toastTimer;
+function showToast(msg, dur = 3500) {
+    const t = document.getElementById('toast');
+    t.innerHTML = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ── Confetti (canvas-based, <300ms burst) ─────────────────────────────────────
+
+function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const COLORS = ['#3ca83c','#ffd050','#60a5fa','#f59e0b','#a78bfa','#fc8181','#7ed957'];
+    const pieces = Array.from({ length: 80 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -10 - Math.random() * 40,
+        w: 6 + Math.random() * 8,
+        h: 4 + Math.random() * 4,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 3 + Math.random() * 4,
+        rot: Math.random() * Math.PI * 2,
+        rotV: (Math.random() - 0.5) * 0.3,
+    }));
+
+    let startTime = null;
+    const DURATION = 2200;
+
+    function draw(ts) {
+        if (!startTime) startTime = ts;
+        const elapsed = ts - startTime;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const alpha = elapsed < 1800 ? 1 : Math.max(0, 1 - (elapsed - 1800) / 400);
+        ctx.globalAlpha = alpha;
+
+        for (const p of pieces) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.12; // gravity
+            p.rot += p.rotV;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+        }
+
+        ctx.globalAlpha = 1;
+        if (elapsed < DURATION) requestAnimationFrame(draw);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    requestAnimationFrame(draw);
+}
+
+// ── Battle Item Choice ─────────────────────────────────────────────────────────
+
+let pendingChoiceId = null;
+
+async function checkPendingItemChoice() {
+    try {
+        const res = await fetch('/api/battles/pending-item-choice', { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.pending) {
+            showItemChoiceModal(data.pending);
+        }
+    } catch (e) {
+        // Non-critical
+    }
+}
+
+function showItemChoiceModal(pending) {
+    pendingChoiceId = pending.choice_id;
+    const oppEl = document.getElementById('choice-opp-name');
+    if (pending.opponent_name) {
+        oppEl.textContent = 'You defeated ' + pending.opponent_name + ' in a ' + (pending.battle_type || '') + ' battle';
+    } else {
+        oppEl.textContent = '';
+    }
+
+    const cardsEl = document.getElementById('choice-cards');
+    cardsEl.innerHTML = '';
+    (pending.options || []).forEach(item => {
+        const card = document.createElement('button');
+        card.className = 'choice-item-card';
+        card.dataset.itemId = item.id;
+        card.innerHTML = `
+            <div class="ci-icon">${item.icon || '📦'}</div>
+            <div class="ci-info">
+                <div class="ci-name">${item.name}</div>
+                <div class="ci-desc">${item.description || ''}</div>
+            </div>
+            <div class="ci-rarity rarity-${item.rarity}">${item.rarity}</div>
+        `;
+        card.addEventListener('click', () => claimBattleItem(item.id, card));
+        cardsEl.appendChild(card);
+    });
+
+    document.getElementById('choice-dismiss-btn').classList.remove('show');
+    document.getElementById('item-choice-overlay').classList.add('show');
+
+    // Victory confetti!
+    launchConfetti();
+}
+
+async function claimBattleItem(itemId, clickedCard) {
+    if (!pendingChoiceId) return;
+
+    document.querySelectorAll('.choice-item-card').forEach(c => c.classList.add('selecting'));
+
+    try {
+        const res = await fetch('/api/battles/claim-item', {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ choice_id: pendingChoiceId, item_id: itemId }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Failed to claim item');
+            document.querySelectorAll('.choice-item-card').forEach(c => c.classList.remove('selecting'));
+            return;
+        }
+
+        document.querySelectorAll('.choice-item-card').forEach(c => {
+            c.classList.remove('selecting');
+            if (parseInt(c.dataset.itemId) === itemId) {
+                c.classList.add('chosen');
+            } else {
+                c.classList.add('unchosen');
+            }
+        });
+
+        setTimeout(() => {
+            document.getElementById('choice-dismiss-btn').classList.add('show');
+        }, 600);
+
+        pendingChoiceId = null;
+    } catch (e) {
+        showToast('Network error');
+        document.querySelectorAll('.choice-item-card').forEach(c => c.classList.remove('selecting'));
+    }
+}
+
+function closeItemChoiceModal() {
+    document.getElementById('item-choice-overlay').classList.remove('show');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+updateConfirmButton();
+loadActiveBattles();
+checkPendingItemChoice();
+</script>
+<!-- In-app notification popup -->
+<div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
+<div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="flex:1;min-width:0;">
+      <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
+      <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <button id="notifPopupClose" style="flex-shrink:0;background:var(--surface2,#2a2a27);border:1px solid var(--border,rgba(255,255,255,0.07));border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text3,#78787a);display:flex;align-items:center;justify-content:center;line-height:1;" aria-label="Dismiss">✕</button>
+  </div>
+  <button id="notifPopupDismissBtn" style="width:100%;margin-top:8px;background:var(--green,#7ed957);color:#fff;border:none;border-radius:10px;padding:11px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Got it</button>
+</div>
+<script>
+(function(){
+  var token = localStorage.getItem('dggo_token');
+  var uuid  = localStorage.getItem('dggo_player_uuid');
+  if (!token && !uuid) return; // not logged in
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  else headers['X-Player-Id'] = uuid;
+  var currentNotifId = null;
+  function dismiss() {
+    document.getElementById('notifPopup').style.display='none';
+    document.getElementById('notifPopupOverlay').style.display='none';
+    if (!currentNotifId) return;
+    fetch('/api/notifications/' + currentNotifId + '/dismiss', { method:'POST', headers:headers }).catch(function(){});
+  }
+  document.getElementById('notifPopupClose').addEventListener('click', dismiss);
+  document.getElementById('notifPopupDismissBtn').addEventListener('click', dismiss);
+  document.getElementById('notifPopupOverlay').addEventListener('click', dismiss);
+  fetch('/api/notifications/active', { headers: headers })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.notification) return;
+      currentNotifId = d.notification.id;
+      document.getElementById('notifPopupTitle').textContent = d.notification.title;
+      document.getElementById('notifPopupMsg').textContent = d.notification.message;
+      document.getElementById('notifPopup').style.display = 'block';
+      document.getElementById('notifPopupOverlay').style.display = 'flex';
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

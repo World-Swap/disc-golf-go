@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <title>Disc Golf Go &mdash; Communications Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+body { padding-bottom: 0; }    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04); }
+    [data-theme="dark"] .card { box-shadow: 0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04); }
+    .input-field { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 0.875rem; width: 100%; outline: none; font-family: 'Space Grotesk', sans-serif; transition: border-color var(--transition); }
+    .input-field:focus { border-color: var(--green); }
+    .btn-green { background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: opacity 0.15s; }
+    .btn-green:hover { opacity: 0.85; }
+    .btn-green:disabled { opacity: 0.5; cursor: default; }
+    .btn-ghost { background: transparent; color: var(--text3); border: 1px solid var(--border2); border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: all 0.15s; }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text3); }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: all 0.15s; }
+    .btn-danger:hover { background: var(--red); color: #fff; }
+    .badge-green { background: var(--green-glow); color: var(--green); padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .badge-gray { background: var(--surface2); color: var(--text3); padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .badge-yellow { background: rgba(251,191,36,0.15); color: #d97706; padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .badge-red { background: rgba(224,64,64,0.12); color: var(--red); padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    #loginOverlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 20px; font-size: 0.875rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 9999; opacity: 0; transition: opacity 0.25s; pointer-events: none; max-width: min(360px, calc(100vw - 2rem)); overflow: hidden; text-overflow: ellipsis; }
+    .toast.show { opacity: 1; }
+    .toast.success { color: var(--green); border-color: var(--green); }
+    .toast.error { color: var(--red); border-color: var(--red); }
+    .notif-row { border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px; }
+    .notif-row:last-child { border-bottom: none; }
+    .notif-row:hover { background: var(--surface2); }
+    .tab-btn { padding: 8px 20px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s; border: 1px solid var(--border2); font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); background: transparent; }
+    .tab-btn.active { background: var(--green); color: #fff; border-color: transparent; }
+    .tab-btn:not(.active):hover { color: var(--text); border-color: var(--text3); }
+    /* Recipient chips */
+    .recipient-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--green-glow); color: var(--green); border: 1px solid rgba(60,168,60,0.3); border-radius: 999px; padding: 3px 10px 3px 12px; font-size: 0.8rem; font-weight: 600; margin: 3px; }
+    .recipient-chip button { background: none; border: none; cursor: pointer; color: inherit; opacity: 0.6; font-size: 1rem; line-height: 1; padding: 0; }
+    .recipient-chip button:hover { opacity: 1; }
+    /* Search dropdown */
+    .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 50; max-height: 220px; overflow-y: auto; margin-top: 4px; }
+    .search-dropdown-item { padding: 10px 14px; cursor: pointer; font-size: 0.875rem; border-bottom: 1px solid var(--border); }
+    .search-dropdown-item:last-child { border-bottom: none; }
+    .search-dropdown-item:hover { background: var(--surface2); }
+    .email-row { border-bottom: 1px solid var(--border); padding: 14px 20px; }
+    .email-row:last-child { border-bottom: none; }
+    .email-row:hover { background: var(--surface2); }
+  </style>
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="card p-8 w-full max-w-sm mx-4">
+    <h1 class="text-xl font-bold mb-1" style="font-family:'Space Mono',monospace;">DISC GOLF GO</h1>
+    <p class="text-sm mb-6" style="color:var(--text3);">Communications Admin</p>
+    <input id="passwordInput" type="password" placeholder="Admin password" class="input-field mb-3" />
+    <button id="loginBtn" class="btn-green w-full">Sign in</button>
+    <p id="loginError" class="text-sm mt-2" style="color:var(--red);display:none;">Wrong password.</p>
+  </div>
+</div>
+
+<!-- Main content -->
+<div id="mainContent" style="display:none;" class="max-w-3xl mx-auto p-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-2xl font-bold" style="font-family:'Space Mono',monospace;">COMMUNICATIONS</h1>
+      <p class="text-sm mt-1" style="color:var(--text3);">In-app notifications &amp; player emails</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="/admin" class="btn-ghost">← Admin</a>
+      <button id="themeToggle" class="btn-ghost">🌙</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-6">
+    <button class="tab-btn active" id="tabNotif" onclick="switchTab('notif')">🔔 Notifications</button>
+    <button class="tab-btn" id="tabEmail" onclick="switchTab('email')">✉️ Email</button>
+  </div>
+
+  <!-- ══════════════ NOTIFICATIONS TAB ══════════════ -->
+  <div id="panelNotif">
+
+    <!-- Compose form -->
+    <div class="card p-6 mb-6">
+      <h2 class="font-bold text-base mb-4" style="color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;font-size:0.75rem;">Compose Notification</h2>
+      <div class="mb-3">
+        <label class="block text-xs font-semibold mb-1" style="color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;">Title</label>
+        <input id="notifTitle" type="text" placeholder="e.g. New feature: multiplayer rounds!" class="input-field" maxlength="255" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-semibold mb-1" style="color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;">Message</label>
+        <textarea id="notifMessage" placeholder="Write your notification message here…" class="input-field" rows="4" style="resize:vertical;"></textarea>
+      </div>
+      <div class="flex items-center gap-4">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" id="notifActive" checked style="accent-color:var(--green);width:16px;height:16px;" />
+          <span class="text-sm font-semibold">Active (show to players)</span>
+        </label>
+        <button id="createBtn" class="btn-green ml-auto">Publish Notification</button>
+      </div>
+      <p id="formError" class="text-xs mt-2" style="color:var(--red);display:none;"></p>
+    </div>
+
+    <!-- Notifications list -->
+    <div class="card">
+      <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:var(--border);">
+        <h2 class="font-bold text-sm" style="text-transform:uppercase;letter-spacing:0.05em;">All Notifications</h2>
+        <span id="countBadge" class="badge-gray">Loading…</span>
+      </div>
+      <div id="notifList">
+        <div class="flex justify-center py-10"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </div><!-- /panelNotif -->
+
+  <!-- ══════════════ EMAIL TAB ══════════════ -->
+  <div id="panelEmail" style="display:none;">
+
+    <!-- Compose email form -->
+    <div class="card p-6 mb-6">
+      <h2 class="font-bold text-base mb-4" style="color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;font-size:0.75rem;">Compose Email</h2>
+
+      <!-- Subject -->
+      <div class="mb-3">
+        <label class="block text-xs font-semibold mb-1" style="color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;">Subject</label>
+        <input id="emailSubject" type="text" placeholder="e.g. Big update just dropped!" class="input-field" maxlength="500" />
+      </div>
+
+      <!-- Body -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold mb-1" style="color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;">Message Body</label>
+        <textarea id="emailBody" placeholder="Write your email message here…" class="input-field" rows="6" style="resize:vertical;"></textarea>
+      </div>
+
+      <!-- Recipients -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold mb-2" style="color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;">Recipients</label>
+        <div class="flex gap-2 mb-3">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="radio" name="recipientType" id="recipAll" value="all" checked style="accent-color:var(--green);width:15px;height:15px;" />
+            <span class="text-sm font-semibold">All Players</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer select-none ml-4">
+            <input type="radio" name="recipientType" id="recipIndiv" value="individual" style="accent-color:var(--green);width:15px;height:15px;" />
+            <span class="text-sm font-semibold">Select Individuals</span>
+          </label>
+        </div>
+
+        <!-- Individual search — shown only when "Select Individuals" is checked -->
+        <div id="individualPickerWrap" style="display:none;">
+          <div class="relative mb-2">
+            <input id="playerSearch" type="text" placeholder="Search by name, username, or email…" class="input-field" autocomplete="off" />
+            <div id="playerSearchDropdown" class="search-dropdown" style="display:none;"></div>
+          </div>
+          <!-- Chips for selected players -->
+          <div id="selectedChips" style="min-height:32px;"></div>
+          <p id="noRecipientsError" class="text-xs mt-1" style="color:var(--red);display:none;">Add at least one recipient.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <button id="sendEmailBtn" class="btn-green">Send Email</button>
+        <p id="emailSendError" class="text-xs" style="color:var(--red);display:none;"></p>
+      </div>
+    </div>
+
+    <!-- Sent email log -->
+    <div class="card">
+      <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:var(--border);">
+        <h2 class="font-bold text-sm" style="text-transform:uppercase;letter-spacing:0.05em;">Sent Email Log</h2>
+        <span id="emailLogBadge" class="badge-gray">Loading…</span>
+      </div>
+      <div id="emailLogList">
+        <div class="flex justify-center py-10"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </div><!-- /panelEmail -->
+
+</div><!-- /mainContent -->
+
+<!-- Edit notification modal -->
+<div id="editModal" class="fixed inset-0 z-40 flex items-center justify-center" style="display:none!important;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);">
+  <div class="card p-6 w-full max-w-lg mx-4">
+    <h2 class="font-bold text-base mb-4">Edit Notification</h2>
+    <input type="hidden" id="editId" />
+    <div class="mb-3">
+      <label class="block text-xs font-semibold mb-1" style="color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;">Title</label>
+      <input id="editTitle" type="text" class="input-field" maxlength="255" />
+    </div>
+    <div class="mb-3">
+      <label class="block text-xs font-semibold mb-1" style="color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;">Message</label>
+      <textarea id="editMessage" class="input-field" rows="4" style="resize:vertical;"></textarea>
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+      <label class="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" id="editActive" style="accent-color:var(--green);width:16px;height:16px;" />
+        <span class="text-sm font-semibold">Active</span>
+      </label>
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button id="editCancelBtn" class="btn-ghost">Cancel</button>
+      <button id="editSaveBtn" class="btn-green">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function() {
+
+  // ── Theme ──────────────────────────────────────────────────────────────
+  var s = localStorage.getItem('dggo_theme');
+  var p = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', s ? (s === 'dark' ? 'dark' : 'light') : (p ? 'dark' : 'light'));
+  document.getElementById('themeToggle').addEventListener('click', function() {
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('dggo_theme', next);
+  });
+
+  // ── Admin auth ─────────────────────────────────────────────────────────
+  var adminToken = sessionStorage.getItem('dggo_admin_token');
+
+  function attemptLogin() {
+    var pw = document.getElementById('passwordInput').value;
+    fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.token) {
+        adminToken = d.token;
+        sessionStorage.setItem('dggo_admin_token', adminToken);
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        onAuthenticated();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    })
+    .catch(function() {
+      document.getElementById('loginError').style.display = 'block';
+    });
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', attemptLogin);
+  document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') attemptLogin();
+  });
+
+  if (adminToken) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    onAuthenticated();
+  }
+
+  function onAuthenticated() {
+    loadNotifications();
+    loadEmailLog();
+  }
+
+  function adminHeaders() {
+    return { 'Content-Type': 'application/json', 'x-admin-token': adminToken };
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────────
+  var toastTimer;
+  function showToast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show ' + (type || '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { el.className = 'toast'; }, 3200);
+  }
+
+  // ── Tab switching ──────────────────────────────────────────────────────
+  window.switchTab = function(tab) {
+    document.getElementById('panelNotif').style.display = tab === 'notif' ? '' : 'none';
+    document.getElementById('panelEmail').style.display = tab === 'email' ? '' : 'none';
+    document.getElementById('tabNotif').classList.toggle('active', tab === 'notif');
+    document.getElementById('tabEmail').classList.toggle('active', tab === 'email');
+  };
+
+  // ══════════════ NOTIFICATIONS ════════════════════════════════════════
+
+  var notifications = [];
+
+  function loadNotifications() {
+    fetch('/api/admin/notifications', { headers: adminHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      notifications = d.notifications || [];
+      renderNotifList();
+    })
+    .catch(function() { showToast('Failed to load notifications', 'error'); });
+  }
+
+  function renderNotifList() {
+    var list = document.getElementById('notifList');
+    var badge = document.getElementById('countBadge');
+    badge.textContent = notifications.length + ' notification' + (notifications.length !== 1 ? 's' : '');
+    badge.className = notifications.length > 0 ? 'badge-green' : 'badge-gray';
+
+    if (!notifications.length) {
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text3);font-size:0.875rem;">No notifications yet. Compose your first one above.</div>';
+      return;
+    }
+
+    list.innerHTML = notifications.map(function(n) {
+      var date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      var statusBadge = n.is_active
+        ? '<span class="badge-green">Active</span>'
+        : '<span class="badge-gray">Inactive</span>';
+      return '<div class="notif-row" data-id="' + n.id + '">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">' +
+            statusBadge +
+            '<span style="font-size:0.7rem;color:var(--text3);">' + escHtml(date) + '</span>' +
+          '</div>' +
+          '<div style="font-weight:600;font-size:0.9375rem;margin-bottom:4px;">' + escHtml(n.title) + '</div>' +
+          '<div style="font-size:0.825rem;color:var(--text2);white-space:pre-wrap;word-break:break-word;">' + escHtml(n.message) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">' +
+          '<button class="btn-ghost edit-btn" data-id="' + n.id + '">Edit</button>' +
+          (n.is_active
+            ? '<button class="btn-ghost deactivate-btn" data-id="' + n.id + '">Deactivate</button>'
+            : '<button class="btn-ghost activate-btn" data-id="' + n.id + '">Activate</button>') +
+          '<button class="btn-danger delete-btn" data-id="' + n.id + '">Delete</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    list.querySelectorAll('.edit-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation(); openEdit(parseInt(btn.dataset.id)); });
+    });
+    list.querySelectorAll('.deactivate-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation(); toggleActive(parseInt(btn.dataset.id), false); });
+    });
+    list.querySelectorAll('.activate-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation(); toggleActive(parseInt(btn.dataset.id), true); });
+    });
+    list.querySelectorAll('.delete-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation(); deleteNotification(parseInt(btn.dataset.id)); });
+    });
+  }
+
+  document.getElementById('createBtn').addEventListener('click', function() {
+    var title = document.getElementById('notifTitle').value.trim();
+    var message = document.getElementById('notifMessage').value.trim();
+    var is_active = document.getElementById('notifActive').checked;
+    var errEl = document.getElementById('formError');
+    errEl.style.display = 'none';
+
+    if (!title) { errEl.textContent = 'Title is required.'; errEl.style.display = 'block'; return; }
+    if (!message) { errEl.textContent = 'Message is required.'; errEl.style.display = 'block'; return; }
+
+    var btn = document.getElementById('createBtn');
+    btn.disabled = true; btn.textContent = 'Publishing…';
+
+    fetch('/api/admin/notifications', {
+      method: 'POST',
+      headers: adminHeaders(),
+      body: JSON.stringify({ title: title, message: message, is_active: is_active })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.notification) {
+        document.getElementById('notifTitle').value = '';
+        document.getElementById('notifMessage').value = '';
+        document.getElementById('notifActive').checked = true;
+        showToast('Notification published!', 'success');
+        loadNotifications();
+      } else {
+        errEl.textContent = d.error || 'Failed to create.'; errEl.style.display = 'block';
+      }
+    })
+    .catch(function() { errEl.textContent = 'Server error.'; errEl.style.display = 'block'; })
+    .finally(function() { btn.disabled = false; btn.textContent = 'Publish Notification'; });
+  });
+
+  function toggleActive(id, active) {
+    fetch('/api/admin/notifications/' + id, {
+      method: 'PATCH',
+      headers: adminHeaders(),
+      body: JSON.stringify({ is_active: active })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.notification) {
+        showToast(active ? 'Notification activated' : 'Notification deactivated', 'success');
+        loadNotifications();
+      } else {
+        showToast(d.error || 'Failed', 'error');
+      }
+    })
+    .catch(function() { showToast('Server error', 'error'); });
+  }
+
+  function deleteNotification(id) {
+    if (!confirm('Delete this notification? This cannot be undone.')) return;
+    fetch('/api/admin/notifications/' + id, { method: 'DELETE', headers: adminHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) { showToast('Notification deleted', 'success'); loadNotifications(); }
+      else showToast(d.error || 'Failed', 'error');
+    })
+    .catch(function() { showToast('Server error', 'error'); });
+  }
+
+  function openEdit(id) {
+    var n = notifications.find(function(x) { return x.id === id; });
+    if (!n) return;
+    document.getElementById('editId').value = n.id;
+    document.getElementById('editTitle').value = n.title;
+    document.getElementById('editMessage').value = n.message;
+    document.getElementById('editActive').checked = n.is_active;
+    document.getElementById('editModal').style.display = 'flex';
+  }
+
+  document.getElementById('editCancelBtn').addEventListener('click', function() {
+    document.getElementById('editModal').style.display = 'none';
+  });
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('editModal')) document.getElementById('editModal').style.display = 'none';
+  });
+
+  document.getElementById('editSaveBtn').addEventListener('click', function() {
+    var id = parseInt(document.getElementById('editId').value);
+    var title = document.getElementById('editTitle').value.trim();
+    var message = document.getElementById('editMessage').value.trim();
+    var is_active = document.getElementById('editActive').checked;
+    if (!title || !message) { showToast('Title and message are required', 'error'); return; }
+
+    var btn = document.getElementById('editSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    fetch('/api/admin/notifications/' + id, {
+      method: 'PATCH',
+      headers: adminHeaders(),
+      body: JSON.stringify({ title: title, message: message, is_active: is_active })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.notification) {
+        showToast('Saved', 'success');
+        document.getElementById('editModal').style.display = 'none';
+        loadNotifications();
+      } else {
+        showToast(d.error || 'Save failed', 'error');
+      }
+    })
+    .catch(function() { showToast('Server error', 'error'); })
+    .finally(function() { btn.disabled = false; btn.textContent = 'Save Changes'; });
+  });
+
+  // ══════════════ EMAIL ════════════════════════════════════════════════
+
+  // Recipient type toggle
+  var selectedPlayers = {}; // id -> {id, email, display_name}
+
+  document.getElementById('recipAll').addEventListener('change', function() {
+    document.getElementById('individualPickerWrap').style.display = 'none';
+  });
+  document.getElementById('recipIndiv').addEventListener('change', function() {
+    document.getElementById('individualPickerWrap').style.display = '';
+  });
+
+  // Player search
+  var searchDebounce;
+  document.getElementById('playerSearch').addEventListener('input', function() {
+    var q = this.value.trim();
+    clearTimeout(searchDebounce);
+    if (q.length < 2) { closeDropdown(); return; }
+    searchDebounce = setTimeout(function() { doPlayerSearch(q); }, 280);
+  });
+
+  document.getElementById('playerSearch').addEventListener('blur', function() {
+    // Delay so click on dropdown item registers first
+    setTimeout(closeDropdown, 180);
+  });
+
+  function doPlayerSearch(q) {
+    fetch('/api/admin/emails/users-search?q=' + encodeURIComponent(q), { headers: adminHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var users = d.users || [];
+      var dropdown = document.getElementById('playerSearchDropdown');
+      if (!users.length) { closeDropdown(); return; }
+      dropdown.innerHTML = users.map(function(u) {
+        var label = escHtml(u.display_name) + ' <span style="color:var(--text3);font-size:0.75rem;">' + escHtml(u.email) + '</span>';
+        return '<div class="search-dropdown-item" data-id="' + u.id + '" data-email="' + escHtml(u.email) + '" data-name="' + escHtml(u.display_name) + '">' + label + '</div>';
+      }).join('');
+      dropdown.style.display = '';
+      dropdown.querySelectorAll('.search-dropdown-item').forEach(function(item) {
+        item.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          var id = parseInt(item.dataset.id);
+          selectPlayer({ id: id, email: item.dataset.email, display_name: item.dataset.name });
+        });
+      });
+    })
+    .catch(function() {});
+  }
+
+  function closeDropdown() {
+    document.getElementById('playerSearchDropdown').style.display = 'none';
+  }
+
+  function selectPlayer(player) {
+    selectedPlayers[player.id] = player;
+    document.getElementById('playerSearch').value = '';
+    closeDropdown();
+    renderChips();
+  }
+
+  function removePlayer(id) {
+    delete selectedPlayers[id];
+    renderChips();
+  }
+
+  function renderChips() {
+    var container = document.getElementById('selectedChips');
+    var ids = Object.keys(selectedPlayers);
+    if (!ids.length) { container.innerHTML = '<span style="font-size:0.8rem;color:var(--text3);">No recipients selected yet.</span>'; return; }
+    container.innerHTML = ids.map(function(id) {
+      var p = selectedPlayers[id];
+      return '<span class="recipient-chip">' + escHtml(p.display_name) +
+        '<button onclick="removePlayer(' + p.id + ')" title="Remove">×</button>' +
+        '</span>';
+    }).join('');
+  }
+  window.removePlayer = removePlayer;
+
+  // Send email
+  document.getElementById('sendEmailBtn').addEventListener('click', function() {
+    var subject = document.getElementById('emailSubject').value.trim();
+    var body = document.getElementById('emailBody').value.trim();
+    var recipientType = document.querySelector('input[name="recipientType"]:checked').value;
+    var errEl = document.getElementById('emailSendError');
+    errEl.style.display = 'none';
+
+    if (!subject) { errEl.textContent = 'Subject is required.'; errEl.style.display = 'block'; return; }
+    if (!body) { errEl.textContent = 'Message body is required.'; errEl.style.display = 'block'; return; }
+
+    var recipientIds = [];
+    if (recipientType === 'individual') {
+      recipientIds = Object.keys(selectedPlayers).map(Number);
+      if (!recipientIds.length) {
+        document.getElementById('noRecipientsError').style.display = 'block';
+        return;
+      }
+    }
+    document.getElementById('noRecipientsError').style.display = 'none';
+
+    var confirmMsg = recipientType === 'all'
+      ? 'Send this email to ALL players? This cannot be undone.'
+      : 'Send this email to ' + recipientIds.length + ' selected player(s)?';
+    if (!confirm(confirmMsg)) return;
+
+    var btn = document.getElementById('sendEmailBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+
+    fetch('/api/admin/emails/send', {
+      method: 'POST',
+      headers: adminHeaders(),
+      body: JSON.stringify({ subject: subject, body: body, recipient_type: recipientType, recipient_ids: recipientIds })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        var msg = 'Sent to ' + d.sent + '/' + d.total + ' recipients';
+        if (d.failed > 0) msg += ' (' + d.failed + ' failed)';
+        showToast(msg, d.failed > 0 ? '' : 'success');
+        document.getElementById('emailSubject').value = '';
+        document.getElementById('emailBody').value = '';
+        selectedPlayers = {};
+        renderChips();
+        loadEmailLog();
+      } else {
+        errEl.textContent = d.error || 'Send failed.'; errEl.style.display = 'block';
+      }
+    })
+    .catch(function() { errEl.textContent = 'Server error.'; errEl.style.display = 'block'; })
+    .finally(function() { btn.disabled = false; btn.textContent = 'Send Email'; });
+  });
+
+  // Load email log
+  function loadEmailLog() {
+    fetch('/api/admin/emails', { headers: adminHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var emails = d.emails || [];
+      renderEmailLog(emails);
+    })
+    .catch(function() {
+      document.getElementById('emailLogList').innerHTML = '<div style="text-align:center;padding:30px;color:var(--red);font-size:0.875rem;">Failed to load email log.</div>';
+    });
+  }
+
+  function renderEmailLog(emails) {
+    var badge = document.getElementById('emailLogBadge');
+    badge.textContent = emails.length + ' sent';
+    badge.className = emails.length > 0 ? 'badge-green' : 'badge-gray';
+
+    var list = document.getElementById('emailLogList');
+    if (!emails.length) {
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text3);font-size:0.875rem;">No emails sent yet.</div>';
+      return;
+    }
+
+    list.innerHTML = emails.map(function(e) {
+      var date = new Date(e.sent_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+      var statusBadge = e.status === 'sent'
+        ? '<span class="badge-green">Sent</span>'
+        : e.status === 'partial'
+          ? '<span class="badge-yellow">Partial</span>'
+          : '<span class="badge-red">Failed</span>';
+      var recipLabel = e.recipient_type === 'all'
+        ? 'All players'
+        : (e.recipient_count || '?') + ' selected';
+
+      return '<div class="email-row">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;">' +
+          statusBadge +
+          '<span style="font-size:0.7rem;color:var(--text3);">' + escHtml(date) + '</span>' +
+          '<span style="font-size:0.7rem;color:var(--text3);">→ ' + escHtml(recipLabel) + '</span>' +
+        '</div>' +
+        '<div style="font-weight:600;font-size:0.9rem;margin-bottom:3px;">' + escHtml(e.subject) + '</div>' +
+        (e.notes ? '<div style="font-size:0.78rem;color:var(--red);margin-top:3px;">Note: ' + escHtml(e.notes) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Escape HTML ────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+})();
+</script>
+</body>
+</html>

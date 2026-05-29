@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ExportOptions.plist — iOS App Store distribution export config
+  Used by: .github/workflows/ios-build.yml (xcodebuild -exportArchive)
+
+  signingStyle: manual — uses the provisioning profile imported from
+  IOS_PROVISIONING_PROFILE secret. The CI workflow injects the profile
+  UUID dynamically into the provisioningProfiles dict at build time.
+
+  To use locally (requires Xcode + correct cert installed):
+    xcodebuild -exportArchive \
+      -archivePath build/App.xcarchive \
+      -exportOptionsPlist ExportOptions.plist \
+      -exportPath build/
+-->
+<plist version="1.0">
+<dict>
+  <!-- method: app-store = TestFlight + App Store distribution -->
+  <key>method</key>
+  <string>app-store</string>
+
+  <!-- destination: upload sends directly to App Store Connect -->
+  <!-- change to "export" to only produce a local .ipa -->
+  <key>destination</key>
+  <string>upload</string>
+
+  <!-- manual: uses explicitly imported provisioning profiles -->
+  <key>signingStyle</key>
+  <string>manual</string>
+
+  <key>stripSwiftSymbols</key>
+  <true/>
+
+  <!-- Bitcode deprecated since Xcode 14; keep false -->
+  <key>uploadBitcode</key>
+  <false/>
+
+  <!-- Upload dSYMs for crash reporting in Xcode Organizer -->
+  <key>uploadSymbols</key>
+  <true/>
+
+  <!--
+    provisioningProfiles: maps bundle ID → provisioning profile name or UUID
+    The CI workflow sets this dynamically using the installed profile UUID.
+    For local builds, replace the value with your profile's exact name
+    (visible in Xcode → Project → Signing & Capabilities → Provisioning Profile).
+  -->
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>the.discgolfgo.app</key>
+    <string>Disc Golf Go App Store Distribution</string>
+  </dict>
+</dict>
+</plist>

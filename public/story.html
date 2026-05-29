@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Career Mode — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#7ed957">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+
+    <!-- Dark mode: apply before paint to prevent flash -->
+    <script>
+    (function() {
+        var saved = localStorage.getItem('dggo_theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+    })();
+    </script>
+
+    <style>
+        /* ── HEADER ── */
+        .theme-btn:active { background: var(--surface); border-color: var(--green); }
+
+        /* ── CONTENT ── */
+        .page-content {
+            max-width: 520px; margin: 0 auto;
+            padding: 1rem 1rem 1.5rem;
+        }
+
+        /* ── HERO ── */
+        .story-hero {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            position: relative; overflow: hidden;
+        }
+        .story-hero::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright), var(--gold));
+        }
+        .story-hero-title {
+            display: flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.25rem;
+        }
+        .story-hero-title .emoji { font-size: 2rem; }
+        .story-hero-title h1 {
+            font-size: 1.5rem; font-weight: 700; color: var(--text);
+            letter-spacing: -0.02em; margin: 0;
+        }
+        .story-hero-sub {
+            font-size: 0.84rem; color: var(--text3); margin-bottom: 1.25rem;
+        }
+        .story-stats-row {
+            display: flex; gap: 0.75rem; flex-wrap: wrap;
+            margin-bottom: 1.1rem;
+        }
+        .story-stat {
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: var(--radius-pill); padding: 0.3rem 0.8rem;
+            font-size: 0.8rem; font-weight: 600; color: var(--text2);
+        }
+        .story-stat .val { color: var(--green); font-family: 'Space Mono', monospace; }
+        .story-stat.gold .val { color: var(--gold); }
+        .xp-bar-wrap { }
+        .xp-bar-header {
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-bottom: 0.4rem;
+        }
+        .xp-bar-label { font-size: 0.72rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
+        .xp-bar-value { font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--green); }
+        .bar-track { height: 10px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+        .bar-fill {
+            height: 100%; border-radius: 100px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright));
+            width: 0%; transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── CHAPTERS ── */
+        .chapter-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: opacity var(--transition);
+        }
+        .chapter-card.locked { opacity: 0.6; }
+        .chapter-card.locked:active { opacity: 0.8; }
+
+        .chapter-header {
+            padding: 1.1rem 1.25rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border2);
+        }
+        .chapter-card:not(.locked) .chapter-header:active { background: var(--surface2); }
+        .chapter-num {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--surface2); border: 2px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; color: var(--text3);
+            flex-shrink: 0;
+        }
+        .chapter-card:not(.locked) .chapter-num {
+            background: var(--green-glow); border-color: var(--green); color: var(--green);
+        }
+        .chapter-card.completed .chapter-num { background: var(--gold-glow); border-color: var(--gold); color: var(--gold); }
+        .chapter-card:not(.locked) .chapter-num::before { content: '🌱'; }
+        .chapter-card.completed .chapter-num::before { content: '🏆'; }
+        .chapter-card.locked .chapter-num::before { content: '🔒'; }
+        .chapter-num-num { font-size: 0.75rem; font-weight: 700; }
+        .chapter-info { flex: 1; min-width: 0; }
+        .chapter-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.15rem; }
+        .chapter-desc { font-size: 0.76rem; color: var(--text3); line-height: 1.4; }
+        .chapter-meta {
+            display: flex; gap: 0.5rem; flex-shrink: 0; align-items: center;
+        }
+        .chapter-quest-chip {
+            font-size: 0.72rem; font-weight: 700;
+            background: var(--surface2); border: 1px solid var(--border2);
+            color: var(--text3); border-radius: var(--radius-pill);
+            padding: 0.2rem 0.55rem;
+            white-space: nowrap;
+        }
+        .chapter-card:not(.locked) .chapter-quest-chip {
+            background: var(--green-glow); border-color: var(--green); color: var(--green);
+        }
+        .chapter-chevron {
+            font-size: 1rem; color: var(--text3);
+            transition: transform var(--transition);
+            flex-shrink: 0;
+        }
+        .chapter-card.open .chapter-chevron { transform: rotate(180deg); }
+
+        /* Per-chapter progress bar */
+        .chapter-progress { padding: 0 1.25rem 0.75rem; }
+        .chapter-progress-track {
+            height: 6px; background: var(--surface2); border-radius: 100px;
+            overflow: hidden;
+        }
+        .chapter-progress-fill {
+            height: 100%; border-radius: 100px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright));
+            width: 0%; transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+        .chapter-card.completed .chapter-progress-fill {
+            background: linear-gradient(90deg, var(--gold), #f5c842);
+        }
+
+        /* Chapter body (quest list) */
+        .chapter-body { display: none; padding: 0.75rem 1.25rem 1rem; }
+        .chapter-card.open .chapter-body { display: block; }
+
+        .quest-section-label {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text3); margin: 0.75rem 0 0.5rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .quest-section-label::after {
+            content: ''; flex: 1; height: 1px; background: var(--border2);
+        }
+
+        .quest-row {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border2);
+        }
+        .quest-row:last-child { border-bottom: none; }
+
+        .quest-icon {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--surface2); border: 1.5px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .quest-row.completed .quest-icon {
+            background: var(--green-glow); border-color: var(--green);
+        }
+        .quest-row.main-quest .quest-icon {
+            background: rgba(126,217,87,0.12); border-color: var(--green);
+        }
+        .quest-row.completed.main-quest .quest-icon {
+            background: var(--green-glow); border-color: var(--green);
+        }
+
+        .quest-info { flex: 1; min-width: 0; }
+        .quest-title {
+            font-size: 0.88rem; font-weight: 700; color: var(--text);
+            margin-bottom: 0.15rem;
+        }
+        .quest-row.completed .quest-title { color: var(--text3); }
+        .quest-objective {
+            font-size: 0.74rem; color: var(--text3); line-height: 1.3;
+        }
+        .quest-rewards {
+            display: flex; gap: 0.3rem; align-items: center;
+        }
+        .quest-reward-chip {
+            font-size: 0.65rem; font-weight: 700;
+            background: var(--surface2); border: 1px solid var(--border2);
+            color: var(--text3); border-radius: var(--radius-pill);
+            padding: 0.18rem 0.45rem;
+            white-space: nowrap;
+        }
+        .quest-reward-chip.xp { color: var(--green); border-color: var(--green); background: var(--green-glow); }
+        .quest-reward-chip.gold { color: var(--gold); border-color: var(--gold); background: var(--gold-glow); }
+        .quest-progress {
+            font-family: 'Space Mono', monospace; font-size: 0.75rem;
+            font-weight: 700; color: var(--text3);
+            flex-shrink: 0; min-width: 40px; text-align: right;
+        }
+        .quest-row.completed .quest-progress { color: var(--green); }
+        .quest-row.locked .quest-title,
+        .quest-row.locked .quest-objective { opacity: 0.5; }
+        .quest-row.locked .quest-icon { opacity: 0.5; }
+        .quest-row.in-progress .quest-icon {
+            background: rgba(126,217,87,0.08); border-color: var(--green);
+        }
+        .quest-row.in-progress .quest-progress { color: var(--green); }
+
+        /* ── LOCKED CHAPTER OVERLAY ── */
+        .locked-chapter-msg {
+            text-align: center; padding: 0.5rem 1rem 1rem;
+            font-size: 0.8rem; color: var(--text3);
+        }
+        .locked-chapter-msg strong { color: var(--text2); }
+
+        /* ── NO AUTH ── */
+        .no-auth {
+            display: none; text-align: center; padding: 4rem 2rem;
+        }
+        .no-auth-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .no-auth h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
+        .no-auth p { color: var(--text3); font-size: 0.88rem; margin-bottom: 1.5rem; }
+        .btn-primary {
+            display: inline-block; background: var(--green); color: #fff;
+            border: none; border-radius: 14px; padding: 0.75rem 1.75rem;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem;
+            font-weight: 700; text-decoration: none; cursor: pointer;
+            transition: opacity var(--transition);
+        }
+        .btn-primary:active { opacity: 0.85; }
+
+        /* ── BOTTOM TAB BAR ── */
+    </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="top-header">
+    <a class="header-logo" href="/">
+        <img src="/logo.png?v=3" alt="Disc Golf Go">
+        Disc Golf <span class="go">Go</span>
+    </a>
+    <div class="header-actions">
+<a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+                <div class="notif-bell-wrap" id="notifWrap">
+                <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+                <span class="notif-badge" id="notifBadge" hidden></span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">Notifications</span>
+                        <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                    </div>
+                    <div class="notif-list" id="notifList"></div>
+                </div>
+            </div>
+        <button class="theme-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </div>
+</header>
+
+<!-- ── PAGE CONTENT ── -->
+<main class="page-content" id="main-content">
+
+    <!-- Not signed in -->
+    <div class="no-auth" id="no-auth">
+        <div class="no-auth-icon">📖</div>
+        <h2>Your Career Awaits</h2>
+        <p>Sign in to track your journey from first round to disc golf legend.</p>
+        <a href="/login" class="btn-primary">Sign In</a>
+    </div>
+
+    <!-- Story content -->
+    <div id="story-content" style="display:none">
+
+        <!-- Hero -->
+        <div class="story-hero">
+            <div class="story-hero-title">
+                <span class="emoji">📖</span>
+                <h1>Career Mode</h1>
+            </div>
+            <div class="story-hero-sub" id="hero-sub">Your disc golf journey begins now.</div>
+
+            <div class="story-stats-row">
+                <span class="story-stat">XP <span class="val" id="stat-xp">0</span></span>
+                <span class="story-stat gold">💰 <span class="val" id="stat-gold">0</span></span>
+                <span class="story-stat">⛳ <span class="val" id="stat-rounds">0</span> rounds</span>
+                <span class="story-stat">⚔️ <span class="val" id="stat-wins">0</span> wins</span>
+            </div>
+
+            <div class="xp-bar-wrap">
+                <div class="xp-bar-header">
+                    <span class="xp-bar-label">Story Progress</span>
+                    <span class="xp-bar-value" id="xp-pct">0%</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" id="xp-bar"></div>
+                </div>
+                <div style="margin-top:0.5rem;font-size:0.78rem;color:var(--text3)">
+                    <span id="quests-completed" style="font-weight:700;color:var(--green)">0</span>
+                    quests completed · <span id="chapters-unlocked" style="font-weight:700;color:var(--green)">1</span>/8 chapters unlocked
+                </div>
+            </div>
+        </div>
+
+        <!-- Chapters -->
+        <div id="chapters-list"></div>
+
+    </div>
+</main>
+
+<!-- ── BOTTOM TAB BAR ── -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/crews">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">Crews</span>
+    </a>
+    <a class="tab-item" href="/battles">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Battles</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item active" href="/challenges">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Quests</span>
+    </a>
+    <a class="tab-item" href="/map">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Map</span>
+    </a>
+</nav>
+
+<script>
+// ── DARK MODE ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const next = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('dggo_theme', next);
+            themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+        const saved = localStorage.getItem('dggo_theme');
+        if (saved === 'dark') themeToggle.textContent = '🌙';
+        else if (saved === 'light') themeToggle.textContent = '☀️';
+        else themeToggle.textContent = window.matchMedia('(prefers-color-scheme: dark)').matches ? '🌙' : '☀️';
+    }
+});
+
+// ── AUTH ─────────────────────────────────────────────────────────────
+const TOKEN = localStorage.getItem('dggo_token');
+let currentPlayer = null;
+
+function authHeaders() {
+    const h = {};
+    if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+    return h;
+}
+
+async function checkAuth() {
+    if (!TOKEN) return false;
+    try {
+        const res = await fetch('/api/players/me', { headers: authHeaders() });
+        if (res.ok) {
+            const data = await res.json();
+            currentPlayer = data;
+            return true;
+        }
+    } catch (_) {}
+    return false;
+}
+
+// ── MAIN INIT ───────────────────────────────────────────────────────
+async function init() {
+    const authed = await checkAuth();
+    if (!authed) {
+        document.getElementById('no-auth').style.display = 'block';
+        return;
+    }
+
+    await loadStory();
+}
+
+async function loadStory() {
+    try {
+        const res = await fetch('/api/story', { headers: authHeaders() });
+        if (!res.ok) throw new Error('Failed to load');
+        const data = await res.json();
+        renderStory(data);
+    } catch (err) {
+        console.error('loadStory error:', err);
+        // Show no-auth as fallback
+        document.getElementById('no-auth').style.display = 'block';
+    }
+}
+
+// ── RENDER ──────────────────────────────────────────────────────────
+function renderStory(data) {
+    document.getElementById('story-content').style.display = 'block';
+
+    // Stats
+    document.getElementById('stat-xp').textContent = data.playerXp?.toLocaleString() || '0';
+    document.getElementById('stat-gold').textContent = data.playerGold?.toLocaleString() || '0';
+    document.getElementById('stat-rounds').textContent = data.totalRounds || 0;
+    document.getElementById('stat-wins').textContent = data.battleWins || 0;
+
+    // Progress
+    const totalMain = data.totalMain || 28;
+    const mainCompleted = data.totalMainCompleted || 0;
+    const pct = totalMain > 0 ? Math.round((mainCompleted / totalMain) * 100) : 0;
+    document.getElementById('xp-pct').textContent = pct + '%';
+    document.getElementById('xp-bar').style.width = pct + '%';
+    document.getElementById('quests-completed').textContent =
+        (data.totalMainCompleted || 0) + (data.totalSideCompleted || 0);
+    document.getElementById('chapters-unlocked').textContent = data.unlockedChapter || 1;
+    document.getElementById('hero-sub').textContent =
+        mainCompleted >= totalMain
+            ? '🏆 Legend status achieved. You are disc golf immortal.'
+            : `Chapter ${data.unlockedChapter || 1} unlocked · ${mainCompleted}/${totalMain} main quests done`;
+
+    // Chapters
+    const list = document.getElementById('chapters-list');
+    list.innerHTML = '';
+
+    for (const chapter of (data.chapters || [])) {
+        const locked = chapter.is_locked;
+        const mainCompleted = chapter.quests.filter(q => q.quest_type === 'main' && q.completed).length;
+        const totalMain = chapter.quests.filter(q => q.quest_type === 'main').length;
+        const completed = mainCompleted === totalMain && totalMain > 0;
+        const open = !locked && !completed;
+        const isOpen = open;
+
+        const mainQuests = chapter.quests.filter(q => q.quest_type === 'main');
+        const sideQuests = chapter.quests.filter(q => q.quest_type === 'side');
+
+        const card = document.createElement('div');
+        card.className = 'chapter-card' +
+            (locked ? ' locked' : '') +
+            (completed ? ' completed' : '') +
+            (isOpen ? ' open' : '');
+        card.dataset.chapter = chapter.chapter_number;
+
+        const allQuests = chapter.quests.length;
+        const questsDone = chapter.quests.filter(q => q.completed).length;
+        const chPct = allQuests > 0 ? Math.round((questsDone / allQuests) * 100) : 0;
+
+        card.innerHTML = `
+            <div class="chapter-header" onclick="toggleChapter(${chapter.chapter_number}, ${locked ? 0 : 1})">
+                <div class="chapter-num">
+                    <span class="chapter-num-num">${chapter.chapter_number}</span>
+                </div>
+                <div class="chapter-info">
+                    <div class="chapter-title">${chapter.title}</div>
+                    <div class="chapter-desc">${chapter.description}</div>
+                </div>
+                <div class="chapter-meta">
+                    <span class="chapter-quest-chip">${questsDone}/${allQuests} quests</span>
+                </div>
+                <span class="chapter-chevron">▼</span>
+            </div>
+            <div class="chapter-progress">
+                <div class="chapter-progress-track">
+                    <div class="chapter-progress-fill" style="width:${chPct}%"></div>
+                </div>
+            </div>
+            <div class="chapter-body">
+                ${locked ? `<div class="locked-chapter-msg"><strong>Chapter ${chapter.chapter_number}</strong> — complete more main quests to unlock this chapter.</div>` : ''}
+                ${renderQuestSection('Main Quests', mainQuests, locked)}
+                ${renderQuestSection('Side Quests', sideQuests, locked)}
+            </div>
+        `;
+        list.appendChild(card);
+    }
+}
+
+function renderQuestSection(label, quests, chapterLocked) {
+    if (!quests.length) return '';
+    let html = `<div class="quest-section-label">${label}</div>`;
+    for (const q of quests) {
+        const completed = q.completed;
+        const progress = q.progress || 0;
+        const target = q.target_value || 1;
+        // Status: completed > in-progress > locked > not started
+        let statusIcon, statusClass;
+        if (completed) {
+            statusIcon = '✅'; statusClass = 'completed';
+        } else if (chapterLocked) {
+            statusIcon = '🔒'; statusClass = 'locked';
+        } else if (progress > 0) {
+            statusIcon = '🔄'; statusClass = 'in-progress';
+        } else {
+            statusIcon = '⬜'; statusClass = '';
+        }
+        html += `
+            <div class="quest-row ${statusClass} ${q.quest_type === 'main' ? 'main-quest' : ''}">
+                <div class="quest-icon">${statusIcon}</div>
+                <div class="quest-info">
+                    <div class="quest-title">${q.title}</div>
+                    <div class="quest-objective">${q.objective}</div>
+                </div>
+                <div class="quest-rewards">
+                    ${q.reward_xp > 0 ? `<span class="quest-reward-chip xp">+${q.reward_xp} XP</span>` : ''}
+                    ${q.reward_gold > 0 ? `<span class="quest-reward-chip gold">+${q.reward_gold} 💰</span>` : ''}
+                </div>
+                <div class="quest-progress">${completed ? '✅' : `${progress}/${target}`}</div>
+            </div>
+        `;
+    }
+    return html;
+}
+
+// ── TOGGLE CHAPTER ──────────────────────────────────────────────────
+function toggleChapter(num, action) {
+    if (action === 0) {
+        // Locked — no toggle
+        return;
+    }
+    const card = document.querySelector(`.chapter-card[data-chapter="${num}"]`);
+    if (!card) return;
+    // Close all other chapters first
+    document.querySelectorAll('.chapter-card.open').forEach(c => {
+        if (c !== card) c.classList.remove('open');
+    });
+    card.classList.toggle('open');
+}
+
+// Init
+init();
+</script>
+
+<script>
+// Notification bell — fetches unread admin notifications, shows badge + dropdown
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.classList.toggle('dot', count > 9);
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            })
+            .catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.remove('open');
+    });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

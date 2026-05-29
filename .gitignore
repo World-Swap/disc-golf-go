@@ -1,0 +1,27 @@
+# Agent work directories
+debug/
+shell-snapshots/
+todos/
+.aider*
+.claude*
+*.tmp
+*.bak
+*.orig
+*.scratch
+*.swp
+scratch-*
+repair-*
+fix-*
+agent-*
+# Polsia safety (auto-injected)
+.env
+.env.*
+.claude/
+.claude.json*
+.tmp/
+debug/
+projects/
+shell-snapshots/
+statsig/
+todos/
+*.jsonl

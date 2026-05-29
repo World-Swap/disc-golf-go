@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Disc Golf Go</string>
+    <string name="title_activity_main">Disc Golf Go</string>
+    <string name="package_name">the.discgolfgo.app</string>
+    <string name="custom_url_scheme">the.discgolfgo.app</string>
+</resources>
