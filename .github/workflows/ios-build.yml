@@ -196,12 +196,18 @@ jobs:
           </plist>
           EOF
 
-      # ── 6b. Configure App signing for distribution ───────────────────────
-      - name: Configure App signing
+      # ── 6c. Configure manual signing for App target only ─────────────────
+      - name: Configure App target signing
         run: |
-          # Switch App target to manual signing (Pods stay Automatic)
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/App/App.xcodeproj/project.pbxproj
-          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = ""/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_UUID"'"/' ios/App/App.xcodeproj/project.pbxproj
+          APP_PROJ="ios/App/App.xcodeproj/project.pbxproj"
+          # Switch automatic → manual signing
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$APP_PROJ"
+          # Inject provisioning profile specifier after each CODE_SIGN_STYLE = Manual
+          sed -i '' '/CODE_SIGN_STYLE = Manual;/a\
+\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "a6972488-d0c6-4200-bce6-75d1813db181";
+' "$APP_PROJ"
+          grep "CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER" "$APP_PROJ" | head -10
+          echo "App target configured for manual signing"
 
       # ── 6b. Disable code signing for Pod frameworks (CI only) ───────────
       - name: Disable code signing for Pods
@@ -226,10 +232,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
             -allowProvisioningUpdates \
-            CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             archive
 
       # ── 8. Export IPA ─────────────────────────────────────────────────────
