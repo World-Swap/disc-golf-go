@@ -198,6 +198,8 @@ jobs:
 
       # ── 7. Build Xcode archive ────────────────────────────────────────────
       - name: Build Xcode Archive
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -o pipefail
           xcodebuild \
