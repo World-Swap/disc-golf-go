@@ -1,0 +1,9 @@
+name: Check Xcode Versions
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: macos-latest
+    steps:
+      - run: ls /Applications/ | grep -i xcode
+      - run: xcodebuild -version
+      - run: xcrun --show-sdk-path
