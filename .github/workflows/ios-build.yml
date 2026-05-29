@@ -19,24 +19,19 @@ on:
       - 'capacitor.config.ts'
       - 'public/**'
       - 'package.json'
-      - 'package-lock.json'
-      - '.npmrc'
       - 'ios/**'
-      - 'resources/**'
-      - 'scripts/**'
-      - '.github/workflows/ios-build.yml'
 
 jobs:
   build-ios:
     name: Build iOS App & Upload to TestFlight
-    runs-on: macos-latest  # Apple Silicon runner  Xcode 16 pre-installed
+    runs-on: macos-latest  # Apple Silicon runner — Xcode 16 pre-installed
 
     steps:
-      #  1. Checkout 
+      # ── 1. Checkout ──────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      #  2. Node.js 
+      # ── 2. Node.js ───────────────────────────────────────────────────────
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -46,66 +41,23 @@ jobs:
       - name: Install Node dependencies
         run: npm install --include=dev
 
-      #  3. Capacitor iOS platform 
+      # ── 3. Capacitor iOS platform ─────────────────────────────────────────
       - name: Initialize or sync iOS platform
         run: |
-          # Check for Xcode workspace (not just ios/ dir  icons may be pre-seeded)
-          if [ ! -f "ios/App/App.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "Xcode project not found  running 'cap add ios'"
+          if [ ! -d "ios" ]; then
+            echo "iOS directory not found — running 'cap add ios'"
             npx cap add ios
           else
-            echo "Xcode project exists  syncing"
+            echo "iOS directory exists — syncing"
           fi
           npx cap sync ios
 
-      - name: Inject app icon into asset catalog
-        run: |
-          # Capacitor 6 + Xcode 16 uses modern single-size AppIcon format:
-          # one 1024x1024 PNG (AppIcon-1024x1024.png) + Contents.json with
-          # "idiom": "universal", "platform": "ios". Xcode auto-generates
-          # all smaller sizes at build time.
-          #
-          # IMPORTANT: Do NOT use @2x suffix  Xcode interprets it as a
-          # 512pt retina asset, causing a size mismatch with the 1024x1024
-          # declaration in Contents.json.
-          #
-          # This runs after cap add/sync so our icon wins over any defaults.
-          ICON_DEST="ios/App/App/Assets.xcassets/AppIcon.appiconset"
-          ICON_SRC="resources/AppIcon.appiconset"
-
-          # Wipe any default/stale icons Capacitor may have placed
-          rm -rf "${ICON_DEST}"
-          mkdir -p "${ICON_DEST}"
-
-          echo "Copying app icon from ${ICON_SRC}  ${ICON_DEST}"
-          cp -f "${ICON_SRC}/AppIcon-1024x1024.png" "${ICON_DEST}/"
-          cp -f "${ICON_SRC}/Contents.json" "${ICON_DEST}/"
-          echo "Icon installed (Xcode 16 single-size format):"
-          ls -la "${ICON_DEST}/"
-
-      - name: Generate branded iOS splash screen
-        run: |
-          # Generates splash-2732x2732.png + Contents.json into the Xcode
-          # asset catalog (ios/App/App/Assets.xcassets/Splash.imageset/).
-          # Overwrites Capacitor's default blank/placeholder splash with the
-          # DGG logo centered on dark teal (#0d2b33).
-          node scripts/generate-ios-splash.js
-          echo "Splash installed:"
-          ls -la ios/App/App/Assets.xcassets/Splash.imageset/
-
-      - name: Patch LaunchScreen.storyboard background color
-        run: |
-          # Sets the storyboard root view background to dark teal (#0d2b33)
-          # so non-square screens don't show white bars around the splash image.
-          chmod +x scripts/patch-ios-launch-storyboard.sh
-          bash scripts/patch-ios-launch-storyboard.sh
-
-      - name: Patch Info.plist with privacy permissions
+      - name: Patch Info.plist with location permissions
         run: |
           chmod +x scripts/patch-ios-info-plist.sh
           bash scripts/patch-ios-info-plist.sh
 
-      #  4. Code signing  decode secrets 
+      # ── 4. Code signing — decode secrets ─────────────────────────────────
       - name: Decode Distribution Certificate
         env:
           IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
@@ -156,7 +108,7 @@ jobs:
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "Installed profile UUID: $PROFILE_UUID"
 
-      #  5. Write App Store Connect API key 
+      # ── 5. Write App Store Connect API key ───────────────────────────────
       - name: Write App Store Connect API key
         env:
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
@@ -166,7 +118,7 @@ jobs:
           echo "$APP_STORE_CONNECT_API_KEY" | base64 --decode > \
             ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
-      #  6. Write ExportOptions.plist 
+      # ── 6. Write ExportOptions.plist ─────────────────────────────────────
       - name: Write ExportOptions.plist
         run: |
           cat > ExportOptions.plist << 'EOF'
@@ -176,9 +128,7 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store-connect</string>
-            <key>destination</key>
-            <string>upload</string>
+            <string>app-store</string>
             <key>signingStyle</key>
             <string>manual</string>
             <key>stripSwiftSymbols</key>
@@ -196,60 +146,50 @@ jobs:
           </plist>
           EOF
 
-      #  6c. Configure manual signing for App target only 
+      # ── 7. Build Xcode archive ────────────────────────────────────────────
       - name: Configure App target signing
-        run: |
-          APP_PROJ="ios/App/App.xcodeproj/project.pbxproj"
-          # Switch automatic  manual signing
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$APP_PROJ"
-          # Inject provisioning profile specifier after each CODE_SIGN_STYLE = Manual
-          perl -i -pe 's/(CODE_SIGN_STYLE = Manual;)/$1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "a6972488-d0c6-4200-bce6-75d1813db181";/' "$APP_PROJ"
-          grep "CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER" "$APP_PROJ" | head -10
-          echo "App target configured for manual signing"
-
-      #  6b. Disable code signing for Pod frameworks (CI only) 
-      - name: Disable code signing for Pods
-        run: |
-          PODS_PROJ="ios/App/Pods/Pods.xcodeproj/project.pbxproj"
-          sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' "$PODS_PROJ"
-          sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' "$PODS_PROJ"
-          sed -i '' 's/"CODE_SIGNING_REQUIRED" = YES/"CODE_SIGNING_REQUIRED" = NO/g' "$PODS_PROJ"
-          sed -i '' 's/"CODE_SIGNING_ALLOWED" = YES/"CODE_SIGNING_ALLOWED" = NO/g' "$PODS_PROJ"
-          echo "Disabled code signing for Pod targets"
-
-      #  7. Build Xcode archive 
-      - name: Build Xcode Archive
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          PROFILE_UUID: ${{ env.PROFILE_UUID }}
         run: |
-          set -o pipefail
+          gem install xcodeproj
+          ruby << 'RUBYEOF'
+          require "xcodeproj"
+          proj = Xcodeproj::Project.open("ios/App/App.xcodeproj")
+          proj.targets.each do |t|
+            next unless t.name == "App"
+            t.build_configurations.each do |c|
+              c.build_settings["CODE_SIGN_STYLE"] = "Manual"
+              c.build_settings["CODE_SIGN_IDENTITY"] = "Apple Distribution"
+              c.build_settings["DEVELOPMENT_TEAM"] = ENV["TEAM_ID"]
+              c.build_settings["PROVISIONING_PROFILE_SPECIFIER"] = ENV["PROFILE_UUID"]
+            end
+          end
+          proj.save
+          puts "App target signing configured"
+          RUBYEOF
+
+      - name: Build Xcode Archive
+        run: |
           xcodebuild \
             -workspace ios/App/App.xcworkspace \
             -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
-            -allowProvisioningUpdates \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
             archive
 
-      #  8. Export IPA 
+      # ── 8. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           xcodebuild \
             -exportArchive \
             -archivePath build/App.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
             -exportPath build/ \
-            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8 \
-            -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"  \
+          
 
-      #  9. Upload to TestFlight 
+      # ── 9. Upload to TestFlight ───────────────────────────────────────────
       - name: Upload to TestFlight via App Store Connect API
         if: ${{ github.event.inputs.upload_testflight != 'false' }}
         env:
@@ -268,7 +208,7 @@ jobs:
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1
 
-      #  10. Upload IPA as artifact (always) 
+      # ── 10. Upload IPA as artifact (always) ──────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -278,7 +218,7 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      #  11. Upload archive as artifact (for debugging) 
+      # ── 11. Upload archive as artifact (for debugging) ───────────────────
       - name: Upload dSYM for crash reporting
         if: always()
         uses: actions/upload-artifact@v4
@@ -288,7 +228,7 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      #  12. Cleanup sensitive files 
+      # ── 12. Cleanup sensitive files ───────────────────────────────────────
       - name: Cleanup signing artifacts
         if: always()
         run: |
@@ -296,20 +236,20 @@ jobs:
           security delete-keychain build.keychain 2>/dev/null || true
           rm -rf ~/.appstoreconnect
 
-      #  13. Build summary 
+      # ── 13. Build summary ─────────────────────────────────────────────────
       - name: Build summary
         if: always()
         run: |
-          echo "## iOS Build Complete " >> $GITHUB_STEP_SUMMARY
+          echo "## iOS Build Complete ✅" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo " **App:** Disc Golf Go" >> $GITHUB_STEP_SUMMARY
-          echo " **Bundle ID:** \`the.discgolfgo.app\`" >> $GITHUB_STEP_SUMMARY
-          echo " **Run:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "📱 **App:** Disc Golf Go" >> $GITHUB_STEP_SUMMARY
+          echo "🆔 **Bundle ID:** \`the.discgolfgo.app\`" >> $GITHUB_STEP_SUMMARY
+          echo "🏗️ **Run:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event.inputs.upload_testflight }}" != "false" ]; then
-            echo " **TestFlight upload triggered**  check App Store Connect for processing status (usually 515 min)" >> $GITHUB_STEP_SUMMARY
+            echo "🚀 **TestFlight upload triggered** — check App Store Connect for processing status (usually 5–15 min)" >> $GITHUB_STEP_SUMMARY
           else
-            echo " **IPA artifact uploaded**  TestFlight upload skipped (toggle on next run)" >> $GITHUB_STEP_SUMMARY
+            echo "📦 **IPA artifact uploaded** — TestFlight upload skipped (toggle on next run)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo " [App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
