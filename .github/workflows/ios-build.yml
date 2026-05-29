@@ -1,7 +1,6 @@
 name: Build iOS IPA & Upload to TestFlight
 
 on:
-  # Trigger manually from GitHub Actions tab
   workflow_dispatch:
     inputs:
       upload_testflight:
@@ -12,7 +11,6 @@ on:
         options:
           - 'true'
           - 'false'
-  # Also run on pushes to main when iOS-relevant files change
   push:
     branches: [main]
     paths:
@@ -21,34 +19,31 @@ on:
       - 'package.json'
       - 'ios/**'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-ios:
     name: Build iOS App & Upload to TestFlight
-    runs-on: macos-latest  # Apple Silicon runner — Xcode 16 pre-installed
+    runs-on: macos-latest
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Node.js ───────────────────────────────────────────────────────
-      - name: Set up Node.js 20
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install Node dependencies
         run: npm install --include=dev
 
-      # ── 3. Capacitor iOS platform ─────────────────────────────────────────
       - name: Initialize or sync iOS platform
         run: |
           if [ ! -d "ios" ]; then
-            echo "iOS directory not found — running 'cap add ios'"
             npx cap add ios
-          else
-            echo "iOS directory exists — syncing"
           fi
           npx cap sync ios
 
@@ -57,7 +52,6 @@ jobs:
           chmod +x scripts/patch-ios-info-plist.sh
           bash scripts/patch-ios-info-plist.sh
 
-      # ── 4. Code signing — decode secrets ─────────────────────────────────
       - name: Decode Distribution Certificate
         env:
           IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
@@ -75,40 +69,28 @@ jobs:
         env:
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
         run: |
-          # Create a temporary keychain
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-
-          # Import the distribution certificate
           security import /tmp/distribution.p12 \
             -k build.keychain \
             -P "$IOS_CERTIFICATE_PASSWORD" \
             -T /usr/bin/codesign
-
-          # Allow codesign to access without password prompt
           security set-key-partition-list \
             -S apple-tool:,apple: \
             -s -k "$KEYCHAIN_PASSWORD" build.keychain
-
-          # Prevent keychain lock during build
           security set-keychain-settings -t 3600 -u build.keychain
 
       - name: Install Provisioning Profile
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          # Get the UUID from the profile and name the file accordingly
           PROFILE_UUID=$(security cms -D -i /tmp/profile.mobileprovision 2>/dev/null | \
-            plutil -extract UUID raw - 2>/dev/null || \
-            /usr/libexec/PlistBuddy -c 'Print :UUID' \
-            /dev/stdin <<< "$(security cms -D -i /tmp/profile.mobileprovision)")
+            plutil -extract UUID raw - 2>/dev/null)
           cp /tmp/profile.mobileprovision \
             ~/Library/MobileDevice/Provisioning\ Profiles/"$PROFILE_UUID".mobileprovision
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
-          echo "Installed profile UUID: $PROFILE_UUID"
 
-      # ── 5. Write App Store Connect API key ───────────────────────────────
       - name: Write App Store Connect API key
         env:
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
@@ -118,7 +100,6 @@ jobs:
           echo "$APP_STORE_CONNECT_API_KEY" | base64 --decode > \
             ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
-      # ── 6. Write ExportOptions.plist ─────────────────────────────────────
       - name: Write ExportOptions.plist
         run: |
           cat > ExportOptions.plist << 'EOF'
@@ -146,13 +127,12 @@ jobs:
           </plist>
           EOF
 
-      # ── 7. Build Xcode archive ────────────────────────────────────────────
       - name: Configure App target signing
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           PROFILE_UUID: ${{ env.PROFILE_UUID }}
         run: |
-          gem install xcodeproj
+          gem install xcodeproj --no-document
           ruby << 'RUBYEOF'
           require "xcodeproj"
           proj = Xcodeproj::Project.open("ios/App/App.xcodeproj")
@@ -166,7 +146,6 @@ jobs:
             end
           end
           proj.save
-          puts "App target signing configured"
           RUBYEOF
 
       - name: Build Xcode Archive
@@ -179,17 +158,14 @@ jobs:
             -archivePath build/App.xcarchive \
             archive
 
-      # ── 8. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
         run: |
           xcodebuild \
             -exportArchive \
             -archivePath build/App.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ \
-          
+            -exportPath build/
 
-      # ── 9. Upload to TestFlight ───────────────────────────────────────────
       - name: Upload to TestFlight via App Store Connect API
         if: ${{ github.event.inputs.upload_testflight != 'false' }}
         env:
@@ -200,15 +176,8 @@ jobs:
             --type ios \
             --file "$(find build/ -name '*.ipa' | head -1)" \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            --verbose 2>&1 | tail -30 || \
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$(find build/ -name '*.ipa' | head -1)" \
-            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1
 
-      # ── 10. Upload IPA as artifact (always) ──────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -218,7 +187,6 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      # ── 11. Upload archive as artifact (for debugging) ───────────────────
       - name: Upload dSYM for crash reporting
         if: always()
         uses: actions/upload-artifact@v4
@@ -228,7 +196,6 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      # ── 12. Cleanup sensitive files ───────────────────────────────────────
       - name: Cleanup signing artifacts
         if: always()
         run: |
@@ -236,20 +203,9 @@ jobs:
           security delete-keychain build.keychain 2>/dev/null || true
           rm -rf ~/.appstoreconnect
 
-      # ── 13. Build summary ─────────────────────────────────────────────────
       - name: Build summary
         if: always()
         run: |
-          echo "## iOS Build Complete ✅" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📱 **App:** Disc Golf Go" >> $GITHUB_STEP_SUMMARY
-          echo "🆔 **Bundle ID:** \`the.discgolfgo.app\`" >> $GITHUB_STEP_SUMMARY
-          echo "🏗️ **Run:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ github.event.inputs.upload_testflight }}" != "false" ]; then
-            echo "🚀 **TestFlight upload triggered** — check App Store Connect for processing status (usually 5–15 min)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "📦 **IPA artifact uploaded** — TestFlight upload skipped (toggle on next run)" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
+          echo "## iOS Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "App: Disc Golf Go" >> $GITHUB_STEP_SUMMARY
+          echo "Run: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
