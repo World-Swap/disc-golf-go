@@ -207,6 +207,7 @@ jobs:
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             archive | xcpretty --color || \
           xcodebuild \
             -workspace ios/App/App.xcworkspace \
@@ -216,6 +217,7 @@ jobs:
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             archive
 
       # ── 8. Export IPA ─────────────────────────────────────────────────────
