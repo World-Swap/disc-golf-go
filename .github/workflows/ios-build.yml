@@ -19,9 +19,6 @@ on:
       - 'package.json'
       - 'ios/**'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-ios:
     name: Build iOS App & Upload to TestFlight
@@ -34,18 +31,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install Node dependencies
         run: npm install --include=dev
-
-      - name: Initialize or sync iOS platform
-        run: |
-          if [ ! -d "ios" ]; then
-            npx cap add ios
-          fi
-          npx cap sync ios
 
       - name: Patch Info.plist with location permissions
         run: |
