@@ -42,12 +42,28 @@ jobs:
           chmod +x scripts/patch-ios-info-plist.sh
           bash scripts/patch-ios-info-plist.sh
 
-      - name: Discover Xcode scheme
-        id: scheme
+      - name: Generate Xcode scheme
         run: |
-          SCHEME=$(xcodebuild -workspace ios/App/App.xcworkspace -list | grep -A 1 "Schemes:" | tail -1 | sed 's/^ *//')
-          echo "scheme=$SCHEME" >> $GITHUB_OUTPUT
-          echo "Found scheme: $SCHEME"
+          gem install xcodeproj --no-document
+          ruby << 'RUBYEOF'
+          require "xcodeproj"
+          proj = Xcodeproj::Project.open("ios/App/App.xcodeproj")
+          # Create a shared scheme for the App target if none exists
+          scheme = proj.schemes.find { |s| s.name == "App" } ||
+                   proj.schemes.first ||
+                   proj.make_shared_scheme("App")
+          # Ensure the App target is in the scheme
+          app_target = proj.targets.find { |t| t.name == "App" }
+          if app_target && !scheme.attributes["TargetContentReferences"].any?
+            scheme.add_target(app_target)
+          end
+          proj.save
+          puts "Scheme saved: #{scheme.name}"
+          RUBYEOF
+
+      - name: List available schemes (debug)
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace -list 2>&1 || true
 
       - name: Decode Distribution Certificate
         env:
@@ -129,7 +145,6 @@ jobs:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           PROFILE_UUID: ${{ env.PROFILE_UUID }}
         run: |
-          gem install xcodeproj --no-document
           ruby << 'RUBYEOF'
           require "xcodeproj"
           proj = Xcodeproj::Project.open("ios/App/App.xcodeproj")
@@ -149,7 +164,7 @@ jobs:
         run: |
           xcodebuild \
             -workspace ios/App/App.xcworkspace \
-            -scheme "${{ steps.scheme.outputs.scheme }}" \
+            -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
@@ -206,4 +221,3 @@ jobs:
           echo "## iOS Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "App: Disc Golf Go" >> $GITHUB_STEP_SUMMARY
           echo "Run: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "Scheme: ${{ steps.scheme.outputs.scheme }}" >> $GITHUB_STEP_SUMMARY
