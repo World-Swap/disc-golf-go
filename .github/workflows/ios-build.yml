@@ -42,91 +42,13 @@ jobs:
           chmod +x scripts/patch-ios-info-plist.sh
           bash scripts/patch-ios-info-plist.sh
 
-      - name: Generate Xcode scheme (write scheme XML file)
+      - name: Verify scheme exists
         run: |
-          mkdir -p ios/App/App.xcodeproj/xcshareddata/xcschemes
-          cat > ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme << 'XMLEOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <Scheme
-             LastUpgradeVersion="1630"
-             version="1.7">
-             <BuildAction
-                parallelizeBuildables="YES"
-                buildImplicitDependencies="YES">
-                <BuildActionEntries>
-                   <BuildActionEntry
-                      buildForTesting="YES"
-                      buildForRunning="YES"
-                      buildForProfiling="YES"
-                      buildForArchiving="YES"
-                      buildForOptimizing="YES">
-                      <BuildableReference
-                         BuildableIdentifier="primary"
-                         BlueprintIdentifier="504EC3041FED79650016851F"
-                         BuildableName="App.app"
-                         BlueprintName="App"
-                         ReferencedContainer="container:App.xcodeproj">
-                      </BuildableReference>
-                   </BuildActionEntry>
-                </BuildActionEntries>
-             </BuildAction>
-             <TestAction
-                selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB"
-                selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB"
-                shouldUseLaunchSchemeArgsEnv="YES"
-                shouldAutocreateTestScheme="YES"
-                version="1.7">
-             </TestAction>
-             <LaunchAction
-                selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB"
-                selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB"
-                launchStyle="0"
-                useCustomWorkingDirectory="NO"
-                buildConfiguration="Release"
-                version="1.7">
-                <BuildableProductRunnable>
-                   <BuildableReference
-                      BuildableIdentifier="primary"
-                      BlueprintIdentifier="504EC3041FED79650016851F"
-                      BuildableName="App.app"
-                      BlueprintName="App"
-                      ReferencedContainer="container:App.xcodeproj">
-                   </BuildableReference>
-                </BuildableProductRunnable>
-             </LaunchAction>
-             <ProfileAction
-                savedToolIdentifier=""
-                useCustomWorkingDirectory="NO"
-                buildConfiguration="Release"
-                version="1.7">
-                <BuildableProductRunnable>
-                   <BuildableReference
-                      BuildableIdentifier="primary"
-                      BlueprintIdentifier="504EC3041FED79650016851F"
-                      BuildableName="App.app"
-                      BlueprintName="App"
-                      ReferencedContainer="container:App.xcodeproj">
-                   </BuildableReference>
-                </BuildableProductRunnable>
-             </ProfileAction>
-             <AnalyzeAction
-                savedToolIdentifier=""
-                useCustomWorkingDirectory="NO"
-                buildConfiguration="Debug"
-                version="1.7">
-             </AnalyzeAction>
-             <ArchiveAction
-                buildConfiguration="Release"
-                customArchiveName="App"
-                version="1.7">
-             </ArchiveAction>
-          </Scheme>
-          XMLEOF
-          echo "Scheme file created at ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme"
-
-      - name: List available schemes (debug)
-        run: |
-          xcodebuild -workspace ios/App/App.xcworkspace -list 2>&1 || true
+          if [ ! -f ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme ]; then
+            echo "ERROR: App.xcscheme not found in repo"
+            exit 1
+          fi
+          echo "Scheme found: $(cat ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme | grep -o 'BlueprintIdentifier="[^"]*"' | head -1)"
 
       - name: Decode Distribution Certificate
         env:
