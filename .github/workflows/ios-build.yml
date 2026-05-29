@@ -203,9 +203,7 @@ jobs:
           # Switch automatic  manual signing
           sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$APP_PROJ"
           # Inject provisioning profile specifier after each CODE_SIGN_STYLE = Manual
-          sed -i '' '/CODE_SIGN_STYLE = Manual;/a\
-\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "a6972488-d0c6-4200-bce6-75d1813db181";
-' "$APP_PROJ"
+          perl -i -pe 's/(CODE_SIGN_STYLE = Manual;)/$1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "a6972488-d0c6-4200-bce6-75d1813db181";/' "$APP_PROJ"
           grep "CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER" "$APP_PROJ" | head -10
           echo "App target configured for manual signing"
 
