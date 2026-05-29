@@ -210,6 +210,7 @@ jobs:
             -archivePath build/App.xcarchive \
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             archive
