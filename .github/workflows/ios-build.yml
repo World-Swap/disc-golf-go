@@ -29,14 +29,14 @@ on:
 jobs:
   build-ios:
     name: Build iOS App & Upload to TestFlight
-    runs-on: macos-latest  # Apple Silicon runner — Xcode 16 pre-installed
+    runs-on: macos-latest  # Apple Silicon runner  Xcode 16 pre-installed
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────────
+      #  1. Checkout 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Node.js ───────────────────────────────────────────────────────
+      #  2. Node.js 
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -46,15 +46,15 @@ jobs:
       - name: Install Node dependencies
         run: npm install --include=dev
 
-      # ── 3. Capacitor iOS platform ─────────────────────────────────────────
+      #  3. Capacitor iOS platform 
       - name: Initialize or sync iOS platform
         run: |
-          # Check for Xcode workspace (not just ios/ dir — icons may be pre-seeded)
+          # Check for Xcode workspace (not just ios/ dir  icons may be pre-seeded)
           if [ ! -f "ios/App/App.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "Xcode project not found — running 'cap add ios'"
+            echo "Xcode project not found  running 'cap add ios'"
             npx cap add ios
           else
-            echo "Xcode project exists — syncing"
+            echo "Xcode project exists  syncing"
           fi
           npx cap sync ios
 
@@ -65,7 +65,7 @@ jobs:
           # "idiom": "universal", "platform": "ios". Xcode auto-generates
           # all smaller sizes at build time.
           #
-          # IMPORTANT: Do NOT use @2x suffix — Xcode interprets it as a
+          # IMPORTANT: Do NOT use @2x suffix  Xcode interprets it as a
           # 512pt retina asset, causing a size mismatch with the 1024x1024
           # declaration in Contents.json.
           #
@@ -77,7 +77,7 @@ jobs:
           rm -rf "${ICON_DEST}"
           mkdir -p "${ICON_DEST}"
 
-          echo "Copying app icon from ${ICON_SRC} → ${ICON_DEST}"
+          echo "Copying app icon from ${ICON_SRC}  ${ICON_DEST}"
           cp -f "${ICON_SRC}/AppIcon-1024x1024.png" "${ICON_DEST}/"
           cp -f "${ICON_SRC}/Contents.json" "${ICON_DEST}/"
           echo "Icon installed (Xcode 16 single-size format):"
@@ -105,7 +105,7 @@ jobs:
           chmod +x scripts/patch-ios-info-plist.sh
           bash scripts/patch-ios-info-plist.sh
 
-      # ── 4. Code signing — decode secrets ─────────────────────────────────
+      #  4. Code signing  decode secrets 
       - name: Decode Distribution Certificate
         env:
           IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
@@ -156,7 +156,7 @@ jobs:
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "Installed profile UUID: $PROFILE_UUID"
 
-      # ── 5. Write App Store Connect API key ───────────────────────────────
+      #  5. Write App Store Connect API key 
       - name: Write App Store Connect API key
         env:
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
@@ -166,7 +166,7 @@ jobs:
           echo "$APP_STORE_CONNECT_API_KEY" | base64 --decode > \
             ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
-      # ── 6. Write ExportOptions.plist ─────────────────────────────────────
+      #  6. Write ExportOptions.plist 
       - name: Write ExportOptions.plist
         run: |
           cat > ExportOptions.plist << 'EOF'
@@ -196,11 +196,11 @@ jobs:
           </plist>
           EOF
 
-      # ── 6c. Configure manual signing for App target only ─────────────────
+      #  6c. Configure manual signing for App target only 
       - name: Configure App target signing
         run: |
           APP_PROJ="ios/App/App.xcodeproj/project.pbxproj"
-          # Switch automatic → manual signing
+          # Switch automatic  manual signing
           sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$APP_PROJ"
           # Inject provisioning profile specifier after each CODE_SIGN_STYLE = Manual
           sed -i '' '/CODE_SIGN_STYLE = Manual;/a\
@@ -209,7 +209,7 @@ jobs:
           grep "CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER" "$APP_PROJ" | head -10
           echo "App target configured for manual signing"
 
-      # ── 6b. Disable code signing for Pod frameworks (CI only) ───────────
+      #  6b. Disable code signing for Pod frameworks (CI only) 
       - name: Disable code signing for Pods
         run: |
           PODS_PROJ="ios/App/Pods/Pods.xcodeproj/project.pbxproj"
@@ -219,7 +219,7 @@ jobs:
           sed -i '' 's/"CODE_SIGNING_ALLOWED" = YES/"CODE_SIGNING_ALLOWED" = NO/g' "$PODS_PROJ"
           echo "Disabled code signing for Pod targets"
 
-      # ── 7. Build Xcode archive ────────────────────────────────────────────
+      #  7. Build Xcode archive 
       - name: Build Xcode Archive
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -236,7 +236,7 @@ jobs:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             archive
 
-      # ── 8. Export IPA ─────────────────────────────────────────────────────
+      #  8. Export IPA 
       - name: Export IPA
         run: |
           xcodebuild \
@@ -246,7 +246,7 @@ jobs:
             -exportPath build/ \
             -allowProvisioningUpdates
 
-      # ── 9. Upload to TestFlight ───────────────────────────────────────────
+      #  9. Upload to TestFlight 
       - name: Upload to TestFlight via App Store Connect API
         if: ${{ github.event.inputs.upload_testflight != 'false' }}
         env:
@@ -265,7 +265,7 @@ jobs:
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1
 
-      # ── 10. Upload IPA as artifact (always) ──────────────────────────────
+      #  10. Upload IPA as artifact (always) 
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -275,7 +275,7 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      # ── 11. Upload archive as artifact (for debugging) ───────────────────
+      #  11. Upload archive as artifact (for debugging) 
       - name: Upload dSYM for crash reporting
         if: always()
         uses: actions/upload-artifact@v4
@@ -285,7 +285,7 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      # ── 12. Cleanup sensitive files ───────────────────────────────────────
+      #  12. Cleanup sensitive files 
       - name: Cleanup signing artifacts
         if: always()
         run: |
@@ -293,20 +293,20 @@ jobs:
           security delete-keychain build.keychain 2>/dev/null || true
           rm -rf ~/.appstoreconnect
 
-      # ── 13. Build summary ─────────────────────────────────────────────────
+      #  13. Build summary 
       - name: Build summary
         if: always()
         run: |
-          echo "## iOS Build Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "## iOS Build Complete " >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📱 **App:** Disc Golf Go" >> $GITHUB_STEP_SUMMARY
-          echo "🆔 **Bundle ID:** \`the.discgolfgo.app\`" >> $GITHUB_STEP_SUMMARY
-          echo "🏗️ **Run:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo " **App:** Disc Golf Go" >> $GITHUB_STEP_SUMMARY
+          echo " **Bundle ID:** \`the.discgolfgo.app\`" >> $GITHUB_STEP_SUMMARY
+          echo " **Run:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event.inputs.upload_testflight }}" != "false" ]; then
-            echo "🚀 **TestFlight upload triggered** — check App Store Connect for processing status (usually 5–15 min)" >> $GITHUB_STEP_SUMMARY
+            echo " **TestFlight upload triggered**  check App Store Connect for processing status (usually 515 min)" >> $GITHUB_STEP_SUMMARY
           else
-            echo "📦 **IPA artifact uploaded** — TestFlight upload skipped (toggle on next run)" >> $GITHUB_STEP_SUMMARY
+            echo " **IPA artifact uploaded**  TestFlight upload skipped (toggle on next run)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
+          echo " [App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
