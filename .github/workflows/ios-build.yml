@@ -39,6 +39,25 @@ jobs:
 
       - name: Install Node dependencies
         run: npm install --include=dev
+      - name: Create LaunchImage assets
+        run: |
+          mkdir -p ios/App/App/Assets.xcassets/LaunchImage.launchimage/
+          cp ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png              ios/App/App/Assets.xcassets/LaunchImage.launchimage/
+          cp ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png              ios/App/App/Assets.xcassets/LaunchImage.launchimage/
+          cp ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png              ios/App/App/Assets.xcassets/LaunchImage.launchimage/
+          cat > ios/App/App/Assets.xcassets/LaunchImage.launchimage/Contents.json << 'EOFJSON'
+          {
+            "images" : [
+              { "idiom" : "iphone", "scale" : "2x", "size" : "640x960" },
+              { "idiom" : "iphone", "scale" : "retina4", "size" : "640x1136" },
+              { "idiom" : "iphone", "scale" : "2x", "size" : "750x1334" },
+              { "idiom" : "iphone", "scale" : "3x", "size" : "1242x2208" },
+              { "idiom" : "ipad", "scale" : "1x", "size" : "768x1024" },
+              { "idiom" : "ipad", "scale" : "2x", "size" : "1536x2048" }
+            ],
+            "info" : { "version" : 1, "author" : "xcode" }
+          }
+          EOFJSON
 
       - name: Patch Info.plist with location permissions
         run: |
