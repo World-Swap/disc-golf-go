@@ -151,8 +151,8 @@ function requireAdmin(req, res, next) {
     if (decoded.role === 'admin') {
       return next();
     }
-  } catch (_e) {
-    // Not a valid JWT — reject
+  } catch (err) {
+    console.warn('[admin-auth] Token verification failed:', err.message);
   }
 
   return res.status(401).json({ error: 'Invalid or expired admin token' });

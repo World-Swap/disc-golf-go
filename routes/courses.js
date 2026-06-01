@@ -84,7 +84,7 @@ module.exports = ({ pool }) => {
     const lat = parseFloat(req.query.lat);
     const lng = parseFloat(req.query.lng);
     const checkinOnly = req.query.checkin_only === 'true';
-    const radiusMeters = checkinOnly ? 500 : (parseFloat(req.query.radius) || 50000); // 500m for check-in path, 50km default
+    const radiusMeters = checkinOnly ? 800 : (parseFloat(req.query.radius) || 50000); // 800m for check-in path, 50km default
 
     if (isNaN(lat) || isNaN(lng)) {
       return res.status(400).json({ error: 'lat and lng query params required' });

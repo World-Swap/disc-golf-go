@@ -95,7 +95,8 @@ h1 {
     // Dark mode
     (function() {
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        var toggle = document.getElementById('themeToggle');
+        if (toggle) toggle.textContent = isDark ? '☀️' : '🌙';
     })();
     document.getElementById('themeToggle').addEventListener('click', function() {
         var current = document.documentElement.getAttribute('data-theme');

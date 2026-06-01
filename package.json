@@ -1,6 +1,6 @@
 {
   "name": "express-postgres-starter",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,11 +12,12 @@
     "pdga:backfill": "node scripts/backfill-pdga-ids.js",
     "pdga:backfill:apply": "node scripts/backfill-pdga-ids.js --apply",
     "cap:sync": "npx cap sync",
+    "capacitor:sync:after": "node scripts/ensure-android-permissions.js",
     "cap:android": "npx cap add android",
     "cap:ios": "npx cap add ios",
-    "android:debug": "cd android && ./gradlew assembleDebug",
-    "android:bundle": "cd android && ./gradlew bundleRelease",
-    "android:release": "node scripts/bump-android-version.js && cd android && ./gradlew clean bundleRelease",
+    "android:debug": "node scripts/ensure-android-permissions.js && cd android && ./gradlew assembleDebug",
+    "android:bundle": "node scripts/ensure-android-permissions.js && cd android && ./gradlew bundleRelease",
+    "android:release": "node scripts/bump-android-version.js && node scripts/ensure-android-permissions.js && cd android && ./gradlew clean bundleRelease",
     "ios:sync": "npx cap sync ios"
   },
   "dependencies": {

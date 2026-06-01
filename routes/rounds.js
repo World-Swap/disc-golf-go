@@ -911,9 +911,11 @@ module.exports = ({ pool }) => {
       }
 
       // ── HOLE COUNT VALIDATION ──
-      // Holes logged must match the round's configured hole count
+      // Only enforce for rounds that have a configured hole count.
+      // Legacy rounds (holes_count IS NULL — pre-layout-selection era) have no
+      // enforced hole target; skip validation to prevent false rejection.
       const expectedHoles = round.holes_count;
-      if (parseInt(holes_logged) !== expectedHoles) {
+      if (expectedHoles !== null && expectedHoles !== undefined && parseInt(holes_logged) !== expectedHoles) {
         await client.query('ROLLBACK');
         return res.status(400).json({
           error: 'Hole count mismatch',

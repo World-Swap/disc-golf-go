@@ -15,7 +15,10 @@ const {
 } = require('./xp-engine');
 // vault imports removed — gold grants use grantGold from xp-engine
 
-const CHECKIN_RADIUS_METERS = 500;
+// 800m: accommodates course coordinate variance (parking lot vs basket)
+// and GPS error on Android devices (50-200m in real-world conditions).
+// A course spanning 600m with 150m GPS error = 750m — needs 800m to pass.
+const CHECKIN_RADIUS_METERS = 800;
 
 function haversineMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000;

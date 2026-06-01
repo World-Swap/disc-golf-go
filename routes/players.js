@@ -162,6 +162,30 @@ module.exports = ({ pool }) => {
         }
       }
 
+      // Fetch real stats from DB (checkins, courses, badges)
+      const [checkinStats, badgeCount, recentCheckins] = await Promise.all([
+        client.query(
+          `SELECT COUNT(*) AS total_checkins, COUNT(DISTINCT course_id) AS unique_courses
+           FROM checkins WHERE player_id = $1`,
+          [p.id]
+        ),
+        client.query(
+          'SELECT COUNT(*) AS cnt FROM player_badges WHERE player_id = $1',
+          [p.id]
+        ),
+        client.query(
+          `SELECT ci.id, ci.checked_in_at, ci.xp_earned, ci.weather_condition, ci.is_round_complete,
+                  c.name AS course_name, c.city, c.state
+           FROM checkins ci JOIN courses c ON c.id = ci.course_id
+           WHERE ci.player_id = $1 ORDER BY ci.checked_in_at DESC LIMIT 5`,
+          [p.id]
+        ),
+      ]);
+
+      const totalCheckins = parseInt(checkinStats.rows[0].total_checkins) || 0;
+      const uniqueCourses = parseInt(checkinStats.rows[0].unique_courses) || 0;
+      const earnedBadges = parseInt(badgeCount.rows[0].cnt) || 0;
+
       await client.query('COMMIT');
 
       const level = getLevelFromXp(p.xp);
@@ -188,16 +212,17 @@ module.exports = ({ pool }) => {
         total_rounds: p.total_rounds || 0,
         created_at: p.created_at,
         login_xp: loginXpGranted,
+        badge_count: earnedBadges,
         badges: [],
         stats: {
-          total_checkins: 0,
-          unique_courses: 0,
+          total_checkins: totalCheckins,
+          unique_courses: uniqueCourses,
           total_rounds: p.total_rounds || 0,
           battle_wins: p.battle_wins || 0,
           login_streak: p.login_streak,
           best_streak: p.best_streak,
         },
-        recent_checkins: [],
+        recent_checkins: recentCheckins.rows,
         active_challenges: [],
       });
     } catch (err) {

@@ -18,7 +18,8 @@ function requireAuth(pool) {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.player = { id: decoded.id, player_uuid: decoded.player_uuid };
         return next();
-      } catch {
+      } catch (err) {
+        console.warn('[auth] JWT verification failed:', err.message);
         return res.status(401).json({ error: 'Invalid or expired token' });
       }
     }
@@ -35,8 +36,8 @@ function requireAuth(pool) {
           req.player = { id: result.rows[0].id, player_uuid: result.rows[0].player_uuid };
           return next();
         }
-      } catch {
-        // fall through
+      } catch (err) {
+        console.warn('[auth] Legacy UUID lookup failed:', err.message);
       }
     }
 

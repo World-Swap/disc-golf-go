@@ -17,6 +17,9 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: false,
+    // Append to WebView user-agent so served HTML can detect native app context
+    // even when loading from remote server.url (where isNativePlatform() returns false)
+    appendUserAgent: 'DiscGolfGoApp',
   },
   ios: {
     // Must match SplashScreen.backgroundColor to prevent color flash on launch
@@ -27,6 +30,8 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
     // Liminal color for status bar area
     preferredContentMode: 'mobile',
+    // Append to WebView user-agent so served HTML can detect native app context
+    appendUserAgent: 'DiscGolfGoApp',
   },
   plugins: {
     Geolocation: {

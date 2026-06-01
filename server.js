@@ -243,10 +243,12 @@ const crewWarsModule = require('./routes/crew-wars');
 const crewWarsRouter = crewWarsModule({ pool });
 const storyRouter = require('./routes/story')({ pool });
 const feedbackRouter = require('./routes/feedback')({ pool });
+const reviewsRouter = require('./routes/reviews')({ pool });
 
 app.use('/api', authRouter);
 app.use('/api', playersRouter);
 app.use('/api', coursesRouter);
+app.use('/api', reviewsRouter);
 app.use('/api', checkinsRouter);
 app.use('/api', uploadRouter);
 app.use('/api', battlesRouter);
@@ -274,6 +276,19 @@ app.get('/', (_req, res) => {
   } else {
     res.json({ message: 'Hello from Polsia Instance!' });
   }
+});
+
+// Global error handler — catches unhandled route errors so they don't crash the process
+app.use((err, _req, res, _next) => {
+  console.error('[global] Unhandled route error:', err.stack || err.message);
+  if (!res.headersSent) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Log unhandled rejections instead of crashing
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] Unhandled promise rejection:', reason);
 });
 
 app.listen(port, () => {

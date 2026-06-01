@@ -35,16 +35,21 @@ const BASE_DROP_RATE = 0.15;
  * Returns rows with: id, boost_type, effect_value, expires_at, name, icon
  */
 async function getActiveBoosts(db, playerId) {
-  const result = await db.query(
-    `SELECT ab.id, ab.boost_type, ab.effect_value, ab.expires_at,
-            vi.name, vi.icon
-     FROM active_boosts ab
-     JOIN vault_items vi ON vi.id = ab.item_id
-     WHERE ab.player_id = $1 AND ab.expires_at > NOW()
-     ORDER BY ab.boost_type, ab.expires_at DESC`,
-    [playerId]
-  );
-  return result.rows;
+  try {
+    const result = await db.query(
+      `SELECT ab.id, ab.boost_type, ab.effect_value, ab.expires_at,
+              vi.name, vi.icon
+       FROM active_boosts ab
+       JOIN vault_items vi ON vi.id = ab.item_id
+       WHERE ab.player_id = $1 AND ab.expires_at > NOW()
+       ORDER BY ab.boost_type, ab.expires_at DESC`,
+      [playerId]
+    );
+    return result.rows;
+  } catch (err) {
+    console.error('[vault] getActiveBoosts failed:', err.message);
+    return [];
+  }
 }
 
 /**
@@ -110,33 +115,42 @@ async function awardGold(db, playerId, reason, baseAmount, activeBoosts = null, 
  * Roll for an item drop. Returns a vault_items row or null.
  */
 async function rollItemDrop(pool, playerId, activeBoosts = null) {
-  let boosts = activeBoosts;
-  if (!boosts) boosts = await getActiveBoosts(pool, playerId);
-  const dropRate = getDropRate(boosts);
-  if (Math.random() > dropRate) return null;
+  try {
+    let boosts = activeBoosts;
+    if (!boosts) boosts = await getActiveBoosts(pool, playerId);
+    const dropRate = getDropRate(boosts);
+    if (Math.random() > dropRate) return null;
 
-  const rarityWeights = { common: 50, uncommon: 30, rare: 14, epic: 5, legendary: 1 };
-  const items = await pool.query(`SELECT * FROM vault_items`);
-  const pool_ = [];
-  for (const item of items.rows) {
-    const w = rarityWeights[item.rarity] || 10;
-    for (let i = 0; i < w; i++) pool_.push(item);
+    const rarityWeights = { common: 50, uncommon: 30, rare: 14, epic: 5, legendary: 1 };
+    const items = await pool.query(`SELECT * FROM vault_items`);
+    const pool_ = [];
+    for (const item of items.rows) {
+      const w = rarityWeights[item.rarity] || 10;
+      for (let i = 0; i < w; i++) pool_.push(item);
+    }
+    if (!pool_.length) return null;
+    return pool_[Math.floor(Math.random() * pool_.length)];
+  } catch (err) {
+    console.error('[vault] rollItemDrop failed:', err.message);
+    return null;
   }
-  if (!pool_.length) return null;
-  return pool_[Math.floor(Math.random() * pool_.length)];
 }
 
 /**
  * Add an item to inventory (upsert quantity).
  */
 async function addToInventory(db, playerId, itemId, acquiredVia = 'drop') {
-  await db.query(
-    `INSERT INTO player_inventory (player_id, item_id, quantity, acquired_via)
-     VALUES ($1, $2, 1, $3)
-     ON CONFLICT (player_id, item_id)
-     DO UPDATE SET quantity = player_inventory.quantity + 1`,
-    [playerId, itemId, acquiredVia]
-  );
+  try {
+    await db.query(
+      `INSERT INTO player_inventory (player_id, item_id, quantity, acquired_via)
+       VALUES ($1, $2, 1, $3)
+       ON CONFLICT (player_id, item_id)
+       DO UPDATE SET quantity = player_inventory.quantity + 1`,
+      [playerId, itemId, acquiredVia]
+    );
+  } catch (err) {
+    console.error('[vault] addToInventory failed:', err.message);
+  }
 }
 
 // Real-money (Stripe/USD) purchase flows removed — Apple App Store compliance.

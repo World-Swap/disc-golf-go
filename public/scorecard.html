@@ -1140,8 +1140,24 @@ function flushBuffer() {
   });
 }
 
-function startGpsTracking(roundId) {
+// Start GPS tracking for a round. Uses navigator.geolocation (browser API)
+// which works in both regular browsers and Capacitor WebView loading from
+// remote server.url. Capacitor plugins are unavailable with remote URLs.
+async function startGpsTracking(roundId) {
   if (!navigator.geolocation) return;
+
+  // Check permission state if Web Permissions API is available
+  if (navigator.permissions && navigator.permissions.query) {
+    try {
+      var res = await navigator.permissions.query({ name: 'geolocation' });
+      console.log('[GPS] Permissions API state:', res.state);
+      if (res.state === 'denied') {
+        console.warn('[GPS] Location permission denied — tracking disabled');
+        return;
+      }
+    } catch (e) { console.warn('[GPS] Permissions API query failed:', e); }
+  }
+
   gpsTrackingRoundId = roundId;
   lastGpsSaveTime = 0;
   gpsIntervalMs = 5000;
@@ -1152,10 +1168,10 @@ function startGpsTracking(roundId) {
   getBatteryLevel();
   requestMotionPermission();
 
-  // Register GPS watcher
+  // Register GPS watcher (browser API — works once native permission is granted)
   gpsWatchId = navigator.geolocation.watchPosition(
     onGpsPosition,
-    (err) => { console.warn('GPS tracking error:', err.code); },
+    (err) => { console.warn('[GPS] watchPosition error:', err.code); },
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
   );
 

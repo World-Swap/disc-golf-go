@@ -8,12 +8,12 @@ Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via C
 
 ## Directory map
 - `server.js` — app entry point; middleware + route mounts (wiring only)
-- `routes/` — one file per feature area (auth, courses, rounds, battles, challenges, players, leaderboard, checkins, admin, vault, gold, upload, xp-engine, distance-analytics, delete-account, crews, crew-wars, story, feedback)
+- `routes/` — one file per feature area (auth, courses, rounds, battles, challenges, players, leaderboard, checkins, admin, vault, gold, upload, xp-engine, distance-analytics, delete-account, crews, crew-wars, story, feedback, reviews)
 - `migrations/` — node-pg-migrate SQL migration files; all DDL lives here
 - `middleware/` — auth middleware (JWT validation)
 - `public/` — static frontend assets (HTML, CSS, JS, images); `app.css` is the unified design system (tokens, shared components) linked by all app pages
 - `lib/` — shared utilities
-- `scripts/` — one-off scripts (linting, audits, iOS patch, Android branding: generate-capacitor-assets-sources.js, write-android-styles.js, generate-ios-splash.js, bump-android-version.js)
+- `scripts/` — one-off scripts (linting, audits, iOS patch, Android branding: generate-capacitor-assets-sources.js, write-android-styles.js, generate-ios-splash.js, bump-android-version.js, ensure-android-permissions.js)
 - `android/` — Capacitor-generated Android native project; committed with branded icons/splash assets
 - `resources/` — @capacitor/assets source images (icon-only.png, icon-background.png, splash.png, splash-dark.png); `AppIcon.appiconset/` holds iOS 1024x1024 icon
 - `debug/` — debug/test utilities (not in production path)
@@ -61,6 +61,7 @@ Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via C
 - `quest_progression` — per-player quest progress; tracks progress count, completed flag, completed_at; auto-populated via DB triggers on rounds and checkins; manually checked via routes/story.js engine for event-based quests
 - `xp_log` — XP transaction log for story quest rewards and other sources; player_id, source, amount, context, created_at
 - `feedback` — visitor-submitted feedback from the landing page; name (optional), email (optional), category (Feedback/Suggestion/Bug Report), message, created_at; indexes on category and created_at
+- `course_reviews` — player star ratings (1–5) and text reviews per course; one review per player per course; unique constraint on (player_id, course_id)
 
 ## External integrations
 - **Neon PostgreSQL** — database (DATABASE_URL env var); shared between staging and production
@@ -70,10 +71,9 @@ Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via C
 - **Capacitor / GitHub Actions** — Android AAB + iOS IPA CI/CD; iOS uploads to TestFlight via App Store Connect API; see `IOS_BUILD.md`
 
 ## Recent changes
+- 2026-06-01: Added course rating and review API endpoints — POST/DELETE `/api/courses/:id/reviews` (authenticated), GET `/api/courses/:id/reviews` (public with avg_rating + total_reviews summary). Migration creates `course_reviews` table with unique constraint per player-course pair.
+- 2026-05-30: Fixed Android AAB zero permissions — `cap sync` was stripping permissions from AndroidManifest.xml. Added `scripts/ensure-android-permissions.js` post-sync hook that verifies and restores ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, INTERNET permissions and GPS hardware feature. Wired as `capacitor:sync:after` hook and prepended to all android build scripts in package.json.
+- 2026-05-30: Widened check-in radius from 500m to 800m — real-world GPS error on Android (50-200m) + course coordinate variance (parking lot vs basket) caused false "too far" failures. 800m accommodates a 600m course span + 150m GPS error with margin. Updated CHECKIN_RADIUS_METERS in `routes/checkins.js`, checkin_only bounding box in `routes/courses.js`, and all 500m thresholds in `public/checkin.html`.
+- 2026-05-30: Fixed Android check-in location bug — removed Capacitor plugin dependency, uses `navigator.geolocation` (browser API) with user-agent detection (`appendUserAgent: 'DiscGolfGoApp'` + Android WebView `wv` token) for platform-appropriate error messages.
+- 2026-05-29: Fixed Android profile empty data bug — SW_POLICY guard was throwing uncaught error that killed the entire `<script>` block in `profile.html`, preventing `loadProfile()` from running on Capacitor native builds. Converted throw to console.warn. Also: hid profile-content by default (prevents placeholder flash), wired `/api/players/me` to return real checkin/course/badge stats from DB instead of hardcoded zeros.
 - 2026-05-28: GPS adaptive accuracy + battery optimization: motion-triggered GPS (pause when stationary >30s via DeviceMotionEvent stdDev, resume on movement), battery-aware interval halving (5s→10s when battery <20%), batch upload (20-point buffer + 15s flush timer) via new POST /api/rounds/:id/track-batch; Douglas-Peucker polyline smoothing preserved.
-- 2026-05-28: Disabled service workers on native iOS/Android builds — no SW registration exists in the codebase; added defensive `Capacitor.isNativePlatform()` guard in `public/profile.html` that throws if any future SW registration is attempted; see `SW_POLICY.md` for the full policy.
-- 2026-05-27: Added feedback form section to landing page — POST /api/feedback stores visitor submissions (name/email/category/message) to `feedback` table; new `routes/feedback.js` and migration `1790000000002`
-- 2026-05-27: Seeded Florida courses batch 2 (55 courses — S. FL, Space Coast, Orlando suburbs, Tampa Bay, Jacksonville area, Tallahassee) and batch 3 (35 courses — Fort Myers, Naples, Daytona, Ocala, Treasure Coast, Panhandle, Gainesville); fixed invalid terrain 'park' → 'open' constraint violation in batch2; total FL coverage now 100+ courses.
-- 2026-05-27: Seeded 129 Texas disc golf courses across 6 metro regions (Tyler, DFW, Austin, Houston, San Antonio, other cities); added course_layouts and course_holes for all TX courses.
-- 2026-05-25: Crew Wars Accept fix (7th attempt): Reverted `acceptWar()` from XMLHttpRequest back to `apiPost()` (fetch) — XHR was silently failing in Capacitor WebView while Cancel/Decline/Join all work via fetch. Previous 5 attempts targeted wrong repo (World-Swap); this is the first fix in the live Polsia-Inc repo.
-- 2026-05-25: Crew Wars stability fix: Added `safeConnect()` wrapper with per-client error handlers; moved `notifyCrew` calls AFTER COMMIT; fixed "???" display on open challenges; changed war queries to LEFT JOIN on defending crew.

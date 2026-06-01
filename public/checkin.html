@@ -454,7 +454,7 @@
                 </div>
             </div>
 
-            <!-- State: Courses list (fallback — shown when no course is within 500m check-in range) -->
+            <!-- State: Courses list (fallback — shown when no course is within 800m check-in range) -->
             <div class="state-view" id="state-courses">
                 <div class="page-header">
                     <h2 id="courses-list-title">Nearby Courses</h2>
@@ -631,78 +631,109 @@
         return (meters / 1000).toFixed(1) + 'km away';
     }
 
+    // ── GEOLOCATION ──
+    // Detect native app context: Capacitor with remote server.url makes
+    // isNativePlatform() return false and plugins unavailable. Detect via
+    // user-agent string instead (appendUserAgent: 'DiscGolfGoApp' in
+    // capacitor.config.ts, plus Android WebView 'wv' token).
+    var _ua = navigator.userAgent || '';
+    var _isNativeApp = _ua.indexOf('DiscGolfGoApp') !== -1 || (/wv\)/.test(_ua) && /Android/.test(_ua));
+
+    function logGeo(label, val) {
+      if (typeof console !== 'undefined') console.log('[Geo] ' + label + ':', val);
+    }
+    logGeo('isNativeApp (UA)', _isNativeApp);
+    logGeo('userAgent', _ua);
+
+    function showLocationError(msg) {
+        var container = document.querySelector('#state-gps .gps-prompt');
+        var existing = container.querySelector('.error-banner');
+        if (existing) existing.remove();
+        var err_div = document.createElement('div');
+        err_div.className = 'error-banner';
+        err_div.style.marginTop = '1rem';
+        err_div.innerHTML = '<h4>Location Error</h4><p>' + msg + '</p>';
+        container.appendChild(err_div);
+    }
+
+    function onLocationSuccess(lat, lng) {
+        playerLat = lat;
+        playerLng = lng;
+        showState('state-searching');
+        loadNearbyCourses();
+    }
+
+    // Build error message appropriate for native app vs browser
+    function geoErrorMsg(err) {
+        if (_isNativeApp) {
+            // Native app — don't reference "browser settings"
+            if (err.code === 1) return 'Location permission denied. Go to Settings \u2192 Apps \u2192 Disc Golf Go \u2192 Permissions and enable Location.';
+            if (err.code === 2) return 'Location unavailable. Make sure GPS/Location is enabled on your device and try again.';
+            if (err.code === 3) return 'Location request timed out. Move to an open area and try again.';
+            return 'Could not get your location. Check that Location is enabled in your device settings.';
+        }
+        // Browser
+        if (err.code === 1) return 'Location access was denied. Please allow location access in your browser settings.';
+        if (err.code === 2) return 'Location unavailable. Try again in a moment.';
+        if (err.code === 3) return 'Location request timed out. Try again.';
+        return 'Could not get your location.';
+    }
+
+    // Single geolocation path — uses navigator.geolocation (browser API)
+    // which works in both regular browsers AND Capacitor WebView loading
+    // from a remote server.url (the only API that works in both contexts).
     function requestLocation() {
-        const btn = document.getElementById('gps-btn');
+        var btn = document.getElementById('gps-btn');
         btn.disabled = true;
-        btn.textContent = 'Getting location…';
+        btn.textContent = 'Getting location\u2026';
 
         if (!navigator.geolocation) {
-            alert('GPS not supported on this device. Try a different browser.');
             btn.disabled = false;
-            btn.textContent = 'Continue';
+            btn.textContent = 'Check In';
+            showLocationError(_isNativeApp
+                ? 'GPS not supported. Please update your device software.'
+                : 'GPS not supported on this device. Try a different browser.');
             return;
         }
 
         navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                playerLat = pos.coords.latitude;
-                playerLng = pos.coords.longitude;
-                showState('state-searching');
-                loadNearbyCourses();
-            },
-            (err) => {
+            function(pos) { onLocationSuccess(pos.coords.latitude, pos.coords.longitude); },
+            function(err) {
+                logGeo('getCurrentPosition error', { code: err.code, message: err.message });
                 btn.disabled = false;
-                btn.textContent = 'Continue';
-                let msg = 'Location access denied.';
-                if (err.code === 1) msg = 'Location access was denied. Please allow location access in your browser settings.';
-                if (err.code === 2) msg = 'Location unavailable. Try again in a moment.';
-                if (err.code === 3) msg = 'Location request timed out. Try again.';
-                const container = document.querySelector('#state-gps .gps-prompt');
-                const existing = container.querySelector('.error-banner');
-                if (existing) existing.remove();
-                const err_div = document.createElement('div');
-                err_div.className = 'error-banner';
-                err_div.style.marginTop = '1rem';
-                err_div.innerHTML = '<h4>Location Error</h4><p>' + msg + '</p>';
-                container.appendChild(err_div);
+                btn.textContent = 'Check In';
+                showLocationError(geoErrorMsg(err));
             },
-            { timeout: 10000, enableHighAccuracy: true }
+            { enableHighAccuracy: true, timeout: 15000 }
         );
     }
 
-    // On page load: if location permission is already granted, skip the prompt and go straight to searching.
-    // This prevents the permission re-prompt loop on Android after the first successful check-in.
+    // On page load: if permission is already granted, skip the prompt button
     (function autoStartIfPermitted() {
-        if (!navigator.permissions || !navigator.geolocation) return;
-        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
-            if (result.state === 'granted') {
-                // Permission already granted — skip the enable-location screen
-                requestLocation();
-            }
-            // 'prompt' → show the button (default state, nothing to do)
-            // 'denied' → user must fix in settings; button press will surface the error naturally
-        }).catch(function() {
-            // permissions API not available on this platform — leave default state
-        });
+        if (navigator.permissions && navigator.geolocation) {
+            navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+                logGeo('Permissions API state on load', result.state);
+                if (result.state === 'granted') requestLocation();
+            }).catch(function(e) { logGeo('Permissions API error on load', e); });
+        }
     })();
 
     async function loadNearbyCourses() {
         try {
-            // First try the checkin_only fast path — only courses within 500m
+            // First try the checkin_only fast path — only courses within 800m (accommodates GPS error + course coord variance)
             const res = await fetch(
                 '/api/courses/nearby?lat=' + playerLat + '&lng=' + playerLng + '&checkin_only=true'
             );
             const data = await res.json();
-            allCourses = data;
 
-            // GPS check-in: if a course is within 500m, skip the course list and
-            // open the confirm sheet directly. Show the list only as fallback.
-            const inRange = data.filter(c => c.distance_meters != null && c.distance_meters <= 500);
-            if (inRange.length > 0) {
-                inRange.sort((a, b) => a.distance_meters - b.distance_meters);
-                selectCourse(inRange[0]);  // immediately open confirm sheet (no list flash)
+            // GPS check-in: if a course is within 800m, skip the course list and
+            // open the confirm sheet directly. The API already filtered to 800m.
+            if (data.length > 0) {
+                // data is already sorted by distance_meters ascending from the API
+                selectCourse(data[0]);  // immediately open confirm sheet (no list flash)
             } else {
                 // Fallback: fetch all nearby courses for the manual selection list
+                allCourses = [];
                 const listRes = await fetch(
                     '/api/courses/nearby?lat=' + playerLat + '&lng=' + playerLng + '&radius=50000'
                 );
@@ -724,8 +755,8 @@
         const countEl = document.getElementById('courses-count');
         const titleEl = document.getElementById('courses-list-title');
 
-        // Check if any course is within the 500m check-in radius
-        const hasInRange = courses.some(c => c.distance_meters != null && c.distance_meters <= 500);
+        // Check if any course is within the 800m check-in radius
+        const hasInRange = courses.some(c => c.distance_meters != null && c.distance_meters <= 800);
         if (hasInRange) {
             // This branch only shows briefly before the confirm sheet opens automatically
             titleEl.textContent = 'Nearby Courses';
@@ -733,7 +764,7 @@
         } else {
             // Fallback: no course within range — user must select manually
             titleEl.textContent = 'No course detected nearby';
-            countEl.textContent = 'Not within 500m of any course — tap a course below to check in anyway.';
+            countEl.textContent = 'No course within 800m — tap a course below to check in anyway.';
         }
 
         if (courses.length === 0) {
@@ -747,7 +778,7 @@
         for (const c of courses) {
             const card = document.createElement('div');
             card.className = 'course-card';
-            const isFar = c.distance_meters != null && c.distance_meters > 500;
+            const isFar = c.distance_meters != null && c.distance_meters > 800;
             const distStr = c.distance_meters != null ? formatDistance(c.distance_meters) : 'Unknown';
 
             // Rating
