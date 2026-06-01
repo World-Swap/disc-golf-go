@@ -617,17 +617,12 @@ async function render(cat) {
     try {
         data = await loadCategory(cat);
     } catch {
-        loading.style.display = 'none';
-        content.style.display = 'block';
         content.innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><div>Failed to load leaderboard. Try refreshing.</div></div>`;
         return;
     }
 
     const meta = CAT_META[cat] || CAT_META.overall;
     const players = data.players || [];
-
-    loading.style.display = 'none';
-    content.style.display = 'block';
 
     let html = `
         <div class="cat-banner">

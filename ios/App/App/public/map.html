@@ -318,6 +318,10 @@
 
 <!-- ── BOTTOM TAB BAR ── -->
 <nav class="bottom-tab-bar">
+    <a class="tab-item" href="/checkin">
+        <span class="tab-icon">📍</span>
+        <span class="tab-label">Check In</span>
+    </a>
     <a class="tab-item" href="/crews">
         <span class="tab-icon">👥</span>
         <span class="tab-label">Crews</span>
@@ -571,19 +575,28 @@ function showToast(msg, type = '') {
 }
 
 // ── NEAR ME / MY LOCATION ─────────────────────────────────────────
-let playerMarker = null;
-function centerOnMe() {
+// Detect native app via user-agent (Capacitor isNativePlatform() is false
+// when loading from remote server.url — see capacitor.config.ts)
+var _mapUA = navigator.userAgent || '';
+var _mapNative = _mapUA.indexOf('DiscGolfGoApp') !== -1 || (/wv\)/.test(_mapUA) && /Android/.test(_mapUA));
+
+// Wrapper: uses navigator.geolocation (works in both browser and WebView)
+function _getPosition(successCb, errorCb, opts) {
     if (!navigator.geolocation) {
-        showToast('Geolocation not supported by your browser.', 'error');
+        if (errorCb) errorCb({ code: 2, message: 'not supported' });
         return;
     }
+    navigator.geolocation.getCurrentPosition(successCb, errorCb, opts);
+}
 
+let playerMarker = null;
+function centerOnMe() {
     const floatBtn = document.getElementById('myLocationBtn');
     const filterBtn = document.getElementById('nearMeBtn');
     floatBtn.classList.add('locating');
     if (filterBtn) { filterBtn.textContent = '⏳ Locating…'; filterBtn.style.pointerEvents = 'none'; }
 
-    navigator.geolocation.getCurrentPosition(
+    _getPosition(
         pos => {
             playerLat = pos.coords.latitude;
             playerLng = pos.coords.longitude;
@@ -609,7 +622,10 @@ function centerOnMe() {
         _err => {
             floatBtn.classList.remove('locating');
             if (filterBtn) { filterBtn.textContent = '📍 Near Me'; filterBtn.style.pointerEvents = ''; }
-            showToast('Enable location access to find courses near you.', 'error');
+            var errMsg = _mapNative
+                ? 'Location denied. Go to Settings \u2192 Apps \u2192 Disc Golf Go \u2192 Permissions and enable Location.'
+                : 'Enable location access to find courses near you.';
+            showToast(errMsg, 'error');
         },
         { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -620,16 +636,14 @@ initMap();
 loadCourses();
 
 // Center on user's GPS location on load; fall back to continental US view if denied
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            // Zoom 11 shows a ~20-mile radius — nearby courses visible without being cluttered
-            map.setView([pos.coords.latitude, pos.coords.longitude], 11, { animate: false });
-        },
-        () => { /* denied or unavailable — stay on continental US default */ },
-        { timeout: 5000, maximumAge: 60000 }
-    );
-}
+_getPosition(
+    pos => {
+        // Zoom 11 shows a ~20-mile radius — nearby courses visible without being cluttered
+        map.setView([pos.coords.latitude, pos.coords.longitude], 11, { animate: false });
+    },
+    () => { /* denied or unavailable — stay on continental US default */ },
+    { timeout: 5000, maximumAge: 60000 }
+);
 
 // Fix map size after fonts/layout settle
 setTimeout(() => { if (map) map.invalidateSize(); }, 400);

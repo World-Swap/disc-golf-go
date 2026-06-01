@@ -1,0 +1,38 @@
+{
+  "images" : [
+    {
+      "idiom" : "iphone",
+      "scale" : "2x",
+      "size" : "640x960"
+    },
+    {
+      "idiom" : "iphone",
+      "scale" : "retina4",
+      "size" : "640x1136"
+    },
+    {
+      "idiom" : "iphone",
+      "scale" : "2x",
+      "size" : "750x1334"
+    },
+    {
+      "idiom" : "iphone",
+      "scale" : "3x",
+      "size" : "1242x2208"
+    },
+    {
+      "idiom" : "ipad",
+      "scale" : "1x",
+      "size" : "768x1024"
+    },
+    {
+      "idiom" : "ipad",
+      "scale" : "2x",
+      "size" : "1536x2048"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}

@@ -871,8 +871,8 @@
     <!-- PAGE CONTENT -->
     <main class="page-content">
 
-        <!-- Profile Content — always visible; shows real data when loaded -->
-        <div id="profile-content">
+        <!-- Profile Content — hidden by default; shown by renderProfile() after data loads -->
+        <div id="profile-content" style="display:none">
 
             <!-- ═══ HERO CARD ═══ -->
             <div class="hero-card" id="hero-card">
@@ -1155,25 +1155,27 @@
     // bundled — SWs are unnecessary and cause broken offline logic.
     // If you accidentally copy a navigator.serviceWorker.register() call here,
     // it will throw on native builds. See SW_POLICY.md for the full policy.
+    // SW_POLICY: Service workers are blocked on native Capacitor builds.
+    // Previous implementation threw an uncaught error that killed the entire
+    // <script> block, preventing loadProfile() from running — root cause of
+    // the "empty profile" bug on Android. Now logs a warning instead.
+    // If SW registration is ever added, it must be gated by !Capacitor check.
     (function() {
         try {
-            // Attempt to detect if Capacitor is present via global
-            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform) {
-                if (Capacitor.isNativePlatform()) {
-                    // Native builds: throw early if anyone tries to register a SW
-                    throw new Error('SW_POLICY: Service worker registration is BLOCKED on iOS/Android native builds. Capacitor apps ship bundled assets and do not need offline caching. See SW_POLICY.md');
-                }
+            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
+                console.warn('[SW_POLICY] Native build detected — service worker registration is blocked. See SW_POLICY.md');
+                window.__DG_NATIVE = true; // flag for other code that needs to know
             }
         } catch (e) {
-            // Re-throw only the SW policy error; ignore other Capacitor errors
-            if (e.message && e.message.startsWith('SW_POLICY:')) throw e;
+            // Capacitor detection failed — not a native build, ignore
         }
     })();
 
     // ── DARK MODE TOGGLE (theme already set by blocking <head> script) ──
     (function() {
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        var toggle = document.getElementById('themeToggle');
+        if (toggle) toggle.textContent = isDark ? '☀️' : '🌙';
     })();
 
     document.getElementById('themeToggle').addEventListener('click', function() {
@@ -1614,7 +1616,7 @@
         document.getElementById('stat-rounds').textContent = stats.total_rounds || 0;
         document.getElementById('stat-battles').textContent = data.battle_wins || 0;
         document.getElementById('stat-streak').textContent = data.login_streak || 0;
-        document.getElementById('stat-badges').textContent = (data.badges || []).length;
+        document.getElementById('stat-badges').textContent = data.badge_count || (data.badges || []).length;
 
         if (badgeCategories) renderBadges(badgeCategories);
         renderChallenges(data.active_challenges || []);
