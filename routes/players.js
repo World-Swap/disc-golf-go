@@ -5,23 +5,20 @@ const {
   getLevelFromXp,
   getLevelProgress,
   getLevelTitle,
-  grantXp,
-  grantGold,
   BADGE_DEFINITIONS,
   BADGE_TIERS,
   TIER_COLORS,
-  evaluateBadges,
-  getStateMilestone,
   getSkillTier,
   getSkillTierProgress,
 } = require('./xp-engine');
 const { getPlayerDistanceStats } = require('./distance-analytics');
+const { applyLoginStreak } = require('../services/login-streak');
 
 module.exports = ({ pool }) => {
   const router = express.Router();
 
   // Register a new player (legacy endpoint — new registrations go through /api/auth/signup)
-  router.post('/players', sanitizeFields('display_name'), async (req, res) => {
+  router.post('/players', sanitizeFields('display_name'), async (req, res, next) => {
     const { display_name, player_uuid } = req.body;
 
     if (!display_name || !player_uuid) {
@@ -71,16 +68,15 @@ module.exports = ({ pool }) => {
       if (err.code === '23505') {
         return res.status(409).json({ error: 'A player with that name already exists' });
       }
-      console.error('Create player error:', err.message);
-      res.status(500).json({ error: 'Failed to create player' });
+      next(err);
     }
   });
 
   // GET /api/players/me — full profile with all progression data
-  router.get('/players/me', requireAuth(pool), async (req, res) => {
+  router.get('/players/me', requireAuth(pool), async (req, res, next) => {
     const client = await pool.connect();
     try {
-            await client.query('BEGIN');
+      await client.query('BEGIN');
 
       const result = await client.query(
         `SELECT id, player_uuid, display_name, username, email, profile_photo_url,
@@ -96,74 +92,9 @@ module.exports = ({ pool }) => {
       }
 
       const p = result.rows[0];
-      const today = new Date().toISOString().split('T')[0];
-      const lastLogin = p.last_login_date ? p.last_login_date.toISOString().split('T')[0] : null;
 
-      // Update login streak
-      let loginXpGranted = null;
-      if (lastLogin !== today) {
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-        let newStreak;
-        if (lastLogin === yesterday) {
-          newStreak = (p.login_streak || 0) + 1;
-        } else if (!lastLogin) {
-          newStreak = 1;
-        } else {
-          newStreak = 1; // Streak broken
-        }
-        const newBest = Math.max(newStreak, p.best_streak || 0);
-
-        await client.query(
-          'UPDATE players SET last_login_date = $1, login_streak = $2, best_streak = $3 WHERE id = $4',
-          [today, newStreak, newBest, p.id]
-        );
-
-        p.login_streak = newStreak;
-        p.best_streak = newBest;
-
-        // Grant streak XP at milestones
-        let streakEvent = null;
-        if (newStreak === 3) streakEvent = 'login_streak_3';
-        else if (newStreak === 7) streakEvent = 'login_streak_7';
-        else if (newStreak === 14) streakEvent = 'login_streak_14';
-        else if (newStreak === 30) streakEvent = 'login_streak_30';
-
-        if (streakEvent) {
-          const r = await grantXp(client, p.id, streakEvent, { streak: newStreak });
-          loginXpGranted = { event: streakEvent, amount: r.amount, newXp: r.newXp, streak: newStreak };
-          p.xp = r.newXp;
-
-          // Evaluate streak badges
-          try {
-            const badgeStats = {
-              uniqueCourses: 0, totalCheckins: 0, totalRounds: p.total_rounds,
-              challengesCompleted: 0, battleWins: p.battle_wins, bestStreak: newBest,
-              uniqueOpponents: 0, uniqueStates: 0, maxSameCourseVisits: 0,
-              weekendRounds: 0, nightCheckins: 0, morningCheckins: 0, weatherCheckins: 0,
-              trailblazerCourses: 0, seasonsPlayed: 0, completedCities: 0,
-            };
-            const existing = await client.query('SELECT category, tier FROM player_badges WHERE player_id = $1', [p.id]);
-            const existingSet = new Set(existing.rows.map(r2 => `${r2.category}:${r2.tier}`));
-            const newBadges = evaluateBadges(badgeStats, existingSet);
-            for (const badge of newBadges) {
-              await client.query(
-                'INSERT INTO player_badges (player_id, category, tier) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
-                [p.id, badge.category, badge.tier]
-              );
-              // Award gold for badge unlock — use SAVEPOINT to prevent transaction poisoning
-              try {
-                await client.query('SAVEPOINT badge_gold');
-                await grantGold(client, p.id, 'badge_unlock', { category: badge.category, tier: badge.tier });
-                await client.query('RELEASE SAVEPOINT badge_gold');
-              } catch (e) {
-                try { await client.query('ROLLBACK TO SAVEPOINT badge_gold'); } catch (_) {}
-              }
-            }
-          } catch (badgeErr) {
-            console.error('Badge evaluation error:', badgeErr.message);
-          }
-        }
-      }
+      // Daily login-streak update + streak badge grants (mutates p, returns any streak XP).
+      const loginXpGranted = await applyLoginStreak(client, p);
 
       // Fetch real stats from DB (checkins, courses, badges)
       const [checkinStats, badgeCount, recentCheckins] = await Promise.all([
@@ -277,15 +208,14 @@ module.exports = ({ pool }) => {
       });
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
-      console.error('[players/me] Error:', err.message);
-      res.status(500).json({ error: 'Failed to get player' });
+      next(err);
     } finally {
       client.release();
     }
   });
 
   // GET /api/players/badges — all badge definitions with player's earned status
-  router.get('/players/badges', requireAuth(pool), async (req, res) => {
+  router.get('/players/badges', requireAuth(pool), async (req, res, next) => {
     try {
       const earnedResult = await pool.query(
         'SELECT category, tier, earned_at FROM player_badges WHERE player_id = $1',
@@ -316,19 +246,17 @@ module.exports = ({ pool }) => {
 
       res.json({ categories });
     } catch (err) {
-      console.error('Get badges error:', err.message);
-      res.status(500).json({ error: 'Failed to get badges' });
+      next(err);
     }
   });
 
   // GET /api/players/distance-stats — distance analytics + distance achievements
-  router.get('/players/distance-stats', requireAuth(pool), async (req, res) => {
+  router.get('/players/distance-stats', requireAuth(pool), async (req, res, next) => {
     try {
       const stats = await getPlayerDistanceStats(pool, req.player.id);
       res.json(stats);
     } catch (err) {
-      console.error('Distance stats error:', err.message);
-      res.status(500).json({ error: 'Failed to get distance stats' });
+      next(err);
     }
   });
 
@@ -339,7 +267,7 @@ module.exports = ({ pool }) => {
   //   - completed_states: names of states where visited === total
   //   - totals: {visited, total, pct}
   //   - badges: player's current badge status for exploration categories
-  router.get('/players/progress', requireAuth(pool), async (req, res) => {
+  router.get('/players/progress', requireAuth(pool), async (req, res, next) => {
     try {
       // Per-state visited/total
       const stateResult = await pool.query(`
@@ -404,13 +332,12 @@ module.exports = ({ pool }) => {
         badges: badgeResult.rows,
       });
     } catch (err) {
-      console.error('Progress error:', err.message);
-      res.status(500).json({ error: 'Failed to get progress' });
+      next(err);
     }
   });
 
   // GET /api/players/leaderboard — global XP leaderboard
-  router.get('/players/leaderboard', async (req, res) => {
+  router.get('/players/leaderboard', async (req, res, next) => {
     try {
       const result = await pool.query(
         `SELECT p.id, p.display_name, p.xp, p.level,
@@ -426,14 +353,13 @@ module.exports = ({ pool }) => {
       );
       res.json({ leaderboard: result.rows });
     } catch (err) {
-      console.error('Leaderboard error:', err.message);
-      res.status(500).json({ error: 'Failed to get leaderboard' });
+      next(err);
     }
   });
 
   // GET /api/players/xp-history — player's XP transaction history with breakdown
   // Returns recent transactions + source breakdown + training streak info
-  router.get('/players/xp-history', requireAuth(pool), async (req, res) => {
+  router.get('/players/xp-history', requireAuth(pool), async (req, res, next) => {
     const limit = Math.min(parseInt(req.query.limit) || 30, 100);
     try {
       // Recent transactions
@@ -498,7 +424,6 @@ module.exports = ({ pool }) => {
       );
 
       // Next tier info
-      const { getSkillTierProgress } = require('./xp-engine');
       const playerXp = (await pool.query('SELECT xp FROM players WHERE id = $1', [req.player.id])).rows[0]?.xp || 0;
       const skillProgress = getSkillTierProgress(playerXp);
 
@@ -520,13 +445,12 @@ module.exports = ({ pool }) => {
         skill_progress: skillProgress,
       });
     } catch (err) {
-      console.error('XP history error:', err.message);
-      res.status(500).json({ error: 'Failed to get XP history' });
+      next(err);
     }
   });
 
   // PUT /api/players/me — update profile fields
-  router.put('/players/me', requireAuth(pool), sanitizeFields('display_name'), async (req, res) => {
+  router.put('/players/me', requireAuth(pool), sanitizeFields('display_name'), async (req, res, next) => {
     const { display_name, username } = req.body;
 
     const updates = [];
@@ -581,14 +505,13 @@ module.exports = ({ pool }) => {
         level_title: getLevelTitle(level).title,
       });
     } catch (err) {
-      console.error('Update player error:', err.message);
-      res.status(500).json({ error: 'Failed to update profile' });
+      next(err);
     }
   });
 
   // POST /api/players/reset-progress — reset all player stats, gold, XP, and vault items to blank slate
   // Preserves: name, email, username, avatar, password hash, created_at, auth fields
-  router.post('/players/reset-progress', requireAuth(pool), async (req, res) => {
+  router.post('/players/reset-progress', requireAuth(pool), async (req, res, next) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -607,43 +530,13 @@ module.exports = ({ pool }) => {
         beforeCounts[table] = parseInt(r.rows[0].count);
       }
 
-      // 1. Delete XP transactions
-      await client.query('DELETE FROM xp_transactions WHERE player_id = $1', [playerId]);
+      // Wipe all player-scoped rows across the tables audited above (same list,
+      // so the delete set and verification set can never drift apart).
+      for (const table of tablesToCheck) {
+        await client.query(`DELETE FROM ${table} WHERE player_id = $1`, [playerId]);
+      }
 
-      // 2. Delete gold transactions
-      await client.query('DELETE FROM gold_transactions WHERE player_id = $1', [playerId]);
-
-      // 3. Delete player badges
-      await client.query('DELETE FROM player_badges WHERE player_id = $1', [playerId]);
-
-      // 4. Delete player challenges
-      await client.query('DELETE FROM player_challenges WHERE player_id = $1', [playerId]);
-
-      // 5. Delete player inventory (column is player_id per vault migration)
-      await client.query('DELETE FROM player_inventory WHERE player_id = $1', [playerId]);
-
-      // 6. Delete active boosts (column is player_id per vault migration)
-      await client.query('DELETE FROM active_boosts WHERE player_id = $1', [playerId]);
-
-      // 7. Delete training streaks
-      await client.query('DELETE FROM training_streaks WHERE player_id = $1', [playerId]);
-
-      // 8. Delete training completions
-      await client.query('DELETE FROM training_completions WHERE player_id = $1', [playerId]);
-
-      // 9. Delete player daily challenges
-      await client.query('DELETE FROM player_daily_challenges WHERE player_id = $1', [playerId]);
-
-      // 10. Delete quest progression
-      await client.query('DELETE FROM quest_progression WHERE player_id = $1', [playerId]);
-
-      // 11. Delete player vault training unlocks
-      await client.query('DELETE FROM player_vault_training_unlocks WHERE player_id = $1', [playerId]);
-
-      // 12. Delete player achievements
-      await client.query('DELETE FROM player_achievements WHERE player_id = $1', [playerId]);
-
-      // 13. Reset player stats to zero (preserving credentials)
+      // Reset player stats to zero (preserving credentials)
       await client.query(
         `UPDATE players SET
            xp = 0,
@@ -707,8 +600,7 @@ module.exports = ({ pool }) => {
       });
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
-      console.error('[reset-progress] Error:', err.message);
-      res.status(500).json({ error: 'Reset failed' });
+      next(err);
     } finally {
       client.release();
     }
