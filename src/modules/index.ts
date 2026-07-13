@@ -16,6 +16,8 @@ import { createPlayersService } from './players/players.service';
 import { createPlayersRouter } from './players/players.routes';
 import { createCoursesService } from './courses/courses.service';
 import { createCoursesRouter } from './courses/courses.routes';
+import { createCheckinsService } from './checkins/checkins.service';
+import { createCheckinsRouter } from './checkins/checkins.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -31,7 +33,10 @@ export function createApiRouter(db: Database): Router {
   const coursesService = createCoursesService(db);
   api.use(createCoursesRouter(coursesService, optAuth));
 
-  // Future modules mount here: checkins, ...
+  const checkinsService = createCheckinsService(db);
+  api.use(createCheckinsRouter(checkinsService, auth));
+
+  // Future modules mount here: leaderboard, vault, training, ...
 
   return api;
 }
