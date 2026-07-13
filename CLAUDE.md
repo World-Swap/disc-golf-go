@@ -10,7 +10,7 @@ Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via C
 - `server.js` — app entry point; middleware + route mounts (wiring only)
 - `routes/` — one file per feature area (auth, courses, rounds, battles, challenges, players, leaderboard, checkins, admin, vault, gold, upload, xp-engine, distance-analytics, delete-account, crews, crew-wars, story, feedback, reviews, referrals, onboarding, campaign, training, training-notifications)
 - `migrations/` — node-pg-migrate SQL migration files; all DDL lives here
-- `services/` — multi-step business logic extracted from routes so route files stay thin (e.g. `checkin-rewards.js` runs the check-in XP/gold/badge pipeline inside the caller's transaction)
+- `services/` — multi-step business logic extracted from routes so route files stay thin (e.g. `checkin-rewards.js` runs the check-in XP/gold/badge pipeline, `login-streak.js` applies the daily login-streak update — both inside the caller's transaction)
 - `middleware/` — `auth.js` (JWT validation + `createToken`; sets `req.player`), `security.js` (security headers, in-memory rate limiter, input sanitization, numeric param validation, admin JWT auth), `pageview-tracker.js` (non-blocking server-side pageview logging)
 - `public/` — static frontend assets (HTML, CSS, JS, images); `app.css` is the unified design system (tokens, shared components) linked by all app pages
 - `lib/` — shared utilities: `email.js` (single outbound-email transport — the one place to change email providers), `app-url.js` (`appBaseUrl()` — canonical public base URL for outbound links), `normalize-state.js`, `utm.js`

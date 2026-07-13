@@ -8,7 +8,7 @@
  */
 
 const express = require('express');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 
 // ──────────────────────────────────────────────
 // GOLD AWARD RATES (base amounts before boost)
@@ -160,13 +160,14 @@ async function addToInventory(db, playerId, itemId, acquiredVia = 'drop') {
 
 const routerFactory = ({ pool }) => {
   const router = express.Router();
+  const optAuth = optionalAuth(pool); // sets req.player when a token/UUID is present
 
   // ────────────────────────────────────────────────────────────────
   // GET /api/vault/library — completed lesson videos + reading links
   // Authenticated: returns lessons grouped by category
   // Unauthenticated: returns { authenticated: false }
   // ────────────────────────────────────────────────────────────────
-  router.get('/vault/library', requireAuth(pool), async (req, res) => {
+  router.get('/vault/library', requireAuth(pool), async (req, res, next) => {
     try {
       // Get completed lesson IDs for this player
       const completedRows = await pool.query(
@@ -240,15 +241,13 @@ const routerFactory = ({ pool }) => {
         });
       }
 
-      const categories = Object.values(categoryMap).sort((a, b) => {
-        // Use sort_order from DB — fetch it explicitly
-        return 0;
-      });
+      // categoryMap is built by iterating lessons already ordered by
+      // c.sort_order, l.sort_order, so insertion order is the display order.
+      const categories = Object.values(categoryMap);
 
       res.json({ authenticated: true, categories });
     } catch (err) {
-      console.error('[vault] GET /library error:', err.message);
-      res.status(500).json({ error: 'Server error' });
+      next(err);
     }
   });
 
@@ -256,7 +255,7 @@ const routerFactory = ({ pool }) => {
   // GET /api/vault/bonus — premium instructor videos catalog
   // Public browse (no auth required), purchased flag + gold_balance require auth
   // ────────────────────────────────────────────────────────────────
-  router.get('/vault/bonus', async (req, res) => {
+  router.get('/vault/bonus', optAuth, async (req, res, next) => {
     try {
       const itemsResult = await pool.query(
         `SELECT id, name, description, preview, icon, gold_cost, item_type, content,
@@ -271,30 +270,17 @@ const routerFactory = ({ pool }) => {
       let purchasedIds = new Set();
       let goldBalance = null;
 
-      // Only check purchased status if auth is present
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const { JWT_SECRET } = require('../middleware/auth');
-        const jwt = require('jsonwebtoken');
-        try {
-          const decoded = jwt.verify(authHeader.slice(7), JWT_SECRET);
-          if (decoded && decoded.id) {
-            const playerId = decoded.id;
-
-            const [playerResult, purchasedResult] = await Promise.all([
-              pool.query('SELECT gold FROM players WHERE id = $1', [playerId]),
-              pool.query(
-                `SELECT item_id FROM player_vault_training_unlocks WHERE player_id = $1`,
-                [playerId]
-              ),
-            ]);
-
-            goldBalance = playerResult.rows[0]?.gold ?? 0;
-            purchasedIds = new Set(purchasedResult.rows.map(r => r.item_id));
-          }
-        } catch (_e) {
-          // Invalid token — treat as unauthenticated for purchased/gold
-        }
+      // purchased flag + gold balance only when authenticated
+      if (req.player) {
+        const [playerResult, purchasedResult] = await Promise.all([
+          pool.query('SELECT gold FROM players WHERE id = $1', [req.player.id]),
+          pool.query(
+            `SELECT item_id FROM player_vault_training_unlocks WHERE player_id = $1`,
+            [req.player.id]
+          ),
+        ]);
+        goldBalance = playerResult.rows[0]?.gold ?? 0;
+        purchasedIds = new Set(purchasedResult.rows.map(r => r.item_id));
       }
 
       const typeLabels = {
@@ -326,15 +312,14 @@ const routerFactory = ({ pool }) => {
         authenticated: goldBalance !== null,
       });
     } catch (err) {
-      console.error('[vault] GET /bonus error:', err.message);
-      res.status(500).json({ error: 'Server error' });
+      next(err);
     }
   });
 
   // ────────────────────────────────────────────────────────────────
   // GET /api/vault/gold — gold balance + recent transactions (still used)
   // ────────────────────────────────────────────────────────────────
-  router.get('/vault/gold', requireAuth(pool), async (req, res) => {
+  router.get('/vault/gold', requireAuth(pool), async (req, res, next) => {
     try {
       const [playerResult, txResult] = await Promise.all([
         pool.query('SELECT gold FROM players WHERE id = $1', [req.player.id]),
@@ -349,8 +334,7 @@ const routerFactory = ({ pool }) => {
         transactions: txResult.rows,
       });
     } catch (err) {
-      console.error('[vault/gold] error:', err.message);
-      res.status(500).json({ error: 'Server error' });
+      next(err);
     }
   });
 
@@ -358,7 +342,7 @@ const routerFactory = ({ pool }) => {
   // POST /api/vault/training/unlock — purchase a bonus item with gold
   // Body: { item_id }
   // ────────────────────────────────────────────────────────────────
-  router.post('/vault/training/unlock', requireAuth(pool), async (req, res) => {
+  router.post('/vault/training/unlock', requireAuth(pool), async (req, res, next) => {
     const { item_id } = req.body;
     if (!item_id) return res.status(400).json({ error: 'item_id required' });
 
@@ -430,9 +414,8 @@ const routerFactory = ({ pool }) => {
         gold: newGoldRes.rows[0].gold,
       });
     } catch (err) {
-      await client.query('ROLLBACK');
-      console.error('[vault/training/unlock] error:', err.message);
-      res.status(500).json({ error: 'Server error' });
+      await client.query('ROLLBACK').catch(() => {});
+      next(err);
     } finally {
       client.release();
     }
