@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -29,6 +31,29 @@ h1 {
 h1 .accent {
     color: var(--green);
 }
+
+.referral-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(255,107,26,0.08);
+    border: 1px solid rgba(255,107,26,0.22);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+    animation: fadeSlideIn 0.4s ease;
+}
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.referral-banner-icon { font-size: 1.4rem; flex-shrink: 0; }
+.referral-banner-text {
+    font-size: 0.82rem;
+    color: var(--text2);
+    line-height: 1.4;
+}
+.referral-banner-text strong { color: var(--green); }
 </style>
 <!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
 <script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
@@ -36,7 +61,7 @@ h1 .accent {
 <body class="auth-page">
     <header class="top-header">
         <a href="/" class="header-logo">
-            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            <img src="/logo.png?v=7" alt="Disc Golf Go" width="32" height="32" loading="eager">
             Disc Golf <span class="go">Go</span>
         </a>
         <div class="header-actions">
@@ -53,6 +78,14 @@ h1 .accent {
             <div class="perk"><div class="perk-icon">🥏</div><span>150 XP for every new course you visit</span></div>
             <div class="perk"><div class="perk-icon">🏆</div><span>Unlock badges as you explore California</span></div>
             <div class="perk"><div class="perk-icon">📈</div><span>Level up with every round</span></div>
+        </div>
+
+        <div class="referral-banner" id="referral-banner" style="display:none;">
+            <div class="referral-banner-icon">🤝</div>
+            <div class="referral-banner-text">
+                <span id="referral-banner-name">A friend</span> invited you!<br>
+                <strong>+25 XP bonus</strong> when you join.
+            </div>
         </div>
 
         <div class="card">
@@ -83,6 +116,13 @@ h1 .accent {
             </div>
 
             <button class="btn-primary" id="register-btn" onclick="register()">Create Account →</button>
+
+            <div class="form-group" style="margin-top:0.75rem;">
+                <label for="referral-code" style="font-size:0.75rem;color:var(--text3);">🎁 Referral code <span style="opacity:0.7">(optional)</span></label>
+                <input type="text" id="referral-code" placeholder="BRINGAFREND" maxlength="12"
+                    style="text-transform:uppercase;letter-spacing:0.05em;font-family:'Space Mono',monospace;"
+                    autocomplete="off" autocorrect="off" autocapitalize="characters">
+            </div>
         </div>
 
         <div class="switch-link">
@@ -141,6 +181,39 @@ h1 .accent {
         window.location.href = '/profile';
     }
 
+    // Pre-fill referral code from URL (?ref=CODE) + capture inbound UTMs
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var ref = params.get('ref');
+        if (ref) {
+            var input = document.getElementById('referral-code');
+            if (input) input.value = ref.trim().toUpperCase();
+        }
+
+        // Capture inbound UTMs so the resulting registration pageview
+        // (and downstream analytics) can be tied to the source channel.
+        var utm = {
+            source: params.get('utm_source'),
+            medium: params.get('utm_medium'),
+            campaign: params.get('utm_campaign'),
+            content: params.get('utm_content'),
+            term: params.get('utm_term'),
+        };
+        if (utm.source || utm.medium || utm.campaign) {
+            try {
+                sessionStorage.setItem('dggo_utm', JSON.stringify({
+                    source: utm.source,
+                    medium: utm.medium,
+                    campaign: utm.campaign,
+                    content: utm.content || undefined,
+                    term: utm.term || undefined,
+                    landing_path: window.location.pathname,
+                    captured_at: new Date().toISOString(),
+                }));
+            } catch (_e) { /* sessionStorage unavailable — non-fatal */ }
+        }
+    })();
+
     const displayNameInput = document.getElementById('display-name');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
@@ -176,6 +249,7 @@ h1 .accent {
         const username = usernameInput.value.trim();
         const email = emailInput.value.trim();
         const password = passwordInput.value;
+        const referral_code = document.getElementById('referral-code').value.trim().toUpperCase() || null;
 
         if (!display_name) { showError('Enter your display name'); return; }
         if (!username || username.length < 3) { showError('Username must be at least 3 characters'); return; }
@@ -190,7 +264,7 @@ h1 .accent {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ display_name, username, email, password })
+                body: JSON.stringify({ display_name, username, email, password, referral_code })
             });
             const data = await res.json();
 
@@ -205,6 +279,20 @@ h1 .accent {
             localStorage.setItem('dggo_token', data.token);
             localStorage.setItem('dggo_player_name', data.player.display_name);
             localStorage.setItem('dggo_player_id', String(data.player.id));
+
+            // Claim referral code (fire-and-forget, don't block redirect)
+            var refCode = sessionStorage.getItem('dggo_ref_code');
+            if (refCode) {
+                fetch('/api/referrals/claim', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + data.token
+                    },
+                    body: JSON.stringify({ code: refCode })
+                }).catch(function() {});
+                sessionStorage.removeItem('dggo_ref_code');
+            }
 
             window.location.href = '/profile';
         } catch (err) {
@@ -221,6 +309,29 @@ h1 .accent {
     function hideError() {
         errorMsg.classList.remove('show');
     }
+
+    // Referral code handling
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var ref = params.get('ref');
+        if (!ref || ref.length !== 8) return;
+
+        var banner = document.getElementById('referral-banner');
+        var nameEl = document.getElementById('referral-banner-name');
+
+        fetch('/api/referrals/validate/' + encodeURIComponent(ref.toUpperCase()))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.valid && data.creator_name) {
+                    nameEl.textContent = data.creator_name;
+                    banner.style.display = 'flex';
+                }
+            })
+            .catch(function() {});
+
+        // Store the ref code — used after successful signup
+        sessionStorage.setItem('dggo_ref_code', ref.toUpperCase());
+    })();
 
     // Polsia Analytics
     (function() {

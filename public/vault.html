@@ -10,13 +10,16 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/app.css">
     <style>/* Page content */
 .page-content { max-width: 520px; margin: 0 auto; padding: 1rem 1rem 1.5rem; }
+
 /* VAULT HEADER */
 .vault-header {
     background: var(--surface);
@@ -27,7 +30,7 @@
     box-shadow: var(--shadow-card);
 }
 .vault-title-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem;
 }
 .vault-title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; font-family: 'Space Grotesk', system-ui, sans-serif; }
 .vault-subtitle { font-size: 0.85rem; color: var(--text3); margin-top: 0.1rem; }
@@ -46,28 +49,6 @@
 .gold-badge .gold-amount { font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700; color: var(--gold); }
 .gold-badge .gold-label { font-size: 0.72rem; color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; }
 
-/* ACTIVE BOOSTS BANNER */
-.active-boosts-banner {
-    background: var(--green-glow);
-    border: 1px solid rgba(60,168,60,0.2);
-    border-radius: 14px;
-    padding: 0.85rem 1.1rem; display: none; flex-direction: column; gap: 0.5rem;
-}
-[data-theme="dark"] .active-boosts-banner {
-    background: rgba(76,223,60,0.08);
-    border-color: rgba(76,223,60,0.2);
-}
-.active-boosts-banner.visible { display: flex; }
-.active-boost-label { font-size: 0.72rem; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.1rem; }
-.boost-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.boost-chip {
-    display: flex; align-items: center; gap: 0.35rem;
-    background: var(--green-glow);
-    border: 1px solid rgba(60,168,60,0.2);
-    border-radius: 100px; padding: 0.3rem 0.7rem; font-size: 0.8rem;
-}
-.boost-chip .bc-timer { color: var(--green); font-weight: 700; font-family: 'Space Mono', monospace; font-size: 0.75rem; }
-
 /* TABS */
 .tabs { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; }
 .tab-btn {
@@ -78,123 +59,118 @@
 }
 .tab-btn.active {
     background: var(--green-glow);
-    border-color: rgba(60,168,60,0.35); color: var(--green);
+    border-color: rgba(255,107,26,0.35); color: var(--green);
 }
-.tab-btn:hover:not(.active) { border-color: rgba(60,168,60,0.25); color: var(--text2); }
+.tab-btn:hover:not(.active) { border-color: rgba(255,107,26,0.25); color: var(--text2); }
 
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-/* TYPE FILTER */
-.type-filter { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-.filter-btn {
-    padding: 0.4rem 0.9rem; border-radius: 100px;
-    font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border);
-    background: transparent; color: var(--text3); cursor: pointer; transition: all 0.2s;
+/* LIBRARY STYLES */
+.library-category { margin-bottom: 2rem; }
+.category-header {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.85rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
 }
-.filter-btn.active { background: var(--green-glow); border-color: rgba(60,168,60,0.35); color: var(--green); }
-.filter-btn:hover:not(.active) { border-color: rgba(60,168,60,0.25); color: var(--text2); }
-
-/* RARITY COLORS */
-.rarity-common    { color: #8ba888; }
-.rarity-uncommon  { color: #4ade80; }
-.rarity-rare      { color: #60a5fa; }
-.rarity-epic      { color: #c084fc; }
-.rarity-legendary { color: #fb923c; }
-
-.rarity-border-common    { border-color: rgba(139,168,136,0.3) !important; }
-.rarity-border-uncommon  { border-color: rgba(74,222,128,0.3) !important; }
-.rarity-border-rare      { border-color: rgba(96,165,250,0.3) !important; }
-.rarity-border-epic      { border-color: rgba(192,132,252,0.35) !important; }
-.rarity-border-legendary { border-color: rgba(251,146,60,0.4) !important; }
-
-.rarity-bg-common    { background: rgba(139,168,136,0.06); }
-.rarity-bg-uncommon  { background: rgba(74,222,128,0.06); }
-.rarity-bg-rare      { background: rgba(96,165,250,0.07); }
-.rarity-bg-epic      { background: rgba(192,132,252,0.08); }
-.rarity-bg-legendary { background: rgba(251,146,60,0.09); }
-
-.rarity-glow-common    { box-shadow: 0 0 10px rgba(139,168,136,0.1); }
-.rarity-glow-uncommon  { box-shadow: 0 0 12px rgba(74,222,128,0.12); }
-.rarity-glow-rare      { box-shadow: 0 0 14px rgba(96,165,250,0.15); }
-.rarity-glow-epic      { box-shadow: 0 0 16px rgba(192,132,252,0.2); }
-.rarity-glow-legendary { box-shadow: 0 0 20px rgba(251,146,60,0.25); }
-
-/* INVENTORY GRID */
-.inv-section { margin-bottom: 2rem; }
-.inv-section-title {
-    font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
-    color: var(--text3); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+.category-icon { font-size: 1.4rem; }
+.category-name {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 1rem; font-weight: 700; color: var(--text);
 }
-.inv-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem;
+.category-count {
+    font-size: 0.75rem; color: var(--text3); margin-left: auto;
 }
 
-.inv-card {
-    border-radius: 14px; border: 1px solid; padding: 1rem 0.85rem;
-    position: relative; transition: transform 0.15s;
-    display: flex; flex-direction: column; gap: 0.5rem;
+.lesson-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    display: flex; gap: 0.85rem; align-items: flex-start;
 }
-.inv-card:hover { transform: translateY(-2px); }
-.inv-card-icon { font-size: 2rem; text-align: center; margin-bottom: 0.1rem; }
-.inv-card-name { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.82rem; font-weight: 700; line-height: 1.3; text-align: center; }
-.inv-card-effect { font-size: 0.72rem; color: var(--text2); text-align: center; }
-.inv-card-rarity {
-    font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
-    text-align: center; margin-top: auto;
-}
-.inv-qty-badge {
-    position: absolute; top: -5px; right: -5px;
-    background: var(--green); color: #fff;
-    border-radius: 100px; font-family: 'Space Mono', monospace;
-    font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.45rem;
-    min-width: 22px; text-align: center;
-}
-.btn-activate {
-    width: 100%; margin-top: 0.25rem; padding: 0.45rem;
-    background: var(--green);
-    color: #fff; border: none; border-radius: 8px;
-    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.75rem; font-weight: 700;
-    cursor: pointer; transition: opacity 0.15s;
-}
-.btn-activate:hover { opacity: 0.85; }
-.btn-activate:disabled { opacity: 0.4; cursor: not-allowed; background: rgba(60,168,60,0.3); }
+.lesson-card:hover { border-color: rgba(255,107,26,0.25); }
 
-/* SHOP GRID */
-.shop-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 0.85rem;
+.video-thumbnail-wrap {
+    position: relative; width: 120px; flex-shrink: 0;
+    border-radius: 10px; overflow: hidden; cursor: pointer;
+    background: #000;
 }
-.shop-card {
-    border-radius: 16px; border: 1px solid; padding: 1.2rem 1rem;
-    display: flex; flex-direction: column; gap: 0.45rem;
+.video-thumbnail-wrap img {
+    width: 100%; aspect-ratio: 16/9; object-fit: cover;
+    display: block; opacity: 0.85;
+}
+.video-thumbnail-wrap:hover img { opacity: 1; }
+.play-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.35);
+}
+.play-overlay::after {
+    content: '▶';
+    font-size: 1.8rem; color: #fff;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.video-thumbnail-wrap .video-duration {
+    position: absolute; bottom: 4px; right: 4px;
+    background: rgba(0,0,0,0.7); color: #fff;
+    font-size: 0.65rem; font-family: 'Space Mono', monospace;
+    padding: 0.1rem 0.3rem; border-radius: 4px;
+}
+
+.lesson-body { flex: 1; min-width: 0; }
+.lesson-title {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 0.9rem; font-weight: 700; line-height: 1.3;
+    margin-bottom: 0.2rem;
+}
+.lesson-channel { font-size: 0.75rem; color: var(--text3); margin-bottom: 0.5rem; }
+
+.further-reading-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text3); margin-bottom: 0.35rem;
+}
+.further-reading-list { list-style: none; padding: 0; margin: 0; }
+.further-reading-list li { margin-bottom: 0.3rem; }
+.further-reading-list a {
+    font-size: 0.78rem; color: var(--green);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;
+}
+.further-reading-list a:hover { text-decoration: underline; }
+.further-reading-list a::before { content: '↗'; font-size: 0.7rem; }
+
+/* BONUS STYLES */
+.bonus-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.85rem;
+}
+.bonus-card {
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 0;
+    overflow: hidden;
     transition: transform 0.15s;
+    display: flex; flex-direction: column;
+    background: var(--surface2);
 }
-.shop-card:hover { transform: translateY(-2px); }
-.shop-card-icon { font-size: 2.2rem; text-align: center; }
-.shop-card-name { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.88rem; font-weight: 700; text-align: center; line-height: 1.3; }
-.shop-card-effect { font-size: 0.75rem; color: var(--text2); text-align: center; line-height: 1.4; }
-.shop-card-duration { font-size: 0.7rem; color: var(--text3); text-align: center; margin-top: 0.1rem; }
-.shop-card-rarity { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; text-align: center; }
-.shop-card-price {
-    display: flex; align-items: center; justify-content: center; gap: 0.35rem;
-    font-family: 'Space Mono', monospace; font-size: 0.95rem; font-weight: 700;
-    color: var(--gold); margin-top: auto; padding-top: 0.25rem;
+.bonus-card:hover { transform: translateY(-2px); }
+
+.bonus-card-body { padding: 1rem 0.9rem; flex: 1; display: flex; flex-direction: column; gap: 0.35rem; }
+.bonus-title {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 0.85rem; font-weight: 700; line-height: 1.3;
+    color: var(--text); flex: 1;
 }
-.shop-card-price-row {
-    display: flex; flex-direction: column; align-items: center; margin-top: auto;
-    gap: 0.15rem; padding-top: 0.25rem;
+.bonus-preview {
+    font-size: 0.75rem; color: var(--text2); line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
 }
-/* Buy buttons */
-.btn-buy {
-    width: 100%; padding: 0.55rem; margin-top: 0.15rem;
-    background: rgba(224,165,0,0.1);
-    border: 1px solid rgba(224,165,0,0.3); border-radius: 10px;
-    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.82rem; font-weight: 700;
-    color: var(--gold); cursor: pointer; transition: all 0.2s;
-}
-.btn-buy:hover { background: rgba(224,165,0,0.18); border-color: rgba(224,165,0,0.5); }
-.btn-buy:disabled { opacity: 0.35; cursor: not-allowed; }
-.btn-buy.cant-afford { opacity: 0.45; color: var(--text3); border-color: var(--border); background: transparent; cursor: not-allowed; }
+
+/* BONUS category filter pills */
+.bonus-cat-tabs .tab-btn { flex: none; font-size: 0.8rem; padding: 0.55rem 0.9rem; }
 
 /* EMPTY STATE */
 .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text3); }
@@ -222,108 +198,19 @@
 .toast.show { opacity: 1; }
 .toast-xp { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--green); }
 
-/* ACTIVATE SHEET */
-.sheet-overlay {
-    position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.5);
-    display: none; align-items: flex-end; justify-content: center;
-}
-[data-theme="dark"] .sheet-overlay { background: rgba(0,0,0,0.7); }
-.sheet-overlay.open { display: flex; }
-.sheet {
-    background: var(--surface); border: 1px solid var(--border2); border-radius: 20px 20px 0 0;
-    padding: 1.5rem; width: 100%; max-width: 480px;
-}
-.sheet-handle { width: 40px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 1.25rem; }
-.sheet-icon { font-size: 3rem; text-align: center; margin-bottom: 0.5rem; }
-.sheet-title { font-size: 1.2rem; font-weight: 800; text-align: center; margin-bottom: 0.25rem; }
-.sheet-desc { font-size: 0.85rem; color: var(--text2); text-align: center; margin-bottom: 1.5rem; line-height: 1.5; }
-.sheet-effect-row {
-    display: flex; justify-content: space-around; margin-bottom: 1.5rem;
-    background: var(--surface2); border-radius: 12px; padding: 0.85rem;
-}
-.sheet-effect-item { text-align: center; }
-.sheet-effect-val { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--green); }
-.sheet-effect-lbl { font-size: 0.68rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.1rem; }
-.btn-confirm-activate {
-    width: 100%; padding: 0.9rem;
-    background: var(--green);
-    color: #fff; border: none; border-radius: 14px;
-    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1rem; font-weight: 800;
-    cursor: pointer; transition: opacity 0.15s; margin-bottom: 0.75rem;
-}
-.btn-confirm-activate:hover { opacity: 0.9; }
-.btn-cancel {
-    width: 100%; padding: 0.75rem; background: transparent;
-    border: 1px solid var(--border); border-radius: 14px;
-    color: var(--text3); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.9rem; cursor: pointer;
-}
-
 @media (max-width: 600px) {
     .vault-title { font-size: 1.5rem; }
-    .inv-grid { grid-template-columns: repeat(2, 1fr); }
-    .shop-grid { grid-template-columns: repeat(2, 1fr); }
+    .bonus-grid { grid-template-columns: repeat(2, 1fr); }
+    .video-thumbnail-wrap { width: 90px; }
 }
-    
-/* ── Contact mini-footer ─────────────────────────────────────── */
-.contact-footer {
-    border-top: 1px solid var(--border);
-    padding: 0.85rem 1rem 0.5rem;
-    text-align: center;
-    font-size: 0.76rem;
-    color: var(--text3);
-    font-family: 'Space Grotesk', sans-serif;
-}
-.contact-footer a {
-    color: var(--text3);
-    text-decoration: none;
-    transition: color 0.22s;
-}
-.contact-footer a:hover { color: var(--green); }
-.contact-footer .cf-email {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-}
-.contact-footer .cf-socials {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-}
-.contact-footer .cf-socials a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--border2);
-    background: var(--surface2);
-    transition: all 0.22s;
-}
-.contact-footer .cf-socials a:hover {
-    border-color: var(--green);
-    background: var(--surface);
-    color: var(--green);
-}
-.contact-footer .cf-socials svg {
-    width: 14px;
-    height: 14px;
-    fill: currentColor;
-}
-.contact-footer .cf-site {
-    font-size: 0.72rem;
-    opacity: 0.75;
-}
-</style>
+    </style>
 <!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
 <script>(function(){var s=localStorage.getItem('dggo_theme');var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s?s==='dark'?'dark':'light':p?'dark':'light')})()</script>
 </head>
 <body>
     <header class="top-header">
         <a href="/" class="header-logo">
-            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            <img src="/logo.png?v=7" alt="Disc Golf Go" width="32" height="32" loading="eager">
             Disc Golf <span class="go">Go</span>
         </a>
         <div class="header-actions">
@@ -349,9 +236,9 @@
                     <div class="vault-title-row">
                         <div>
                             <div class="vault-title">Vault</div>
-                            <div class="vault-subtitle">Your items &amp; boosts</div>
+                            <div class="vault-subtitle">Training videos &amp; bonus content</div>
                         </div>
-                        <div class="gold-badge">
+                        <div class="gold-badge" id="gold-badge" style="display:none;">
                             <span class="gold-icon">💰</span>
                             <div>
                                 <div class="gold-amount" id="gold-display">0</div>
@@ -359,39 +246,29 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="active-boosts-banner" id="active-boosts-banner">
-                        <div class="active-boost-label">Active Boosts</div>
-                        <div class="boost-chips" id="active-boost-chips"></div>
-                    </div>
                 </div>
 
                 <div class="tabs">
-                    <button class="tab-btn active" id="tab-btn-inventory" onclick="switchTab('inventory', this)">🎒 Inventory</button>
-                    <button class="tab-btn" id="tab-btn-shop" onclick="switchTab('shop', this)">🛒 Shop</button>
+                    <button class="tab-btn active" id="tab-btn-library" onclick="switchTab('library', this)">📚 My Library</button>
+                    <button class="tab-btn" id="tab-btn-bonus" onclick="switchTab('bonus', this)">🎬 Bonus</button>
                 </div>
 
-                <!-- INVENTORY TAB -->
-                <div id="tab-inventory" class="tab-panel active">
-                    <div id="inventory-body"></div>
+                <!-- MY LIBRARY TAB -->
+                <div id="tab-library" class="tab-panel active">
+                    <div id="library-body"></div>
                 </div>
 
-                <!-- SHOP TAB -->
-                <div id="tab-shop" class="tab-panel">
-                    <div class="type-filter" id="shop-filter">
-                        <button class="filter-btn active" onclick="filterShop('all', this)">All</button>
-                        <button class="filter-btn" onclick="filterShop('boost_xp', this)">XP Boosts</button>
-                        <button class="filter-btn" onclick="filterShop('boost_gold', this)">Gold Boosts</button>
-                        <button class="filter-btn" onclick="filterShop('boost_drops', this)">Drop Boosts</button>
-                    </div>
-                    <div class="shop-grid" id="shop-grid"></div>
+                <!-- BONUS CONTENT TAB -->
+                <div id="tab-bonus" class="tab-panel">
+                    <div class="tabs bonus-cat-tabs" id="bonus-cat-tabs" style="flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;"></div>
+                    <div id="bonus-grid" class="bonus-grid"></div>
                 </div>
             </div>
 
             <div id="no-auth" style="display:none;text-align:center;padding:4rem 2rem;">
-                <div style="font-size:3rem;margin-bottom:1rem;">🏪</div>
+                <div style="font-size:3rem;margin-bottom:1rem;">📚</div>
                 <h2 style="margin-bottom:0.75rem;">Sign in to access the Vault</h2>
-                <p style="color:var(--text2);margin-bottom:1.5rem;">Earn gold playing rounds, spend it on boosts and dominate the course</p>
+                <p style="color:var(--text2);margin-bottom:1.5rem;">Complete training lessons to unlock video content, or browse bonus instructor videos</p>
                 <a href="/login" class="btn-orange">Sign In</a>
                 <div style="margin-top:1rem;font-size:0.9rem;color:var(--text3);">
                     New? <a href="/register" style="color:var(--green);text-decoration:none;">Create an account</a>
@@ -399,31 +276,9 @@
             </div>
         </div>
 
-    <!-- Activate Confirmation Sheet -->
-    <div class="sheet-overlay" id="activate-sheet">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <div class="sheet-icon" id="sheet-icon">⚡</div>
-            <div class="sheet-title" id="sheet-name">Item Name</div>
-            <div class="sheet-desc" id="sheet-desc">Description</div>
-            <div class="sheet-effect-row">
-                <div class="sheet-effect-item">
-                    <div class="sheet-effect-val" id="sheet-effect">+25%</div>
-                    <div class="sheet-effect-lbl">Boost</div>
-                </div>
-                <div class="sheet-effect-item">
-                    <div class="sheet-effect-val" id="sheet-duration">60m</div>
-                    <div class="sheet-effect-lbl">Duration</div>
-                </div>
-            </div>
-            <button class="btn-confirm-activate" id="sheet-confirm-btn">Activate Now</button>
-            <button class="btn-cancel" onclick="closeSheet()">Cancel</button>
-        </div>
-    </div>
-
     <div class="toast" id="toast"></div>
 
-    
+
         <!-- Contact mini-footer -->
         <div class="contact-footer">
             <a href="mailto:contact@discgolfgo.com" class="cf-email">contact@discgolfgo.com</a>
@@ -491,294 +346,182 @@
         _tt = setTimeout(() => t.classList.remove('show'), dur);
     }
 
-    const RARITY_COLORS = {
-        common: 'var(--r-common)',
-        uncommon: 'var(--r-uncommon)',
-        rare: 'var(--r-rare)',
-        epic: 'var(--r-epic)',
-        legendary: 'var(--r-legendary)',
-    };
-    const TYPE_LABELS = {
-        boost_xp: 'XP Boost',
-        boost_gold: 'Gold Boost',
-        boost_drops: 'Drop Boost',
-    };
-    const TYPE_ICONS_MAP = { boost_xp: '⚡ XP Boosts', boost_gold: '💰 Gold Boosts', boost_drops: '🍀 Drop Boosts' };
-
-    function formatDuration(mins) {
-        return mins >= 60 ? (mins / 60) + ' hr' : mins + ' min';
-    }
-
-    // ── State ────────────────────────────────────────────────────────────────────
-    let allShopItems = [];
-    let currentShopFilter = 'all';
-    let activeTimers = {};
-    let pendingActivate = null;
-
     // ── Tabs ─────────────────────────────────────────────────────────────────────
     function switchTab(tab, btn) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
         (btn || event.target).classList.add('active');
         document.getElementById('tab-' + tab).classList.add('active');
-        if (tab === 'shop' && allShopItems.length === 0) loadShop();
-    }
-
-    // ── Active boosts banner ─────────────────────────────────────────────────────
-    function renderActiveBoostsBanner(boosts) {
-        const banner = document.getElementById('active-boosts-banner');
-        const chips = document.getElementById('active-boost-chips');
-        if (!boosts || !boosts.length) { banner.classList.remove('visible'); return; }
-        banner.classList.add('visible');
-        chips.innerHTML = '';
-        for (const b of boosts) {
-            const chip = document.createElement('div');
-            chip.className = 'boost-chip';
-            chip.dataset.expires = b.expires_at;
-            chip.dataset.boostId = b.id;
-            chip.innerHTML = b.icon + ' <span>' + b.name + '</span> <span class="bc-timer" id="timer-' + b.id + '">–</span>';
-            chips.appendChild(chip);
-            startTimer(b.id, b.expires_at);
-        }
-    }
-
-    function startTimer(id, expiresAt) {
-        if (activeTimers[id]) clearInterval(activeTimers[id]);
-        function tick() {
-            const remaining = new Date(expiresAt) - Date.now();
-            const el = document.getElementById('timer-' + id);
-            if (!el) { clearInterval(activeTimers[id]); return; }
-            if (remaining <= 0) {
-                el.textContent = 'expired';
-                clearInterval(activeTimers[id]);
-                setTimeout(loadInventory, 1500);
-                return;
-            }
-            const m = Math.floor(remaining / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
-            el.textContent = m + ':' + String(s).padStart(2, '0');
-        }
-        tick();
-        activeTimers[id] = setInterval(tick, 1000);
+        if (tab === 'library' && !document.getElementById('library-body').dataset.loaded) loadLibrary();
+        if (tab === 'bonus' && !document.getElementById('bonus-cat-tabs').dataset.built) initBonusTab();
     }
 
     // ── Gold display ─────────────────────────────────────────────────────────────
     function setGold(amount) {
         document.getElementById('gold-display').textContent = Number(amount).toLocaleString();
+        const badge = document.getElementById('gold-badge');
+        if (badge) badge.style.display = amount !== null ? 'flex' : 'none';
     }
 
-    // ── Inventory ────────────────────────────────────────────────────────────────
-    async function loadInventory() {
+    // ── Library ───────────────────────────────────────────────────────────────────
+    async function loadLibrary() {
+        const body = document.getElementById('library-body');
+        body.dataset.loaded = 'true';
         try {
-            const res = await fetch('/api/vault/inventory', { headers: authHeaders() });
+            const res = await fetch('/api/vault/library', { headers: authHeaders() });
             if (!res.ok) throw new Error('fail');
             const data = await res.json();
-            setGold(data.gold);
-            renderActiveBoostsBanner(data.active_boosts);
-            renderInventory(data.inventory, data.active_boosts);
-        } catch {}
+            renderLibrary(data);
+        } catch {
+            body.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📚</span><h3>Could not load library</h3><p>Check your connection and try again</p></div>';
+        }
     }
 
-    function renderInventory(items, activeBoosts) {
-        const body = document.getElementById('inventory-body');
-        if (!items || !items.length) {
-            body.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🎒</span><h3>Inventory is empty</h3><p>Head to the Shop tab to buy your first boost</p></div>';
+    function renderLibrary(data) {
+        const body = document.getElementById('library-body');
+        if (!data.authenticated) {
+            body.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📚</span><h3>Sign in to see your Library</h3><p>Complete training lessons to unlock video content</p><a href="/login" class="btn-orange">Sign In</a></div>';
+            return;
+        }
+        if (!data.categories || data.categories.length === 0) {
+            body.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📚</span><h3>Your library is empty</h3><p>Complete training lessons to unlock videos here</p><a href="/training" class="btn-orange">Browse Training</a></div>';
             return;
         }
 
-        // Group by type
-        const groups = {};
-        for (const item of items) {
-            if (!groups[item.type]) groups[item.type] = [];
-            groups[item.type].push(item);
+        body.innerHTML = data.categories.map(cat => {
+            const lessonCards = cat.lessons.map(lesson => {
+                const videoId = extractYouTubeId(lesson.youtube_url);
+                const thumbUrl = lesson.thumbnail_url
+                    ? lesson.thumbnail_url
+                    : (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null);
+
+                const videoHtml = thumbUrl && videoId
+                    ? `<a href="https://www.youtube.com/embed/${videoId}" target="_blank" rel="noopener" class="video-thumbnail-wrap">
+                         <img src="${thumbUrl}" alt="${lesson.title}" loading="lazy">
+                         <div class="play-overlay"></div>
+                       </a>`
+                    : '';
+
+                const resourcesHtml = lesson.resources && lesson.resources.length
+                    ? `<div class="further-reading-label">Further Reading</div>
+                       <ul class="further-reading-list">
+                         ${lesson.resources.map(r => `<li><a href="${r.url}" target="_blank" rel="noopener">${r.title}</a></li>`).join('')}
+                       </ul>`
+                    : '';
+
+                return `<div class="lesson-card">
+                    ${videoHtml}
+                    <div class="lesson-body">
+                        <div class="lesson-title">${lesson.title}</div>
+                        <div class="lesson-channel">${lesson.youtube_channel || ''}</div>
+                        ${resourcesHtml}
+                    </div>
+                </div>`;
+            }).join('');
+
+            return `<div class="library-category">
+                <div class="category-header">
+                    <span class="category-icon">${cat.icon || '📁'}</span>
+                    <span class="category-name">${cat.name}</span>
+                    <span class="category-count">${cat.lessons.length} video${cat.lessons.length !== 1 ? 's' : ''}</span>
+                </div>
+                ${lessonCards}
+            </div>`;
+        }).join('');
+    }
+
+    function extractYouTubeId(url) {
+        if (!url) return null;
+        const patterns = [
+            /youtube.com\/embed\/([^/?&]+)/,
+            /youtube.com\/watch\/?\/?.*v=([^/&?]+)/,
+            /youtu.be\/([^/?&]+)/,
+            /youtube.com\/v\/([^/?&]+)/,
+        ];
+        for (const p of patterns) {
+            const m = url.match(p);
+            if (m && m[1]) return m[1];
         }
-
-        const activeTypeSet = new Set((activeBoosts || []).map(b => {
-            // We need item type from inventory. We'll check by item_id match.
-            return null; // filled below
-        }));
-        const activeItemIds = new Set((activeBoosts || []).map(b => b.item_id));
-
-        body.innerHTML = '';
-        for (const [type, typeItems] of Object.entries(groups)) {
-            const sec = document.createElement('div');
-            sec.className = 'inv-section';
-            sec.innerHTML = '<div class="inv-section-title">' + (TYPE_ICONS_MAP[type] || type) + ' <span style="color:var(--text3);font-size:0.7rem">·</span> <span style="color:var(--text3);font-size:0.7rem">' + typeItems.reduce((s,i) => s + i.quantity, 0) + ' owned</span></div>';
-            const grid = document.createElement('div');
-            grid.className = 'inv-grid';
-
-            for (const item of typeItems) {
-                const rarity = item.rarity;
-                const isActiveType = (activeBoosts || []).some(b => b.type === item.type);
-                const card = document.createElement('div');
-                card.className = 'inv-card rarity-bg-' + rarity + ' rarity-border-' + rarity + ' rarity-glow-' + rarity;
-                card.innerHTML =
-                    '<span class="inv-qty-badge">×' + item.quantity + '</span>' +
-                    '<div class="inv-card-icon">' + item.icon + '</div>' +
-                    '<div class="inv-card-name">' + item.name + '</div>' +
-                    '<div class="inv-card-effect">+' + item.effect_value + '% · ' + formatDuration(item.duration_minutes) + '</div>' +
-                    '<div class="inv-card-rarity rarity-' + rarity + '">' + rarity + '</div>' +
-                    '<button class="btn-activate" ' + (isActiveType ? 'disabled title="A ' + TYPE_LABELS[item.type] + ' is already active"' : '') + ' onclick="openActivateSheet(' + JSON.stringify(item).replace(/"/g, '&quot;') + ')">Activate</button>';
-                grid.appendChild(card);
-            }
-            sec.appendChild(grid);
-            body.appendChild(sec);
-        }
+        return null;
     }
 
-    // ── Activate Sheet ────────────────────────────────────────────────────────────
-    function openActivateSheet(item) {
-        pendingActivate = item;
-        document.getElementById('sheet-icon').textContent = item.icon;
-        document.getElementById('sheet-name').textContent = item.name;
-        document.getElementById('sheet-desc').textContent = item.description || '+' + item.effect_value + '% for ' + formatDuration(item.duration_minutes);
-        document.getElementById('sheet-effect').textContent = '+' + item.effect_value + '%';
-        document.getElementById('sheet-duration').textContent = formatDuration(item.duration_minutes);
-        document.getElementById('sheet-confirm-btn').onclick = confirmActivate;
-        document.getElementById('activate-sheet').classList.add('open');
-    }
+    // ── Bonus Content — fetched from API ─────────────────────────────────────────
+    let bonusItems = [];
+    let activeBonusCat = 'All';
 
-    function closeSheet() {
-        document.getElementById('activate-sheet').classList.remove('open');
-        pendingActivate = null;
-    }
-
-    async function confirmActivate() {
-        if (!pendingActivate) return;
-        const item = pendingActivate;
-        const btn = document.getElementById('sheet-confirm-btn');
-        btn.disabled = true;
-        btn.textContent = 'Activating...';
+    async function initBonusTab() {
         try {
-            const res = await fetch('/api/vault/activate', {
-                method: 'POST',
-                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ inventory_id: item.id }),
-            });
+            const res = await fetch('/api/vault/bonus', { headers: authHeaders() });
+            if (!res.ok) throw new Error('fetch failed');
             const data = await res.json();
-            closeSheet();
-            if (!res.ok) {
-                if (res.status === 409) {
-                    showToast('A ' + TYPE_LABELS[item.type] + ' is already active! (' + data.remaining_minutes + 'm left)');
-                } else {
-                    showToast(data.error || 'Could not activate');
-                }
-            } else {
-                showToast('⚡ ' + item.name + ' activated!\n+' + item.effect_value + '% for ' + formatDuration(item.duration_minutes));
-                setTimeout(loadInventory, 300);
+            bonusItems = data.items || [];
+
+            const cats = ['All', ...new Set(bonusItems.map(v => v.type_label).filter(Boolean))];
+            const tabsEl = document.getElementById('bonus-cat-tabs');
+            if (tabsEl) {
+                tabsEl.dataset.built = '1';
+                tabsEl.innerHTML = cats.map(cat =>
+                    `<button class="tab-btn${cat === 'All' ? ' active' : ''}" onclick="filterBonus('${cat.replace(/'/g, "\\'")}', this)">${cat}</button>`
+                ).join('');
             }
         } catch {
-            closeSheet();
-            showToast('Could not activate item');
+            bonusItems = [];
         }
+        renderBonusGrid();
     }
 
-    // ── Shop ─────────────────────────────────────────────────────────────────────
-    async function loadShop() {
-        try {
-            const res = await fetch('/api/vault/shop', { headers: authHeaders() });
-            if (!res.ok) throw new Error('fail');
-            const data = await res.json();
-            allShopItems = data.items;
-            renderShop(allShopItems, currentShopFilter);
-        } catch {
-            document.getElementById('shop-grid').innerHTML = '<div class="empty-state"><p>Could not load shop</p></div>';
+    function filterBonus(cat, btn) {
+        activeBonusCat = cat;
+        document.querySelectorAll('#bonus-cat-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderBonusGrid();
+    }
+
+    function renderBonusGrid() {
+        const grid = document.getElementById('bonus-grid');
+        const filtered = activeBonusCat === 'All'
+            ? bonusItems
+            : bonusItems.filter(v => v.type_label === activeBonusCat);
+
+        if (!filtered.length) {
+            grid.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🎬</span><h3>No videos in this category</h3></div>';
+            return;
         }
+
+        grid.innerHTML = filtered.map(v => {
+            if (!v.youtube_url) return '';  // skip items with no URL
+            const videoId = extractYouTubeId(v.youtube_url);
+            const thumb = v.thumbnail_url || (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '');
+            return `<a href="${v.youtube_url}" target="_blank" rel="noopener" class="bonus-card" style="text-decoration:none;">
+                <div style="width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:14px 14px 0 0;background:#000;position:relative;flex-shrink:0;">
+                    ${thumb ? `<img src="${thumb}" alt="${v.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;opacity:0.9;">` : ''}
+                    <div class="play-overlay"></div>
+                </div>
+                <div class="bonus-card-body">
+                    <div class="bonus-title">${v.name}</div>
+                    ${v.instructor_name ? `<div class="lesson-channel">${v.instructor_name}</div>` : ''}
+                </div>
+            </a>`;
+        }).join('');
     }
-
-    function filterShop(type, btn) {
-        currentShopFilter = type;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderShop(allShopItems, type);
-    }
-
-    function renderShop(items, filter) {
-        const grid = document.getElementById('shop-grid');
-        const filtered = filter === 'all' ? items : items.filter(i => i.type === filter);
-        const playerGold = parseInt(document.getElementById('gold-display').textContent.replace(/,/g,'')) || 0;
-
-        grid.innerHTML = '';
-        for (const item of filtered) {
-            const rarity = item.rarity;
-            const canAfford = playerGold >= item.gold_cost;
-
-            const card = document.createElement('div');
-            card.className = 'shop-card rarity-bg-' + rarity + ' rarity-border-' + rarity + ' rarity-glow-' + rarity;
-
-            const priceAndButtonsHtml =
-                '<div class="shop-card-price-row">' +
-                '<div class="shop-card-price">💰 ' + item.gold_cost.toLocaleString() + '</div>' +
-                '<button class="btn-buy ' + (canAfford ? '' : 'cant-afford') + '" onclick="buyItem(' + item.id + ', ' + item.gold_cost + ', this)" ' + (canAfford ? '' : 'disabled') + '>' +
-                (canAfford ? '💰 Buy' : '🔒 Need more gold') + '</button>' +
-                '</div>';
-
-            card.innerHTML =
-                '<div class="shop-card-icon">' + item.icon + '</div>' +
-                '<div class="shop-card-name">' + item.name + '</div>' +
-                '<div class="shop-card-effect">+' + item.effect_value + '% ' + TYPE_LABELS[item.type].replace(' Boost','') + '</div>' +
-                '<div class="shop-card-duration">⏱ ' + formatDuration(item.duration_minutes) + '</div>' +
-                '<div class="shop-card-rarity rarity-' + rarity + '">' + rarity + '</div>' +
-                priceAndButtonsHtml;
-            grid.appendChild(card);
-        }
-    }
-
-    async function buyItem(itemId, cost, btn) {
-        btn.disabled = true;
-        btn.innerHTML = 'Buying...';
-        try {
-            const res = await fetch('/api/vault/buy', {
-                method: 'POST',
-                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ item_id: itemId }),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                btn.disabled = false;
-                btn.textContent = '💰 Buy';
-                if (res.status === 402) {
-                    showToast('💰 Not enough gold! Need ' + data.cost + ', you have ' + data.gold);
-                } else {
-                    showToast(data.error || 'Purchase failed');
-                }
-                return;
-            }
-            setGold(data.gold);
-            showToast('✅ Bought ' + data.item_name + '!\n💰 −' + data.gold_spent + ' gold · ' + Number(data.gold).toLocaleString() + ' remaining');
-            btn.textContent = '✓ Bought!';
-            btn.disabled = true;
-            // Re-render shop to update can-afford states
-            setTimeout(() => renderShop(allShopItems, currentShopFilter), 400);
-            // Reload inventory in background
-            setTimeout(loadInventory, 600);
-        } catch {
-            btn.disabled = false;
-            btn.textContent = 'Buy';
-            showToast('Purchase failed');
-        }
-    }
-
-    // Close sheet on backdrop click
-    document.getElementById('activate-sheet').addEventListener('click', function(e) {
-        if (e.target === this) closeSheet();
-    });
 
     // ── Init ─────────────────────────────────────────────────────────────────────
     async function init() {
         const token = getToken();
         if (!token) {
             document.getElementById('no-auth').style.display = 'block';
-            // Still load shop for unauthenticated users
-            loadShop();
+            document.getElementById('vault-content').style.display = 'none';
+            initBonusTab();
             return;
         }
 
         try {
-            await loadInventory();
             document.getElementById('vault-content').style.display = 'block';
+            await loadLibrary();
+            initBonusTab();
         } catch {
             document.getElementById('no-auth').style.display = 'block';
+            document.getElementById('vault-content').style.display = 'none';
         }
     }
 
@@ -799,38 +542,30 @@
     })();
     </script>
 
-    <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
-    <nav class="bottom-tab-bar">
-    <a class="tab-item" href="/crews">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label">Crews</span>
-    </a>
-    <a class="tab-item" href="/battles">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Battles</span>
+    <!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
     </a>
     <a class="tab-item" href="/scorecard">
         <span class="tab-icon">🥏</span>
         <span class="tab-label">Play</span>
     </a>
-    <a class="tab-item" href="/profile">
-        <span class="tab-icon">👤</span>
-        <span class="tab-label">Profile</span>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
     </a>
-    <a class="tab-item" href="/challenges">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-label">Quests</span>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
     </a>
-    <a class="tab-item" href="/map">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Map</span>
-    </a>
-</nav>
+    </nav>
 <!-- In-app notification popup -->
 <div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
 <div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
-    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(255,107,26,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
     <div style="flex:1;min-width:0;">
       <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
       <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>

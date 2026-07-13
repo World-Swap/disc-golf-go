@@ -5,7 +5,190 @@ const { syncBattleProgress } = require('./battles');
 const { syncWarProgress } = require('./crew-wars');
 const { getActiveBoosts, awardGold, rollItemDrop, addToInventory, GOLD_EVENTS } = require('./vault');
 const { processRoundDistanceAnalytics, getPlayerDistanceStats } = require('./distance-analytics');
-const { checkQuestCompletion } = require('./story');
+// ── Quest round pre-completion validation ─────────────────────────────────────
+// Checks a completed round against active in-progress quest trigger_conditions
+// BEFORE the round is marked complete. Rejects mismatches so the client can
+// surface the failure reason before the round is finalized.
+// Structural constraints (course_id, min_holes) are pre-validated; stats-based
+// conditions (min_birdies, min_gold, streak, window_days) are evaluated post-commit.
+async function validateQuestRoundConstraints(client, playerId, roundId, round) {
+  const courseId = round.course_id;
+
+  // Fetch in-progress quests with non-empty trigger_conditions
+  const quests = await client.query(
+    `SELECT sq.id, sq.quest_key, sq.title, sq.trigger_event, sq.trigger_conditions,
+            qp.id as progress_id, qp.progress, qp.completed
+     FROM story_quests sq
+     LEFT JOIN quest_progression qp ON qp.quest_id = sq.id AND qp.player_id = $1
+     WHERE (qp.completed IS FALSE OR qp.id IS NULL)
+       AND sq.trigger_conditions IS NOT NULL
+       AND sq.trigger_conditions != 'null'
+       AND jsonb_typeof(sq.trigger_conditions) = 'object'
+       AND (sq.trigger_conditions != '{}' OR sq.trigger_event IN ('COURSE_REPEAT'))
+     ORDER BY sq.chapter_number, sq.sort_order`,
+    [playerId]
+  );
+
+  if (quests.rows.length === 0) return null;
+
+  // Get hole count for this round
+  const holesResult = await client.query(
+    `SELECT COUNT(*)::int as holes_logged FROM round_holes WHERE round_id = $1`,
+    [roundId]
+  );
+  const holesLogged = parseInt(holesResult.rows[0]?.holes_logged || 0);
+
+  for (const quest of quests.rows) {
+    const cond = quest.trigger_conditions || {};
+    const event = quest.trigger_event;
+
+    // course_id constraint — round must be at the required course
+    if (cond.course_id != null) {
+      if (parseInt(cond.course_id) !== courseId) {
+        return {
+          error: 'quest_constraint_mismatch',
+          message: `This round is at a different course than required by "${quest.title}". You must play at the correct course to complete this quest.`,
+          details: {
+            quest_id: quest.id,
+            quest_key: quest.quest_key,
+            expected_course_id: parseInt(cond.course_id),
+            received_course_id: courseId,
+          },
+        };
+      }
+    }
+
+    // min_holes constraint — belt-and-suspenders check (hole count is already
+    // enforced at round start, but we double-check here for defence in depth)
+    if (cond.min_holes != null && event === 'HOLES_LOGGED') {
+      if (holesLogged < parseInt(cond.min_holes)) {
+        return {
+          error: 'quest_constraint_mismatch',
+          message: `This round has too few holes logged for "${quest.title}". You need at least ${cond.min_holes} holes.`,
+          details: {
+            quest_id: quest.id,
+            quest_key: quest.quest_key,
+            min_holes_required: parseInt(cond.min_holes),
+            holes_logged: holesLogged,
+          },
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+// ── Battle / Crew War round validation ─────────────────────────────────────────
+// When a player completes a round linked to an active battle or crew war, the round
+// MUST match the locked_parameters (course, layout, holes). Reject mismatches.
+// Grandfathered battles/wars with NULL locked_parameters skip this check.
+async function validateBattleAndWarRound(client, playerId, roundId, round) {
+  const courseId = round.course_id;
+  const layoutId = round.layout_id;
+
+  // Fetch all active battles for this player at this course with locked_parameters
+  const battles = await client.query(
+    `SELECT b.id, b.locked_parameters, b.course_id
+     FROM battles b
+     WHERE b.status = 'active'
+       AND b.locked_parameters IS NOT NULL
+       AND (b.challenger_id = $1 OR b.opponent_id = $1)
+       AND b.started_at IS NOT NULL
+       AND b.ends_at > NOW()
+       AND b.course_id = $2`,
+    [playerId, courseId]
+  );
+
+  for (const battle of battles.rows) {
+    const locked = typeof battle.locked_parameters === 'string'
+      ? JSON.parse(battle.locked_parameters) : battle.locked_parameters;
+    if (!locked) continue; // grandfathered
+
+    const errors = {};
+    if (locked.course_id && parseInt(locked.course_id) !== courseId) {
+      errors.expected_course_id = parseInt(locked.course_id);
+      errors.received_course_id = courseId;
+    }
+    if (locked.layout_id && parseInt(locked.layout_id) !== (layoutId || null)) {
+      errors.expected_layout_id = parseInt(locked.layout_id);
+      errors.received_layout_id = layoutId || null;
+    }
+    if (locked.holes && Array.isArray(locked.holes)) {
+      const submittedHoles = await client.query(
+        `SELECT hole_number FROM round_holes WHERE round_id = $1 ORDER BY hole_number ASC`,
+        [roundId]
+      );
+      const submitted = submittedHoles.rows.map(h => parseInt(h.hole_number));
+      const expected = locked.holes.map(n => parseInt(n));
+      if (JSON.stringify(submitted) !== JSON.stringify(expected)) {
+        errors.expected_holes = expected;
+        errors.received_holes = submitted;
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return {
+        battle_id: battle.id,
+        error: 'round_mismatch',
+        message: 'Your round doesn\u2019t match the battle requirements. You must play the same course, layout, and holes as specified in the battle.',
+        details: errors,
+      };
+    }
+  }
+
+  // Fetch all active crew wars for this player at this course with locked_parameters
+  const wars = await client.query(
+    `SELECT cw.id, cw.locked_parameters, cw.course_id
+     FROM crew_wars cw
+     JOIN crew_members cm ON cm.player_id = $1
+       AND cm.crew_id IN (cw.challenging_crew_id, cw.defending_crew_id)
+     WHERE cw.status = 'active'
+       AND cw.locked_parameters IS NOT NULL
+       AND cw.course_id = $2
+       AND cw.ends_at > NOW()`,
+    [playerId, courseId]
+  );
+
+  for (const war of wars.rows) {
+    const locked = typeof war.locked_parameters === 'string'
+      ? JSON.parse(war.locked_parameters) : war.locked_parameters;
+    if (!locked) continue; // grandfathered
+
+    const errors = {};
+    if (locked.course_id && parseInt(locked.course_id) !== courseId) {
+      errors.expected_course_id = parseInt(locked.course_id);
+      errors.received_course_id = courseId;
+    }
+    if (locked.layout_id && parseInt(locked.layout_id) !== (layoutId || null)) {
+      errors.expected_layout_id = parseInt(locked.layout_id);
+      errors.received_layout_id = layoutId || null;
+    }
+    if (locked.holes && Array.isArray(locked.holes)) {
+      const submittedHoles = await client.query(
+        `SELECT hole_number FROM round_holes WHERE round_id = $1 ORDER BY hole_number ASC`,
+        [roundId]
+      );
+      const submitted = submittedHoles.rows.map(h => parseInt(h.hole_number));
+      const expected = locked.holes.map(n => parseInt(n));
+      if (JSON.stringify(submitted) !== JSON.stringify(expected)) {
+        errors.expected_holes = expected;
+        errors.received_holes = submitted;
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return {
+        war_id: war.id,
+        error: 'round_mismatch',
+        message: 'Your round doesn\u2019t match the crew war requirements. You must play the same course, layout, and holes as specified in the war.',
+        details: errors,
+      };
+    }
+  }
+
+  return null; // no validation errors
+}
 
 // ── Challenge progress sync after round completion ─────────────────────────────
 // Computes and upserts rotating challenge progress for round-related types.
@@ -410,7 +593,7 @@ module.exports = ({ pool }) => {
   // co_player_ids — optional array of player IDs to add to the group.
   //   Each must have a valid check-in at the same course within the last 2 hours.
   router.post('/rounds/start', requireAuth(pool), async (req, res) => {
-    const { course_id, holes_count = 18, layout_id = null, co_player_ids = [] } = req.body;
+    const { course_id, holes_count, layout_id, co_player_ids = [], battle_id = null, crew_war_id = null } = req.body;
     if (!course_id) return res.status(400).json({ error: 'course_id required' });
 
     // Deduplicate and exclude host from co-players list
@@ -469,14 +652,6 @@ module.exports = ({ pool }) => {
         return res.status(404).json({ error: 'Course not found' });
       }
       const courseHoles = parseInt(courseCheck.rows[0].course_holes);
-      if (holes_count > courseHoles) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({
-          error: 'Invalid hole count',
-          message: `This course has ${courseHoles} holes. You cannot play more than ${courseHoles}.`,
-          course_holes: courseHoles,
-        });
-      }
 
       // ── RESOLVE LAYOUT ────────────────────────────────────────────────────
       // If layout_id provided, verify it belongs to this course.
@@ -484,10 +659,11 @@ module.exports = ({ pool }) => {
       // Falls back to null when the course has no layouts yet.
       let resolvedLayoutId = null;
       let layoutHoles = [];
+      let layoutHoleCount = null;
 
       if (layout_id) {
         const layoutCheck = await client.query(
-          `SELECT id FROM course_layouts WHERE id = $1 AND course_id = $2`,
+          `SELECT id, hole_count FROM course_layouts WHERE id = $1 AND course_id = $2`,
           [layout_id, course_id]
         );
         if (layoutCheck.rows.length === 0) {
@@ -495,10 +671,11 @@ module.exports = ({ pool }) => {
           return res.status(400).json({ error: 'Layout does not belong to this course' });
         }
         resolvedLayoutId = layout_id;
+        layoutHoleCount = layoutCheck.rows[0].hole_count || null;
       } else {
         // Auto-select default layout (or only layout if just one exists)
         const defaultLayout = await client.query(
-          `SELECT id FROM course_layouts
+          `SELECT id, hole_count FROM course_layouts
            WHERE course_id = $1
            ORDER BY is_default DESC, id ASC
            LIMIT 1`,
@@ -506,7 +683,16 @@ module.exports = ({ pool }) => {
         );
         if (defaultLayout.rows.length > 0) {
           resolvedLayoutId = defaultLayout.rows[0].id;
+          layoutHoleCount = defaultLayout.rows[0].hole_count || null;
         }
+      }
+
+      // Derive holes_count from layout if not provided
+      let resolvedHolesCount = holes_count;
+      if (!resolvedHolesCount && layoutHoleCount) {
+        resolvedHolesCount = layoutHoleCount;
+      } else if (!resolvedHolesCount) {
+        resolvedHolesCount = 18; // sensible default for courses with no layout data
       }
 
       // Fetch hole data for the resolved layout (for use during the round)
@@ -521,6 +707,17 @@ module.exports = ({ pool }) => {
         layoutHoles = holesRes.rows;
       }
 
+      // Validate hole count — use layout's hole count as the ceiling when available
+      const maxHoles = layoutHoleCount || courseHoles;
+      if (resolvedHolesCount > maxHoles) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: 'Invalid hole count',
+          message: `This layout has ${maxHoles} holes. You cannot play more than ${maxHoles}.`,
+          max_holes: maxHoles,
+        });
+      }
+
       // Abandon any existing in-progress round for this player
       await client.query(
         `UPDATE rounds SET status = 'abandoned' WHERE player_id = $1 AND status = 'in_progress'`,
@@ -532,7 +729,7 @@ module.exports = ({ pool }) => {
         `INSERT INTO rounds (player_id, course_id, holes_count, layout_id, status)
          VALUES ($1, $2, $3, $4, 'in_progress')
          RETURNING *`,
-        [req.player.id, course_id, holes_count, resolvedLayoutId]
+        [req.player.id, course_id, resolvedHolesCount, resolvedLayoutId]
       );
       const round = result.rows[0];
 
@@ -553,8 +750,36 @@ module.exports = ({ pool }) => {
       }
 
       await client.query('COMMIT');
-      // layout_holes gives the frontend per-hole par/distance without a second round-trip
-      res.json({ round, group_size: 1 + coPlayerIds.length, layout_holes: layoutHoles });
+
+      // Notify co-players of the new round via in-app notifications
+      if (coPlayerIds.length > 0) {
+        try {
+          const hostName = req.player.display_name || 'A player';
+          const courseNameRes = await pool.query(
+            `SELECT name FROM courses WHERE id = $1`, [course_id]
+          );
+          const courseName = courseNameRes.rows[0]?.name || 'the course';
+          await pool.query(
+            `INSERT INTO notifications (title, message, is_active)
+             VALUES ($1, $2, true)`,
+            ['Round Started', `${hostName} started a round at ${courseName}. Join the scorecard!`]
+          );
+        } catch (_e) {
+          console.error('Notification insert error (non-fatal):', _e.message);
+        }
+      }
+
+      // Fetch full roster for the response so the host sees participants immediately
+      const rosterResult = await pool.query(
+        `SELECT rp.player_id, rp.is_host, p.display_name, p.profile_photo_url as avatar_url
+         FROM round_players rp
+         JOIN players p ON p.id = rp.player_id
+         WHERE rp.round_id = $1
+         ORDER BY rp.is_host DESC, rp.joined_at ASC`,
+        [round.id]
+      );
+
+      res.json({ round, group_size: 1 + coPlayerIds.length, layout_holes: layoutHoles, players: rosterResult.rows });
     } catch (err) {
       await client.query('ROLLBACK');
       console.error('Start round error:', err.message);
@@ -639,8 +864,159 @@ module.exports = ({ pool }) => {
     }
   });
 
+  // GET /api/rounds/active-quests — quests whose requirements apply to a given course.
+  // Scorecard calls this after a course is selected to surface any in-progress quest
+  // requirements (e.g. COURSE_REPEAT, hole_count constraints) that affect round config.
+  // Returns empty array if no active quests apply to this course.
+  router.get('/rounds/active-quests', requireAuth(pool), async (req, res) => {
+    const courseId = parseInt(req.query.course_id);
+    if (!courseId) return res.status(400).json({ error: 'course_id required' });
+
+    try {
+      // Fetch in-progress quests (not completed, not locked by chapter gate)
+      // Check if any of them have trigger_conditions that constrain this round's config.
+      // Currently handles: COURSE_REPEAT (needs multiple rounds at same course).
+      // Other quest types (ROUND_COMPLETE, HOLES_LOGGED, ROUND_UNDER_PAR, etc.)
+      // are not course-specific but are surfaced so users know which quests will fire.
+      const quests = await pool.query(
+        `SELECT sq.id, sq.quest_key, sq.title, sq.objective, sq.target_value,
+                sq.trigger_event, sq.trigger_conditions, sq.reward_xp, sq.reward_gold,
+                sq.quest_type, sq.chapter_number,
+                COALESCE(qp.progress, 0) as progress, COALESCE(qp.completed, FALSE) as completed
+         FROM story_quests sq
+         LEFT JOIN quest_progression qp ON qp.quest_id = sq.id AND qp.player_id = $1
+         WHERE qp.completed IS FALSE OR qp.id IS NULL
+         ORDER BY sq.chapter_number, sq.sort_order`,
+        [req.player.id]
+      );
+
+      // Filter quests relevant to this course and extract constraints
+      const relevant = [];
+      for (const quest of quests.rows) {
+        const cond = quest.trigger_conditions || {};
+        const event = quest.trigger_event;
+
+        // COURSE_REPEAT quests — player must play multiple rounds at this exact course.
+        // The round being started is the FIRST (or Nth) round; we surface this so the
+        // player knows they need to repeat after completing.
+        if (event === 'COURSE_REPEAT') {
+          const existingRounds = await pool.query(
+            `SELECT COUNT(*)::int as cnt FROM rounds
+             WHERE player_id = $1 AND course_id = $2 AND status = 'completed'`,
+            [req.player.id, courseId]
+          );
+          const roundsDone = existingRounds.rows[0]?.cnt || 0;
+          const remaining = quest.target_value - roundsDone;
+          relevant.push({
+            quest_id: quest.id,
+            quest_key: quest.quest_key,
+            title: quest.title,
+            objective: quest.objective,
+            trigger_event: event,
+            target: quest.target_value,
+            progress: roundsDone,
+            remaining: remaining > 0 ? remaining : 0,
+            course_specific: true,
+            constraint: remaining > 0
+              ? `${remaining} more round${remaining !== 1 ? 's' : ''} at this course needed`
+              : 'completed',
+            reward_xp: quest.reward_xp,
+            reward_gold: quest.reward_gold,
+          });
+          continue;
+        }
+
+        // ROUND_COMPLETE, ROUND_18_HOLES, HOLES_LOGGED — surfaces round requirements
+        // when player is at a course and has an in-progress quest of this type.
+        if (['ROUND_COMPLETE', 'ROUND_18_HOLES', 'HOLES_LOGGED', 'ROUND_UNDER_PAR', 'ROUND_AT_PAR'].includes(event)) {
+          const minHoles = cond.min_holes || (event === 'ROUND_18_HOLES' ? 18 : 3);
+          relevant.push({
+            quest_id: quest.id,
+            quest_key: quest.quest_key,
+            title: quest.title,
+            objective: quest.objective,
+            trigger_event: event,
+            target: quest.target_value,
+            progress: quest.progress || 0,
+            remaining: quest.target_value - (quest.progress || 0),
+            course_specific: false,
+            constraint: event === 'ROUND_18_HOLES'
+              ? `Complete at least ${minHoles} holes per round`
+              : event === 'HOLES_LOGGED'
+              ? `Log at least ${minHoles} holes`
+              : null,
+            min_holes: minHoles,
+            reward_xp: quest.reward_xp,
+            reward_gold: quest.reward_gold,
+          });
+          continue;
+        }
+
+        // BATTLE_WIN, BATTLE_COMPLETE — surface if player has active battles at this course
+        if (['BATTLE_WIN', 'BATTLE_COMPLETE', 'BATTLE_STARTED'].includes(event)) {
+          const activeBattles = await pool.query(
+            `SELECT COUNT(*)::int as cnt FROM battles
+             WHERE status = 'active'
+               AND (challenger_id = $1 OR opponent_id = $1)
+               AND started_at IS NOT NULL
+               AND ends_at > NOW()
+               AND course_id = $2`,
+            [req.player.id, courseId]
+          );
+          if (activeBattles.rows[0]?.cnt > 0) {
+            relevant.push({
+              quest_id: quest.id,
+              quest_key: quest.quest_key,
+              title: quest.title,
+              objective: quest.objective,
+              trigger_event: event,
+              target: quest.target_value,
+              progress: quest.progress || 0,
+              remaining: quest.target_value - (quest.progress || 0),
+              course_specific: true,
+              constraint: `${activeBattles.rows[0].cnt} active battle${activeBattles.rows[0].cnt !== 1 ? 's' : ''} at this course`,
+              reward_xp: quest.reward_xp,
+              reward_gold: quest.reward_gold,
+            });
+          }
+        }
+      }
+
+      res.json({ quests: relevant });
+    } catch (err) {
+      console.error('GET /rounds/active-quests error:', err.message);
+      res.status(500).json({ error: 'Failed to get active quests' });
+    }
+  });
+
+  // GET /api/rounds/:id/quest-constraints — dry-run validation for round-in-progress
+  // Returns the same validation result as completion without marking the round complete.
+  // The scorecard UI calls this before the player finishes to warn of constraint mismatches.
+  router.get('/rounds/:id/quest-constraints', requireAuth(pool), async (req, res) => {
+    const roundId = parseInt(req.params.id);
+    try {
+      const roundResult = await pool.query(
+        `SELECT id, course_id FROM rounds WHERE id = $1 AND player_id = $2 AND status = 'in_progress'`,
+        [roundId, req.player.id]
+      );
+      if (roundResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Active round not found' });
+      }
+      const round = roundResult.rows[0];
+      const validationError = await validateQuestRoundConstraints(pool, req.player.id, roundId, round);
+      if (validationError) {
+        return res.status(422).json(validationError);
+      }
+      res.json({ ok: true, round_id: roundId });
+    } catch (err) {
+      console.error('GET /rounds/:id/quest-constraints error:', err.message);
+      res.status(500).json({ error: 'Failed to validate quest constraints' });
+    }
+  });
+
   // GET /api/rounds/active — get the in-progress round for the player
   // Returns the round, scored holes, and layout holes (for per-hole par/distance display).
+  // Includes rounds where the player is a co-player (via round_players), not just host rounds.
   router.get('/rounds/active', requireAuth(pool), async (req, res) => {
     try {
       const roundResult = await pool.query(
@@ -649,8 +1025,11 @@ module.exports = ({ pool }) => {
          FROM rounds r
          LEFT JOIN courses co ON co.id = r.course_id
          LEFT JOIN course_layouts cl ON cl.id = r.layout_id
-         WHERE r.player_id = $1 AND r.status = 'in_progress'
-         ORDER BY r.started_at DESC LIMIT 1`,
+         LEFT JOIN round_players rp ON rp.round_id = r.id AND rp.player_id = $1
+         WHERE (r.player_id = $1 OR rp.player_id = $1)
+           AND r.status = 'in_progress'
+         ORDER BY r.started_at DESC
+         LIMIT 1`,
         [req.player.id]
       );
 
@@ -659,8 +1038,9 @@ module.exports = ({ pool }) => {
       }
 
       const round = roundResult.rows[0];
+      const isHost = round.player_id === req.player.id;
 
-      const [holesResult, layoutHolesResult] = await Promise.all([
+      const [holesResult, layoutHolesResult, groupSizeResult] = await Promise.all([
         pool.query(
           `SELECT id, round_id, hole_number, par, score FROM round_holes WHERE round_id = $1 ORDER BY hole_number ASC`,
           [round.id]
@@ -670,9 +1050,21 @@ module.exports = ({ pool }) => {
            FROM course_holes WHERE layout_id = $1 ORDER BY hole_number ASC`,
           [round.layout_id]
         ) : Promise.resolve({ rows: [] }),
+        pool.query(
+          `SELECT COUNT(*)::int as cnt FROM round_players WHERE round_id = $1`,
+          [round.id]
+        ),
       ]);
 
-      res.json({ round, holes: holesResult.rows, layout_holes: layoutHolesResult.rows });
+      const groupSize = parseInt(groupSizeResult.rows[0]?.cnt || 1);
+
+      res.json({
+        round,
+        holes: holesResult.rows,
+        layout_holes: layoutHolesResult.rows,
+        is_host: isHost,
+        is_group_round: groupSize > 1,
+      });
     } catch (err) {
       console.error('Get active round error:', err.message);
       res.status(500).json({ error: 'Failed to get active round' });
@@ -911,18 +1303,43 @@ module.exports = ({ pool }) => {
       }
 
       // ── HOLE COUNT VALIDATION ──
-      // Only enforce for rounds that have a configured hole count.
-      // Legacy rounds (holes_count IS NULL — pre-layout-selection era) have no
-      // enforced hole target; skip validation to prevent false rejection.
+      // Enforce a minimum 50% of expected holes (with a 3-hole floor) so
+      // partial rounds can be salvaged. Legacy rounds (holes_count IS NULL —
+      // pre-layout-selection era) have no enforced hole target.
       const expectedHoles = round.holes_count;
-      if (expectedHoles !== null && expectedHoles !== undefined && parseInt(holes_logged) !== expectedHoles) {
+      const minRequired = expectedHoles != null
+        ? Math.max(3, Math.ceil(parseInt(expectedHoles) / 2))
+        : null;
+      if (minRequired !== null && parseInt(holes_logged) < minRequired) {
         await client.query('ROLLBACK');
-        return res.status(400).json({
-          error: 'Hole count mismatch',
-          message: `This round requires exactly ${expectedHoles} holes. You have logged ${parseInt(holes_logged)}.`,
+        return res.status(409).json({
+          error: 'Round too incomplete',
+          message: `Log at least ${minRequired} holes to finish (you have ${parseInt(holes_logged)}). Tap Finish again to keep saving, or abandon to discard.`,
+          incomplete: true,
           expected: expectedHoles,
           logged: parseInt(holes_logged),
+          min_required: minRequired,
         });
+      }
+
+      // ── BATTLE / CREW WAR LOCKED PARAMETERS VALIDATION ──
+      // Reject rounds that don't match the battle or crew war locked_parameters.
+      // Grandfathered (NULL locked_parameters) are skipped.
+      const mismatchError = await validateBattleAndWarRound(client, req.player.id, roundId, round);
+      if (mismatchError) {
+        await client.query('ROLLBACK');
+        return res.status(422).json(mismatchError);
+      }
+
+      // ── QUEST CONSTRAINT VALIDATION ──
+      // Reject rounds that don't satisfy in-progress quest trigger_conditions.
+      // e.g. a course-specific quest must be earned at the required course.
+      const questValidationError = await validateQuestRoundConstraints(
+        client, req.player.id, roundId, round
+      );
+      if (questValidationError) {
+        await client.query('ROLLBACK');
+        return res.status(422).json(questValidationError);
       }
 
       // Best/worst hole
@@ -980,6 +1397,20 @@ module.exports = ({ pool }) => {
           { round_id: roundId }
         );
       } catch (_e) { /* non-fatal — gold failures don't block round completion */ }
+
+      // Referral reward: if friend completed a qualifying round (9+ holes), award referrer gold
+      // Fire-and-forget — don't block the round completion response
+      const holesCompleted = parseInt(holes_logged);
+      if (holesCompleted >= 9) {
+        const baseUrl = process.env.APP_URL || 'https://disc-golf-go.polsia.app';
+        fetch(`${baseUrl}/api/referrals/award`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${req.rawToken || ''}`,
+          },
+        }).catch(err => console.error('[rounds] Referral award failed:', err.message));
+      }
 
       // ── Personal best tracking ──────────────────────────────────────────────
       // Upsert player_course_bests; detect if this round sets a new course record
@@ -1097,8 +1528,52 @@ module.exports = ({ pool }) => {
       syncWarProgress(pool, req.player.id, roundId, { total_score: parseInt(total_score) });
 
       // ── Story Mode Quest Checking (non-blocking) ─────────────────────────────
+      // Augment eventData with computed fields needed for quest validation.
+      // Each field gates specific quest types — missing fields = quest won't fire.
       const scoreVsPar = parseInt(total_score) - parseInt(total_par);
       const completedAt = new Date().toISOString();
+
+      // ROUNDS_IN_WINDOW: count rounds completed within 7 days of this completion
+      const windowDays = 7;
+      const windowStart = new Date(completedAt);
+      windowStart.setDate(windowStart.getDate() - windowDays);
+      const windowResult = await pool.query(
+        `SELECT COUNT(*)::int AS cnt FROM rounds
+         WHERE player_id = $1 AND status = 'completed'
+           AND completed_at >= $2`,
+        [req.player.id, windowStart.toISOString()]
+      );
+      const roundsInWindow = parseInt(windowResult.rows[0].cnt);
+
+      // COURSE_VISITED: count of distinct courses with completed rounds
+      const courseVisitsResult = await pool.query(
+        `SELECT COUNT(DISTINCT course_id)::int AS cnt FROM rounds
+         WHERE player_id = $1 AND status = 'completed'`,
+        [req.player.id]
+      );
+      const courseVisitCount = parseInt(courseVisitsResult.rows[0].cnt);
+
+      // STATES_VISITED: count of distinct states across all completed rounds
+      const statesResult = await pool.query(
+        `SELECT COUNT(DISTINCT c.state)::int AS cnt
+         FROM rounds ro JOIN courses c ON c.id = ro.course_id
+         WHERE ro.player_id = $1 AND ro.status = 'completed' AND c.state IS NOT NULL`,
+        [req.player.id]
+      );
+      const statesVisitedCount = parseInt(statesResult.rows[0].cnt);
+
+      // NEW_STATE: was this the player's first round in the course's state?
+      const newStateResult = await pool.query(
+        `SELECT COUNT(DISTINCT c.state) = 1 AS is_new_state,
+                (SELECT COUNT(DISTINCT c2.state) FROM rounds r2
+                 JOIN courses c2 ON c2.id = r2.course_id
+                 WHERE r2.player_id = $1 AND r2.status = 'completed' AND c2.state IS NOT NULL) AS total_states
+         FROM courses c WHERE c.id = $2 AND c.state IS NOT NULL`,
+        [req.player.id, round.course_id]
+      );
+      const isNewState = newStateResult.rows[0]?.is_new_state === true;
+      const newStateReached = isNewState && parseInt(newStateResult.rows[0]?.total_states || 0) === 1;
+
       const eventData = {
         courseId: round.course_id,
         holesLogged: parseInt(holes_logged),
@@ -1110,23 +1585,11 @@ module.exports = ({ pool }) => {
         doublesPlus: parseInt(doubles_plus),
         completedAt,
         playerId: req.player.id,
+        roundsInWindow,
+        courseVisitCount,
+        statesVisitedCount,
+        newStateReached,
       };
-
-      // Fire quest checks for all applicable round events
-      checkQuestCompletion(pool, req.player.id, 'ROUND_UNDER_PAR', eventData).catch(e => console.error('Story quest ROUND_UNDER_PAR error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_AT_PAR', eventData).catch(e => console.error('Story quest ROUND_AT_PAR error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_18_HOLES', eventData).catch(e => console.error('Story quest ROUND_18_HOLES error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'HOLES_LOGGED', eventData).catch(e => console.error('Story quest HOLES_LOGGED error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_BIRDIE_COUNT', eventData).catch(e => console.error('Story quest ROUND_BIRDIE_COUNT error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_WEEKEND', eventData).catch(e => console.error('Story quest ROUND_WEEKEND error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_TIME_MORNING', eventData).catch(e => console.error('Story quest ROUND_TIME_MORNING error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_TIME_EARLY', eventData).catch(e => console.error('Story quest ROUND_TIME_EARLY error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_TIME_LATE', eventData).catch(e => console.error('Story quest ROUND_TIME_LATE error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_ACE', eventData).catch(e => console.error('Story quest ROUND_ACE error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_EAGLE', eventData).catch(e => console.error('Story quest ROUND_EAGLE error:', e.message));
-      checkQuestCompletion(pool, req.player.id, 'ROUND_CLEAN', eventData).catch(e => console.error('Story quest ROUND_CLEAN error:', e.message));
-      // ROUND_COMPLETE quests are handled by DB trigger (trg_round_complete_quest)
-      // COURSE_REPEAT quests are handled in checkQuestCompletion when courseId is set
 
       // ── AWARD CO-PLAYERS: create completed rounds + grant XP/gold ──
       // Runs after commit so host round is already finalized.
@@ -1595,6 +2058,109 @@ module.exports = ({ pool }) => {
     } catch (err) {
       console.error('Get round error:', err.message);
       res.status(500).json({ error: 'Failed to get round' });
+    }
+  });
+
+  // POST /api/rounds/queue-process — submit a round that was queued while offline.
+  // Called by the offline-utils flush logic when the app regains connectivity.
+  // Payload: { roundId, courseId, layoutId, holesCount, holes, coPlayers }
+  router.post('/rounds/queue-process', requireAuth(pool), async (req, res) => {
+    const { roundId, courseId, layoutId, holesCount, holes, coPlayers } = req.body || {};
+
+    if (!roundId || !holes || !Array.isArray(holes) || holes.length === 0) {
+      return res.status(400).json({ error: 'Invalid queue payload' });
+    }
+
+    try {
+      // Verify the round exists and belongs to this player
+      const roundResult = await pool.query(
+        `SELECT id, status FROM rounds WHERE id = $1 AND player_id = $2`,
+        [roundId, req.player.id]
+      );
+      if (roundResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Round not found' });
+      }
+      // Already completed — nothing to do
+      if (roundResult.rows[0].status === 'completed') {
+        return res.json({ status: 'already_completed' });
+      }
+
+      // Upsert each hole score (handles idempotency — offline queue may include
+      // holes already saved in a prior partial-submit attempt)
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const h of holes) {
+          await client.query(
+            `INSERT INTO round_holes (round_id, hole_number, par, score)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (round_id, hole_number) DO UPDATE SET par = EXCLUDED.par, score = EXCLUDED.score`,
+            [roundId, h.hole_number, h.par, h.score]
+          );
+        }
+
+        // Complete the round (same flow as the /complete endpoint, minus quest validation
+        // — quest constraints were already satisfied before the round was queued)
+        const holesResult = await client.query(
+          `SELECT SUM(score)::int as total_score, SUM(par)::int as total_par,
+                  COUNT(*)::int as holes_logged FROM round_holes WHERE round_id = $1`,
+          [roundId]
+        );
+        const { total_score, total_par, holes_logged } = holesResult.rows[0];
+
+        if (holes_logged < 3) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: 'Not enough holes logged (min 3)' });
+        }
+
+        await client.query(
+          `UPDATE rounds SET status = 'completed', completed_at = NOW(),
+                             total_score = $2, total_par = $3 WHERE id = $1`,
+          [roundId, total_score, total_par]
+        );
+
+        // Award XP
+        const baseXp = holes_logged * 10;
+        const scoreVsPar = total_score - total_par;
+        const bonusXp = scoreVsPar <= 0 ? Math.abs(scoreVsPar) * 5 : 0;
+        const totalXp = baseXp + bonusXp;
+        const [milestone] = await getRoundMilestone(client, req.player.id, total_score, total_par, holes_logged);
+        const milestoneXp = milestone ? milestone.xp : 0;
+
+        await client.query(
+          `UPDATE players SET xp = xp + $2, total_rounds = total_rounds + 1 WHERE id = $1`,
+          [req.player.id, totalXp + milestoneXp]
+        );
+
+        // Log XP
+        await client.query(
+          `INSERT INTO xp_log (player_id, source, amount, context) VALUES ($1, $2, $3, $4)`,
+          [req.player.id, 'round_complete', totalXp + milestoneXp, JSON.stringify({ roundId, scoreVsPar, offline_queued: true })]
+        );
+
+        // Update best score per course
+        const scoreVsParVal = total_score - total_par;
+        await client.query(
+          `INSERT INTO player_course_bests (player_id, course_id, best_score_vs_par, best_round_id)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (player_id, course_id) DO UPDATE
+           SET best_score_vs_par = LEAST(player_course_bests.best_score_vs_par, EXCLUDED.best_score_vs_par),
+               best_round_id   = CASE WHEN player_course_bests.best_score_vs_par > EXCLUDED.best_score_vs_par
+                                      THEN player_course_bests.best_round_id ELSE EXCLUDED.best_round_id END`,
+          [req.player.id, courseId, scoreVsParVal, roundId]
+        );
+
+        await client.query('COMMIT');
+        res.json({ status: 'queued_complete', roundId, holes_logged, total_score });
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+    } catch (err) {
+      console.error('Queue process error:', err.message);
+      res.status(500).json({ error: 'Failed to process queued round' });
     }
   });
 

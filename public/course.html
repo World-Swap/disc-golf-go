@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -139,9 +141,9 @@
             color: var(--text2);
         }
         .badge-beginner {
-            background: rgba(60,168,60,0.1);
-            border: 1px solid rgba(60,168,60,0.2);
-            color: #2e8b2e;
+            background: rgba(255,107,26,0.1);
+            border: 1px solid rgba(255,107,26,0.2);
+            color: #FF6B1A;
         }
         .badge-intermediate {
             background: rgba(224,165,0,0.1);
@@ -158,7 +160,7 @@
             border: 1px solid rgba(224,32,32,0.2);
             color: #b01c1c;
         }
-        [data-theme="dark"] .badge-beginner  { color: #7ed957; background: rgba(76,223,60,0.12); border-color: rgba(76,223,60,0.2); }
+        [data-theme="dark"] .badge-beginner  { color: #FF6B1A; background: rgba(255,107,26,0.12); border-color: rgba(255,107,26,0.2); }
         [data-theme="dark"] .badge-intermediate { color: #ffd050; background: rgba(255,208,80,0.12); border-color: rgba(255,208,80,0.2); }
         [data-theme="dark"] .badge-advanced  { color: #ff8c42; background: rgba(255,140,66,0.12); border-color: rgba(255,140,66,0.2); }
         [data-theme="dark"] .badge-pro       { color: #fc8181; background: rgba(252,129,129,0.12); border-color: rgba(252,129,129,0.2); }
@@ -217,7 +219,7 @@
             border-left: 3px solid var(--green-glow);
             padding-left: 0.9rem;
         }
-        [data-theme="dark"] .notable-text { border-left-color: rgba(76,223,60,0.2); }
+        [data-theme="dark"] .notable-text { border-left-color: rgba(255,107,26,0.2); }
 
         /* ── COMMUNITY STATS ── */
         .community-grid {
@@ -265,11 +267,11 @@
             font-size: 0.9rem; font-weight: 700;
             cursor: pointer;
             transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
-            box-shadow: 0 4px 16px rgba(60,168,60,0.3);
+            box-shadow: 0 4px 16px rgba(255,107,26,0.3);
             text-decoration: none;
             text-align: center;
         }
-        [data-theme="dark"] .btn-primary { box-shadow: 0 4px 20px rgba(76,223,60,0.22); }
+        [data-theme="dark"] .btn-primary { box-shadow: 0 4px 20px rgba(255,107,26,0.22); }
         .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-primary:active { transform: scale(0.98); }
 
@@ -356,7 +358,7 @@
     <!-- TOP HEADER -->
     <header class="top-header">
         <a href="/" class="header-logo">
-            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            <img src="/logo.png?v=7" alt="Disc Golf Go" width="32" height="32" loading="eager">
             Disc Golf <span class="go">Go</span>
         </a>
         <div>
@@ -491,33 +493,25 @@
     <p>Disc Golf Go &nbsp;·&nbsp; <a href="/privacy">Privacy</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/delete-account">Delete Account</a></p>
 </footer>
 
-    <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
-    <nav class="bottom-tab-bar">
-    <a class="tab-item" href="/crews">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label">Crews</span>
-    </a>
-    <a class="tab-item" href="/battles">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Battles</span>
+    <!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
     </a>
     <a class="tab-item" href="/scorecard">
         <span class="tab-icon">🥏</span>
         <span class="tab-label">Play</span>
     </a>
-    <a class="tab-item" href="/profile">
-        <span class="tab-icon">👤</span>
-        <span class="tab-label">Profile</span>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
     </a>
-    <a class="tab-item" href="/challenges">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-label">Quests</span>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
     </a>
-    <a class="tab-item" href="/map">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Map</span>
-    </a>
-</nav>
+    </nav>
 
     <script>
     // ── DARK MODE ────────────────────────────────────────────────

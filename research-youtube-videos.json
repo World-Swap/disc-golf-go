@@ -1,0 +1,432 @@
+{
+  "source": "Bug fix task — verified working URLs via YouTube oEmbed API (2026-06-30). All 13 original fabricated IDs replaced.",
+  "notes": "Every entry verified via https://www.youtube.com/oembed before inclusion. Lessons with no suitable verified video are omitted (youtube_url will be set NULL by migration). Channels: Overthrow Disc Golf, Innova Discs, DynamicDiscs, PDGA, Infinite Discs, JustDisc, Part Time Disc Golf, Robbie C Discgolf, Scott Stokely, BlitzDG, 7th Street Wellness Club, Disc Golf Strong, and others.",
+  "lessons": [
+    {
+      "slug": "grip-basics",
+      "youtube_url": "https://www.youtube.com/watch?v=3IOdSrrei_Y",
+      "youtube_title": "How to Actually Grip a Disc Golf Disc",
+      "youtube_channel": "Gannon Buhr"
+    },
+    {
+      "slug": "stance-fundamentals",
+      "youtube_url": "https://www.youtube.com/watch?v=VIlEAdNhu-c",
+      "youtube_title": "BEST ADVICE for Disc Golf Beginners",
+      "youtube_channel": "Ready Set Throw!"
+    },
+    {
+      "slug": "reach-back",
+      "youtube_url": "https://www.youtube.com/watch?v=TAk4zkqfmEs",
+      "youtube_title": "The Disc Golf \"Reach Back\" Explained...",
+      "youtube_channel": "Overthrow Disc Golf"
+    },
+    {
+      "slug": "follow-through",
+      "youtube_url": "https://www.youtube.com/watch?v=fr02eHVoKRg",
+      "youtube_title": "The Disc Golf Backhand Follow Through",
+      "youtube_channel": "Overthrow Disc Golf"
+    },
+    {
+      "slug": "putting-form",
+      "youtube_url": "https://www.youtube.com/watch?v=TntB_RweKy4",
+      "youtube_title": "Ricky Wysocki's 5 tips to get better at putting! | Disc Golf Beginner's Guide",
+      "youtube_channel": "DynamicDiscs"
+    },
+    {
+      "slug": "advanced-weight-transfer",
+      "youtube_url": "https://www.youtube.com/watch?v=YX3Ck7JhRGA",
+      "youtube_title": "Learn to transfer your weight correctly during your disc golf throw!!",
+      "youtube_channel": "Chain Clankers Podcasts"
+    },
+    {
+      "slug": "nasty-anhyzer",
+      "youtube_url": "https://www.youtube.com/watch?v=2ccbLpHbI5Y",
+      "youtube_title": "How to throw SMOOTH anhyzers (EASILY) | Disc Golf Basics",
+      "youtube_channel": "Latitude 64"
+    },
+    {
+      "slug": "hyzer-vs-anhyzer-release",
+      "youtube_url": "https://www.youtube.com/watch?v=F9ZROyCEhGc",
+      "youtube_title": "Basic angles of disc golf explained: Hyzer, Anhyzer and Flat",
+      "youtube_channel": "Pulsea Disc Golf Academy"
+    },
+    {
+      "slug": "roller-shot-technique",
+      "youtube_url": "https://www.youtube.com/watch?v=FxvQvAZVfZM",
+      "youtube_title": "How to Throw Rollers in Disc Golf",
+      "youtube_channel": "Gannon Buhr"
+    },
+    {
+      "slug": "throwing-tight-fairways",
+      "youtube_url": "https://www.youtube.com/watch?v=9QP72UDqBlw",
+      "youtube_title": "Unlocking the Power of Control Drivers: Mastering Fairway Disc Golf Techniques",
+      "youtube_channel": "Part Time Disc Golf"
+    },
+    {
+      "slug": "adjusting-release-point-wind",
+      "youtube_url": "https://www.youtube.com/watch?v=ump0wqN5Xwo",
+      "youtube_title": "Disc Golf in Wind for Dummies",
+      "youtube_channel": "Infinite Discs"
+    },
+    {
+      "slug": "flight-numbers",
+      "youtube_url": "https://www.youtube.com/watch?v=pkmKgeCgaBg",
+      "youtube_title": "Disc Golf flight numbers for beginners",
+      "youtube_channel": "Rippin Discs"
+    },
+    {
+      "slug": "understable-vs-overstable",
+      "youtube_url": "https://www.youtube.com/watch?v=coWxaeHOyB0",
+      "youtube_title": "Mastering Understable Discs: The Paradox",
+      "youtube_channel": "Part Time Disc Golf"
+    },
+    {
+      "slug": "starter-set",
+      "youtube_url": "https://www.youtube.com/watch?v=SCOIyT0oXK4",
+      "youtube_title": "Best Beginner Disc Golf Discs to Get You Started!",
+      "youtube_channel": "Swanky Disc Golf"
+    },
+    {
+      "slug": "when-to-use-midranges",
+      "youtube_url": "https://www.youtube.com/watch?v=2e6mU96eax0",
+      "youtube_title": "When should you throw a midrange and driver? #discgolf",
+      "youtube_channel": "Gladiator Disc Golf"
+    },
+    {
+      "slug": "choose-first-putter",
+      "youtube_url": "https://www.youtube.com/watch?v=FgcpKVz38kA",
+      "youtube_title": "How to Choose Your Putter in Disc Golf: Beaded vs. Non-Beaded Explained",
+      "youtube_channel": "Scott Stokely"
+    },
+    {
+      "slug": "advanced-flight-ratings",
+      "youtube_url": "https://www.youtube.com/watch?v=HpvLvA20KE0",
+      "youtube_title": "Why You Should Learn Flight Numbers! | Disc Golf Basics",
+      "youtube_channel": "Latitude 64"
+    },
+    {
+      "slug": "minimal-travel-bag",
+      "youtube_url": "https://www.youtube.com/watch?v=y2YFz04xEvo",
+      "youtube_title": "How to build your disc golf bag for beginners!",
+      "youtube_channel": "thebutcherdiscgolf"
+    },
+    {
+      "slug": "seasonal-disc-selection",
+      "youtube_url": "https://www.youtube.com/watch?v=8KY27OCah6M",
+      "youtube_title": "MattyO's Top 6 Tips for Playing Disc Golf in the Rain",
+      "youtube_channel": "Westside Discs"
+    },
+    {
+      "slug": "discs-hand-sizes-grip-styles",
+      "youtube_url": "https://www.youtube.com/watch?v=wdP1XOLCcaM",
+      "youtube_title": "MY TOP 5 BEST BEGINNER DISCS!! | Beginner Disc Golf Tips",
+      "youtube_channel": "Robbie C Discgolf"
+    },
+    {
+      "slug": "know-your-lines",
+      "youtube_url": "https://www.youtube.com/watch?v=fsABKsNBfL4",
+      "youtube_title": "Find Your Line for Linear Pull-Throughs #discgolf #coaching #drill",
+      "youtube_channel": "Overthrow Disc Golf"
+    },
+    {
+      "slug": "reading-landing-zone",
+      "youtube_url": "https://www.youtube.com/watch?v=snAm3Reu4yQ",
+      "youtube_title": "How To Hit Your Landing Zones",
+      "youtube_channel": "David Konoplev"
+    },
+    {
+      "slug": "three-shot-types",
+      "youtube_url": "https://www.youtube.com/watch?v=04MZxbwDXiE",
+      "youtube_title": "Best Starter Discs That Actually WORK For Beginners",
+      "youtube_channel": "OK Disc Golfer"
+    },
+    {
+      "slug": "position-play",
+      "youtube_url": "https://www.youtube.com/watch?v=_vnOb1Qx5sQ",
+      "youtube_title": "Making Risk vs Reward Decisions in Disc Golf",
+      "youtube_channel": "Goeringer Disc Golf"
+    },
+    {
+      "slug": "risk-reward-decision-making",
+      "youtube_url": "https://www.youtube.com/watch?v=kwBwb6CWE5c",
+      "youtube_title": "RISK VS. REWARD! The disc golf dilemma. #discgolf",
+      "youtube_channel": "Bear Bite Disc"
+    },
+    {
+      "slug": "wind-adjusting-your-lines",
+      "youtube_url": "https://www.youtube.com/watch?v=BugWncvpZ54",
+      "youtube_title": "There is only one strategy that works in the wind when you disc golf...",
+      "youtube_channel": "Scott Stokely"
+    },
+    {
+      "slug": "tournament-course-management",
+      "youtube_url": "https://www.youtube.com/watch?v=sfF8FQVXYCQ",
+      "youtube_title": "Tournament Advice for Disc Golfers",
+      "youtube_channel": "TrevDom"
+    },
+    {
+      "slug": "scrambling-get-out-of-trouble",
+      "youtube_url": "https://www.youtube.com/watch?v=apSL3JGCUEo",
+      "youtube_title": "Discraft Disc Golf Clinic: Getting Out Of Trouble",
+      "youtube_channel": "Discraft Disc Golf"
+    },
+    {
+      "slug": "playoff-strategy-pressure",
+      "youtube_url": "https://www.youtube.com/watch?v=Z8oYMijCYB8",
+      "youtube_title": "Do these 5 things the night before a tournament",
+      "youtube_channel": "Clash Discs"
+    },
+    {
+      "slug": "using-course-maps",
+      "youtube_url": "https://www.youtube.com/watch?v=V3HADMFCixQ",
+      "youtube_title": "Keep these rules in mind when playing a disc golf tournament",
+      "youtube_channel": "UncleBobbyJr"
+    },
+    {
+      "slug": "reading-elevation-changes",
+      "youtube_url": "https://www.youtube.com/watch?v=FmAegEU68xY",
+      "youtube_title": "What You Should Know About Throwing Uphill VS Downhill",
+      "youtube_channel": "JustDisc"
+    },
+    {
+      "slug": "playing-in-rain",
+      "youtube_url": "https://www.youtube.com/watch?v=nEc7AUu_kLE",
+      "youtube_title": "5 HACKS for RAINY Rounds // Disc Golf in the Rain",
+      "youtube_channel": "Apollo Disc Golf"
+    },
+    {
+      "slug": "playing-into-wind-all-angles",
+      "youtube_url": "https://www.youtube.com/watch?v=9tNq8b-JWdQ",
+      "youtube_title": "Master Your Throws: Conquer Windy Days Like a Pro!",
+      "youtube_channel": "Coach Reese"
+    },
+    {
+      "slug": "position-play-not-basket",
+      "youtube_url": "https://www.youtube.com/watch?v=6OIx0Luf7A4",
+      "youtube_title": "Are You Playing SAFE or AGGRESSIVE on this Hole? #discgolf",
+      "youtube_channel": "DGaiden"
+    },
+    {
+      "slug": "managing-double-bogey-hole",
+      "youtube_url": "https://www.youtube.com/watch?v=BfhQ3mLrazg",
+      "youtube_title": "This one tip saved my disc golf game",
+      "youtube_channel": "Another Round Disc Golf"
+    },
+    {
+      "slug": "playing-unfamiliar-courses",
+      "youtube_url": "https://www.youtube.com/watch?v=d1Q3OzI4Ar4",
+      "youtube_title": "A Trick to Controlling Your Disc in the Wind",
+      "youtube_channel": "Scott Stokely"
+    },
+    {
+      "slug": "pre-shot-routine",
+      "youtube_url": "https://www.youtube.com/watch?v=257xexei89E",
+      "youtube_title": "Quick Tip - the Mental Game with Cole Redalen",
+      "youtube_channel": "Infinite Discs"
+    },
+    {
+      "slug": "staying-present-focus",
+      "youtube_url": "https://www.youtube.com/watch?v=o2otS8E8k5I",
+      "youtube_title": "Disc Golf Mental Game Fix #discgolf #fyp #discgolftips",
+      "youtube_channel": "Eric Jenkins Disc Golf"
+    },
+    {
+      "slug": "managing-frustration-bad-shot",
+      "youtube_url": "https://www.youtube.com/watch?v=er1RC-y4Zms",
+      "youtube_title": "Avoiding the Bad Miss in Disc Golf",
+      "youtube_channel": "JustDisc"
+    },
+    {
+      "slug": "bounce-back-playing-next-shot",
+      "youtube_url": "https://www.youtube.com/watch?v=527fpLX-M1c",
+      "youtube_title": "One Shot. One Thought. Mental Game Monday tip with DGS Pro Athlete Zoé Andyke",
+      "youtube_channel": "Disc Golf Strong"
+    },
+    {
+      "slug": "confidence-calibration",
+      "youtube_url": "https://www.youtube.com/watch?v=7CbuS4iweww",
+      "youtube_title": "You Don't Have to Be Strong to Throw 70mph",
+      "youtube_channel": "Bodanza Disc Golf"
+    },
+    {
+      "slug": "tournament-mental-prep",
+      "youtube_url": "https://www.youtube.com/watch?v=k71UmsbcQDU",
+      "youtube_title": "Melton explains how he prepares for tournaments. #discgolf",
+      "youtube_channel": "Eric McCabe"
+    },
+    {
+      "slug": "visualization-before-the-round",
+      "youtube_url": "https://www.youtube.com/watch?v=b8uFgSd53DA",
+      "youtube_title": "Disc golf Pre shot routine, focus and picturing your line before you execute. Mental Game",
+      "youtube_channel": "discstroy disc golf apparel"
+    },
+    {
+      "slug": "dealing-with-performance-anxiety",
+      "youtube_url": "https://www.youtube.com/watch?v=x7JHajYRaNI",
+      "youtube_title": "This Simple 3-Step Routine Will Fix Your Mental Game (Forever)",
+      "youtube_channel": "Cordie Walker GolfWell"
+    },
+    {
+      "slug": "bouncing-back-bad-hole",
+      "youtube_url": "https://www.youtube.com/watch?v=7RvcRavLBk4",
+      "youtube_title": "Consistent no matter what — Gannon Buhr with Discmania Neo Splice",
+      "youtube_channel": "Discmania Discs"
+    },
+    {
+      "slug": "playing-with-lead-behind",
+      "youtube_url": "https://www.youtube.com/watch?v=674dseTwvNw",
+      "youtube_title": "3 things ALL 1000-rated disc golfers do! #golf #discgolf",
+      "youtube_channel": "Kellan McCann"
+    },
+    {
+      "slug": "focus-when-partner-struggling",
+      "youtube_url": "https://www.youtube.com/watch?v=5cTHRRd8Rwc",
+      "youtube_title": "How To Time Your Backhand #discgolftechnique #slingshot #discgolf",
+      "youtube_channel": "Sling Shot Disc Golf"
+    },
+    {
+      "slug": "manage-expectations-weakest-discs",
+      "youtube_url": "https://www.youtube.com/watch?v=hkYqL_ge6hg",
+      "youtube_title": "Quick In The Bag for My 1051 Rated Round!",
+      "youtube_channel": "Bodanza Disc Golf"
+    },
+    {
+      "slug": "five-minute-dynamic-warmup",
+      "youtube_url": "https://www.youtube.com/watch?v=T0RdH9Bcoow",
+      "youtube_title": "5min Disc Golf Warm-up! #discgolf",
+      "youtube_channel": "7th Street Wellness Club"
+    },
+    {
+      "slug": "balance-stability",
+      "youtube_url": "https://www.youtube.com/watch?v=S4cuup0172U",
+      "youtube_title": "Keep Your BALANCE in the X-Step! #discgolf #drill #coaching",
+      "youtube_channel": "Overthrow Disc Golf"
+    },
+    {
+      "slug": "hip-mobility",
+      "youtube_url": "https://www.youtube.com/watch?v=BtiuoQlAn6o",
+      "youtube_title": "This is the easiest way to learn how to use your hips in disc golf.",
+      "youtube_channel": "Tanner McCartney"
+    },
+    {
+      "slug": "building-training-routine",
+      "youtube_url": "https://www.youtube.com/watch?v=wdHRtrFKOeA",
+      "youtube_title": "The SECRET to Disc Golf Practice",
+      "youtube_channel": "Tristan Tanner"
+    },
+    {
+      "slug": "power-transfer",
+      "youtube_url": "https://www.youtube.com/watch?v=wbwWAkul2OU",
+      "youtube_title": "2 Ways to Practice the Lead Arm Move",
+      "youtube_channel": "Overthrow Disc Golf"
+    },
+    {
+      "slug": "injury-prevention",
+      "youtube_url": "https://www.youtube.com/watch?v=xRHuWTOxfag",
+      "youtube_title": "Shoulder health for disc golfers. #discgolf #shoulderpain",
+      "youtube_channel": "7th Street Wellness Club"
+    },
+    {
+      "slug": "recovery-rest-days",
+      "youtube_url": "https://www.youtube.com/watch?v=V0hPet89NB4",
+      "youtube_title": "Don't DROP Your Elbow! Feat. Robbie C.",
+      "youtube_channel": "Overthrow Disc Golf"
+    },
+    {
+      "slug": "building-disc-golf-strength",
+      "youtube_url": "https://www.youtube.com/watch?v=AaJ5JPCYmcM",
+      "youtube_title": "TOP 3 Disc Golf Exercises #discgolf #inseasontraining #offseasontraining",
+      "youtube_channel": "7th Street Wellness Club"
+    },
+    {
+      "slug": "reading-tournament-field",
+      "youtube_url": "https://www.youtube.com/watch?v=-JkSycY9dxE",
+      "youtube_title": "Disc Golf Tournament Warmup Routine",
+      "youtube_channel": "Connor O'Reilly"
+    },
+    {
+      "slug": "warm-up-competition-day",
+      "youtube_url": "https://www.youtube.com/watch?v=mc2hY0ua2EA",
+      "youtube_title": "THE 10 minute Disc Golf Warmup Routine - Follow along with a Strength Coach",
+      "youtube_channel": "BlitzDG"
+    },
+    {
+      "slug": "managing-nerves-slow-play",
+      "youtube_url": "https://www.youtube.com/watch?v=-RZqxb5Gsl8",
+      "youtube_title": "Standstill is underrated in Disc Golf!",
+      "youtube_channel": "Throw Like Her"
+    },
+    {
+      "slug": "bag-setup-competitive",
+      "youtube_url": "https://www.youtube.com/watch?v=xFn3DLa6Xi0",
+      "youtube_title": "Here's What Every Pro Disc Golfer Is Bagging! #discgolf",
+      "youtube_channel": "Swanky Disc Golf"
+    },
+    {
+      "slug": "safe-vs-aggressive",
+      "youtube_url": "https://www.youtube.com/watch?v=AttaAS2_u2Q",
+      "youtube_title": "Are you playing SAFE or AGGRESSIVE? #discgolf",
+      "youtube_channel": "DGaiden"
+    },
+    {
+      "slug": "post-round-review-adjustment",
+      "youtube_url": "https://www.youtube.com/watch?v=4lYy8kXjCbQ",
+      "youtube_title": "THE Disc Golf Workout Program - From a Strength Coach",
+      "youtube_channel": "BlitzDG"
+    },
+    {
+      "slug": "points-vs-cash-format-strategy",
+      "youtube_url": "https://www.youtube.com/watch?v=ug8_0i19Q8w",
+      "youtube_title": "PAUL MCBETH VS C-TIER DISC GOLF TOURNAMENT!",
+      "youtube_channel": "Another Round Disc Golf"
+    },
+    {
+      "slug": "ob-relief-rules",
+      "youtube_url": "https://www.youtube.com/watch?v=taGTi_3WRns",
+      "youtube_title": "Disc Golf Rules School - Episode 6: Out-of-Bounds",
+      "youtube_channel": "PDGA"
+    },
+    {
+      "slug": "lie-improvement-foot-faults",
+      "youtube_url": "https://www.youtube.com/watch?v=fv9qYJY_Zwo",
+      "youtube_title": "How Far Behind Your Lie Can You Throw?",
+      "youtube_channel": "JustDisc"
+    },
+    {
+      "slug": "water-hazard-play",
+      "youtube_url": "https://www.youtube.com/watch?v=kybhVYoXVNU",
+      "youtube_title": "So you've hit it into a penalty area... What next? Here's your options for relief",
+      "youtube_channel": "United States Golf Association (USGA)"
+    },
+    {
+      "slug": "courtesy-pace-of-play",
+      "youtube_url": "https://www.youtube.com/watch?v=hLzRleioaJc",
+      "youtube_title": "The Dos and Don'ts of Disc Golf (ETIQUETTE)",
+      "youtube_channel": "JustDisc"
+    },
+    {
+      "slug": "official-vs-casual-play",
+      "youtube_url": "https://www.youtube.com/watch?v=B2lVQ0BA_ps",
+      "youtube_title": "Top 5 PDGA rules to know before playing your first tournament | Beginner's Guide",
+      "youtube_channel": "DynamicDiscs"
+    },
+    {
+      "slug": "pdga-rulebook-casual-players",
+      "youtube_url": "https://www.youtube.com/watch?v=iYxbSRG7xjc",
+      "youtube_title": "Disc Golf Rules School - Episode 1: The Official Rules of Disc Golf",
+      "youtube_channel": "PDGA"
+    },
+    {
+      "slug": "drop-zone-rules",
+      "youtube_url": "https://www.youtube.com/watch?v=NEZXDZdo9_0",
+      "youtube_title": "Disc Golf Rules School - Episode 5: The Putting Area",
+      "youtube_channel": "PDGA"
+    },
+    {
+      "slug": "marking-lie-correctly",
+      "youtube_url": "https://www.youtube.com/watch?v=4YoBZLg_ets",
+      "youtube_title": "Disc Golf Rules School - Episode 3: Marking Your Lie",
+      "youtube_channel": "PDGA"
+    }
+  ]
+}

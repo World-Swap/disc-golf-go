@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bring a Friend — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#1E1E1E">
+    <meta name="description" content="Bring a friend to Disc Golf Go. Earn Gold and XP for every friend who joins. Share your code, climb together.">
+    <meta property="og:title" content="Bring a Friend — Disc Golf Go">
+    <meta property="og:description" content="Earn Gold and XP every time a friend joins and plays. Share your code, climb together.">
+    <meta property="og:image" content="https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/8f88fdd4-3698-4d3f-8761-072b4f1477c4.png">
+    <meta property="og:site_name" content="Disc Golf Go">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+:root {
+    --bg-deep: #141414;
+    --bg: #1E1E1E;
+    --surface: #2A2A2A;
+    --surface2: #333333;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --text: #FAFAFA;
+    --text2: #D0D0D0;
+    --text3: #A0A0A0;
+    --green: #FF6B1A;
+    --green-bright: #7ED957;
+    --green-dim: #E55A0D;
+    --green-glow: rgba(255,107,26,0.15);
+    --green-glow2: rgba(255,107,26,0.08);
+    --gold: #ffd050;
+    --gold-bg: rgba(255,208,80,0.12);
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+    --font-mono: 'Space Mono', monospace;
+}
+
+body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+}
+
+/* Grid texture */
+body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+        linear-gradient(rgba(255,107,26,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,107,26,0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+}
+body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, var(--bg-deep) 80%);
+    pointer-events: none;
+}
+
+/* ── TOP NAV ── */
+.top-nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(var(--safe-t) + 1rem) 1.5rem 1rem;
+}
+.nav-logo {
+    display: flex; align-items: center; gap: 0.5rem;
+    text-decoration: none; color: var(--text); font-weight: 700; font-size: 1rem;
+    letter-spacing: -0.02em;
+}
+.nav-logo span { color: var(--green); }
+.nav-cta {
+    display: flex; align-items: center; gap: 0.6rem;
+}
+.nav-login {
+    color: var(--text2); font-size: 0.85rem; font-weight: 600;
+    text-decoration: none; transition: color var(--transition);
+}
+.nav-login:hover { color: var(--green); }
+.btn-nav {
+    display: inline-flex; align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--green); color: #fff;
+    border-radius: 10px; font-size: 0.8rem; font-weight: 700;
+    text-decoration: none; transition: all var(--transition);
+    letter-spacing: -0.01em;
+}
+.btn-nav:hover { background: #E55A0D; transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    padding: 3rem 1.5rem 2rem;
+}
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(255,107,26,0.1);
+    border: 1px solid rgba(255,107,26,0.3);
+    border-radius: 100px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--green);
+    margin-bottom: 1.25rem;
+}
+.hero-badge::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 6px var(--green);
+    animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.hero-title {
+    font-size: clamp(2.5rem, 9vw, 4rem);
+    font-weight: 800; letter-spacing: -0.04em; line-height: 0.95;
+    margin-bottom: 1.25rem;
+}
+.hero-title .green { color: var(--green); text-shadow: 0 0 40px rgba(255,107,26,0.4); }
+
+.hero-sub {
+    font-size: 1.05rem; color: var(--text2); line-height: 1.55;
+    max-width: 400px; margin: 0 auto 0.5rem;
+}
+.hero-sub-gold {
+    font-size: 0.9rem; color: var(--gold); font-weight: 600;
+    margin-bottom: 2.5rem;
+}
+
+/* ── YOUR CODE CARD ── */
+.code-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 1.75rem;
+    width: 100%; max-width: 420px;
+    position: relative; overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 48px rgba(255,107,26,0.12);
+}
+.code-card::before {
+    content: '';
+    position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 200px;
+    background: radial-gradient(ellipse, rgba(255,107,26,0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+.code-card-label {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 0.5rem;
+}
+.code-display {
+    display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;
+}
+.code-value {
+    font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700;
+    color: var(--green); letter-spacing: 0.1em;
+    text-shadow: 0 0 20px rgba(255,107,26,0.5);
+}
+.btn-copy {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--green-glow); border: 1px solid rgba(255,107,26,0.2);
+    color: var(--green); cursor: pointer; font-size: 1rem;
+    transition: all var(--transition); flex-shrink: 0;
+}
+.btn-copy:hover { background: rgba(255,107,26,0.2); transform: scale(1.05); }
+.btn-copy.copied { background: var(--green); color: #fff; }
+
+.share-url {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 0.6rem 0.85rem;
+    font-size: 0.75rem; color: var(--text3); overflow: hidden;
+}
+.share-url span {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.btn-share-copy {
+    background: var(--green-glow); border: 1px solid rgba(255,107,26,0.2);
+    color: var(--green); border-radius: 8px;
+    padding: 0.35rem 0.75rem; font-size: 0.72rem; font-weight: 700;
+    cursor: pointer; transition: all var(--transition); flex-shrink: 0;
+    font-family: 'Space Grotesk', sans-serif;
+}
+.btn-share-copy:hover { background: rgba(255,107,26,0.2); }
+.btn-share-copy.copied { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* Stats row */
+.code-stats {
+    display: flex; gap: 1.5rem; margin-top: 1.25rem;
+    padding-top: 1.25rem; border-top: 1px solid var(--border);
+}
+.code-stat { text-align: center; }
+.code-stat .num {
+    font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700;
+    color: var(--green); display: block;
+    text-shadow: 0 0 12px rgba(255,107,26,0.4);
+}
+.code-stat .lbl {
+    font-size: 0.6rem; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-top: 0.15rem;
+}
+
+/* Auth state */
+.auth-prompt {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0.75rem; margin-bottom: 2rem;
+}
+.auth-prompt p { font-size: 0.9rem; color: var(--text2); }
+.auth-prompt a {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0.8rem 2rem;
+    background: var(--green); color: #fff;
+    border-radius: 12px; font-size: 0.9rem; font-weight: 700;
+    text-decoration: none; transition: all var(--transition);
+    letter-spacing: -0.01em;
+}
+.auth-prompt a:hover { background: #E55A0D; transform: translateY(-1px); }
+
+/* ── REWARD TIERS ── */
+.tiers-section {
+    position: relative; z-index: 1;
+    padding: 2rem 1.5rem;
+    max-width: 700px; margin: 0 auto;
+}
+.section-eyebrow {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem;
+}
+.section-title {
+    font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 800;
+    letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 2rem;
+}
+.tiers-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+.tier-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.25rem 1rem;
+    position: relative; overflow: hidden;
+    transition: all var(--transition);
+}
+.tier-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.tier-card.earned {
+    border-color: rgba(255,107,26,0.3);
+    background: rgba(255,107,26,0.04);
+}
+.tier-card.earned::after {
+    content: '✓'; position: absolute; top: 0.75rem; right: 0.85rem;
+    font-size: 0.8rem; color: var(--green);
+}
+.tier-num {
+    font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700;
+    color: var(--text3); margin-bottom: 0.5rem; letter-spacing: 0.08em;
+}
+.tier-card.earned .tier-num { color: var(--green); }
+.tier-friends {
+    font-size: 1.1rem; font-weight: 700; color: var(--text);
+    margin-bottom: 0.25rem;
+}
+.tier-reward {
+    font-size: 0.8rem; color: var(--gold); font-weight: 600;
+    display: flex; align-items: center; gap: 0.3rem;
+}
+.tier-reward-icon { font-size: 0.9rem; }
+
+/* ── HOW IT WORKS ── */
+.how-section {
+    position: relative; z-index: 1;
+    padding: 2rem 1.5rem;
+    max-width: 700px; margin: 0 auto;
+}
+.how-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+}
+.how-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.25rem 1rem;
+    text-align: center;
+}
+.how-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
+.how-step {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    background: var(--green-glow); border: 1px solid rgba(255,107,26,0.2);
+    font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700;
+    color: var(--green); margin-bottom: 0.6rem;
+}
+.how-card h4 { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+.how-card p { font-size: 0.75rem; color: var(--text3); line-height: 1.45; }
+
+/* ── DORMANT USER HOOK ── */
+.comeback-section {
+    position: relative; z-index: 1;
+    padding: 2rem 1.5rem 3rem;
+    max-width: 600px; margin: 0 auto;
+    text-align: center;
+}
+.comeback-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2.5rem 1.75rem;
+    position: relative; overflow: hidden;
+}
+.comeback-card::before {
+    content: ''; position: absolute; top: -40%; left: 50%;
+    transform: translateX(-50%); width: 60%; height: 200px;
+    background: radial-gradient(ellipse, rgba(255,107,26,0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+.comeback-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+.comeback-card h2 {
+    font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 800;
+    letter-spacing: -0.03em; color: var(--text); margin-bottom: 0.75rem;
+}
+.comeback-card p { font-size: 0.9rem; color: var(--text2); line-height: 1.55; margin-bottom: 1.75rem; }
+.btn-playnow {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.5rem; padding: 1rem 2.5rem;
+    background: var(--green); color: #fff;
+    border-radius: 14px; font-size: 1rem; font-weight: 800;
+    text-decoration: none; transition: all var(--transition);
+    box-shadow: 0 0 32px rgba(255,107,26,0.35), 0 4px 24px rgba(255,107,26,0.2);
+    letter-spacing: -0.01em;
+}
+.btn-playnow:hover { background: #E55A0D; transform: translateY(-2px); box-shadow: 0 0 48px rgba(255,107,26,0.5); }
+.btn-playnow:active { transform: scale(0.98); }
+
+/* ── FOOTER ── */
+.site-footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 1.5rem calc(var(--safe-b) + 1rem);
+    text-align: center;
+}
+.footer-links {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.footer-links a {
+    font-size: 0.75rem; color: var(--text3); text-decoration: none;
+    transition: color var(--transition);
+}
+.footer-links a:hover { color: var(--green); }
+.footer-copy { font-size: 0.7rem; color: var(--text3); }
+
+/* ── ANIMATIONS ── */
+.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 520px) {
+    .tiers-grid { grid-template-columns: 1fr; }
+    .how-grid { grid-template-columns: 1fr; }
+}
+@media (min-width: 600px) {
+    .tiers-grid { grid-template-columns: repeat(4, 1fr); }
+}
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+    <a href="/" class="nav-logo">
+        <img src="/logo.png?v=7" alt="Disc Golf Go" width="28" height="28" loading="lazy">
+        Disc Golf <span>Go</span>
+    </a>
+    <div class="nav-cta">
+        <a href="/login" class="nav-login">Sign in</a>
+        <a href="/register" class="btn-nav">Get Started</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-badge">Bring a Friend</div>
+    <h1 class="hero-title">
+        Share the<br><span class="green">Course.</span>
+    </h1>
+    <p class="hero-sub">Every friend who joins and plays earns you Gold and XP. The more friends, the bigger the rewards.</p>
+    <p class="hero-sub-gold">Earn up to 500 Gold + 500 XP when 10 friends join.</p>
+
+    <!-- Authenticated view -->
+    <div id="code-section" style="width:100%;max-width:420px;display:none;">
+        <div class="code-card">
+            <div class="code-card-label">Your referral code</div>
+            <div class="code-display">
+                <span class="code-value" id="code-value">XXXXXXXX</span>
+                <button class="btn-copy" id="copy-btn" title="Copy code" onclick="copyCode()">📋</button>
+            </div>
+            <div class="share-url">
+                <span id="share-url">https://disc-golf-go.polsia.app/register?ref=XXXXXXXX</span>
+                <button class="btn-share-copy" id="share-copy-btn" onclick="copyShareUrl()">Copy link</button>
+            </div>
+            <div class="code-stats">
+                <div class="code-stat">
+                    <span class="num" id="stat-total">0</span>
+                    <span class="lbl">Friends joined</span>
+                </div>
+                <div class="code-stat">
+                    <span class="num" id="stat-month">0</span>
+                    <span class="lbl">Last 30 days</span>
+                </div>
+                <div class="code-stat">
+                    <span class="num" id="stat-next">1</span>
+                    <span class="lbl">Next reward at</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest view -->
+    <div id="auth-prompt" class="auth-prompt">
+        <p>Sign in or create an account to get your unique referral code.</p>
+        <a href="/register">Create Free Account</a>
+    </div>
+</section>
+
+<!-- REWARD TIERS -->
+<section class="tiers-section reveal">
+    <div class="section-eyebrow">Reward Tiers</div>
+    <div class="section-title">The more you share, <span style="color:var(--text3)">the more you earn.</span></div>
+
+    <div class="tiers-grid" id="tiers-grid">
+        <!-- Filled by JS -->
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section reveal">
+    <div class="section-eyebrow">How It Works</div>
+    <div class="section-title">Three steps to <span style="color:var(--text3)">more Gold.</span></div>
+
+    <div class="how-grid">
+        <div class="how-card">
+            <div class="how-step">1</div>
+            <span class="how-icon">📋</span>
+            <h4>Grab your code</h4>
+            <p>Find your unique referral code above. It's ready instantly.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-step">2</div>
+            <span class="how-icon">📱</span>
+            <h4>Share with friends</h4>
+            <p>Text it, post it, slide into their DMs. Any friend can use it.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-step">3</div>
+            <span class="how-icon">💰</span>
+            <h4>Watch Gold roll in</h4>
+            <p>When your friend joins and creates an account, Gold hits your account.</p>
+        </div>
+    </div>
+</section>
+
+<!-- DORMANT USER HOOK -->
+<section class="comeback-section reveal">
+    <div class="comeback-card">
+        <span class="comeback-icon">🥏</span>
+        <h2>The course misses you.</h2>
+        <p>It's been a while. New courses, challenges, and crew wars have dropped since you last played. Grab your code and give your disc golf friends a reason to get back out there — together.</p>
+        <a href="/profile" class="btn-playnow">▶ Back to the game</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+    <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/delete-account">Delete Account</a>
+        <a href="/leaderboard">Leaderboard</a>
+        <a href="/register">Play in Browser</a>
+    </div>
+    <p class="footer-copy">Disc Golf Go &copy; 2026 &nbsp;&middot;&nbsp; discgolfgo.app</p>
+</footer>
+
+<script>
+// Tiers config (mirror server-side)
+var TIERS = [
+    { friends: 1,  label: '1 Friend',  reward: '50 Gold' },
+    { friends: 3,  label: '3 Friends', reward: '150 Gold + 100 XP' },
+    { friends: 5,  label: '5 Friends', reward: '250 Gold + 250 XP' },
+    { friends: 10, label: '10 Friends', reward: '500 Gold + 500 XP' },
+];
+
+function renderTiers(total) {
+    var grid = document.getElementById('tiers-grid');
+    grid.innerHTML = TIERS.map(function(t) {
+        var earned = total >= t.friends;
+        return '<div class="tier-card' + (earned ? ' earned' : '') + '">' +
+            '<div class="tier-num">' + t.label + '</div>' +
+            '<div class="tier-friends">' + t.friends + '×</div>' +
+            '<div class="tier-reward"><span class="tier-reward-icon">🪙</span>' + t.reward + '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function copyCode() {
+    var code = document.getElementById('code-value').textContent;
+    navigator.clipboard.writeText(code).then(function() {
+        var btn = document.getElementById('copy-btn');
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(function() {
+            btn.textContent = '📋';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+
+function copyShareUrl() {
+    var url = document.getElementById('share-url').textContent;
+    navigator.clipboard.writeText(url).then(function() {
+        var btn = document.getElementById('share-copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+            btn.textContent = 'Copy link';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+
+// Init
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var authSection = document.getElementById('code-section');
+    var guestSection = document.getElementById('auth-prompt');
+
+    if (!token) {
+        // Show guest view — still show tiers so they understand the mechanic
+        renderTiers(0);
+        authSection.style.display = 'none';
+        guestSection.style.display = 'flex';
+        return;
+    }
+
+    authSection.style.display = 'block';
+    guestSection.style.display = 'none';
+
+    fetch('/api/referrals/me', {
+        headers: { Authorization: 'Bearer ' + token }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        document.getElementById('code-value').textContent = data.code || 'XXXXXXXX';
+        document.getElementById('share-url').textContent = data.referral_url || '';
+
+        var total = (data.stats && data.stats.total_referrals) ? data.stats.total_referrals : 0;
+        var last30 = (data.stats && data.stats.last_30_days) ? data.stats.last_30_days : 0;
+        var nextTier = data.stats && data.stats.next_tier;
+        var nextAt = nextTier ? nextTier.friends : 10;
+
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-month').textContent = last30;
+        document.getElementById('stat-next').textContent = nextAt;
+
+        renderTiers(total);
+    })
+    .catch(function() {
+        // Still show tiers
+        renderTiers(0);
+    });
+})();
+
+// Scroll reveal
+(function() {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+        els.forEach(function(el) { el.classList.add('visible'); });
+        return;
+    }
+    var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+        });
+    }, { threshold: 0.08 });
+    els.forEach(function(el) { obs.observe(el); });
+})();
+
+// Polsia Analytics
+(function() {
+    var slug = 'disc-golf-go';
+    var vid = localStorage.getItem('polsia_vid');
+    if (!vid) {
+        vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        localStorage.setItem('polsia_vid', vid);
+    }
+    new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+})();
+</script>
+
+</body>
+</html>

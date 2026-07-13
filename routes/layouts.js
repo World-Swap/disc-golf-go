@@ -17,22 +17,66 @@ module.exports = ({ pool }) => {
 
   // ─── Layouts ─────────────────────────────────────────────────────────────
 
-  // GET /api/courses/:courseId/layouts — list all layouts for a course
+  // GET /api/courses/:courseId/layouts — list layouts for a course, enriched with metadata
+  // Deduplicates by (name, hole_count) — keeps PDGA > DGCR > UDisc in priority order.
   router.get('/courses/:courseId/layouts', async (req, res) => {
     const courseId = parseInt(req.params.courseId, 10);
     if (isNaN(courseId)) return res.status(400).json({ error: 'Invalid course ID' });
 
     try {
-      const { rows } = await pool.query(
-        `SELECT l.id, l.course_id, l.name, l.hole_count, l.is_default, l.created_at,
-                COALESCE(l.hole_count,
-                  (SELECT COUNT(*) FROM course_holes ch WHERE ch.layout_id = l.id)) AS total_holes
+      // Fetch all layouts with source_tag and per-hole details in one query
+      const { rows: layouts } = await pool.query(
+        `SELECT
+            l.id,
+            l.course_id,
+            l.name,
+            l.hole_count,
+            l.is_default,
+            l.source_tag,
+            l.created_at,
+            COALESCE(l.hole_count,
+              (SELECT COUNT(*) FROM course_holes ch WHERE ch.layout_id = l.id)) AS total_holes,
+            COALESCE(l.hole_count,
+              (SELECT COUNT(*) FROM course_holes ch WHERE ch.layout_id = l.id),
+              0) AS hole_count_val,
+            COALESCE(
+              (SELECT SUM(ch.par) FROM course_holes ch WHERE ch.layout_id = l.id),
+              54  -- sensible default if no per-hole data
+            )::INTEGER AS total_par
          FROM course_layouts l
          WHERE l.course_id = $1
          ORDER BY l.is_default DESC, l.name ASC`,
         [courseId]
       );
-      res.json(rows);
+
+      // Deduplicate by (name, hole_count): keep first in PDGA > DGCR > UDisc priority order.
+      // Layouts are already ordered PDGA first if they have the column; layouts with no
+      // source_tag are treated as PDGA-equivalent. Distinct names (e.g., "Blue Tees" vs
+      // "Gold Tees") are kept even if hole_count matches — the name is what differentiates them.
+      const sourcePriority = { PDGA: 1, DGCR: 2, UDisc: 3 };
+      const seen = new Map(); // key: name|hole_count_val -> first-seen layout
+      const deduped = [];
+
+      for (const layout of layouts) {
+        const key = `${layout.name}|${layout.hole_count_val}`;
+        if (!seen.has(key)) {
+          seen.set(key, layout);
+          deduped.push(layout);
+        }
+        // If already seen, skip — the earlier one (from higher-priority source) wins
+      }
+
+      // Strip internal fields from response
+      const response = deduped.map(l => ({
+        id: l.id,
+        name: l.name,
+        hole_count: l.hole_count_val,
+        total_par: l.total_par,
+        is_default: l.is_default,
+        source_tag: l.source_tag || 'PDGA'
+      }));
+
+      res.json(response);
     } catch (err) {
       console.error('List layouts error:', err.message);
       res.status(500).json({ error: 'Failed to list layouts' });

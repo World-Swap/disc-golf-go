@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -83,7 +85,7 @@ body { padding-bottom: 0; }        .back-btn {
             margin-bottom: 0.9rem;
             position: relative; overflow: hidden;
         }
-        .war-card.active-war { border-color: rgba(60,168,60,0.3); }
+        .war-card.active-war { border-color: rgba(255,107,26,0.3); }
         .war-card.active-war::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
             background: linear-gradient(90deg, transparent, var(--green), transparent);
@@ -134,10 +136,10 @@ body { padding-bottom: 0; }        .back-btn {
             font-size: 0.68rem; font-weight: 700; padding: 0.22rem 0.6rem;
             border-radius: 20px; letter-spacing: 0.03em; flex-shrink: 0;
         }
-        .pill-active { background: rgba(60,168,60,0.15); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+        .pill-active { background: rgba(255,107,26,0.15); color: var(--green); border: 1px solid rgba(255,107,26,0.25); }
         .pill-pending { background: rgba(224,165,0,0.15); color: var(--gold); border: 1px solid rgba(224,165,0,0.25); }
         .pill-open { background: rgba(107,154,240,0.15); color: var(--diamond); border: 1px solid rgba(107,154,240,0.25); }
-        .pill-won { background: rgba(60,168,60,0.15); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+        .pill-won { background: rgba(255,107,26,0.15); color: var(--green); border: 1px solid rgba(255,107,26,0.25); }
         .pill-lost { background: rgba(224,64,64,0.15); color: var(--red); border: 1px solid rgba(224,64,64,0.25); }
         .pill-draw { background: rgba(138,138,134,0.15); color: var(--text3); border: 1px solid var(--border); }
         .pill-type {
@@ -160,7 +162,7 @@ body { padding-bottom: 0; }        .back-btn {
             background: var(--surface2); border: 1px solid var(--border);
             border-radius: 10px; padding: 0.5rem;
         }
-        .score-side.winning { border-color: rgba(60,168,60,0.35); background: rgba(60,168,60,0.07); }
+        .score-side.winning { border-color: rgba(255,107,26,0.35); background: rgba(255,107,26,0.07); }
         .score-side.losing { border-color: rgba(224,64,64,0.25); background: rgba(224,64,64,0.05); }
         .score-num {
             font-family: 'Space Mono', monospace;
@@ -180,7 +182,7 @@ body { padding-bottom: 0; }        .back-btn {
 
         /* Timer */
         .timer-row {
-            background: rgba(60,168,60,0.07); border: 1px solid rgba(60,168,60,0.2);
+            background: rgba(255,107,26,0.07); border: 1px solid rgba(255,107,26,0.2);
             border-radius: 8px; padding: 0.4rem 0.7rem;
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 0.75rem;
@@ -205,7 +207,7 @@ body { padding-bottom: 0; }        .back-btn {
         .btn-cancel:hover { background: var(--border2); }
         .btn-view { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); flex: none; padding: 0.65rem 0.9rem; }
         .btn-challenge {
-            width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #3ca83c, #7ed957);
+            width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #FF6B1A, #ff8c4a);
             color: white; border: none; border-radius: 12px;
             font-size: 0.9rem; font-weight: 700; cursor: pointer;
             font-family: inherit; transition: var(--transition);
@@ -281,13 +283,13 @@ body { padding-bottom: 0; }        .back-btn {
             text-align: center; font-family: inherit; color: var(--text2);
             transition: var(--transition);
         }
-        .duration-pill.selected { background: rgba(60,168,60,0.12); border-color: var(--green); color: var(--green); }
+        .duration-pill.selected { background: rgba(255,107,26,0.12); border-color: var(--green); color: var(--green); }
         .gold-cost-note {
             font-size: 0.76rem; color: var(--gold); display: flex; align-items: center;
             gap: 0.3rem; margin-bottom: 1rem;
         }
         .btn-submit-challenge {
-            width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #3ca83c, #7ed957);
+            width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #FF6B1A, #ff8c4a);
             color: white; border: none; border-radius: 12px;
             font-size: 0.9rem; font-weight: 700; cursor: pointer;
             font-family: inherit; transition: var(--transition);
@@ -306,7 +308,7 @@ body { padding-bottom: 0; }        .back-btn {
             transition: var(--transition);
         }
         .type-option:hover { border-color: var(--green); }
-        .type-option.selected { background: rgba(60,168,60,0.1); border-color: var(--green); }
+        .type-option.selected { background: rgba(255,107,26,0.1); border-color: var(--green); }
         .type-option-icon { font-size: 1.3rem; display: block; margin-bottom: 0.25rem; }
         .type-option-label { font-size: 0.82rem; font-weight: 700; color: var(--text2); display: block; }
         .type-option.selected .type-option-label { color: var(--green); }
@@ -328,7 +330,7 @@ body { padding-bottom: 0; }        .back-btn {
             font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem;
             border-radius: 20px;
         }
-        .badge-won { background: rgba(60,168,60,0.15); color: var(--green); }
+        .badge-won { background: rgba(255,107,26,0.15); color: var(--green); }
         .badge-lost { background: rgba(224,64,64,0.15); color: var(--red); }
         .badge-draw { background: rgba(138,138,134,0.12); color: var(--text3); }
         .badge-declined { background: rgba(138,138,134,0.12); color: var(--text3); }
@@ -341,7 +343,7 @@ body { padding-bottom: 0; }        .back-btn {
             font-family: inherit; color: var(--text2); transition: var(--transition);
         }
         .layout-pill:hover { border-color: var(--green); color: var(--green); }
-        .layout-pill.selected { background: rgba(60,168,60,0.12); border-color: var(--green); color: var(--green); }
+        .layout-pill.selected { background: rgba(255,107,26,0.12); border-color: var(--green); color: var(--green); }
 
         /* Deferred start row */
         .deferred-toggle {
@@ -360,7 +362,7 @@ body { padding-bottom: 0; }        .back-btn {
             text-align: center; min-width: 70px;
         }
         .hole-pill:hover { border-color: var(--green); color: var(--green); }
-        .hole-pill.selected { background: rgba(60,168,60,0.12); border-color: var(--green); color: var(--green); }
+        .hole-pill.selected { background: rgba(255,107,26,0.12); border-color: var(--green); color: var(--green); }
         .hole-placeholder { font-size: 0.82rem; color: var(--text3); padding: 0.3rem 0; }
 
         /* Notifications panel */
@@ -376,7 +378,7 @@ body { padding-bottom: 0; }        .back-btn {
         }
         .notif-item:last-child { border-bottom: none; }
         .notif-item:hover { background: var(--surface2); }
-        .notif-item.unread { background: rgba(60,168,60,0.04); }
+        .notif-item.unread { background: rgba(255,107,26,0.04); }
         .notif-icon { font-size: 1.2rem; flex-shrink: 0; width: 28px; text-align: center; }
         .notif-content { flex: 1; }
         .notif-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--text); }
@@ -1379,14 +1381,11 @@ async function submitChallenge() {
 
 // ── Bottom Tab Bar ─────────────────────────────────────────────────────────────
 (function renderNav() {
-    // Correct order per spec: Crews | Battles | Play | Profile | Quests | Map
+    // 3-tab nav: Training | Play | Profile
     const tabs = [
-        { icon: '👥', label: 'Crews', href: '/crews' },
-        { icon: '⚔️', label: 'Battles', href: '/battles' },
+        { icon: '🎓', label: 'Training', href: '/training' },
         { icon: '🥏', label: 'Play', href: '/scorecard' },
         { icon: '👤', label: 'Profile', href: '/profile' },
-        { icon: '🎯', label: 'Quests', href: '/challenges' },
-        { icon: '🗺️', label: 'Map', href: '/map' },
     ];
     const cur = location.pathname;
     document.getElementById('bottomNav').outerHTML =

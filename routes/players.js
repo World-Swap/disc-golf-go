@@ -12,6 +12,8 @@ const {
   TIER_COLORS,
   evaluateBadges,
   getStateMilestone,
+  getSkillTier,
+  getSkillTierProgress,
 } = require('./xp-engine');
 const { getPlayerDistanceStats } = require('./distance-analytics');
 
@@ -83,6 +85,7 @@ module.exports = ({ pool }) => {
       const result = await client.query(
         `SELECT id, player_uuid, display_name, username, email, profile_photo_url,
                 xp, level, login_streak, best_streak, battle_wins, battle_losses, win_streak, total_rounds,
+                total_birdies, total_aces,
                 gold, last_login_date, created_at
          FROM players WHERE id = $1`,
         [req.player.id]
@@ -186,11 +189,45 @@ module.exports = ({ pool }) => {
       const uniqueCourses = parseInt(checkinStats.rows[0].unique_courses) || 0;
       const earnedBadges = parseInt(badgeCount.rows[0].cnt) || 0;
 
+      // Training stats + categories mastered
+      const [trainingStatsResult, totalLessonsResult] = await Promise.all([
+        client.query(
+          `SELECT COUNT(DISTINCT tc.lesson_id) AS lessons_completed
+           FROM training_completions tc WHERE tc.player_id = $1`,
+          [p.id]
+        ),
+        client.query('SELECT COUNT(*) AS total FROM training_lessons WHERE is_active IS NOT FALSE'),
+      ]);
+      const lessonsCompleted = parseInt(trainingStatsResult.rows[0]?.lessons_completed) || 0;
+      const totalLessons = parseInt(totalLessonsResult.rows[0]?.total) || 0;
+      const trainingStreak = await client.query(
+        'SELECT streak_days FROM training_streaks WHERE player_id = $1',
+        [p.id]
+      );
+      const trainingStreakDays = parseInt(trainingStreak.rows[0]?.streak_days) || 0;
+      // Categories mastered: count of categories where player completed every lesson
+      const categoriesMasteredResult = await client.query(`
+        SELECT COUNT(*) AS cnt FROM (
+          SELECT l.category_id
+          FROM training_lessons l
+          JOIN training_categories tc2 ON tc2.id = l.category_id
+          JOIN training_completions tc3 ON tc3.lesson_id = l.id AND tc3.player_id = $1
+          WHERE l.is_active IS NOT FALSE AND tc2.is_active IS NOT FALSE
+          GROUP BY l.category_id
+          HAVING COUNT(DISTINCT l.id) = COUNT(DISTINCT tc3.lesson_id)
+            AND COUNT(DISTINCT tc3.lesson_id) > 0
+        ) sub`,
+        [p.id]
+      );
+      const categoriesMastered = parseInt(categoriesMasteredResult.rows[0]?.cnt) || 0;
+
       await client.query('COMMIT');
 
       const level = getLevelFromXp(p.xp);
       const levelProgress = getLevelProgress(p.xp);
       const levelTitle = getLevelTitle(level);
+      const skillTier = getSkillTier(p.xp);
+      const skillProgress = getSkillTierProgress(p.xp);
 
       res.json({
         id: p.id,
@@ -203,6 +240,8 @@ module.exports = ({ pool }) => {
         level_title: levelTitle.title,
         level_title_icon: levelTitle.icon,
         level_progress: levelProgress,
+        skill_tier: skillTier,
+        skill_tier_progress: skillProgress,
         gold: p.gold || 0,
         login_streak: p.login_streak,
         best_streak: p.best_streak,
@@ -214,13 +253,24 @@ module.exports = ({ pool }) => {
         login_xp: loginXpGranted,
         badge_count: earnedBadges,
         badges: [],
+        training_stats: {
+          lessons_completed: lessonsCompleted,
+          total_lessons: totalLessons,
+          training_streak_days: trainingStreakDays,
+          categories_mastered: categoriesMastered,
+        },
         stats: {
           total_checkins: totalCheckins,
           unique_courses: uniqueCourses,
           total_rounds: p.total_rounds || 0,
           battle_wins: p.battle_wins || 0,
+          total_birdies: p.total_birdies || 0,
+          total_aces: p.total_aces || 0,
           login_streak: p.login_streak,
           best_streak: p.best_streak,
+          lessons_completed: lessonsCompleted,
+          training_streak_days: trainingStreakDays,
+          categories_mastered: categoriesMastered,
         },
         recent_checkins: recentCheckins.rows,
         active_challenges: [],
@@ -381,19 +431,94 @@ module.exports = ({ pool }) => {
     }
   });
 
-  // GET /api/players/xp-history — player's XP transaction history
+  // GET /api/players/xp-history — player's XP transaction history with breakdown
+  // Returns recent transactions + source breakdown + training streak info
   router.get('/players/xp-history', requireAuth(pool), async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit) || 30, 100);
     try {
+      // Recent transactions
       const result = await pool.query(
-        `SELECT id, event_type, xp_amount, metadata, created_at
+        `SELECT id, event_type, xp_amount, metadata, created_at,
+                COALESCE(source, 'unknown') AS source
          FROM xp_transactions
          WHERE player_id = $1
          ORDER BY created_at DESC
          LIMIT $2`,
         [req.player.id, limit]
       );
-      res.json({ transactions: result.rows });
+
+      // Source breakdown
+      const breakdown = await pool.query(
+        `SELECT
+           COALESCE(source, 'other') AS source,
+           COUNT(*) AS count,
+           SUM(xp_amount) AS total_xp
+         FROM xp_transactions
+         WHERE player_id = $1
+         GROUP BY COALESCE(source, 'other')
+         ORDER BY total_xp DESC`,
+        [req.player.id]
+      );
+
+      // Training streak
+      const streak = await pool.query(
+        'SELECT streak_days, last_date FROM training_streaks WHERE player_id = $1',
+        [req.player.id]
+      );
+
+      // Training stats
+      const trainingStats = await pool.query(`
+        SELECT
+          COUNT(DISTINCT tc.lesson_id) AS lessons_completed,
+          COUNT(DISTINCT l.category_id) AS categories_started,
+          SUM(l.xp_reward) AS total_lesson_xp
+        FROM training_completions tc
+        JOIN training_lessons l ON l.id = tc.lesson_id
+        WHERE tc.player_id = $1
+      `, [req.player.id]);
+
+      // Milestones achieved (from xp_transactions event types)
+      const milestones = await pool.query(`
+        SELECT DISTINCT ON (event_type) event_type, created_at
+        FROM xp_transactions
+        WHERE player_id = $1
+          AND (event_type LIKE 'milestone_%' OR event_type LIKE 'training_category%')
+        ORDER BY event_type, created_at ASC
+      `, [req.player.id]);
+
+      // XP earned this week
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      const weekXp = await pool.query(
+        `SELECT COALESCE(SUM(xp_amount), 0) AS weekly_xp
+         FROM xp_transactions
+         WHERE player_id = $1 AND created_at >= $2`,
+        [req.player.id, weekStart.toISOString()]
+      );
+
+      // Next tier info
+      const { getSkillTierProgress } = require('./xp-engine');
+      const playerXp = (await pool.query('SELECT xp FROM players WHERE id = $1', [req.player.id])).rows[0]?.xp || 0;
+      const skillProgress = getSkillTierProgress(playerXp);
+
+      res.json({
+        transactions: result.rows,
+        breakdown: breakdown.rows.map(r => ({
+          source: r.source,
+          count: parseInt(r.count),
+          total_xp: parseInt(r.total_xp),
+        })),
+        training_streak: streak.rows[0] || null,
+        training_stats: {
+          lessons_completed: parseInt(trainingStats.rows[0]?.lessons_completed) || 0,
+          categories_started: parseInt(trainingStats.rows[0]?.categories_started) || 0,
+          total_lesson_xp: parseInt(trainingStats.rows[0]?.total_lesson_xp) || 0,
+        },
+        milestones: milestones.rows.map(r => ({ event: r.event_type, date: r.created_at })),
+        weekly_xp: parseInt(weekXp.rows[0]?.weekly_xp) || 0,
+        skill_progress: skillProgress,
+      });
     } catch (err) {
       console.error('XP history error:', err.message);
       res.status(500).json({ error: 'Failed to get XP history' });
@@ -458,6 +583,134 @@ module.exports = ({ pool }) => {
     } catch (err) {
       console.error('Update player error:', err.message);
       res.status(500).json({ error: 'Failed to update profile' });
+    }
+  });
+
+  // POST /api/players/reset-progress — reset all player stats, gold, XP, and vault items to blank slate
+  // Preserves: name, email, username, avatar, password hash, created_at, auth fields
+  router.post('/players/reset-progress', requireAuth(pool), async (req, res) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const playerId = req.player.id;
+
+      // Log before counts for verification
+      const beforeCounts = {};
+      const tablesToCheck = [
+        'xp_transactions', 'gold_transactions', 'player_badges', 'player_challenges',
+        'player_inventory', 'active_boosts', 'training_streaks', 'training_completions',
+        'player_daily_challenges', 'quest_progression', 'player_vault_training_unlocks', 'player_achievements',
+      ];
+      for (const table of tablesToCheck) {
+        const r = await client.query(`SELECT COUNT(*) FROM ${table} WHERE player_id = $1`, [playerId]);
+        beforeCounts[table] = parseInt(r.rows[0].count);
+      }
+
+      // 1. Delete XP transactions
+      await client.query('DELETE FROM xp_transactions WHERE player_id = $1', [playerId]);
+
+      // 2. Delete gold transactions
+      await client.query('DELETE FROM gold_transactions WHERE player_id = $1', [playerId]);
+
+      // 3. Delete player badges
+      await client.query('DELETE FROM player_badges WHERE player_id = $1', [playerId]);
+
+      // 4. Delete player challenges
+      await client.query('DELETE FROM player_challenges WHERE player_id = $1', [playerId]);
+
+      // 5. Delete player inventory (column is player_id per vault migration)
+      await client.query('DELETE FROM player_inventory WHERE player_id = $1', [playerId]);
+
+      // 6. Delete active boosts (column is player_id per vault migration)
+      await client.query('DELETE FROM active_boosts WHERE player_id = $1', [playerId]);
+
+      // 7. Delete training streaks
+      await client.query('DELETE FROM training_streaks WHERE player_id = $1', [playerId]);
+
+      // 8. Delete training completions
+      await client.query('DELETE FROM training_completions WHERE player_id = $1', [playerId]);
+
+      // 9. Delete player daily challenges
+      await client.query('DELETE FROM player_daily_challenges WHERE player_id = $1', [playerId]);
+
+      // 10. Delete quest progression
+      await client.query('DELETE FROM quest_progression WHERE player_id = $1', [playerId]);
+
+      // 11. Delete player vault training unlocks
+      await client.query('DELETE FROM player_vault_training_unlocks WHERE player_id = $1', [playerId]);
+
+      // 12. Delete player achievements
+      await client.query('DELETE FROM player_achievements WHERE player_id = $1', [playerId]);
+
+      // 13. Reset player stats to zero (preserving credentials)
+      await client.query(
+        `UPDATE players SET
+           xp = 0,
+           gold = 0,
+           level = 1,
+           login_streak = 0,
+           best_streak = 0,
+           battle_wins = 0,
+           battle_losses = 0,
+           win_streak = 0,
+           total_rounds = 0,
+           total_birdies = 0,
+           total_aces = 0,
+           training_streak_days = 0,
+           training_streak_last_date = NULL,
+           last_login_date = NULL
+         WHERE id = $1`,
+        [playerId]
+      );
+
+      await client.query('COMMIT');
+
+      // Verification queries — run after COMMIT, log to console
+      const afterCounts = {};
+      for (const table of tablesToCheck) {
+        const r = await client.query(`SELECT COUNT(*) FROM ${table} WHERE player_id = $1`, [playerId]);
+        afterCounts[table] = parseInt(r.rows[0].count);
+      }
+
+      const playerRow = await client.query('SELECT xp, gold, level FROM players WHERE id = $1', [playerId]);
+      const p = playerRow.rows[0];
+
+      console.log('[reset-progress] Before counts:', beforeCounts);
+      console.log('[reset-progress] After counts:', afterCounts);
+      console.log('[reset-progress] Player final state:', { xp: p.xp, gold: p.gold, level: p.level });
+
+      // Assert all after counts are zero
+      const failures = Object.entries(afterCounts).filter(([, v]) => v !== 0);
+      if (failures.length > 0) {
+        console.error('[reset-progress] VERIFICATION FAILED — non-zero counts:', failures);
+      }
+
+      res.json({
+        success: true,
+        message: 'Progress reset complete',
+        verification: {
+          xp_transactions: afterCounts.xp_transactions,
+          gold_transactions: afterCounts.gold_transactions,
+          player_badges: afterCounts.player_badges,
+          player_challenges: afterCounts.player_challenges,
+          player_inventory: afterCounts.player_inventory,
+          active_boosts: afterCounts.active_boosts,
+          training_streaks: afterCounts.training_streaks,
+          training_completions: afterCounts.training_completions,
+          player_daily_challenges: afterCounts.player_daily_challenges,
+          quest_progression: afterCounts.quest_progression,
+          player_vault_training_unlocks: afterCounts.player_vault_training_unlocks,
+          player_achievements: afterCounts.player_achievements,
+          player: { xp: p.xp, gold: p.gold, level: p.level },
+        },
+      });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('[reset-progress] Error:', err.message);
+      res.status(500).json({ error: 'Reset failed' });
+    } finally {
+      client.release();
     }
   });
 

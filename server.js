@@ -80,6 +80,12 @@ app.get('/health', (_req, res) => {
 // Pageview tracking — records page navigations server-side
 app.use(createPageviewTracker(pool));
 
+// Root: serve landing page for unauthenticated visitors.
+// Authenticated users land on /home which handles its own client-side auth check.
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     // Images: short cache with must-revalidate so cache-busting query params work
@@ -98,109 +104,63 @@ app.get('/admin/notifications', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-notifications.html'));
 });
 
-// HTML page routes
-app.get('/register', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+// Referral link landing — fire click event then redirect to /register
+// Must come before pageRoutes to catch /referral before it falls through.
+app.get('/referral', (req, res) => {
+  const code = req.query.code;
+  if (!code || code.length < 4 || code.length > 12) {
+    return res.redirect('/');
+  }
+  // Serve landing page that fires click API and auto-redirects
+  res.sendFile(path.join(__dirname, 'public', 'referral.html'));
 });
 
-app.get('/login', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+// HTML page routes — one-to-one mapping, keeps server.js clean
+const pageRoutes = [
+  ['/register',        'register.html'],
+  ['/login',          'login.html'],
+  ['/forgot-password','forgot-password.html'],
+  ['/reset-password', 'reset-password.html'],
+  ['/onboard',        'onboard.html'],
+  ['/profile',        'profile.html'],
+  ['/checkin',        'checkin.html'],
+  ['/challenges',     'challenges.html'],
+  ['/scorecard',      'scorecard.html'],
+  ['/leaderboard',    'leaderboard.html'],
+  ['/battles',        'battles.html'],
+  ['/vault',          'vault.html'],
+  ['/privacy',        'privacy.html'],
+  ['/contact',        'contact.html'],
+  ['/investor',       'investor.html'],
+  ['/delete-account', 'delete-account.html'],
+  ['/map',            'map.html'],
+  ['/progress',       'progress.html'],
+  ['/rounds',         'rounds.html'],
+  ['/crews',          'crews.html'],
+  ['/crew/me',        'crew-me.html'],
+  ['/crew/join',      'crew-join.html'],
+  ['/crew/create',    'crew-create.html'],
+  ['/crew/rounds',    'crew-rounds.html'],
+  ['/crew/wars',      'crew-wars.html'],
+  ['/missions',       'missions.html'],
+  ['/referrals',      'referrals.html'],
+  ['/training',      'training.html'],
+  ['/home',           'home.html'],
+];
+pageRoutes.forEach(([route, file]) => {
+  app.get(route, (_req, res) => res.sendFile(path.join(__dirname, 'public', file)));
 });
 
-app.get('/forgot-password', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'forgot-password.html'));
+// Training pages — must precede /course/:id (Express matches in order)
+app.get('/training/:catSlug/:lessonSlug', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'training.html'));
 });
-
-app.get('/reset-password', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
-});
-
-app.get('/profile', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
-});
-
-app.get('/checkin', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'checkin.html'));
-});
-
-app.get('/challenges', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'challenges.html'));
-});
-
-app.get('/scorecard', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'scorecard.html'));
-});
-
-app.get('/leaderboard', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-app.get('/battles', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'battles.html'));
-});
-
-app.get('/vault', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'vault.html'));
-});
-
-app.get('/privacy', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
-});
-
-app.get('/contact', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'contact.html'));
-});
-
-app.get('/investor', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'investor.html'));
-});
-
-app.get('/delete-account', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'delete-account.html'));
+app.get('/training/:catSlug', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'training.html'));
 });
 
 app.get('/course/:id', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'course.html'));
-});
-
-app.get('/map', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'map.html'));
-});
-
-app.get('/progress', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'progress.html'));
-});
-
-app.get('/rounds', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rounds.html'));
-});
-
-app.get('/crews', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'crews.html'));
-});
-
-app.get('/crew/me', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'crew-me.html'));
-});
-
-app.get('/crew/join', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'crew-join.html'));
-});
-
-app.get('/crew/create', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'crew-create.html'));
-});
-
-app.get('/crew/rounds', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'crew-rounds.html'));
-});
-
-app.get('/crew/wars', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'crew-wars.html'));
-});
-
-app.get('/story', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'story.html'));
 });
 
 // Global param validation — reject non-numeric :id params early
@@ -244,6 +204,11 @@ const crewWarsRouter = crewWarsModule({ pool });
 const storyRouter = require('./routes/story')({ pool });
 const feedbackRouter = require('./routes/feedback')({ pool });
 const reviewsRouter = require('./routes/reviews')({ pool });
+const referralsRouter = require('./routes/referrals')({ pool });
+const onboardingRouter = require('./routes/onboarding')({ pool });
+const campaignRouter = require('./routes/campaign')({ pool });
+const trainingRouter = require('./routes/training')({ pool });
+const trainingNotificationsRouter = require('./routes/training-notifications')({ pool });
 
 app.use('/api', authRouter);
 app.use('/api', playersRouter);
@@ -263,20 +228,13 @@ app.use('/api', layoutsRouter);
 app.use('/api', crewsRouter);
 app.use('/api', crewWarsRouter);
 app.use('/api', storyRouter);
+app.use('/api', referralsRouter);
+app.use('/api', onboardingRouter);
+app.use('/api', campaignRouter);
+app.use('/api', trainingRouter);
+app.use('/api', trainingNotificationsRouter);
 app.use('/api/feedback', feedbackRouter);
 
-app.get('/', (_req, res) => {
-  const slug = process.env.POLSIA_ANALYTICS_SLUG || '';
-  const htmlPath = path.join(__dirname, 'public', 'index.html');
-
-  if (fs.existsSync(htmlPath)) {
-    let html = fs.readFileSync(htmlPath, 'utf8');
-    html = html.replace('__POLSIA_SLUG__', slug);
-    res.type('html').send(html);
-  } else {
-    res.json({ message: 'Hello from Polsia Instance!' });
-  }
-});
 
 // Global error handler — catches unhandled route errors so they don't crash the process
 app.use((err, _req, res, _next) => {

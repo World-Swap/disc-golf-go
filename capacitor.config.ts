@@ -49,7 +49,7 @@ const config: CapacitorConfig = {
       // No spinner — clean logo-only splash
       showSpinner: false,
       // Fill screen edge-to-edge without letterboxing
-      androidScaleType: 'CENTER_CROP',
+      androidScaleType: 'CENTER_INSIDE',
       // Full-screen immersive: hides status bar and nav bar during Capacitor splash
       splashFullScreen: true,
       splashImmersive: true,

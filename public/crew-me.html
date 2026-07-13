@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -28,7 +30,7 @@
         /* Crew hero card */
         .crew-hero {
             background: var(--surface);
-            border: 1px solid rgba(60,168,60,0.25);
+            border: 1px solid rgba(255,107,26,0.25);
             border-radius: var(--radius-card);
             box-shadow: var(--shadow-card);
             padding: 1.5rem 1.25rem 1.25rem;
@@ -71,7 +73,7 @@
             white-space: nowrap;
         }
         .btn:active { opacity: 0.8; transform: scale(0.97); }
-        .btn-primary { background: var(--green); color: #111; }
+        .btn-primary { background: var(--green); color: #fff; }
         .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
         .btn-danger { background: rgba(224,64,64,0.1); color: var(--red); border: 1px solid rgba(224,64,64,0.2); }
 
@@ -102,7 +104,7 @@
             border: 1px solid var(--border2); white-space: nowrap;
             transition: background var(--transition);
         }
-        .copy-btn.copied { background: var(--green); color: #111; border-color: var(--green); }
+        .copy-btn.copied { background: var(--green); color: #fff; border-color: var(--green); }
         .invite-expiry { font-size: 0.75rem; color: var(--text3); margin-top: 0.4rem; }
 
         /* Pending requests */
@@ -127,7 +129,7 @@
             cursor: pointer; transition: opacity var(--transition);
         }
         .btn-xs:active { opacity: 0.75; }
-        .btn-xs-green { background: var(--green); color: #111; }
+        .btn-xs-green { background: var(--green); color: #fff; }
         .btn-xs-outline { background: var(--surface2); color: var(--text3); border: 1px solid var(--border2); }
 
         /* Member roster cards */
@@ -245,11 +247,11 @@
             font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.5rem;
             border-radius: 20px; flex-shrink: 0;
         }
-        .vault-badge-unassigned { background: rgba(60,168,60,0.12); color: var(--green); border: 1px solid rgba(60,168,60,0.25); }
+        .vault-badge-unassigned { background: rgba(255,107,26,0.12); color: var(--green); border: 1px solid rgba(255,107,26,0.25); }
         .vault-badge-assigned { background: rgba(138,138,134,0.12); color: var(--text3); border: 1px solid var(--border); }
         .btn-assign {
             padding: 0.4rem 0.7rem; border-radius: 8px; border: none;
-            background: var(--green); color: #111;
+            background: var(--green); color: #fff;
             font-family: inherit; font-size: 0.75rem; font-weight: 700;
             cursor: pointer; transition: opacity var(--transition); flex-shrink: 0;
         }
@@ -280,36 +282,25 @@
     <!-- Invite card (hidden until generated) -->
     <div id="inviteSection" style="display:none;padding:0 1.25rem;max-width:480px;margin:0 auto;"></div>
 
-    <nav class="bottom-tab-bar">
-    <a class="tab-item active" href="/crews">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label">Crews</span>
-    </a>
-    <a class="tab-item" href="/checkin">
-        <span class="tab-icon">📍</span>
-        <span class="tab-label">Check In</span>
-    </a>
-    <a class="tab-item" href="/battles">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Battles</span>
+    <!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
     </a>
     <a class="tab-item" href="/scorecard">
         <span class="tab-icon">🥏</span>
         <span class="tab-label">Play</span>
     </a>
-    <a class="tab-item" href="/profile">
-        <span class="tab-icon">👤</span>
-        <span class="tab-label">Profile</span>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
     </a>
-    <a class="tab-item" href="/challenges">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-label">Quests</span>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
     </a>
-    <a class="tab-item" href="/map">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Map</span>
-    </a>
-</nav>
+    </nav>
 
     <!-- Disband confirm modal -->
     <div id="disbandModal" class="modal-overlay">
@@ -393,7 +384,7 @@
             <button id="notifPopupClose" style="background:none;border:none;cursor:pointer;color:var(--text3,#78787a);font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
         </div>
         <div id="notifPopupMsg" style="font-size:0.88rem;color:var(--text2,#c4c4bc);line-height:1.55;margin-bottom:16px;"></div>
-        <button id="notifPopupDismissBtn" style="width:100%;padding:10px;background:var(--green,#7ed957);border:none;border-radius:10px;font-size:0.9rem;font-weight:700;color:#111;cursor:pointer;">Got it</button>
+        <button id="notifPopupDismissBtn" style="width:100%;padding:10px;background:var(--green,#7ed957);border:none;border-radius:10px;font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;">Got it</button>
     </div>
     <input type="file" id="crew-logo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadCrewLogo(this)">
     <div id="toast"></div>
@@ -574,7 +565,7 @@
                     if (isManager) {
                         actionHtml += '<button class="kick-btn" style="background:rgba(138,138,134,0.15);color:var(--text3);border:1px solid var(--border);margin-right:0.3rem;padding:0.3rem 0.55rem;font-size:0.7rem;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit" onclick="setMemberRole(' + m.player_id + ', \'member\', \'' + escHtml(m.username) + '\')">Demote</button>';
                     } else {
-                        actionHtml += '<button class="kick-btn" style="background:rgba(60,168,60,0.12);color:var(--green);border:1px solid rgba(60,168,60,0.25);margin-right:0.3rem;padding:0.3rem 0.55rem;font-size:0.7rem;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit" onclick="setMemberRole(' + m.player_id + ', \'manager\', \'' + escHtml(m.username) + '\')">Promote</button>';
+                        actionHtml += '<button class="kick-btn" style="background:rgba(255,107,26,0.12);color:var(--green);border:1px solid rgba(255,107,26,0.25);margin-right:0.3rem;padding:0.3rem 0.55rem;font-size:0.7rem;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit" onclick="setMemberRole(' + m.player_id + ', \'manager\', \'' + escHtml(m.username) + '\')">Promote</button>';
                     }
                 }
                 if (canKick) {

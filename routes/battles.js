@@ -2,8 +2,6 @@ const express = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { grantXp, grantGold, evaluateBadges } = require('./xp-engine');
 const { addToInventory } = require('./vault');
-const { checkQuestCompletion } = require('./story');
-
 // ── Battle Item Choice Helpers ─────────────────────────────────────────────────
 
 /**
@@ -325,40 +323,6 @@ async function resolveExpiredBattles(pool) {
         await resolveBattle(client, battle);
         await client.query('COMMIT');
 
-        // ── Story Mode Quest Checking (fire-and-forget) ──────────────────────
-        try {
-          // Get resolved battle data
-          const resolved = await pool.query(
-            `SELECT winner_id, challenger_id, opponent_id, battle_type FROM battles WHERE id = $1`,
-            [battle.id]
-          );
-          if (resolved.rows.length > 0) {
-            const { winner_id, challenger_id, opponent_id, battle_type } = resolved.rows[0];
-            const winnerStreak = await pool.query(
-              `SELECT win_streak, best_streak FROM players WHERE id = $1`,
-              [winner_id]
-            );
-            const streak = winnerStreak.rows[0]?.win_streak || 0;
-            const eventData = { battleType: battle_type, streak };
-
-            // Check BATTLE_WIN quests for winner
-            if (winner_id) {
-              checkQuestCompletion(pool, winner_id, 'BATTLE_WIN', eventData)
-                .catch(e => console.error('Story BATTLE_WIN quest error:', e.message));
-              checkQuestCompletion(pool, winner_id, 'BATTLE_WIN_STREAK', eventData)
-                .catch(e => console.error('Story BATTLE_WIN_STREAK quest error:', e.message));
-            }
-            // Check BATTLE_COMPLETE for both players
-            for (const pid of [challenger_id, opponent_id]) {
-              if (pid) {
-                checkQuestCompletion(pool, pid, 'BATTLE_COMPLETE', { battleType: battle_type })
-                  .catch(e => console.error('Story BATTLE_COMPLETE quest error:', e.message));
-              }
-            }
-          }
-        } catch (qe) {
-          console.error('Story quest check error:', qe.message);
-        }
       } catch (e) {
         await client.query('ROLLBACK');
         console.error('Battle auto-resolve error:', e.message, 'battle_id:', battle.id);
@@ -444,7 +408,6 @@ module.exports = ({ pool }) => {
     }
 
     try {
-      // Validate course exists and hole_count is valid for course
       const courseCheck = await pool.query(
         'SELECT id, name, city, state, COALESCE(hole_count, holes) AS total_holes FROM courses WHERE id = $1',
         [course_id]
@@ -461,15 +424,54 @@ module.exports = ({ pool }) => {
       if (opponent_id) {
         const opp = await pool.query('SELECT id, display_name FROM players WHERE id = $1', [opponent_id]);
         if (opp.rows.length === 0) return res.status(404).json({ error: 'Opponent not found' });
-
-
       }
+
+      // Resolve the default layout for this course and extract the specific holes
+      // that correspond to hole_count_option. These are locked at creation time.
+      const layoutRes = await pool.query(
+        `SELECT cl.id AS layout_id
+         FROM course_layouts cl
+         WHERE cl.course_id = $1 AND cl.is_default = TRUE
+         LIMIT 1`,
+        [course_id]
+      );
+      const layoutId = layoutRes.rows[0]?.layout_id || null;
+
+      let lockedHoles = [];
+      let parPerHole = [];
+      let totalPar = 0;
+
+      if (layoutId) {
+        const holesRes = await pool.query(
+          `SELECT hole_number, par
+           FROM course_holes
+           WHERE layout_id = $1
+           ORDER BY hole_number ASC
+           LIMIT $2`,
+          [layoutId, holeCountInt]
+        );
+        lockedHoles = holesRes.rows.map(h => parseInt(h.hole_number));
+        parPerHole = holesRes.rows.map(h => parseInt(h.par));
+        totalPar = parPerHole.reduce((sum, p) => sum + p, 0);
+      } else {
+        // No layout data: lock the first N hole numbers with par unknown
+        lockedHoles = Array.from({ length: holeCountInt }, (_, i) => i + 1);
+        parPerHole = [];
+        totalPar = 0;
+      }
+
+      const lockedParameters = {
+        course_id: parseInt(course_id),
+        layout_id: layoutId,
+        hole_count_option: String(holeCountInt),
+        holes: lockedHoles,
+        par_per_hole: parPerHole,
+        total_par: totalPar,
+        scoring_type: metric,
+      };
 
       const durationSecs = durationSecondsForType(battle_type);
       const status = is_open ? 'open' : 'pending';
-
-      // 1v1 direct challenge: timer starts NOW (when the challenge is sent).
-      // Open challenge: timer starts when someone accepts — ends_at is null until then.
       const now = new Date();
       const endsAt = is_open ? null : computeEndsAtFromMoment(durationSecs, now);
       const startedAt = is_open ? null : now;
@@ -477,11 +479,13 @@ module.exports = ({ pool }) => {
       const result = await pool.query(
         `INSERT INTO battles
            (challenger_id, opponent_id, battle_type, metric, status, is_open,
-            started_at, ends_at, duration_seconds, course_id, hole_count)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            started_at, ends_at, duration_seconds, course_id, hole_count,
+            locked_parameters)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING *`,
         [req.player.id, opponent_id || null, battle_type, metric, status, !!is_open,
-         startedAt, endsAt, durationSecs, course_id, holeCountInt]
+         startedAt, endsAt, durationSecs, course_id, holeCountInt,
+         JSON.stringify(lockedParameters)]
       );
 
       res.status(201).json({ battle: result.rows[0] });
@@ -872,6 +876,58 @@ module.exports = ({ pool }) => {
     } catch (err) {
       console.error('Battle leaderboard error:', err.message);
       res.status(500).json({ error: 'Failed to get leaderboard' });
+    }
+  });
+
+  // GET /api/battles/:id/locked-params — fetch locked course/layout/holes for a battle
+  // Used by scorecard.html to pre-lock the UI when playing for a battle round.
+  router.get('/battles/:id/locked-params', requireAuth(pool), async (req, res) => {
+    const battleId = parseInt(req.params.id);
+    try {
+      const r = await pool.query(
+        `SELECT locked_parameters, course_id, hole_count
+         FROM battles
+         WHERE id = $1
+           AND locked_parameters IS NOT NULL
+           AND (challenger_id = $2 OR opponent_id = $2 OR is_open = TRUE)
+           AND status IN ('active', 'pending')
+           AND ends_at > NOW()`,
+        [battleId, req.player.id]
+      );
+      if (r.rows.length === 0) {
+        return res.status(404).json({ error: 'No active battle with locked parameters found' });
+      }
+      const { locked_parameters, course_id, hole_count } = r.rows[0];
+      const locked = typeof locked_parameters === 'string'
+        ? JSON.parse(locked_parameters) : locked_parameters;
+
+      // Resolve course name
+      const courseRes = await pool.query(
+        `SELECT name, city, state FROM courses WHERE id = $1`, [course_id]
+      );
+      const courseName = courseRes.rows[0]?.name || null;
+
+      // Resolve layout name
+      let layoutName = null;
+      if (locked?.layout_id) {
+        const layoutRes = await pool.query(
+          `SELECT name FROM course_layouts WHERE id = $1`, [locked.layout_id]
+        );
+        layoutName = layoutRes.rows[0]?.name || null;
+      }
+
+      res.json({
+        battle_id: battleId,
+        course_id,
+        course_name: courseName,
+        layout_id: locked?.layout_id || null,
+        layout_name: layoutName,
+        holes: locked?.holes || [],
+        hole_count: hole_count,
+      });
+    } catch (err) {
+      console.error('Get battle locked-params error:', err.message);
+      res.status(500).json({ error: 'Failed to get locked parameters' });
     }
   });
 

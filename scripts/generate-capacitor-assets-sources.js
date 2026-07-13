@@ -7,9 +7,9 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-// Branded dark teal background
-const BG_COLOR = { r: 13, g: 43, b: 51 };
-const BG_HEX = '#0d2b33';
+// Branded charcoal background
+const BG_COLOR = { r: 30, g: 30, b: 30 };
+const BG_HEX = '#1E1E1E';
 
 // Use the existing 1024x1024 app icon as the source
 const SOURCE_PATH = path.join(__dirname, '..', 'resources', 'AppIcon.appiconset', 'AppIcon-1024x1024.png');
@@ -70,7 +70,7 @@ async function main() {
   })
     .png()
     .toFile(path.join(RESOURCES_DIR, 'icon-background.png'));
-  console.log('  ✓ resources/icon-background.png (1024x1024, solid #0d2b33)');
+  console.log('  ✓ resources/icon-background.png (1024x1024, solid #1E1E1E)');
 
   // ── 3. icon.png (1024x1024, logo on dark teal — used for non-adaptive icons) ──
   // Fallback icon for platforms that don't support adaptive icons
@@ -88,9 +88,23 @@ async function main() {
     .toFile(path.join(RESOURCES_DIR, 'icon.png'));
   console.log('  ✓ resources/icon.png (1024x1024, logo on dark teal)');
 
-  // ── 4. splash.png (2732x2732, branded splash with centered logo) ──
+  // ── 4. splash.png (2732x2732, branded splash with centered logo + glow) ──
   const SPLASH_SIZE = 2732;
-  const LOGO_IN_SPLASH = Math.round(SPLASH_SIZE * 0.30); // 30% of canvas — not too large
+  const LOGO_IN_SPLASH = Math.round(SPLASH_SIZE * 0.40); // 40% of canvas — bold treatment
+
+  function createGlowSvg(diameter) {
+    const r = diameter / 2;
+    return Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}">` +
+      `<defs><radialGradient id="g" cx="50%" cy="50%" r="50%">` +
+      `<stop offset="0%" stop-color="#FF6B1A" stop-opacity="0.55"/>` +
+      `<stop offset="45%" stop-color="#FF6B1A" stop-opacity="0.20"/>` +
+      `<stop offset="100%" stop-color="#FF6B1A" stop-opacity="0"/>` +
+      `</radialGradient></defs>` +
+      `<circle cx="${r}" cy="${r}" r="${r}" fill="url(#g)"/></svg>`,
+      'utf8'
+    );
+  }
 
   const resizedSplash = await sharp(sourceBuffer)
     .resize(LOGO_IN_SPLASH, LOGO_IN_SPLASH, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
@@ -100,33 +114,38 @@ async function main() {
   const maskedSplash = await circularMask(resizedSplash);
   const splashMeta = await sharp(maskedSplash).metadata();
 
+  const splashLeft = Math.floor((SPLASH_SIZE - splashMeta.width) / 2);
+  const splashTop  = Math.floor((SPLASH_SIZE - splashMeta.height) / 2);
+
+  const glowDiam = Math.round(Math.max(splashMeta.width, splashMeta.height) * 1.8);
+  const glowLeft = Math.floor((SPLASH_SIZE - glowDiam) / 2);
+  const glowTop  = Math.floor((SPLASH_SIZE - glowDiam) / 2);
+  const glowBuffer = await sharp(createGlowSvg(glowDiam)).png().toBuffer();
+
+  const splashComposites = [
+    { input: glowBuffer, left: glowLeft, top: glowTop },
+    { input: maskedSplash, left: splashLeft, top: splashTop },
+  ];
+
   await sharp({
     create: { width: SPLASH_SIZE, height: SPLASH_SIZE, channels: 4, background: { ...BG_COLOR, alpha: 255 } },
   })
-    .composite([{
-      input: maskedSplash,
-      left: Math.floor((SPLASH_SIZE - splashMeta.width) / 2),
-      top: Math.floor((SPLASH_SIZE - splashMeta.height) / 2),
-    }])
+    .composite(splashComposites)
     .png()
     .toFile(path.join(RESOURCES_DIR, 'splash.png'));
-  console.log('  ✓ resources/splash.png (2732x2732, branded splash)');
+  console.log('  ✓ resources/splash.png (2732x2732, branded splash with glow)');
 
-  // ── 5. splash-dark.png (same as splash — dark teal is already dark-mode friendly) ──
+  // ── 5. splash-dark.png (same as splash — charcoal is already dark-mode friendly) ──
   await sharp({
     create: { width: SPLASH_SIZE, height: SPLASH_SIZE, channels: 4, background: { ...BG_COLOR, alpha: 255 } },
   })
-    .composite([{
-      input: maskedSplash,
-      left: Math.floor((SPLASH_SIZE - splashMeta.width) / 2),
-      top: Math.floor((SPLASH_SIZE - splashMeta.height) / 2),
-    }])
+    .composite(splashComposites)
     .png()
     .toFile(path.join(RESOURCES_DIR, 'splash-dark.png'));
-  console.log('  ✓ resources/splash-dark.png (2732x2732, dark mode splash)');
+  console.log('  ✓ resources/splash-dark.png (2732x2732, dark mode splash with glow)');
 
   console.log('\nAll @capacitor/assets source images generated in resources/.');
-  console.log('Next step: npx @capacitor/assets generate --iconBackgroundColor "#0d2b33" --splashBackgroundColor "#0d2b33"');
+  console.log('Next step: npx @capacitor/assets generate --iconBackgroundColor "#1E1E1E" --splashBackgroundColor "#1E1E1E"');
 }
 
 main().catch((err) => {

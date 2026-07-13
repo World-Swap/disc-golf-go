@@ -3,10 +3,10 @@
 // Run during iOS CI after `cap add/sync ios` so the ios/ directory exists.
 // Does NOT own app icons — that's generate-web-icons.js + CI icon injection.
 //
-// Produces a single 2732x2732 universal splash PNG: dark teal (#0d2b33) background
+// Produces a single 2732x2732 universal splash PNG: charcoal (#1E1E1E) background
 // with the circular logo emblem centered at ~30% of canvas width.
-// The source logo has an opaque square behind the circular emblem —
-// a circular mask removes that square so only the emblem survives.
+// The source logo already has the charcoal background baked in;
+// a circular mask shapes the emblem for the splash.
 //
 // Output: ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png
 // Also writes the matching Contents.json for Xcode asset catalog.
@@ -19,16 +19,19 @@ const path = require('path');
 // Branded dark teal — matches capacitor.config.ts SplashScreen.backgroundColor
 const BG_COLOR = { r: 13, g: 43, b: 51 };
 
+// Primary source URL (R2 — may go stale; fallback is local AppIcon-1024x1024.png)
 const SOURCE_URL =
-  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/e8cdbbcc-19dc-4fc4-bac5-4016fb74ce13.png';
+  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/46faf86b-5de0-4152-8b2b-ad4a265e8881.png';
+
+// Local fallback — committed AppIcon PNG, always present in the repo.
+const LOCAL_SOURCE = path.join(__dirname, '..', 'resources', 'AppIcon.appiconset', 'AppIcon-1024x1024.png');
 
 // Single universal splash image — iOS scales via storyboard Auto Layout.
 // 2732x2732 covers iPad Pro 12.9" (largest iOS device) at 2x.
 const SPLASH_SIZE = 2732;
 
-// Logo occupies ~30% of canvas (slightly smaller than Android's 40% since
-// the iOS canvas is much larger and we want a refined centered look)
-const LOGO_RATIO = 0.30;
+// Logo occupies ~45% of canvas (bold, prominent treatment)
+const LOGO_RATIO = 0.45;
 
 const SPLASH_DEST = path.join(
   __dirname, '..', 'ios', 'App', 'App', 'Assets.xcassets', 'Splash.imageset'
@@ -67,7 +70,6 @@ async function generateSplash(sourceBuffer) {
   const size = SPLASH_SIZE;
   const logoSize = Math.round(size * LOGO_RATIO);
 
-  // Resize logo then apply circular mask to remove opaque square background
   const resized = await sharp(sourceBuffer)
     .resize(logoSize, logoSize, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
@@ -79,27 +81,43 @@ async function generateSplash(sourceBuffer) {
   const lw = logoMeta.width;
   const lh = logoMeta.height;
 
-  // Center logo on canvas
   const left = Math.floor((size - lw) / 2);
-  const top = Math.floor((size - lh) / 2);
+  const top  = Math.floor((size - lh) / 2);
 
   return sharp({
-    create: {
-      width: size,
-      height: size,
-      channels: 4,
-      background: { ...BG_COLOR, alpha: 255 },
-    },
+    create: { width: size, height: size, channels: 4, background: { ...BG_COLOR, alpha: 255 } },
   })
-    .composite([{ input: logoBuffer, left, top }])
+    .composite([
+      { input: logoBuffer, left, top },
+    ])
     .png()
     .toBuffer();
 }
 
 async function main() {
-  console.log('Downloading source logo…');
-  const sourceBuffer = await downloadBuffer(SOURCE_URL);
-  console.log(`Downloaded ${sourceBuffer.length} bytes`);
+  let sourceBuffer;
+  try {
+    console.log('Downloading source logo from R2…');
+    sourceBuffer = await downloadBuffer(SOURCE_URL);
+    console.log(`Downloaded ${sourceBuffer.length} bytes from R2`);
+  } catch (r2err) {
+    console.warn(`R2 download failed (${r2err.message}) — falling back to local AppIcon`);
+    if (!fs.existsSync(LOCAL_SOURCE)) {
+      throw new Error(
+        `Neither R2 source nor local fallback exists at ${LOCAL_SOURCE}. ` +
+        'Cannot generate iOS splash.'
+      );
+    }
+    sourceBuffer = fs.readFileSync(LOCAL_SOURCE);
+    console.log(`Loaded ${sourceBuffer.length} bytes from local fallback`);
+  }
+
+  if (sourceBuffer.length < 1000) {
+    throw new Error(
+      `Source buffer too small (${sourceBuffer.length} bytes) — likely corrupt. ` +
+      'Check that AppIcon-1024x1024.png in resources/AppIcon.appiconset/ is valid.'
+    );
+  }
 
   // Ensure destination exists (cap add ios must have run first)
   fs.mkdirSync(SPLASH_DEST, { recursive: true });

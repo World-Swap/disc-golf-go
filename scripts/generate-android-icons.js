@@ -4,24 +4,26 @@
 // Does NOT own iOS icons — those live in resources/AppIcon.appiconset/.
 //
 // Also writes adaptive icon XML and background color so the launcher shows the
-// branded dark teal background instead of the default white square.
+// branded charcoal background instead of the default white square.
 //
-// The source logo has an opaque light-teal rounded square behind the circular emblem.
-// A circular mask is applied during foreground generation so the light square doesn't
-// bleed through the adaptive icon mask. For launcher icons, the full image is used
-// with a cover crop (the light square is not visible at icon sizes).
+// The source logo already has the charcoal background baked in.
+// A circular mask is applied during foreground generation for the adaptive icon shape.
+// For launcher icons, the full image is used with a cover crop.
 
 const sharp = require('sharp');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-// Branded dark teal from the logo's outer ring
-const BG_COLOR = { r: 13, g: 43, b: 51, alpha: 1 };
-const BG_HEX = '#0d2b33';
+// Branded charcoal — matches the uploaded logo's embedded background
+const BG_COLOR = { r: 30, g: 30, b: 30, alpha: 1 };
+const BG_HEX = '#1E1E1E';
 
 const SOURCE_URL =
-  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/e8cdbbcc-19dc-4fc4-bac5-4016fb74ce13.png';
+  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/46faf86b-5de0-4152-8b2b-ad4a265e8881.png';
+
+// Local fallback — committed AppIcon PNG, always present in the repo.
+const LOCAL_SOURCE = path.join(__dirname, '..', 'resources', 'AppIcon.appiconset', 'AppIcon-1024x1024.png');
 
 // mipmap density → icon size in pixels
 const MIPMAP_SIZES = {
@@ -90,7 +92,7 @@ function writeBackgroundColor(valuesDir) {
   fs.mkdirSync(valuesDir, { recursive: true });
   const colorsXml = `<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Disc Golf Go branded dark teal — used as adaptive icon background -->
+    <!-- Disc Golf Go branded charcoal — used as adaptive icon background -->
     <color name="ic_launcher_background">${BG_HEX}</color>
 </resources>
 `;
@@ -120,9 +122,29 @@ function writeBackgroundColor(valuesDir) {
 }
 
 async function main() {
-  console.log('Downloading source icon…');
-  const sourceBuffer = await downloadBuffer(SOURCE_URL);
-  console.log(`Downloaded ${sourceBuffer.length} bytes`);
+  let sourceBuffer;
+  try {
+    console.log('Downloading source icon from R2…');
+    sourceBuffer = await downloadBuffer(SOURCE_URL);
+    console.log(`Downloaded ${sourceBuffer.length} bytes from R2`);
+  } catch (r2err) {
+    console.warn(`R2 download failed (${r2err.message}) — falling back to local AppIcon`);
+    if (!fs.existsSync(LOCAL_SOURCE)) {
+      throw new Error(
+        `Neither R2 source nor local fallback exists at ${LOCAL_SOURCE}. ` +
+        'Cannot generate Android icons.'
+      );
+    }
+    sourceBuffer = fs.readFileSync(LOCAL_SOURCE);
+    console.log(`Loaded ${sourceBuffer.length} bytes from local fallback`);
+  }
+
+  if (sourceBuffer.length < 1000) {
+    throw new Error(
+      `Source buffer too small (${sourceBuffer.length} bytes) — likely corrupt. ` +
+      'Check that AppIcon-1024x1024.png in resources/AppIcon.appiconset/ is valid.'
+    );
+  }
 
   for (const [density, size] of Object.entries(MIPMAP_SIZES)) {
     const dir = path.join(RES_BASE, density);
@@ -158,9 +180,9 @@ async function main() {
   }
 
   // ── Adaptive icon layers (API 26+) ───────────────────────────────────────
-  // Foreground: circular-masked logo centered with dark teal padding on 108dp canvas.
-  // The circular mask removes the light-teal rounded square from the source so the
-  // adaptive icon's background layer (#0d2b33) blends seamlessly with the foreground.
+  // Foreground: circular-masked logo centered with charcoal padding on 108dp canvas.
+  // The circular mask shapes the logo for the adaptive icon so the
+  // background layer (#1E1E1E) blends seamlessly with the foreground.
   const FOREGROUND_SIZES = {
     'mipmap-mdpi':    108,   // 108dp × 1
     'mipmap-hdpi':    162,   // 108dp × 1.5

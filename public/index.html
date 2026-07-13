@@ -3,42 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Disc Golf Go — Hit The Course</title>
+    <title>Disc Golf Go — Train. Improve. Play.</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#0a0f0a">
-    <meta name="description" content="Disc Golf Go — GPS check-in, course battles, XP, leaderboards. The competitive disc golf app. Available now on the App Store.">
-    <meta property="og:title" content="Disc Golf Go — Hit The Course">
-    <meta property="og:description" content="GPS check-in. Course battles. XP. Leaderboards. The competitive disc golf app.">
-    <meta property="og:image" content="/logo-original-1080.png">
+    <meta name="theme-color" content="#1E1E1E">
+    <meta name="description" content="Disc Golf Go is a structured disc golf training platform. Build skills, track progress, and improve your game with 72 expert-guided lessons.">
+    <meta property="og:title" content="Disc Golf Go">
+    <meta property="og:description" content="Disc Golf Go is a structured disc golf training platform. Build skills, track progress, and improve your game with 72 expert-guided lessons.">
+    <meta property="og:image" content="https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/8f88fdd4-3698-4d3f-8761-072b4f1477c4.png">
+    <meta property="og:site_name" content="Disc Golf Go">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-/* ── Reset ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 /* ── Design tokens ── */
 :root {
-    --bg-deep: #050a05;
-    --bg: #0a0f0a;
-    --surface: #111811;
-    --surface2: #182018;
+    --bg-deep: #121212;
+    --bg: #1E1E1E;
+    --surface: #252525;
+    --surface2: #2D2D2D;
     --border: rgba(255,255,255,0.06);
     --border2: rgba(255,255,255,0.12);
-    --text: #f0f4f0;
-    --text2: #b8c8b8;
-    --text3: #6a7a6a;
-    --green: #4cdf3c;
-    --green-bright: #7ed957;
-    --green-dim: #2a7a20;
-    --green-glow: rgba(76,223,60,0.15);
-    --green-glow2: rgba(76,223,60,0.08);
+    --text: #F5F5F5;
+    --text2: #AAAAAA;
+    --text3: #666666;
+    --green: #FF6B1A;
+    --green-bright: #FF8C4A;
+    --green-dim: #8B3A0F;
+    --green-glow: rgba(255,107,26,0.15);
+    --green-glow2: rgba(255,107,26,0.08);
     --gold: #ffd050;
     --safe-t: env(safe-area-inset-top, 0px);
     --safe-b: env(safe-area-inset-bottom, 0px);
@@ -51,874 +53,983 @@ body {
     background: var(--bg-deep);
     color: var(--text);
     min-height: 100vh;
-    min-height: 100dvh;
     overflow-x: hidden;
 }
 
-/* ── Scanline texture overlay ── */
+/* scanlines */
 body::before {
     content: '';
     position: fixed; inset: 0; z-index: 0;
-    background-image: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.04) 2px,
-        rgba(0,0,0,0.04) 4px
-    );
+    background-image: repeating-linear-gradient(63deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
     pointer-events: none;
 }
+
+/* ── Layout helpers ── */
+.container { max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
+.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── NAV ── */
+.top-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: calc(var(--safe-t) + 0.75rem) 1.5rem 0.75rem;
+    background: linear-gradient(to bottom, var(--bg-deep) 60%, transparent);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+    font-weight: 800; font-size: 1.1rem; letter-spacing: -0.03em;
+    color: var(--text); text-decoration: none;
+}
+.nav-logo .green { color: var(--green); }
+.nav-cta {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--green); color: #fff;
+    border: none; border-radius: 100px;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; font-weight: 700;
+    text-decoration: none; cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 0 20px rgba(255,107,26,0.3);
+}
+.nav-cta:hover { background: #FF8C4A; transform: translateY(-1px); }
 
 /* ── HERO ── */
-.launcher-hero {
-    position: relative;
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: calc(var(--safe-t) + 2rem) 1.5rem calc(var(--safe-b) + 2rem);
-    text-align: center;
-    overflow: hidden;
+.hero {
+    position: relative; min-height: 100vh; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: calc(var(--safe-t) + 5rem) 1.5rem calc(var(--safe-b) + 4rem);
+    text-align: center; overflow: hidden;
 }
-
-/* Radial green glow behind hero */
-.launcher-hero::before {
+.hero::before {
     content: '';
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80vw;
-    height: 80vw;
-    max-width: 600px;
-    max-height: 600px;
-    background: radial-gradient(ellipse at center, rgba(76,223,60,0.12) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
+    position: absolute; top: 5%; left: 50%; transform: translateX(-50%);
+    width: 80vw; height: 80vw; max-width: 700px; max-height: 700px;
+    background: radial-gradient(ellipse at center, rgba(255,107,26,0.1) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
 }
-
-/* ── Grid lines (game UI aesthetic) ── */
 .hero-grid {
     position: absolute; inset: 0; z-index: 0;
-    background-image:
-        linear-gradient(rgba(76,223,60,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(76,223,60,0.03) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(255,107,26,0.025) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,107,26,0.025) 1px, transparent 1px);
     background-size: 48px 48px;
-    pointer-events: none;
 }
-
-/* Fade grid at edges */
 .hero-grid::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, transparent 30%, var(--bg-deep) 80%);
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 25%, var(--bg-deep) 75%);
 }
 
-.hero-inner {
-    position: relative; z-index: 1;
-    display: flex; flex-direction: column; align-items: center;
-    max-width: 520px;
-}
+.hero-inner { position: relative; z-index: 1; max-width: 600px; }
 
-/* ── Logo mark ── */
-.hero-logo-wrap {
-    position: relative;
-    margin-bottom: 2rem;
-}
-.hero-logo {
-    width: 120px; height: 120px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 32px rgba(76,223,60,0.5)) drop-shadow(0 0 8px rgba(76,223,60,0.8));
-    animation: logo-pulse 3s ease-in-out infinite;
-}
-@keyframes logo-pulse {
-    0%, 100% { filter: drop-shadow(0 0 28px rgba(76,223,60,0.5)) drop-shadow(0 0 8px rgba(76,223,60,0.8)); }
-    50%       { filter: drop-shadow(0 0 48px rgba(76,223,60,0.75)) drop-shadow(0 0 12px rgba(76,223,60,1)); }
-}
-
-/* Small "DISC GOLF" badge above */
 .hero-badge {
     display: inline-flex; align-items: center; gap: 0.4rem;
-    background: rgba(76,223,60,0.1);
-    border: 1px solid rgba(76,223,60,0.3);
-    border-radius: 100px;
-    padding: 0.3rem 0.85rem;
+    background: rgba(255,107,26,0.1); border: 1px solid rgba(255,107,26,0.3);
+    border-radius: 100px; padding: 0.3rem 0.85rem;
     font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--green);
-    margin-bottom: 1.25rem;
+    text-transform: uppercase; color: var(--green); margin-bottom: 1.5rem;
 }
 .hero-badge::before {
-    content: '';
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 6px var(--green);
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 6px var(--green);
     animation: blink 2s ease-in-out infinite;
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-/* ── Main headline ── */
 .hero-title {
-    font-size: clamp(2.8rem, 10vw, 4.5rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 0.95;
-    margin-bottom: 1.25rem;
-    color: var(--text);
+    font-size: clamp(2.4rem, 9vw, 3.8rem);
+    font-weight: 800; letter-spacing: -0.04em; line-height: 1;
+    margin-bottom: 1.5rem; color: var(--text);
 }
-.hero-title .green {
-    color: var(--green);
-    text-shadow: 0 0 40px rgba(76,223,60,0.4);
-}
+.hero-title .green { color: var(--green); text-shadow: 0 0 40px rgba(255,107,26,0.35); }
 .hero-title .dim { color: var(--text2); }
 
-/* ── Sub copy ── */
 .hero-sub {
-    font-size: 1.05rem;
-    color: var(--text2);
-    line-height: 1.55;
-    max-width: 380px;
-    margin: 0 auto 2.5rem;
-    font-weight: 400;
+    font-size: 1.05rem; color: var(--text2); line-height: 1.6;
+    max-width: 480px; margin: 0 auto 1.5rem;
 }
 
-/* ── App Store CTA ── */
-.cta-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.85rem;
-    width: 100%;
-    max-width: 320px;
-    margin-bottom: 2.5rem;
-}
-
-.btn-appstore {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    width: 100%;
-    padding: 1rem 1.75rem;
-    background: var(--text);
-    color: var(--bg-deep);
-    border: none;
-    border-radius: 16px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all var(--transition);
-    box-shadow: 0 4px 32px rgba(240,244,240,0.15);
-    letter-spacing: -0.01em;
-}
-.btn-appstore:hover, .btn-appstore:active {
-    background: #ffffff;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 40px rgba(240,244,240,0.25);
-}
-.btn-appstore:active { transform: scale(0.98); }
-.appstore-icon {
-    width: 24px; height: 24px; flex-shrink: 0;
-}
-
-/* Play Now — primary CTA for existing users */
-.btn-playnow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 1.1rem 1.75rem;
-    background: var(--green);
-    color: #050a05;
-    border: none;
-    border-radius: 16px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 800;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all var(--transition);
-    box-shadow: 0 0 32px rgba(76,223,60,0.35), 0 4px 24px rgba(76,223,60,0.2);
-    letter-spacing: -0.01em;
-    text-shadow: 0 1px 0 rgba(255,255,255,0.15);
-}
-.btn-playnow:hover, .btn-playnow:active {
-    background: #7ed957;
-    transform: translateY(-2px);
-    box-shadow: 0 0 48px rgba(76,223,60,0.5), 0 8px 32px rgba(76,223,60,0.3);
-}
-.btn-playnow:active { transform: scale(0.98); }
-
-/* Two-up download row */
-.download-row {
-    display: flex;
-    gap: 0.6rem;
-    width: 100%;
-}
-.btn-appstore--small {
-    flex: 1;
-    padding: 0.7rem 0.75rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    border-radius: 12px;
-}
-
-.btn-web {
+.hero-stats {
     display: flex; align-items: center; justify-content: center;
-    gap: 0.5rem; width: 100%;
-    padding: 0.85rem 1.75rem;
-    background: transparent;
+    gap: 0; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 0.6rem 1.25rem; margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+.hero-stat { text-align: center; padding: 0 1rem; }
+.hero-stat-num {
+    display: block; font-family: var(--font-mono); font-size: 1.1rem;
+    font-weight: 700; color: var(--green); line-height: 1;
+    text-shadow: 0 0 12px rgba(255,107,26,0.25);
+}
+.hero-stat-label {
+    display: block; font-size: 0.65rem; color: var(--text3);
+    font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    margin-top: 0.2rem;
+}
+.hero-stat-div {
+    width: 1px; height: 28px; background: var(--border);
+    flex-shrink: 0;
+}
+
+.hero-callouts {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1rem; flex-wrap: wrap; max-width: 520px; margin: 0 auto;
+}
+.hero-callout {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.72rem; color: var(--text3); font-weight: 500;
+}
+.hero-callout-icon { font-size: 0.9rem; line-height: 1; }
+
+.hero-image {
+    width: 100%; max-width: 680px; margin: 0 auto 2.5rem;
+    border-radius: 16px; overflow: hidden;
     border: 1px solid var(--border2);
-    color: var(--text2);
-    border-radius: 16px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.9rem; font-weight: 600;
+    box-shadow: 0 0 60px rgba(255,107,26,0.12), 0 24px 48px rgba(0,0,0,0.6);
+}
+.hero-image img { width: 100%; display: block; }
+
+.download-row {
+    display: flex; gap: 0.65rem; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 2rem;
+}
+.btn-app {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--text); color: var(--bg-deep);
+    border: none; border-radius: 14px;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 700;
+    text-decoration: none; cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 24px rgba(240,244,240,0.12);
+}
+.btn-app:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 8px 32px rgba(240,244,240,0.2); }
+.btn-app svg { width: 20px; height: 20px; flex-shrink: 0; }
+.btn-web {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: transparent; border: 1px solid var(--border2); color: var(--text2);
+    border-radius: 14px;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600;
     text-decoration: none; cursor: pointer;
     transition: all var(--transition);
 }
-.btn-web:hover {
-    border-color: var(--green);
-    color: var(--green);
-    background: var(--green-glow2);
-}
+.btn-web:hover { border-color: var(--green); color: var(--green); background: var(--green-glow2); }
 
-/* ── Stat counters ── */
-.hero-stats {
-    display: flex; gap: 2rem; align-items: center;
-    padding-top: 0.5rem;
-}
-.hero-stat {
-    text-align: center;
-}
-.hero-stat .num {
-    font-family: var(--font-mono);
-    font-size: 1.4rem; font-weight: 700;
-    color: var(--green);
-    display: block;
-    text-shadow: 0 0 16px rgba(76,223,60,0.4);
-}
-.hero-stat .lbl {
-    font-size: 0.65rem; font-weight: 600;
-    color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em;
-    display: block; margin-top: 0.15rem;
-}
-.stat-divider {
-    width: 1px; height: 32px; background: var(--border2);
-}
-
-/* ── Scroll indicator ── */
-.scroll-hint {
-    position: absolute; bottom: calc(var(--safe-b) + 1.5rem); left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
-    color: var(--text3); font-size: 0.65rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.1em; z-index: 1;
-    animation: scroll-bob 2s ease-in-out infinite;
-}
-@keyframes scroll-bob { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(4px)} }
-.scroll-hint svg { width: 16px; height: 16px; opacity: 0.5; }
-
-/* ── FEATURES SECTION ── */
-.features-section {
+/* ── SECTION ── */
+.section {
     position: relative; z-index: 1;
-    padding: 5rem 1.5rem 3rem;
-    max-width: 700px; margin: 0 auto;
+    padding: 5rem 1.5rem;
 }
-
 .section-eyebrow {
     font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--green);
-    margin-bottom: 0.75rem;
+    text-transform: uppercase; color: var(--green); margin-bottom: 0.75rem;
 }
-
 .section-title {
-    font-size: clamp(1.75rem, 6vw, 2.5rem);
-    font-weight: 800; letter-spacing: -0.03em;
-    line-height: 1.1; color: var(--text);
-    margin-bottom: 3rem;
+    font-size: clamp(1.6rem, 5vw, 2.25rem);
+    font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
+    margin-bottom: 0.75rem; color: var(--text);
 }
 .section-title .dim { color: var(--text3); }
+.section-sub {
+    font-size: 1rem; color: var(--text2); line-height: 1.6;
+    max-width: 560px; margin-bottom: 3rem;
+}
+.section-sub .dim { color: var(--text3); }
 
-.features-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
+/* ── WHAT IT IS ── */
+.what-is-section {
+    position: relative; z-index: 1;
+    padding: 4rem 1.5rem;
+    background: linear-gradient(to bottom, var(--bg-deep) 0%, var(--bg) 100%);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+.what-is-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+}
+.what-is-item {
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    padding: 0 1.5rem 0 0;
+    border-right: 1px solid var(--border);
+}
+.what-is-item:last-child { border-right: none; padding-right: 0; }
+.what-is-item:nth-child(2) { padding-left: 1.5rem; }
+.what-is-item:nth-child(3) { padding-left: 1.5rem; }
+.what-is-item:nth-child(4) { padding-left: 1.5rem; }
+.what-is-icon { font-size: 1.4rem; line-height: 1.2; flex-shrink: 0; margin-top: 0.1rem; }
+.what-is-item h3 { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+.what-is-item p { font-size: 0.72rem; color: var(--text3); line-height: 1.5; }
+
+@media (max-width: 640px) {
+    .what-is-grid { grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .what-is-item { border-right: none; padding: 0; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; }
+    .what-is-item:nth-child(odd) { padding-right: 0; }
+    .what-is-item:nth-child(even) { padding-left: 0; }
+    .what-is-item:last-child, .what-is-item:nth-last-child(2) { border-bottom: none; }
 }
 
-.feat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 1.5rem 1.25rem;
-    transition: all var(--transition);
+/* ── PROBLEM SECTION ── */
+.problem-section { background: var(--bg); }
+.problem-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0; border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+    margin-top: 2.5rem;
+}
+.problem-card {
+    padding: 2.5rem 2rem;
     position: relative;
-    overflow: hidden;
 }
-.feat-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(76,223,60,0.3), transparent);
-    opacity: 0;
-    transition: opacity var(--transition);
+.problem-card--before { background: rgba(255,80,80,0.04); border-right: 1px solid var(--border); }
+.problem-card--after { background: rgba(255,107,26,0.04); }
+.problem-label {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 1rem;
 }
-.feat-card:hover::before { opacity: 1; }
-.feat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.problem-card--before .problem-label { color: rgba(255,100,100,0.8); }
+.problem-card--after .problem-label { color: var(--green); }
+.problem-card h3 {
+    font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em;
+    margin-bottom: 0.75rem; color: var(--text);
+}
+.problem-card p { font-size: 0.85rem; color: var(--text2); line-height: 1.6; }
+.problem-card ul { list-style: none; margin-top: 1rem; }
+.problem-card li {
+    font-size: 0.82rem; color: var(--text2); line-height: 1.7;
+    padding-left: 1.25rem; position: relative;
+}
+.problem-card li::before {
+    content: ''; position: absolute; left: 0; top: 0.6em;
+    width: 6px; height: 6px; border-radius: 50%;
+}
+.problem-card--before li::before { background: rgba(255,100,100,0.5); }
+.problem-card--after li::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
-.feat-card--wide { grid-column: 1 / -1; }
+/* ── LOOP SECTION ── */
+.loop-section { background: var(--surface); }
+.loop-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1rem; margin-top: 2.5rem;
+}
+.loop-step {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.75rem 1.25rem;
+    position: relative; text-align: center;
+    transition: all var(--transition);
+}
+.loop-step:hover { border-color: var(--border2); transform: translateY(-2px); }
+.loop-step-icon {
+    width: 44px; height: 44px; margin: 0 auto 0.75rem;
+    background: var(--green-glow); border: 1px solid rgba(255,107,26,0.2);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+}
+.loop-step-num {
+    font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700;
+    color: var(--green); margin-bottom: 0.5rem; letter-spacing: 0.05em;
+}
+.loop-step h4 { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+.loop-step p { font-size: 0.75rem; color: var(--text3); line-height: 1.5; }
 
-.feat-icon {
+/* ── CATEGORIES SECTION ── */
+.categories-section { background: var(--bg-deep); }
+.categories-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.75rem; margin-top: 2.5rem;
+}
+.cat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 1.75rem 1.5rem;
+    transition: all var(--transition); cursor: pointer;
+    text-decoration: none; color: inherit; display: block;
+}
+.cat-card:hover { border-color: rgba(255,107,26,0.3); transform: translateY(-2px); }
+.cat-card-icon {
     font-size: 1.75rem; margin-bottom: 0.75rem; display: block;
 }
-.feat-card h3 {
-    font-size: 0.95rem; font-weight: 700; color: var(--text);
-    margin-bottom: 0.4rem; letter-spacing: -0.01em;
-}
-.feat-card p {
-    font-size: 0.8rem; color: var(--text3); line-height: 1.5;
-}
-
-/* ── HOW IT WORKS ── */
-.how-section {
-    position: relative; z-index: 1;
-    padding: 3rem 1.5rem;
-    max-width: 700px; margin: 0 auto;
+.cat-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+.cat-card p { font-size: 0.8rem; color: var(--text3); line-height: 1.55; }
+.cat-card .cat-lessons {
+    margin-top: 0.75rem; font-size: 0.7rem; font-weight: 600;
+    color: var(--green); opacity: 0.7; letter-spacing: 0.04em;
 }
 
-.steps-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    margin-top: 2rem;
-}
-
-.step-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.5rem 1.25rem;
+/* ── SKILL TIERS ── */
+.tiers-section { background: var(--surface); }
+.tiers-track {
+    display: flex; align-items: stretch;
+    gap: 0; margin-top: 2.5rem;
     position: relative;
-    overflow: hidden;
+}
+.tiers-track::before {
+    content: ''; position: absolute; top: 50%; left: 24px; right: 24px;
+    height: 2px; background: linear-gradient(90deg, var(--green-dim), var(--green), var(--gold));
+    transform: translateY(-50%); z-index: 0; border-radius: 2px;
+}
+.tier-node {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    text-align: center; position: relative; z-index: 1; padding: 0 0.25rem;
+}
+.tier-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--surface2); border: 2px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; margin-bottom: 0.75rem;
+    transition: all var(--transition);
+}
+.tier-node.active .tier-icon {
+    background: var(--green-glow); border-color: var(--green);
+    box-shadow: 0 0 20px rgba(255,107,26,0.3);
+}
+.tier-node h4 { font-size: 0.8rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+.tier-node p { font-size: 0.68rem; color: var(--text3); line-height: 1.4; }
+.tier-node .tier-xp {
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    color: var(--green); opacity: 0.7; margin-top: 0.3rem; letter-spacing: 0.04em;
 }
 
-.step-num-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 2rem; height: 2rem; border-radius: 8px;
-    background: var(--green-glow);
-    border: 1px solid rgba(76,223,60,0.2);
-    font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
-    color: var(--green);
-    margin-bottom: 0.75rem;
+.level-filter-note {
+    margin-top: 1.5rem; text-align: center;
+    font-size: 0.78rem; color: var(--text3);
+}
+.level-filter-note span {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 100px; padding: 0.25rem 0.65rem; font-size: 0.68rem;
+    color: var(--text2); margin: 0.15rem;
 }
 
-.step-card h4 {
-    font-size: 0.9rem; font-weight: 700; color: var(--text);
-    margin-bottom: 0.35rem;
+/* ── MISSIONS SECTION ── */
+.missions-section { background: var(--bg-deep); }
+.missions-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem; margin-top: 2.5rem;
 }
-.step-card p { font-size: 0.78rem; color: var(--text3); line-height: 1.5; }
+.mission-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 1.75rem 1.5rem;
+    position: relative; overflow: hidden;
+}
+.mission-card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,107,26,0.2), transparent);
+}
+.mission-badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--green); opacity: 0.8;
+    margin-bottom: 0.65rem;
+}
+.mission-badge svg { width: 10px; height: 10px; }
+.mission-card h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+.mission-card p { font-size: 0.8rem; color: var(--text3); line-height: 1.55; }
+.mission-reward {
+    margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.72rem; font-weight: 600; color: var(--text2);
+}
+.reward-xp { color: var(--green); }
+.reward-gold { color: var(--gold); }
+
+.streak-note {
+    margin-top: 2rem; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+}
+.streak-flame { font-size: 2rem; line-height: 1; }
+.streak-text h4 { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem; }
+.streak-text p { font-size: 0.75rem; color: var(--text3); }
+
+/* ── VAULT SECTION ── */
+.vault-section { background: var(--surface); }
+.vault-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem; margin-top: 2.5rem;
+}
+.vault-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem 1.25rem;
+    transition: all var(--transition);
+}
+.vault-card:hover { border-color: rgba(255,208,80,0.3); transform: translateY(-2px); }
+.vault-card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; display: block; }
+.vault-card h4 { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+.vault-card p { font-size: 0.75rem; color: var(--text3); line-height: 1.5; margin-bottom: 0.75rem; }
+.vault-price {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700;
+    color: var(--gold); background: rgba(255,208,80,0.08);
+    border: 1px solid rgba(255,208,80,0.2); border-radius: 100px;
+    padding: 0.25rem 0.65rem;
+}
+
+.vault-earn { margin-top: 2rem; }
+.vault-earn-title { font-size: 0.72rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.65rem; }
+.earn-items { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.earn-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 100px; padding: 0.3rem 0.75rem;
+    font-size: 0.72rem; color: var(--text2); font-weight: 500;
+}
+
+/* ── COURSES / PROOF ── */
+.proof-section { background: var(--bg-deep); }
+.proof-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.75rem; margin-top: 2.5rem;
+}
+.proof-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 2rem 1.5rem;
+}
+.proof-stat {
+    font-family: var(--font-mono); font-size: 2.25rem; font-weight: 700;
+    color: var(--green); text-shadow: 0 0 20px rgba(255,107,26,0.3);
+    margin-bottom: 0.25rem; line-height: 1;
+}
+.proof-label { font-size: 0.85rem; font-weight: 600; color: var(--text2); margin-bottom: 0.5rem; }
+.proof-desc { font-size: 0.78rem; color: var(--text3); line-height: 1.55; }
 
 /* ── FINAL CTA ── */
-.final-cta {
+.final-cta-section {
     position: relative; z-index: 1;
-    padding: 4rem 1.5rem calc(var(--safe-b) + 4rem);
+    padding: 5rem 1.5rem 6rem;
     text-align: center;
-    max-width: 500px; margin: 0 auto;
+}
+.final-cta-inner { max-width: 500px; margin: 0 auto; }
+.fcta-title {
+    font-size: clamp(2rem, 7vw, 3rem); font-weight: 800; letter-spacing: -0.04em;
+    line-height: 1; margin-bottom: 1rem;
+}
+.fcta-sub {
+    font-size: 1rem; color: var(--text2); line-height: 1.6;
+    margin-bottom: 2.5rem;
 }
 
-.final-cta-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 2.5rem 1.75rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.final-cta-card::before {
-    content: '';
-    position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
-    width: 60%; height: 200px;
-    background: radial-gradient(ellipse, rgba(76,223,60,0.12) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.final-cta-card h2 {
-    font-size: clamp(1.6rem, 6vw, 2rem);
-    font-weight: 800; letter-spacing: -0.03em;
-    color: var(--text); margin-bottom: 0.75rem;
-}
-
-.final-cta-card p {
-    font-size: 0.9rem; color: var(--text2); line-height: 1.55;
-    margin-bottom: 2rem; max-width: 340px; margin-left: auto; margin-right: auto;
-}
-
-/* ── Footer ── */
+/* ── FOOTER ── */
 .site-footer {
-    position: relative; z-index: 1;
-    border-top: 1px solid var(--border);
-    padding: 1.5rem 1.5rem calc(var(--safe-b) + 1rem);
+    position: relative; z-index: 1; border-top: 1px solid var(--border);
+    padding: 1.5rem 1.5rem calc(var(--safe-b) + 1.5rem);
     text-align: center;
 }
-
 .footer-links {
     display: flex; align-items: center; justify-content: center;
-    gap: 1.25rem; flex-wrap: wrap;
-    margin-bottom: 1rem;
+    gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1rem;
 }
-.footer-links a {
-    font-size: 0.75rem; color: var(--text3); text-decoration: none;
-    transition: color var(--transition);
-}
+.footer-links a { font-size: 0.75rem; color: var(--text3); text-decoration: none; transition: color var(--transition); }
 .footer-links a:hover { color: var(--green); }
-
-.footer-social {
-    display: flex; align-items: center; justify-content: center; gap: 0.65rem;
-    margin-bottom: 1rem;
-}
+.footer-social { display: flex; align-items: center; justify-content: center; gap: 0.65rem; margin-bottom: 1rem; }
 .footer-social a {
     display: flex; align-items: center; justify-content: center;
-    width: 30px; height: 30px;
-    border: 1px solid var(--border2); border-radius: 8px;
-    background: var(--surface); color: var(--text3);
-    transition: all var(--transition);
+    width: 30px; height: 30px; border: 1px solid var(--border2); border-radius: 8px;
+    background: var(--surface); color: var(--text3); transition: all var(--transition);
 }
 .footer-social a:hover { border-color: var(--green); color: var(--green); background: var(--green-glow2); }
 .footer-social svg { width: 14px; height: 14px; fill: currentColor; }
+.footer-copy { font-size: 0.7rem; color: var(--text3); }
 
-.footer-copy {
-    font-size: 0.7rem; color: var(--text3);
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+    .problem-grid, .categories-grid, .missions-grid, .proof-grid { grid-template-columns: 1fr; }
+    .loop-grid { grid-template-columns: repeat(2, 1fr); }
+    .vault-grid { grid-template-columns: 1fr; }
+    .tiers-track { flex-wrap: wrap; }
+    .tiers-track::before { display: none; }
+    .tier-node { flex: 0 0 50%; margin-bottom: 1.5rem; }
+    .hero-image { border-radius: 12px; }
 }
-
-/* ── Fade in animation ── */
-.reveal {
-    opacity: 0; transform: translateY(20px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-}
-.reveal.visible { opacity: 1; transform: translateY(0); }
-
-@media (max-width: 480px) {
-    .hero-title { font-size: 2.6rem; }
-    .hero-stats { gap: 1.25rem; }
-    .features-grid { grid-template-columns: 1fr; }
-    .steps-grid { grid-template-columns: 1fr; }
-    .hero-logo { width: 96px; height: 96px; }
-}
-
-/* ── FEEDBACK SECTION ── */
-.feedback-section {
-    position: relative; z-index: 1;
-    padding: 3rem 1.5rem 4rem;
-    max-width: 600px; margin: 0 auto;
-}
-
-.feedback-form-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2rem 1.75rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.feedback-form-wrap::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(76,223,60,0.25), transparent);
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.85rem;
-    margin-bottom: 0.85rem;
-}
-
-.form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin-bottom: 0.85rem;
-}
-
-.form-field label {
-    font-size: 0.72rem; font-weight: 600;
-    color: var(--text2); letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.form-field input,
-.form-field select,
-.form-field textarea {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    color: var(--text);
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.9rem;
-    transition: border-color var(--transition);
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-.form-field select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a7a6a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.85rem center;
-    padding-right: 2.5rem;
-    cursor: pointer;
-}
-
-.form-field select option {
-    background: var(--surface2);
-    color: var(--text);
-}
-
-.form-field textarea {
-    resize: vertical;
-    min-height: 110px;
-    line-height: 1.5;
-}
-
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
-    outline: none;
-    border-color: var(--green);
-}
-
-.form-field .field-error {
-    font-size: 0.72rem;
-    color: #ff6b6b;
-    display: none;
-    margin-top: 0.15rem;
-}
-
-.form-field.has-error input,
-.form-field.has-error select,
-.form-field.has-error textarea {
-    border-color: #ff6b6b;
-}
-
-.form-field.has-error .field-error { display: block; }
-
-.btn-feedback {
-    width: 100%;
-    padding: 0.9rem 1.75rem;
-    background: var(--green);
-    color: #050a05;
-    border: none;
-    border-radius: 12px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.95rem; font-weight: 800;
-    cursor: pointer;
-    transition: all var(--transition);
-    box-shadow: 0 0 24px rgba(76,223,60,0.25);
-    letter-spacing: -0.01em;
-    margin-top: 0.5rem;
-}
-.btn-feedback:hover { background: #7ed957; transform: translateY(-1px); }
-.btn-feedback:active { transform: scale(0.98); }
-.btn-feedback:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-.feedback-success {
-    display: none;
-    flex-direction: column; align-items: center;
-    text-align: center; padding: 2rem 1rem;
-    gap: 0.75rem;
-}
-.feedback-success.show { display: flex; }
-.feedback-success .success-icon {
-    font-size: 3rem; line-height: 1;
-}
-.feedback-success h3 {
-    font-size: 1.1rem; font-weight: 700; color: var(--green);
-}
-.feedback-success p { font-size: 0.85rem; color: var(--text2); }
-
-@media (max-width: 480px) {
-    .form-row { grid-template-columns: 1fr; }
-}
-
-@media (min-width: 600px) {
-    .features-grid { grid-template-columns: repeat(3, 1fr); }
-    .steps-grid { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 400px) {
+    .loop-grid { grid-template-columns: 1fr; }
+    .tier-node { flex: 0 0 100%; }
 }
     </style>
-    <!-- Blocking theme init (keep bg dark always on landing) -->
-    <script>(function(){document.documentElement.style.setProperty('background','#050a05');})()</script>
+    <script>(function(){document.documentElement.style.setProperty('background','#121212');})()</script>
 </head>
 <body class="landing-page">
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- HERO — LAUNCHER SCREEN                                        -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<section class="launcher-hero">
+<!-- ── NAV ── -->
+<nav class="top-nav">
+    <a href="/" class="nav-logo">Disc Golf <span class="green">Go</span></a>
+    <a href="/training" class="nav-link">Training</a>
+    <a href="/training" class="nav-cta">Start Training →</a>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
     <div class="hero-grid"></div>
-
     <div class="hero-inner">
-        <!-- Badge -->
-        <div class="hero-badge">Disc Golf · Now Live</div>
 
-        <!-- Logo -->
-        <div class="hero-logo-wrap">
+        <div class="hero-badge">Training-First · 3,938+ Courses · Free to Start</div>
+
+        <h1 class="hero-title">
+            The disc golf app that makes you <span class="green">actually better</span><br>
+            — not just <span class="dim">a better scorekeeper.</span>
+        </h1>
+
+        <p class="hero-sub">
+            Train from anywhere — then prove it on the course. 72 lessons, 7 skill categories, daily missions,
+            and XP that tracks your improvement over time. GPS check-in at 3,938+ real courses worldwide.
+        </p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="hero-stat-num">3,938+</span>
+                <span class="hero-stat-label">courses</span>
+            </div>
+            <div class="hero-stat-div"></div>
+            <div class="hero-stat">
+                <span class="hero-stat-num">72</span>
+                <span class="hero-stat-label">lessons</span>
+            </div>
+            <div class="hero-stat-div"></div>
+            <div class="hero-stat">
+                <span class="hero-stat-num">4</span>
+                <span class="hero-stat-label">skill tiers</span>
+            </div>
+            <div class="hero-stat-div"></div>
+            <div class="hero-stat">
+                <span class="hero-stat-num">Free</span>
+                <span class="hero-stat-label">to start</span>
+            </div>
+        </div>
+
+        <div class="hero-image">
             <img
-                src="/logo.png?v=3"
-                alt="Disc Golf Go"
-                class="hero-logo"
-                width="120" height="120"
+                src="https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/generated-images/company_104974/6fbeb3ba-327e-4688-bc92-d8efce64ca2e.jpg"
+                alt="Disc Golf Go training hub"
                 loading="eager"
+                width="680" height="382"
             >
         </div>
 
-        <!-- Headline -->
-        <h1 class="hero-title">
-            Hit <span class="green">The</span><br>
-            Course.
-        </h1>
-
-        <!-- Sub -->
-        <p class="hero-sub">
-            GPS check-in. Course battles. XP and leaderboards.<br>
-            Disc golf meets mobile game.
-        </p>
-
-        <!-- CTAs -->
-        <div class="cta-group">
-            <!-- Play Now — primary CTA for existing users -->
-            <a href="/login" class="btn-playnow">
-                ▶ Play Now
+        <div class="download-row">
+            <a href="https://apps.apple.com/app/disc-golf-go/id6743638566" class="btn-app" target="_blank" rel="noopener" data-utm-campaign="app_download" data-utm-medium="app_store">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                App Store
             </a>
+            <a href="/training" class="btn-web">Start Training</a>
+        </div>
 
-            <!-- New user downloads -->
-            <div class="download-row">
-                <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" class="btn-appstore btn-appstore--small" target="_blank" rel="noopener">
-                    <svg class="appstore-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                    </svg>
-                    App Store
-                </a>
-                <a href="https://play.google.com/store/apps/details?id=com.discgolfgo.app" class="btn-appstore btn-appstore--small" target="_blank" rel="noopener">
-                    <svg class="appstore-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a.996.996 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.635-8.634z"/>
-                    </svg>
-                    Google Play
-                </a>
+        <div class="hero-callouts">
+            <div class="hero-callout">
+                <span class="hero-callout-icon">🏠</span>
+                <span>Train from home — no course needed</span>
             </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="hero-stats">
-            <div class="hero-stat">
-                <span class="num" id="stat-courses">---</span>
-                <span class="lbl">Courses</span>
+            <div class="hero-callout">
+                <span class="hero-callout-icon">🎯</span>
+                <span>72 lessons across 7 skill categories</span>
             </div>
-            <div class="stat-divider"></div>
-            <div class="hero-stat">
-                <span class="num">8M+</span>
-                <span class="lbl">Disc Golfers</span>
+            <div class="hero-callout">
+                <span class="hero-callout-icon">📱</span>
+                <span>iOS &amp; web — free to start</span>
             </div>
-            <div class="stat-divider"></div>
-            <div class="hero-stat">
-                <span class="num">1</span>
-                <span class="lbl">App for All of It</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scroll hint -->
-    <div class="scroll-hint">
-        <span>More</span>
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M4 6l4 4 4-4"/>
-        </svg>
-    </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- FEATURES                                                      -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<section class="features-section reveal">
-    <div class="section-eyebrow">What's in the App</div>
-    <div class="section-title">Not Another <span class="dim">Scorecard App.</span></div>
-
-    <div class="features-grid">
-        <div class="feat-card">
-            <span class="feat-icon">📍</span>
-            <h3>GPS Check-In</h3>
-            <p>You must physically be at the course. No faking rounds.</p>
-        </div>
-        <div class="feat-card">
-            <span class="feat-icon">⚔️</span>
-            <h3>Player Battles</h3>
-            <p>Challenge nearby players. Win XP, badges, and bragging rights.</p>
-        </div>
-        <div class="feat-card">
-            <span class="feat-icon">🎯</span>
-            <h3>Course Quests</h3>
-            <p>Time-limited challenges at real courses. Weekly quests drive exploration.</p>
-        </div>
-        <div class="feat-card">
-            <span class="feat-icon">⬡</span>
-            <h3>XP &amp; Leveling</h3>
-            <p>Every round earns XP. Climb the global leaderboard.</p>
-        </div>
-        <div class="feat-card">
-            <span class="feat-icon">👥</span>
-            <h3>Crew Wars</h3>
-            <p>Form a crew. Challenge rivals. Defend your home course.</p>
-        </div>
-        <div class="feat-card">
-            <span class="feat-icon">🏆</span>
-            <h3>Achievements</h3>
-            <p>Ace Hunter. Birdie Streak. Hundreds of badges tell your story.</p>
         </div>
     </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- HOW IT WORKS                                                  -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<section class="how-section reveal">
-    <div class="section-eyebrow">The Loop</div>
-    <div class="section-title">Show Up. <span class="dim">Play. Level Up.</span></div>
-
-    <div class="steps-grid">
-        <div class="step-card">
-            <div class="step-num-badge">01</div>
-            <h4>Show Up</h4>
-            <p>GPS confirms you're at the course. No check-in, no round.</p>
-        </div>
-        <div class="step-card">
-            <div class="step-num-badge">02</div>
-            <h4>Play Your Round</h4>
-            <p>Score hole by hole. Accept challenges mid-round.</p>
-        </div>
-        <div class="step-card">
-            <div class="step-num-badge">03</div>
-            <h4>Earn XP</h4>
-            <p>New courses, battle wins, quest completions — all XP.</p>
-        </div>
-        <div class="step-card">
-            <div class="step-num-badge">04</div>
-            <h4>Climb The Board</h4>
-            <p>Global and regional leaderboards. Your crew vs. theirs.</p>
-        </div>
-    </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- FEEDBACK                                                      -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<section class="feedback-section reveal">
-    <div class="section-eyebrow">Help Us Improve</div>
-    <div class="section-title">Got Feedback? <span class="dim">We Want It.</span></div>
-
-    <div class="feedback-form-wrap">
-        <div id="feedback-form-container">
-            <div class="form-row">
-                <div class="form-field" id="ff-name-wrap">
-                    <label for="ff-name">Name <span style="color:var(--text3)">(optional)</span></label>
-                    <input type="text" id="ff-name" placeholder="Your name" maxlength="100" autocomplete="name">
-                    <span class="field-error" id="ff-name-error"></span>
-                </div>
-                <div class="form-field" id="ff-email-wrap">
-                    <label for="ff-email">Email <span style="color:var(--text3)">(optional)</span></label>
-                    <input type="email" id="ff-email" placeholder="you@example.com" maxlength="255" autocomplete="email">
-                    <span class="field-error" id="ff-email-error"></span>
+<!-- ── WHAT IT IS ── -->
+<section class="what-is-section">
+    <div class="container">
+        <div class="what-is-grid">
+            <div class="what-is-item">
+                <div class="what-is-icon">🎯</div>
+                <div>
+                    <h3>Track rounds</h3>
+                    <p>Scorecard for any course. Hole-by-hole. Solo or group. GPS-gated so you have to be there.</p>
                 </div>
             </div>
-
-            <div class="form-field" id="ff-category-wrap">
-                <label for="ff-category">Category</label>
-                <select id="ff-category">
-                    <option value="Feedback" selected>Feedback</option>
-                    <option value="Suggestion">Suggestion</option>
-                    <option value="Bug Report">Bug Report</option>
-                </select>
-                <span class="field-error" id="ff-category-error"></span>
+            <div class="what-is-item">
+                <div class="what-is-icon">📚</div>
+                <div>
+                    <h3>Train anywhere</h3>
+                    <p>72 lessons on form, disc selection, course strategy, mental game, fitness, tournament prep, and rules. No course needed.</p>
+                </div>
             </div>
-
-            <div class="form-field" id="ff-message-wrap">
-                <label for="ff-message">Message <span style="color:var(--text3)">(min. 10 characters)</span></label>
-                <textarea id="ff-message" placeholder="Tell us what's on your mind..." maxlength="2000"></textarea>
-                <span class="field-error" id="ff-message-error"></span>
+            <div class="what-is-item">
+                <div class="what-is-icon">🏆</div>
+                <div>
+                    <h3>Level up</h3>
+                    <p>Earn XP from training and rounds. Auto-calculated skill tiers from Rookie to Pro. Streak bonuses.</p>
+                </div>
             </div>
-
-            <button type="button" class="btn-feedback" id="ff-submit" onclick="submitFeedback()">Send Feedback</button>
-        </div>
-
-        <div class="feedback-success" id="feedback-success">
-            <span class="success-icon">✉️</span>
-            <h3>Thanks for your feedback!</h3>
-            <p>We read every submission and use it to make Disc Golf Go better.</p>
+            <div class="what-is-item">
+                <div class="what-is-icon">💰</div>
+                <div>
+                    <h3>Earn &amp; collect</h3>
+                    <p>Gold from missions, referrals, and milestones. Spend it in the Vault on premium content and items.</p>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- FINAL CTA                                                     -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<section class="final-cta reveal">
-    <div class="final-cta-card">
-        <h2>The Course Is Calling.</h2>
-        <p>Every round matters. Every course is a quest. Download free and start building your legend.</p>
+<!-- ── PROBLEM / PIVOT ── -->
+<section class="section problem-section reveal">
+    <div class="container">
+        <div class="section-eyebrow">Why Disc Golf Go</div>
+        <div class="section-title">Disc Golf Go is the <span class="dim">only app that makes you</span><br><span class="green">actually better</span> — not just busier.</div>
 
-        <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" class="btn-appstore" target="_blank" rel="noopener" style="max-width:300px; margin: 0 auto 0.75rem;">
-            <svg class="appstore-icon" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-            </svg>
-            Download on the App Store
-        </a>
+        <div class="problem-grid">
+            <div class="problem-card problem-card--before">
+                <div class="problem-label">Before</div>
+                <h3>You download a scorecard app.</h3>
+                <p>You track your rounds. You feel like you're doing something. Nothing changes.</p>
+                <ul>
+                    <li>89.7% of registered disc golfers never improve year-over-year</li>
+                    <li>Score-tracking doesn't teach you anything</li>
+                    <li>You only "learn" when you're at the course</li>
+                    <li>No accountability, no structure, no progress</li>
+                </ul>
+            </div>
+            <div class="problem-card problem-card--after">
+                <div class="problem-label">After Disc Golf Go</div>
+                <h3>You train anywhere, then apply it.</h3>
+                <p>Train from home. Earn XP. Get better. The courses prove it worked.</p>
+                <ul>
+                    <li>7 training categories, 72 lessons — no course needed</li>
+                    <li>Skill tiers track real improvement (Rookie → Pro)</li>
+                    <li>Daily missions keep you accountable</li>
+                    <li>Streak bonuses reward consistency</li>
+                </ul>
+            </div>
+        </div>
     </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- FOOTER                                                        -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ── CORE LOOP ── -->
+<section class="section loop-section reveal">
+    <div class="container">
+        <div class="section-eyebrow">The Loop</div>
+        <div class="section-title">Train. Level Up. <span class="dim">Crush It.</span></div>
+        <p class="section-sub">The Disc Golf Go progression system that actually makes you <span class="dim">better</span>.</p>
+
+        <div class="loop-grid">
+            <div class="loop-step">
+                <div class="loop-step-icon">🏠</div>
+                <div class="loop-step-num">STEP 01</div>
+                <h4>Train Anywhere</h4>
+                <p>Watch lessons, do skill checks, read guides. No course required.</p>
+            </div>
+            <div class="loop-step">
+                <div class="loop-step-icon">⚡</div>
+                <div class="loop-step-num">STEP 02</div>
+                <h4>Earn XP</h4>
+                <p>Lessons, streaks, and milestones push your total up.</p>
+            </div>
+            <div class="loop-step">
+                <div class="loop-step-icon">📈</div>
+                <div class="loop-step-num">STEP 03</div>
+                <h4>Unlock Tiers</h4>
+                <p>Rookie → Player → Advanced → Pro. Each tier unlocks more.</p>
+            </div>
+            <div class="loop-step">
+                <div class="loop-step-icon">🎯</div>
+                <div class="loop-step-num">STEP 04</div>
+                <h4>Prove It on Course</h4>
+                <p>3,938 courses. GPS check-in. See your training pay off.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── TRAINING CATEGORIES ── -->
+<section class="section categories-section reveal">
+    <div class="container">
+        <div class="section-eyebrow">Training Library</div>
+        <div class="section-title">7 categories. <span class="dim">Every skill level.</span></div>
+        <p class="section-sub">From first-time thrower to tournament regular — <span class="dim">lessons that match where you are.</span></p>
+
+        <div class="categories-grid">
+            <a class="cat-card" href="/training/form-technique">
+                <span class="cat-card-icon">🎯</span>
+                <h3>Form &amp; Technique</h3>
+                <p>Grip, stance, arm path, power mechanics. The fundamentals that 90% of players get wrong.</p>
+                <div class="cat-lessons">Beginner · Intermediate · Advanced</div>
+            </a>
+            <a class="cat-card" href="/training/disc-selection">
+                <span class="cat-card-icon">🥏</span>
+                <h3>Disc Selection</h3>
+                <p>What each disc does, overstable vs understable, building a bag from scratch to tournament-ready.</p>
+                <div class="cat-lessons">Beginner · Intermediate · Advanced</div>
+            </a>
+            <a class="cat-card" href="/training/course-strategy">
+                <span class="cat-card-icon">🗺️</span>
+                <h3>Course Strategy</h3>
+                <p>Line selection, position play, wind adjustments, when to play safe vs when to go for it.</p>
+                <div class="cat-lessons">Intermediate · Advanced</div>
+            </a>
+            <a class="cat-card" href="/training/mental-game">
+                <span class="cat-card-icon">🧠</span>
+                <h3>Mental Game</h3>
+                <p>Pre-shot routine, focus under pressure, handling a bad hole, building tournament confidence.</p>
+                <div class="cat-lessons">All Levels</div>
+            </a>
+            <a class="cat-card" href="/training/fitness-warmup">
+                <span class="cat-card-icon">🏃</span>
+                <h3>Fitness &amp; Warmup</h3>
+                <p>Dynamic warmup routine, hip mobility for rotation power, footwork, injury prevention.</p>
+                <div class="cat-lessons">All Levels</div>
+            </a>
+            <a class="cat-card" href="/training/tournament-competition">
+                <span class="cat-card-icon">🏆</span>
+                <h3>Tournament &amp; Competition</h3>
+                <p>Bag setup for competition, tournament nerves, card etiquette, reading the field.</p>
+                <div class="cat-lessons">Intermediate · Advanced</div>
+            </a>
+            <a class="cat-card" href="/training/rules-etiquette">
+                <span class="cat-card-icon">📋</span>
+                <h3>Rules &amp; Etiquette</h3>
+                <p>Official rules, common penalties, pace of play, course courtesy, and competitive conduct.</p>
+                <div class="cat-lessons">All Levels</div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ── SKILL TIERS ── -->
+<section class="section tiers-section reveal">
+    <div class="container">
+        <div class="section-eyebrow">Skill Tiers</div>
+        <div class="section-title">4 tiers. <span class="dim">A path from first-timer to pro.</span></div>
+        <p class="section-sub">Your tier is auto-calculated from XP. <span class="dim">No self-reporting. No guessing.</span></p>
+
+        <div class="tiers-track">
+            <div class="tier-node active">
+                <div class="tier-icon">🌱</div>
+                <h4>Rookie</h4>
+                <p>Just starting out. Learn the fundamentals.</p>
+                <div class="tier-xp">0 – 499 XP</div>
+            </div>
+            <div class="tier-node">
+                <div class="tier-icon">⭐</div>
+                <h4>Player</h4>
+                <p>Knows the basics. Building consistency.</p>
+                <div class="tier-xp">500 – 1,999 XP</div>
+            </div>
+            <div class="tier-node">
+                <div class="tier-icon">🔥</div>
+                <h4>Advanced</h4>
+                <p>Competitive edge. Strategy + fine-tuning.</p>
+                <div class="tier-xp">2,000 – 4,999 XP</div>
+            </div>
+            <div class="tier-node">
+                <div class="tier-icon">🏆</div>
+                <h4>Pro</h4>
+                <p>Tournament-level. Continuous refinement.</p>
+                <div class="tier-xp">5,000+ XP</div>
+            </div>
+        </div>
+
+        <div class="level-filter-note">
+            Filter lessons by level:
+            <span>Beginner</span><span>Intermediate</span><span>Advanced</span><span>All Levels</span>
+        </div>
+
+        <div style="text-align:center; margin-top:1.5rem;">
+            <a href="/training" class="btn-app" style="background:var(--green); color:#fff;">Start Training →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ── MISSIONS ── -->
+<section class="section missions-section reveal">
+    <div class="container">
+        <div class="section-eyebrow">Daily Missions</div>
+        <div class="section-title">Every day there's a <span class="dim">new challenge waiting.</span></div>
+        <p class="section-sub">Training missions are tied to lessons AND course application. <span class="dim">You practice, then you prove it.</span></p>
+
+        <div class="missions-grid">
+            <div class="mission-card">
+                <div class="mission-badge">
+                    <svg viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2"/></svg>
+                    Watch &amp; Learn
+                </div>
+                <h3>Watch a lesson, retain the key insight.</h3>
+                <p>Complete a lesson in any category. Reinforces fundamentals through active recall.</p>
+                <div class="mission-reward">
+                    <span class="reward-xp">+15–30 XP</span>
+                    <span>·</span>
+                    <span class="reward-gold">+5–10 G</span>
+                </div>
+            </div>
+            <div class="mission-card">
+                <div class="mission-badge">
+                    <svg viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2"/></svg>
+                    Skill Check
+                </div>
+                <h3>Quiz yourself. Know what you know.</h3>
+                <p>Answer disc golf scenario questions. Tests knowledge retention and decision-making.</p>
+                <div class="mission-reward">
+                    <span class="reward-xp">+20–40 XP</span>
+                    <span>·</span>
+                    <span class="reward-gold">+5–15 G</span>
+                </div>
+            </div>
+            <div class="mission-card">
+                <div class="mission-badge">
+                    <svg viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2"/></svg>
+                    Course Apply
+                </div>
+                <h3>Hit a course. Apply what you learned.</h3>
+                <p>Play a round at a specific course. Missions target courses near you, driving exploration.</p>
+                <div class="mission-reward">
+                    <span class="reward-xp">+50–100 XP</span>
+                    <span>·</span>
+                    <span class="reward-gold">+10–25 G</span>
+                </div>
+            </div>
+            <div class="mission-card">
+                <div class="mission-badge">
+                    <svg viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2"/></svg>
+                    Daily Challenge
+                </div>
+                <h3>One fresh challenge. Every day at midnight.</h3>
+                <p>A rotating challenge from our pool of 13 templates. Something different keeps you coming back.</p>
+                <div class="mission-reward">
+                    <span class="reward-xp">+25–50 XP</span>
+                    <span>·</span>
+                    <span class="reward-gold">+10–20 G</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="streak-note">
+            <div class="streak-flame">🔥</div>
+            <div class="streak-text">
+                <h4>Streak Bonuses</h4>
+                <p>3 consecutive training days = +25 XP bonus. 7 days = +75 XP. Consistency compounds.</p>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top:2rem;">
+            <a href="/training" class="btn-app" style="background:var(--green); color:#fff;">Start Training →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ── VAULT ── -->
+<section class="section vault-section reveal">
+    <div class="container">
+        <div class="section-eyebrow">Vault</div>
+        <div class="section-title">Premium content. <span class="dim">Earned, not bought.</span></div>
+        <p class="section-sub">Gold is earned through activity — referrals, milestones, daily challenges. <span class="dim">Spend it on content that makes you better.</span></p>
+
+        <div class="vault-grid">
+            <div class="vault-card">
+                <span class="vault-card-icon">🎯</span>
+                <h4>Advanced Form Breakdown</h4>
+                <p>Deep-dive video series on power mechanics and arm path for advanced players.</p>
+                <div class="vault-price">💰 150 G</div>
+            </div>
+            <div class="vault-card">
+                <span class="vault-card-icon">📚</span>
+                <h4>Disc Golf Bag Guide</h4>
+                <p>Complete guide to building a tournament-ready bag from 1 disc to 18.</p>
+                <div class="vault-price">💰 100 G</div>
+            </div>
+            <div class="vault-card">
+                <span class="vault-card-icon">⚡</span>
+                <h4>Pro Tips Collection</h4>
+                <p>Curated tips from top PDGA-rated players on game management and mental prep.</p>
+                <div class="vault-price">💰 50 G</div>
+            </div>
+        </div>
+
+        <div class="vault-earn">
+            <div class="vault-earn-title">How to earn gold</div>
+            <div class="earn-items">
+                <span class="earn-item">🎁 Refer a friend</span>
+                <span class="earn-item">🏆 Hit milestones</span>
+                <span class="earn-item">🔥 Daily challenges</span>
+                <span class="earn-item">⭐ Complete categories</span>
+                <span class="earn-item">👥 Crew wars wins</span>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top:2rem;">
+            <a href="/training" class="btn-app" style="background:var(--green); color:#fff;">Earn Gold Through Training</a>
+        </div>
+    </div>
+</section>
+
+<!-- ── COURSES / PROOF ── -->
+<section class="section proof-section reveal">
+    <div class="container">
+        <div class="section-eyebrow">It's Not Just Training</div>
+        <div class="section-title">The course proves your training <span class="dim">worked.</span></div>
+        <p class="section-sub">Everything works from home. When you're ready, track rounds at 3,938+ real courses. <span class="dim">No compromises.</span></p>
+
+        <div class="proof-grid">
+            <div class="proof-card">
+                <div class="proof-stat">3,938+</div>
+                <div class="proof-label">Courses worldwide</div>
+                <div class="proof-desc">Texas, California, North Carolina, Minnesota, Georgia, Wisconsin, Ohio, and growing. GPS-gated so you actually have to be there.</div>
+            </div>
+            <div class="proof-card">
+                <div class="proof-stat">Offline</div>
+                <div class="proof-label">Scorecard works anywhere</div>
+                <div class="proof-desc">No signal on the course? No problem. Score offline, sync when you're back. Hole-by-hole, shareable round cards.</div>
+            </div>
+            <div class="proof-card">
+                <div class="proof-stat">Multi</div>
+                <div class="proof-label">Player group rounds</div>
+                <div class="proof-desc">Play with your crew. Host a round, invite friends, track everyone's score on the same layout simultaneously.</div>
+            </div>
+            <div class="proof-card">
+                <div class="proof-stat">GPS</div>
+                <div class="proof-label">800m check-in radius</div>
+                <div class="proof-desc">Real-world GPS variance accounted for. You check in from the parking lot, the practice basket, or the first tee — your call.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── FINAL CTA ── -->
+<section class="final-cta-section reveal">
+    <div class="final-cta-inner">
+        <div class="hero-badge" style="margin-bottom: 1.25rem;">Your first step is free</div>
+        <h2 class="fcta-title">Train smarter.<br><span class="green">Play better.</span></h2>
+        <p class="fcta-sub">No GPS required. No credit card. Just you, your phone, and a path to getting legitimately good at disc golf.</p>
+
+        <div class="download-row" style="justify-content: center;">
+            <a href="https://apps.apple.com/app/disc-golf-go/id6743638566" class="btn-app" target="_blank" rel="noopener" data-utm-campaign="app_download" data-utm-medium="app_store">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                App Store
+            </a>
+            <a href="/training" class="btn-web">Play in Browser →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ── FOOTER ── -->
 <footer class="site-footer">
     <div class="footer-social">
-        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok">
+        <a href="https://www.tiktok.com/@discgolfgo" target="_blank" rel="noopener" title="TikTok" data-utm-campaign="social_follow" data-utm-medium="social" data-utm-source="tiktok">
             <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.27 8.27 0 0 0 4.83 1.56V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
         </a>
-        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram">
+        <a href="https://www.instagram.com/discgolfgo" target="_blank" rel="noopener" title="Instagram" data-utm-campaign="social_follow" data-utm-medium="social" data-utm-source="instagram">
             <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
         </a>
-        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter">
+        <a href="https://twitter.com/discgolfgo" target="_blank" rel="noopener" title="X / Twitter" data-utm-campaign="social_follow" data-utm-medium="social" data-utm-source="x_twitter">
             <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         </a>
-        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook">
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener" title="Facebook" data-utm-campaign="social_follow" data-utm-medium="social" data-utm-source="facebook">
             <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
         </a>
     </div>
     <div class="footer-links">
-        <a href="mailto:contact@discgolfgo.com">contact@discgolfgo.com</a>
+        <a href="/login">Login</a>
+        <a href="/register">Sign Up</a>
+        <a href="/training">Training</a>
+        <a href="/leaderboard">Leaderboard</a>
         <a href="/privacy">Privacy</a>
         <a href="/delete-account">Delete Account</a>
-        <a href="/leaderboard">Leaderboard</a>
-        <a href="/register">Play in Browser</a>
     </div>
-    <p class="footer-copy">Disc Golf Go &copy; 2026 &nbsp;&middot;&nbsp; discgolfgo.com</p>
+    <p class="footer-copy">Disc Golf Go © 2026 &nbsp;&middot;&nbsp; discgolfgo.app &nbsp;&middot;&nbsp; Built by Polsia</p>
 </footer>
-
-<!-- Dynamic course count -->
-<script>
-(function() {
-    fetch('/api/courses/count')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data && data.total) {
-                var el = document.getElementById('stat-courses');
-                if (el) el.textContent = data.total + '+';
-            }
-        })
-        .catch(function() {});
-})();
-</script>
 
 <!-- Scroll reveal -->
 <script>
@@ -953,69 +1064,8 @@ body::before {
 })();
 </script>
 
-<!-- Feedback form -->
-<script>
-(function() {
-    function setFieldError(id, msg) {
-        var wrap = document.getElementById(id + '-wrap');
-        var errEl = document.getElementById(id + '-error');
-        if (wrap) wrap.classList.remove('has-error');
-        if (errEl) errEl.textContent = '';
-        if (msg) {
-            if (wrap) wrap.classList.add('has-error');
-            if (errEl) errEl.textContent = msg;
-        }
-    }
-
-    function clearAllErrors() {
-        ['ff-name', 'ff-email', 'ff-category', 'ff-message'].forEach(function(id) {
-            setFieldError(id, '');
-        });
-    }
-
-    window.submitFeedback = function() {
-        clearAllErrors();
-        var btn = document.getElementById('ff-submit');
-        var name = document.getElementById('ff-name').value.trim();
-        var email = document.getElementById('ff-email').value.trim();
-        var category = document.getElementById('ff-category').value;
-        var message = document.getElementById('ff-message').value;
-        var valid = true;
-
-        if (!message || message.length < 10) {
-            setFieldError('ff-message', 'Please enter at least 10 characters.');
-            valid = false;
-        }
-
-        if (!valid) return;
-
-        btn.disabled = true;
-        btn.textContent = 'Sending...';
-
-        fetch('/api/feedback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: name || null, email: email || null, category: category, message: message })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.success) {
-                document.getElementById('feedback-form-container').style.display = 'none';
-                document.getElementById('feedback-success').classList.add('show');
-            } else {
-                setFieldError('ff-message', data.error || 'Something went wrong. Please try again.');
-                btn.disabled = false;
-                btn.textContent = 'Send Feedback';
-            }
-        })
-        .catch(function() {
-            setFieldError('ff-message', 'Network error. Please check your connection and try again.');
-            btn.disabled = false;
-            btn.textContent = 'Send Feedback';
-        });
-    };
-})();
-</script>
+<script src="/js/utm.js" defer></script>
+<script>document.addEventListener('DOMContentLoaded', function(){ window.DGGO_UTM && window.DGGO_UTM.bindOutboundTracking(); });</script>
 
 </body>
 </html>

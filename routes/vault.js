@@ -1,8 +1,9 @@
 /**
  * Vault Route — Disc Golf Go
- * Handles: shop items, player inventory, boost activation, gold tracking
+ * Handles: My Library (completed lesson videos + resources),
+ *          Bonus Content (gold-purchasable premium instructor videos)
  *
- * Table names: vault_items, player_inventory, active_boosts, gold_transactions
+ * Table names: vault_training_items, player_vault_training_unlocks, gold_transactions
  * Auth: uses req.player.id (set by requireAuth middleware)
  */
 
@@ -153,9 +154,6 @@ async function addToInventory(db, playerId, itemId, acquiredVia = 'drop') {
   }
 }
 
-// Real-money (Stripe/USD) purchase flows removed — Apple App Store compliance.
-// All vault items are purchasable with gold only. See CLAUDE.md Recent changes.
-
 // ──────────────────────────────────────────────
 // ROUTER
 // ──────────────────────────────────────────────
@@ -164,310 +162,177 @@ const routerFactory = ({ pool }) => {
   const router = express.Router();
 
   // ────────────────────────────────────────────────────────────────
-  // GET /api/vault/items — shop catalog (public, no auth needed for browsing)
+  // GET /api/vault/library — completed lesson videos + reading links
+  // Authenticated: returns lessons grouped by category
+  // Unauthenticated: returns { authenticated: false }
   // ────────────────────────────────────────────────────────────────
-  router.get('/vault/items', async (req, res) => {
+  router.get('/vault/library', requireAuth(pool), async (req, res) => {
     try {
-      const result = await pool.query(
-        `SELECT id, name, description, icon, item_type AS type,
-                effect_value, duration_minutes, rarity, gold_cost
-         FROM vault_items
-         WHERE is_purchasable = true
-         ORDER BY sort_order`
-      );
-      res.json({ items: result.rows });
-    } catch (err) {
-      console.error('vault/items error:', err.message);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
-
-  // ────────────────────────────────────────────────────────────────
-  // GET /api/vault/shop — alias for items, also returns gold balance
-  // ────────────────────────────────────────────────────────────────
-  router.get('/vault/shop', requireAuth(pool), async (req, res) => {
-    try {
-      const [itemsResult, playerResult] = await Promise.all([
-        pool.query(
-          `SELECT id, name, description, icon, item_type AS type,
-                  effect_value, duration_minutes, rarity, gold_cost
-           FROM vault_items WHERE is_purchasable = true ORDER BY sort_order`
-        ),
-        pool.query('SELECT gold FROM players WHERE id = $1', [req.player.id]),
-      ]);
-      res.json({
-        items: itemsResult.rows,
-        gold_balance: playerResult.rows[0]?.gold ?? 0,
-      });
-    } catch (err) {
-      console.error('vault/shop error:', err.message);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
-
-  // ────────────────────────────────────────────────────────────────
-  // GET /api/vault/inventory — inventory + active boosts + gold balance
-  // Shape expected by vault.html: { gold, inventory: [...], active_boosts: [...] }
-  // ────────────────────────────────────────────────────────────────
-  router.get('/vault/inventory', requireAuth(pool), async (req, res) => {
-    try {
-      const [goldRes, invRes, boostRes] = await Promise.all([
-        pool.query('SELECT gold FROM players WHERE id = $1', [req.player.id]),
-        pool.query(
-          `SELECT pi.id, pi.item_id, pi.quantity, pi.acquired_via, pi.acquired_at,
-                  vi.name, vi.description, vi.icon,
-                  vi.item_type AS type,
-                  vi.effect_value, vi.duration_minutes, vi.rarity, vi.gold_cost
-           FROM player_inventory pi
-           JOIN vault_items vi ON vi.id = pi.item_id
-           WHERE pi.player_id = $1 AND pi.quantity > 0
-           ORDER BY vi.sort_order, vi.name`,
-          [req.player.id]
-        ),
-        pool.query(
-          `SELECT ab.id, ab.item_id, ab.boost_type AS type, ab.effect_value,
-                  ab.activated_at, ab.expires_at,
-                  vi.name, vi.icon, vi.rarity
-           FROM active_boosts ab
-           JOIN vault_items vi ON vi.id = ab.item_id
-           WHERE ab.player_id = $1 AND ab.expires_at > NOW()
-           ORDER BY ab.expires_at ASC`,
-          [req.player.id]
-        ),
-      ]);
-
-      res.json({
-        gold: goldRes.rows[0]?.gold ?? 0,
-        inventory: invRes.rows,
-        active_boosts: boostRes.rows,
-      });
-    } catch (err) {
-      console.error('vault/inventory error:', err.message);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
-
-  // ────────────────────────────────────────────────────────────────
-  // POST /api/vault/buy — purchase an item (deduct gold, add to inventory)
-  // Body: { item_id }
-  // ────────────────────────────────────────────────────────────────
-  router.post('/vault/buy', requireAuth(pool), async (req, res) => {
-    const { item_id } = req.body;
-    if (!item_id) return res.status(400).json({ error: 'item_id required' });
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      // Lock player row and check gold
-      const playerRes = await client.query(
-        'SELECT gold FROM players WHERE id = $1 FOR UPDATE',
+      // Get completed lesson IDs for this player
+      const completedRows = await pool.query(
+        `SELECT lesson_id FROM training_completions WHERE player_id = $1`,
         [req.player.id]
       );
-      if (!playerRes.rows.length) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Player not found' });
-      }
-      const currentGold = playerRes.rows[0].gold;
+      const completedIds = completedRows.rows.map(r => r.lesson_id);
 
-      // Load item
-      const itemRes = await client.query(
-        `SELECT id, name, icon, item_type AS type, effect_value,
-                duration_minutes, rarity, gold_cost
-         FROM vault_items WHERE id = $1 AND is_purchasable = true`,
-        [item_id]
+      if (!completedIds.length) {
+        return res.json({ authenticated: true, categories: [] });
+      }
+
+      // Get completed lessons that have a youtube_url, joined to categories
+      const lessonsResult = await pool.query(
+        `SELECT l.id, l.title, l.youtube_url, l.youtube_title, l.youtube_channel,
+                c.id AS category_id, c.name AS category_name,
+                c.icon AS category_icon, c.slug AS category_slug
+         FROM training_lessons l
+         JOIN training_categories c ON c.id = l.category_id
+         WHERE l.id = ANY($1::int[])
+           AND l.is_active = true
+           AND l.youtube_url IS NOT NULL
+           AND l.youtube_url != ''
+         ORDER BY c.sort_order, l.sort_order`,
+        [completedIds]
       );
-      if (!itemRes.rows.length) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Item not found' });
-      }
-      const item = itemRes.rows[0];
 
-      if (currentGold < item.gold_cost) {
-        await client.query('ROLLBACK');
-        return res.status(402).json({
-          error: 'Not enough gold',
-          gold: currentGold,
-          cost: item.gold_cost,
-          shortfall: item.gold_cost - currentGold,
+      if (!lessonsResult.rows.length) {
+        return res.json({ authenticated: true, categories: [] });
+      }
+
+      // Fetch resources for all these lessons
+      const resourceRows = await pool.query(
+        `SELECT lr.lesson_id, lr.title, lr.url, lr.resource_type
+         FROM lesson_resources lr
+         WHERE lr.lesson_id = ANY($1::int[])
+         ORDER BY lr.display_order ASC, lr.id ASC`,
+        [lessonsResult.rows.map(l => l.id)]
+      );
+
+      // Group resources by lesson_id
+      const resourcesByLesson = {};
+      for (const r of resourceRows.rows) {
+        if (!resourcesByLesson[r.lesson_id]) resourcesByLesson[r.lesson_id] = [];
+        resourcesByLesson[r.lesson_id].push({
+          title: r.title,
+          url: r.url,
+          resource_type: r.resource_type,
         });
       }
 
-      // Deduct gold + record transaction
-      await client.query(
-        'UPDATE players SET gold = gold - $1 WHERE id = $2',
-        [item.gold_cost, req.player.id]
-      );
-      await client.query(
-        `INSERT INTO gold_transactions (player_id, amount, event_type, metadata)
-         VALUES ($1, $2, 'purchase', $3)`,
-        [req.player.id, -item.gold_cost, JSON.stringify({ item_id: item.id, item_name: item.name })]
-      );
-
-      // Upsert inventory
-      await client.query(
-        `INSERT INTO player_inventory (player_id, item_id, quantity, acquired_via)
-         VALUES ($1, $2, 1, 'purchase')
-         ON CONFLICT (player_id, item_id)
-         DO UPDATE SET quantity = player_inventory.quantity + 1`,
-        [req.player.id, item.id]
-      );
-
-      await client.query('COMMIT');
-
-      const newGoldRes = await pool.query('SELECT gold FROM players WHERE id = $1', [req.player.id]);
-      res.json({
-        success: true,
-        item_name: item.name,
-        gold_spent: item.gold_cost,
-        gold: newGoldRes.rows[0].gold,
-      });
-    } catch (err) {
-      await client.query('ROLLBACK');
-      console.error('vault/buy error:', err.message);
-      res.status(500).json({ error: 'Server error' });
-    } finally {
-      client.release();
-    }
-  });
-
-  // ────────────────────────────────────────────────────────────────
-  // POST /api/vault/activate — activate a boost from inventory
-  // Body: { inventory_id } — the player_inventory.id row
-  // Stacks duration if same boost_type already active
-  // ────────────────────────────────────────────────────────────────
-  router.post('/vault/activate', requireAuth(pool), async (req, res) => {
-    const { inventory_id } = req.body;
-    if (!inventory_id) return res.status(400).json({ error: 'inventory_id required' });
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      // Get inventory row + item details
-      const invRes = await client.query(
-        `SELECT pi.id, pi.quantity, pi.item_id,
-                vi.name, vi.icon, vi.item_type AS type,
-                vi.effect_value, vi.duration_minutes, vi.rarity
-         FROM player_inventory pi
-         JOIN vault_items vi ON vi.id = pi.item_id
-         WHERE pi.id = $1 AND pi.player_id = $2 AND pi.quantity > 0`,
-        [inventory_id, req.player.id]
-      );
-      if (!invRes.rows.length) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Item not found in inventory' });
-      }
-      const inv = invRes.rows[0];
-
-      if (!inv.type || !inv.type.startsWith('boost_')) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ error: 'Item is not a boost' });
+      // Group lessons by category
+      const categoryMap = {};
+      for (const lesson of lessonsResult.rows) {
+        if (!categoryMap[lesson.category_id]) {
+          categoryMap[lesson.category_id] = {
+            id: lesson.category_id,
+            name: lesson.category_name,
+            icon: lesson.category_icon,
+            slug: lesson.category_slug,
+            lessons: [],
+          };
+        }
+        categoryMap[lesson.category_id].lessons.push({
+          id: lesson.id,
+          title: lesson.title,
+          youtube_url: lesson.youtube_url,
+          youtube_title: lesson.youtube_title,
+          youtube_channel: lesson.youtube_channel,
+          resources: resourcesByLesson[lesson.id] || [],
+        });
       }
 
-      // Decrement quantity
-      await client.query(
-        'UPDATE player_inventory SET quantity = quantity - 1 WHERE id = $1',
-        [inventory_id]
+      const categories = Object.values(categoryMap).sort((a, b) => {
+        // Use sort_order from DB — fetch it explicitly
+        return 0;
+      });
+
+      res.json({ authenticated: true, categories });
+    } catch (err) {
+      console.error('[vault] GET /library error:', err.message);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // GET /api/vault/bonus — premium instructor videos catalog
+  // Public browse (no auth required), purchased flag + gold_balance require auth
+  // ────────────────────────────────────────────────────────────────
+  router.get('/vault/bonus', async (req, res) => {
+    try {
+      const itemsResult = await pool.query(
+        `SELECT id, name, description, preview, icon, gold_cost, item_type, content,
+                instructor_name, youtube_url, thumbnail_url
+         FROM vault_training_items
+         WHERE is_active = true
+           AND youtube_url IS NOT NULL
+           AND youtube_url <> ''
+         ORDER BY sort_order, id`
       );
 
-      // Check if same boost_type is already active → stack duration
-      const existingRes = await client.query(
-        `SELECT id, expires_at FROM active_boosts
-         WHERE player_id = $1 AND boost_type = $2 AND expires_at > NOW()
-         ORDER BY expires_at DESC LIMIT 1`,
-        [req.player.id, inv.type]
-      );
+      let purchasedIds = new Set();
+      let goldBalance = null;
 
-      let expiresAt;
-      if (existingRes.rows.length) {
-        // Extend existing boost duration
-        const currentExpiry = new Date(existingRes.rows[0].expires_at);
-        expiresAt = new Date(currentExpiry.getTime() + inv.duration_minutes * 60 * 1000);
-        await client.query(
-          'UPDATE active_boosts SET expires_at = $1 WHERE id = $2',
-          [expiresAt.toISOString(), existingRes.rows[0].id]
-        );
-      } else {
-        // Create new boost
-        expiresAt = new Date(Date.now() + inv.duration_minutes * 60 * 1000);
-        await client.query(
-          `INSERT INTO active_boosts (player_id, item_id, boost_type, effect_value, expires_at)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [req.player.id, inv.item_id, inv.type, inv.effect_value, expiresAt.toISOString()]
-        );
+      // Only check purchased status if auth is present
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const { JWT_SECRET } = require('../middleware/auth');
+        const jwt = require('jsonwebtoken');
+        try {
+          const decoded = jwt.verify(authHeader.slice(7), JWT_SECRET);
+          if (decoded && decoded.id) {
+            const playerId = decoded.id;
+
+            const [playerResult, purchasedResult] = await Promise.all([
+              pool.query('SELECT gold FROM players WHERE id = $1', [playerId]),
+              pool.query(
+                `SELECT item_id FROM player_vault_training_unlocks WHERE player_id = $1`,
+                [playerId]
+              ),
+            ]);
+
+            goldBalance = playerResult.rows[0]?.gold ?? 0;
+            purchasedIds = new Set(purchasedResult.rows.map(r => r.item_id));
+          }
+        } catch (_e) {
+          // Invalid token — treat as unauthenticated for purchased/gold
+        }
       }
 
-      await client.query('COMMIT');
+      const typeLabels = {
+        premium_tip: 'Premium Tip',
+        disc_guide: 'Disc Guide',
+        technique_breakdown: 'Technique Breakdown',
+        instructor_video: 'Instructor Video',
+      };
+
+      const items = itemsResult.rows.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        preview: item.preview,
+        icon: item.icon,
+        gold_cost: item.gold_cost,
+        item_type: item.item_type,
+        type_label: typeLabels[item.item_type] || item.item_type,
+        purchased: purchasedIds.has(item.id),
+        instructor_name: item.instructor_name || null,
+        youtube_url: item.youtube_url || null,
+        thumbnail_url: item.thumbnail_url || null,
+        content: item.content || null,
+      }));
 
       res.json({
-        success: true,
-        boost: {
-          item_name: inv.name,
-          icon: inv.icon,
-          type: inv.type,
-          effect_value: inv.effect_value,
-          expires_at: expiresAt.toISOString(),
-          stacked: existingRes.rows.length > 0,
-        },
+        items,
+        gold_balance: goldBalance,
+        authenticated: goldBalance !== null,
       });
     } catch (err) {
-      await client.query('ROLLBACK');
-      console.error('vault/activate error:', err.message);
-      res.status(500).json({ error: 'Server error' });
-    } finally {
-      client.release();
-    }
-  });
-
-  // ────────────────────────────────────────────────────────────────
-  // GET /api/vault/active-boosts — profile widget endpoint
-  // Returns: { gold, active_boosts: [...] }
-  // ────────────────────────────────────────────────────────────────
-  router.get('/vault/active-boosts', requireAuth(pool), async (req, res) => {
-    try {
-      const [boostRes, goldRes] = await Promise.all([
-        pool.query(
-          `SELECT ab.id, ab.boost_type AS type, ab.effect_value, ab.expires_at,
-                  vi.name, vi.icon
-           FROM active_boosts ab
-           JOIN vault_items vi ON vi.id = ab.item_id
-           WHERE ab.player_id = $1 AND ab.expires_at > NOW()
-           ORDER BY ab.expires_at ASC`,
-          [req.player.id]
-        ),
-        pool.query('SELECT gold FROM players WHERE id = $1', [req.player.id]),
-      ]);
-      res.json({
-        active_boosts: boostRes.rows,
-        gold: goldRes.rows[0]?.gold ?? 0,
-      });
-    } catch (err) {
-      console.error('vault/active-boosts error:', err.message);
+      console.error('[vault] GET /bonus error:', err.message);
       res.status(500).json({ error: 'Server error' });
     }
   });
 
   // ────────────────────────────────────────────────────────────────
-  // GET /api/boosts/active — original endpoint (used by checkins/rounds)
-  // ────────────────────────────────────────────────────────────────
-  router.get('/boosts/active', requireAuth(pool), async (req, res) => {
-    try {
-      const boosts = await getActiveBoosts(pool, req.player.id);
-      res.json({
-        boosts: boosts.map(b => ({
-          ...b,
-          remaining_ms: Math.max(0, new Date(b.expires_at) - Date.now()),
-        })),
-      });
-    } catch (err) {
-      console.error('boosts/active error:', err.message);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
-
-  // ────────────────────────────────────────────────────────────────
-  // GET /api/vault/gold — gold balance + recent transactions
+  // GET /api/vault/gold — gold balance + recent transactions (still used)
   // ────────────────────────────────────────────────────────────────
   router.get('/vault/gold', requireAuth(pool), async (req, res) => {
     try {
@@ -484,8 +349,92 @@ const routerFactory = ({ pool }) => {
         transactions: txResult.rows,
       });
     } catch (err) {
-      console.error('vault/gold error:', err.message);
+      console.error('[vault/gold] error:', err.message);
       res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // POST /api/vault/training/unlock — purchase a bonus item with gold
+  // Body: { item_id }
+  // ────────────────────────────────────────────────────────────────
+  router.post('/vault/training/unlock', requireAuth(pool), async (req, res) => {
+    const { item_id } = req.body;
+    if (!item_id) return res.status(400).json({ error: 'item_id required' });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const playerRes = await client.query(
+        'SELECT gold FROM players WHERE id = $1 FOR UPDATE',
+        [req.player.id]
+      );
+      if (!playerRes.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Player not found' });
+      }
+      const currentGold = playerRes.rows[0].gold;
+
+      const itemRes = await client.query(
+        `SELECT id, name, gold_cost FROM vault_training_items WHERE id = $1 AND is_active = true`,
+        [item_id]
+      );
+      if (!itemRes.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Training item not found' });
+      }
+      const item = itemRes.rows[0];
+
+      const alreadyUnlocked = await client.query(
+        `SELECT 1 FROM player_vault_training_unlocks WHERE player_id = $1 AND item_id = $2`,
+        [req.player.id, item_id]
+      );
+      if (alreadyUnlocked.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'Already unlocked', item_name: item.name });
+      }
+
+      if (currentGold < item.gold_cost) {
+        await client.query('ROLLBACK');
+        return res.status(402).json({
+          error: 'Not enough gold',
+          gold: currentGold,
+          cost: item.gold_cost,
+          shortfall: item.gold_cost - currentGold,
+        });
+      }
+
+      await client.query(
+        'UPDATE players SET gold = gold - $1 WHERE id = $2',
+        [item.gold_cost, req.player.id]
+      );
+      await client.query(
+        `INSERT INTO gold_transactions (player_id, amount, event_type, metadata)
+         VALUES ($1, $2, 'training_unlock', $3)`,
+        [req.player.id, -item.gold_cost, JSON.stringify({ item_id: item.id, item_name: item.name })]
+      );
+
+      await client.query(
+        `INSERT INTO player_vault_training_unlocks (player_id, item_id) VALUES ($1, $2)`,
+        [req.player.id, item_id]
+      );
+
+      await client.query('COMMIT');
+
+      const newGoldRes = await pool.query('SELECT gold FROM players WHERE id = $1', [req.player.id]);
+      res.json({
+        success: true,
+        item_name: item.name,
+        gold_spent: item.gold_cost,
+        gold: newGoldRes.rows[0].gold,
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('[vault/training/unlock] error:', err.message);
+      res.status(500).json({ error: 'Server error' });
+    } finally {
+      client.release();
     }
   });
 
@@ -494,7 +443,7 @@ const routerFactory = ({ pool }) => {
 
 module.exports = routerFactory;
 
-// Utility exports (used by rounds.js, checkins.js, challenges.js)
+// Utility exports (used by rounds.js, challenges.js)
 module.exports.getActiveBoosts = getActiveBoosts;
 module.exports.applyXpBoost = applyXpBoost;
 module.exports.applyGoldBoost = applyGoldBoost;

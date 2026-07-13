@@ -32,9 +32,8 @@ const stylesXml = `<?xml version="1.0" encoding="utf-8"?>
     <!-- Launch theme: Android 12+ system splash with branded background + icon -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#0d2b33</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_splash</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
-        <item name="android:background">@drawable/splash</item>
     </style>
 
 </resources>

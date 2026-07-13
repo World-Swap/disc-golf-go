@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -31,16 +33,9 @@
         .page-title { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.2rem; }
         .page-sub { color: var(--text3); font-size: 0.9rem; }
 
-        /* ── Category tabs (scrollable) ───────────────────────────────── */
-        .tab-outer {
-            margin-bottom: 1.25rem; position: relative;
-        }
-        .tab-outer::after {
-            content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 32px;
-            background: linear-gradient(to right, transparent, var(--bg));
-            pointer-events: none;
-        }
+        /* ── Category tabs ────────────────────────────────────────────── */
         .tabs {
+            margin-bottom: 0.65rem;
             display: flex; gap: 0.35rem;
             background: var(--surface2);
             border: 1px solid var(--border);
@@ -321,7 +316,7 @@
 <!-- Top header -->
 <header class="top-header">
     <a href="/" class="header-logo">
-        <img src="/logo.png?v=3" width="30" height="30" loading="eager" alt="Disc Golf Go logo">
+        <img src="/logo.png?v=7" width="30" height="30" loading="eager" alt="Disc Golf Go logo">
         Disc Golf <span>Go</span>
     </a>
     <div class="header-actions">
@@ -347,18 +342,19 @@
         <p class="page-sub">Top players across every stat. Where do you rank?</p>
     </div>
 
-    <div class="tab-outer">
-        <div class="tabs" id="tabs">
-            <button class="tab active" data-cat="overall">⭐ Overall</button>
-            <button class="tab" data-cat="checkins">📍 Check-ins</button>
-            <button class="tab" data-cat="rounds">🔄 Rounds</button>
-            <button class="tab" data-cat="birdies">🐦 Birdies</button>
-            <button class="tab" data-cat="aces">🎯 Aces</button>
-            <button class="tab" data-cat="challenges">⚔️ Quests</button>
-            <button class="tab" data-cat="battles">🥊 Battles</button>
-            <button class="tab" data-cat="courses">🗺️ Courses</button>
-            <button class="tab" data-cat="streak">🔥 Streak</button>
-        </div>
+    <!-- Row 1: stat tabs -->
+    <div class="tabs" id="stat-tabs">
+        <button class="tab active" data-tab="overall">⭐ Overall</button>
+        <button class="tab" data-tab="lessons">📚 Lessons</button>
+        <button class="tab" data-tab="streak">🔥 Streak</button>
+        <button class="tab" data-tab="challenges">🎯 Challenges</button>
+    </div>
+
+    <!-- Row 2: period tabs -->
+    <div style="display:flex;gap:0.35rem;margin-bottom:0.85rem;" id="period-tabs">
+        <button class="tab active" data-period="alltime" style="flex:1;padding:0.45rem;background:var(--surface);color:var(--green);border:1px solid var(--green-border);border-radius:9px;font-weight:700;font-size:0.8rem;font-family:inherit;cursor:pointer;">All Time</button>
+        <button class="tab" data-period="week" style="flex:1;padding:0.45rem;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:9px;font-weight:700;font-size:0.8rem;font-family:inherit;cursor:pointer;">This Week</button>
+        <button class="tab" data-period="month" style="flex:1;padding:0.45rem;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:9px;font-weight:700;font-size:0.8rem;font-family:inherit;cursor:pointer;">This Month</button>
     </div>
 
     <div id="lb-content"></div>
@@ -390,32 +386,25 @@
 </footer>
 
 <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+<!-- BOTTOM TAB BAR — 4 tabs -->
 <nav class="bottom-tab-bar">
-    <a class="tab-item" href="/crews">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label">Crews</span>
-    </a>
-    <a class="tab-item" href="/battles">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Battles</span>
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
     </a>
     <a class="tab-item" href="/scorecard">
         <span class="tab-icon">🥏</span>
         <span class="tab-label">Play</span>
     </a>
-    <a class="tab-item" href="/profile">
-        <span class="tab-icon">👤</span>
-        <span class="tab-label">Profile</span>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
     </a>
-    <a class="tab-item" href="/challenges">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-label">Quests</span>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
     </a>
-    <a class="tab-item" href="/map">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Map</span>
-    </a>
-</nav>
+    </nav>
 
 <script>
 // ── Dark mode toggle ──────────────────────────────────────────────────────────
@@ -449,50 +438,60 @@ function getAuthHeaders() {
     return h;
 }
 
-// ── Level helpers ─────────────────────────────────────────────────────────────
-function getLevelTitle(lvl) {
-    if (lvl < 5) return { icon: '🥏', title: 'Rookie' };
-    if (lvl < 10) return { icon: '⛳', title: 'Amateur' };
-    if (lvl < 15) return { icon: '🎯', title: 'Intermediate' };
-    if (lvl < 25) return { icon: '🏅', title: 'Advanced' };
-    if (lvl < 40) return { icon: '🥇', title: 'Pro' };
-    if (lvl < 60) return { icon: '👑', title: 'Legend' };
-    return { icon: '🐐', title: 'GOAT' };
-}
-
 function initials(name) {
     if (!name) return '?';
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
 }
 
-// ── Category metadata ─────────────────────────────────────────────────────────
-const CAT_META = {
-    overall:    { icon: '⭐', title: 'Overall XP',         desc: 'Total experience points earned across everything', unit: 'XP', fmt: n => Number(n).toLocaleString() },
-    checkins:   { icon: '📍', title: 'Most Check-ins',     desc: 'Total course check-ins logged', unit: 'check-ins', fmt: n => n },
-    rounds:     { icon: '🔄', title: 'Rounds Completed',   desc: 'Full rounds finished on the scorecard', unit: 'rounds', fmt: n => n },
-    birdies:    { icon: '🐦', title: 'Most Birdies',       desc: 'Holes finished one stroke under par', unit: 'birdies', fmt: n => n },
-    aces:       { icon: '🎯', title: 'Most Aces',          desc: 'Holes-in-one — the rarest shot in disc golf', unit: 'aces', fmt: n => n },
-    challenges: { icon: '⚔️', title: 'Quests Done',   desc: 'Daily, weekly, monthly and all-time quests completed', unit: 'done', fmt: n => n },
-    battles:    { icon: '🥊', title: 'Battle Wins',        desc: 'Head-to-head PvP victories', unit: 'wins', fmt: n => n },
-    courses:    { icon: '🗺️', title: 'Courses Explored',  desc: 'Unique disc golf courses visited', unit: 'courses', fmt: n => n },
-    streak:     { icon: '🔥', title: 'Best Streak',        desc: 'Longest consecutive login streak ever achieved', unit: 'days', fmt: n => n },
+// ── Tab metadata ──────────────────────────────────────────────────────────────
+const TAB_META = {
+    overall:    { icon: '⭐', title: 'Overall XP',         desc: 'Total training XP earned from lessons',            unit: 'XP',      fmt: n => Number(n).toLocaleString() },
+    lessons:    { icon: '📚', title: 'Most Lessons',       desc: 'Total training lessons completed',                  unit: 'lessons', fmt: n => n },
+    streak:     { icon: '🔥', title: 'Training Streak',    desc: 'Current consecutive days of training activity',    unit: 'days',    fmt: n => n },
+    challenges: { icon: '🎯', title: 'Challenges Won',     desc: 'Daily challenges completed',                        unit: 'done',    fmt: n => n },
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let activeCategory = 'overall';
+let activeTab = 'overall';
+let activePeriod = 'alltime';
 let cache = {};
 
+// ── Period toggle ─────────────────────────────────────────────────────────────
+function setPeriod(period) {
+    activePeriod = period;
+    document.querySelectorAll('#period-tabs .tab').forEach(function(btn) {
+        if (btn.dataset.period === period) {
+            btn.style.background = 'var(--surface)';
+            btn.style.color = 'var(--green)';
+            btn.style.border = '1px solid var(--green-border)';
+        } else {
+            btn.style.background = 'var(--surface2)';
+            btn.style.color = 'var(--text3)';
+            btn.style.border = '1px solid var(--border)';
+        }
+    });
+    cache = {};
+    render(activeTab);
+}
+
 // ── Load data ─────────────────────────────────────────────────────────────────
-async function loadCategory(cat) {
-    if (cache[cat]) return cache[cat];
-    const res = await fetch('/api/leaderboard?category=' + cat, { headers: getAuthHeaders() });
+async function loadTab(tab) {
+    const cacheKey = tab + '|' + activePeriod;
+    if (cache[cacheKey]) return cache[cacheKey];
+    const url = '/api/leaderboard?tab=' + tab + '&period=' + activePeriod;
+    const res = await fetch(url, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed');
     const data = await res.json();
-    cache[cat] = data;
+    cache[cacheKey] = data;
     return data;
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function avatarHTML(p, cls) {
     const me = cls || '';
     if (p.profile_photo_url) {
@@ -509,31 +508,29 @@ function podiumAvatarHTML(p, isMe) {
     return `<div class="podium-avatar${ring}">${escHtml(initials(p.display_name))}</div>`;
 }
 
-function escHtml(s) {
-    if (s == null) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function rankTierBadge(tier) {
+    if (tier === 'gold') return '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px;background:rgba(212,160,23,0.15);color:#d4a017;border:1px solid rgba(212,160,23,0.3);">🥇 Gold</span>';
+    if (tier === 'silver') return '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px;background:rgba(110,117,128,0.12);color:#8a9199;border:1px solid rgba(110,117,128,0.25);">🥈 Silver</span>';
+    if (tier === 'bronze') return '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px;background:rgba(160,82,45,0.12);color:#a0522d;border:1px solid rgba(160,82,45,0.25);">🥉 Bronze</span>';
+    return '';
 }
 
+// ── Render: podium ────────────────────────────────────────────────────────────
 function renderPodium(players, meta) {
     const top3 = players.filter(p => p.rank <= 3 && !p.out_of_top).slice(0, 3);
-    if (top3.length < 2) return ''; // not enough for podium
+    if (top3.length < 2) return '';
 
-    // Reorder: 2, 1, 3
     const order = [top3[1], top3[0], top3[2]].filter(Boolean);
     const crowns = ['🥈', '🥇', '🥉'];
     const rankClasses = ['rank-2', 'rank-1', 'rank-3'];
 
     const slots = order.map((p, i) => {
-        const rankClass = rankClasses[i];
-        const crown = crowns[i];
-        const lt = getLevelTitle(p.level || 1);
         const statFmt = meta.fmt(p.stat_value);
         return `
-            <div class="podium-slot ${rankClass}">
-                <span class="podium-crown">${crown}</span>
+            <div class="podium-slot ${rankClasses[i]}">
+                <span class="podium-crown">${crowns[i]}</span>
                 ${podiumAvatarHTML(p, p.is_me)}
                 <div class="podium-name">${escHtml(p.display_name)}${p.is_me ? ' 👈' : ''}</div>
-                <div class="podium-level">${escHtml(lt.icon)} Lv.${p.level || 1}</div>
                 <div class="podium-stat">${statFmt}</div>
                 <div class="podium-stat-label">${meta.unit}</div>
             </div>`;
@@ -542,13 +539,18 @@ function renderPodium(players, meta) {
     return `<div class="podium-section"><div class="podium">${slots.join('')}</div></div>`;
 }
 
+// ── Render: list ──────────────────────────────────────────────────────────────
 function renderList(players, meta) {
     if (!players || players.length === 0) {
-        return `<div class="empty-state"><span class="empty-icon">🥏</span><div>No players yet in this category.</div><div class="empty-sub">Be the first! Go play some disc golf.</div></div>`;
+        return `<div class="empty-state">
+            <span class="empty-icon">🏆</span>
+            <div>No rankings yet — complete lessons to earn your spot</div>
+            <div style="margin-top:1rem;"><a href="/training" style="color:var(--green);font-weight:700;text-decoration:underline;">Start Training</a></div>
+        </div>`;
     }
 
-    const top100 = players.filter(p => !p.out_of_top);
-    const myRow  = players.find(p => p.out_of_top);
+    const topRows = players.filter(p => !p.out_of_top);
+    const myRow   = players.find(p => p.out_of_top);
 
     const rankMedal = r => {
         if (r === 1) return `<span class="rank-medal">🥇</span>`;
@@ -565,15 +567,20 @@ function renderList(players, meta) {
     };
 
     const renderRow = p => {
-        const lt = getLevelTitle(p.level || 1);
         const meClass = p.is_me ? ' is-me' : '';
         const otClass = p.out_of_top ? ' out-of-top' : '';
         const avMe = p.is_me ? 'me-ring' : '';
         const statFmt = meta.fmt(p.stat_value);
+        const tier = p.rank_tier || null;
+        const tierAttr = tier ? ` data-tier="${tier}"` : '';
+
+        const secondaryStat = activeTab !== 'overall'
+            ? `<span style="font-size:0.7rem;color:var(--text3);display:block;">${Number(p.total_xp || 0).toLocaleString()} XP</span>`
+            : '';
 
         return `
-            <div class="player-row${meClass}${otClass}${rankRowClass(p.rank)}">
-                <div class="rank-cell">${rankMedal(p.rank)}</div>
+            <div class="player-row${meClass}${otClass}${rankRowClass(p.rank)}"${tierAttr}>
+                <div class="rank-cell">${rankMedal(p.rank)}${rankTierBadge(tier)}</div>
                 <div class="player-info">
                     ${avatarHTML(p, avMe)}
                     <div class="player-text">
@@ -582,18 +589,16 @@ function renderList(players, meta) {
                             ${p.is_me ? '<span class="you-chip">You</span>' : ''}
                         </div>
                         <div class="player-meta">
-                            <span class="level-pill">${escHtml(lt.icon)} Lv.${p.level || 1} ${escHtml(lt.title)}</span>
-                            ${p.username ? ' &nbsp;<span style="color:var(--text3);">@' + escHtml(p.username) + '</span>' : ''}
+                            ${p.username ? '<span style="color:var(--text3);">@' + escHtml(p.username) + '</span>' : ''}
                         </div>
                     </div>
                 </div>
-                <div class="stat-cell">${statFmt}<span class="stat-unit">${meta.unit}</span></div>
+                <div class="stat-cell">${statFmt}<span class="stat-unit"> ${meta.unit}</span>${secondaryStat}</div>
             </div>`;
     };
 
-    // Split top 10 and the rest
-    const first10 = top100.filter(p => p.rank <= 10);
-    const rest    = top100.filter(p => p.rank > 10);
+    const first10 = topRows.filter(p => p.rank <= 10);
+    const rest    = topRows.filter(p => p.rank > 10);
 
     let html = `<div class="list-header"><div>Rank</div><div>Player</div><div>Stat</div></div>`;
     html += `<div class="player-list">`;
@@ -602,26 +607,25 @@ function renderList(players, meta) {
         html += `<div class="top10-divider">Positions 11+</div>`;
         html += rest.map(renderRow).join('');
     }
-    if (myRow) {
-        html += renderRow(myRow);
-    }
+    if (myRow) html += renderRow(myRow);
     html += `</div>`;
     return html;
 }
 
-async function render(cat) {
+// ── Render: main ─────────────────────────────────────────────────────────────
+async function render(tab) {
+    activeTab = tab;
     const content = document.getElementById('lb-content');
-    content.style.display = 'block';
 
     let data;
     try {
-        data = await loadCategory(cat);
+        data = await loadTab(tab);
     } catch {
         content.innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><div>Failed to load leaderboard. Try refreshing.</div></div>`;
         return;
     }
 
-    const meta = CAT_META[cat] || CAT_META.overall;
+    const meta = TAB_META[tab] || TAB_META.overall;
     const players = data.players || [];
 
     let html = `
@@ -632,26 +636,28 @@ async function render(cat) {
                 <div class="cat-desc">${meta.desc}</div>
             </div>
         </div>`;
-
     html += renderPodium(players, meta);
     html += renderList(players, meta);
-
     content.innerHTML = html;
 }
 
-// ── Tab switching ─────────────────────────────────────────────────────────────
-document.getElementById('tabs').addEventListener('click', e => {
+// ── Tab listeners ─────────────────────────────────────────────────────────────
+document.getElementById('stat-tabs').addEventListener('click', function(e) {
     const tab = e.target.closest('.tab');
-    if (!tab) return;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (!tab || !tab.dataset.tab) return;
+    document.querySelectorAll('#stat-tabs .tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    activeCategory = tab.dataset.cat;
-    render(activeCategory);
+    render(tab.dataset.tab);
+});
+
+document.getElementById('period-tabs').addEventListener('click', function(e) {
+    const btn = e.target.closest('.tab');
+    if (!btn || !btn.dataset.period) return;
+    setPeriod(btn.dataset.period);
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-render(activeCategory).then(() => {
-    // If arriving from "See where you stand" link, scroll to the current user's row
+render('overall').then(() => {
     if (new URLSearchParams(window.location.search).get('highlight') === 'me') {
         requestAnimationFrame(() => {
             var meRow = document.querySelector('.player-row.is-me, .player-row.out-of-top');
@@ -669,7 +675,7 @@ render(activeCategory).then(() => {
 <div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
 <div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
-    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(255,107,26,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
     <div style="flex:1;min-width:0;">
       <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
       <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>

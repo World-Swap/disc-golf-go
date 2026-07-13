@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#0a0f0a">
+    <meta name="theme-color" content="#1E1E1E">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -101,20 +103,20 @@
         .level-pill {
             display: inline-flex; align-items: center; gap: 0.4rem;
             background: var(--green-glow);
-            border: 1px solid rgba(60,168,60,0.3);
+            border: 1px solid rgba(255,107,26,0.3);
             border-radius: var(--radius-pill);
             padding: 0.28rem 0.75rem;
             margin-bottom: 0.5rem;
         }
-        [data-theme="dark"] .level-pill { border-color: rgba(76,223,60,0.3); }
+        [data-theme="dark"] .level-pill { border-color: rgba(255,107,26,0.3); }
         .level-num {
             font-family: 'Space Mono', monospace;
             font-size: 1rem;
             font-weight: 700;
             color: var(--green);
         }
-        .level-dot { color: rgba(60,168,60,0.5); font-size: 0.7rem; }
-        [data-theme="dark"] .level-dot { color: rgba(76,223,60,0.4); }
+        .level-dot { color: rgba(255,107,26,0.5); font-size: 0.7rem; }
+        [data-theme="dark"] .level-dot { color: rgba(255,107,26,0.4); }
         .level-title-text {
             font-size: 0.8rem;
             font-weight: 700;
@@ -136,6 +138,69 @@
             transition: background var(--transition);
         }
         .streak-chip.hot { background: rgba(232,96,32,0.1); border-color: rgba(232,96,32,0.2); color: var(--orange); }
+
+        /* Skill tier pill */
+        .skill-tier-pill {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+            margin-top: 0.35rem;
+        }
+
+        /* Training Profile section */
+        .training-profile-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-card); padding: 1rem;
+            margin-top: 0.85rem;
+        }
+        .tp-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+        .tp-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+        .tp-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.55rem; border-radius: var(--radius-pill);
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .tp-overall-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 0.6rem;
+        }
+        .tp-overall-label { font-size: 0.78rem; color: var(--text2); }
+        .tp-overall-pct { font-size: 0.8rem; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--green); }
+        .tp-track { width: 100%; height: 7px; background: var(--surface2); border-radius: var(--radius-pill); overflow: hidden; border: 1px solid var(--border); }
+        .tp-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-bright)); border-radius: var(--radius-pill); transition: width 0.6s; }
+        .tp-cat-list { margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
+        .tp-cat-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .tp-cat-icon { font-size: 14px; flex-shrink: 0; }
+        .tp-cat-name { flex: 1; color: var(--text2); }
+        .tp-cat-right { text-align: right; }
+        .tp-cat-pct { font-weight: 700; font-family: 'Space Mono', monospace; color: var(--green); }
+        .tp-cat-pct.done { color: var(--text3); }
+        .tp-next-row {
+            margin-top: 0.7rem; padding: 0.6rem 0.75rem;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; display: flex; align-items: center; gap: 0.6rem;
+            text-decoration: none; color: inherit; transition: border-color 0.2s;
+        }
+        .tp-next-row:hover { border-color: rgba(255,107,26,0.3); }
+        .tp-next-icon { font-size: 18px; }
+        .tp-next-body { flex: 1; min-width: 0; }
+        .tp-next-label { font-size: 0.68rem; color: var(--green); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1px; }
+        .tp-next-title { font-size: 0.82rem; font-weight: 700; }
+        .tp-next-cat { font-size: 0.7rem; color: var(--text3); }
+        .tp-next-xp { font-size: 0.72rem; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--gold); }
+        .tp-next-arrow { font-size: 14px; color: var(--text3); }
+        .tp-streak {
+            margin-top: 0.6rem; font-size: 0.72rem; color: var(--text3);
+            display: flex; align-items: center; gap: 0.3rem;
+        }
+        .tp-streak .fire { font-size: 14px; }
 
         /* XP bar */
         .xp-section { margin-top: 0.1rem; }
@@ -190,7 +255,171 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 0.6rem;
+        }
+        .stat-group-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text3);
+            margin-bottom: 0.35rem;
+            padding: 0 0.25rem;
+        }
+        .stat-empty-hint {
+            display: block;
+            font-size: 0.6rem;
+            color: var(--text3);
+            margin-top: 0.2rem;
+        }
+        .stat-cta-link {
+            display: inline-block;
+            font-size: 0.65rem;
+            color: var(--green);
+            text-decoration: none;
+            margin-top: 0.2rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .stat-cta-link:hover { text-decoration: underline; }
             margin-bottom: 1rem;
+        }
+
+        /* ──────────────────────────────────────────
+           REFERRAL CARD
+        ────────────────────────────────────────── */
+        .referral-card {
+            background: linear-gradient(135deg, rgba(255,107,26,0.07) 0%, var(--surface) 100%);
+            border: 1px solid rgba(255,107,26,0.22);
+            border-radius: var(--radius-card);
+            padding: 1rem 1rem 0.85rem;
+            margin-bottom: 1rem;
+            transition: border-color var(--transition);
+        }
+        .referral-card:hover { border-color: rgba(255,107,26,0.40); }
+
+        /* XP breakdown */
+        .xp-breakdown-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .xp-total-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.85rem;
+        }
+        .xp-total-label { font-size: 0.78rem; font-weight: 600; color: var(--text3); }
+        .xp-total-num {
+            font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 800; color: var(--green);
+        }
+        .xp-source-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.4rem 0; border-bottom: 1px solid var(--border);
+        }
+        .xp-source-row:last-of-type { border-bottom: none; }
+        .xp-source-name { font-size: 0.8rem; color: var(--text2); display: flex; align-items: center; gap: 0.5rem; }
+        .xp-source-name .xsrc-icon { font-size: 0.9rem; }
+        .xp-source-num { font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700; color: var(--text2); }
+        .xp-divider { border: none; border-top: 1px solid var(--border); margin: 0.75rem 0; }
+        .xp-next-tier-row { display: flex; justify-content: space-between; align-items: center; }
+        .xnt-label { font-size: 0.75rem; color: var(--text3); }
+        .xnt-info { font-size: 0.8rem; font-weight: 600; }
+        .xp-milestone-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.5rem; border-radius: var(--radius-pill);
+            background: rgba(255,208,80,0.10); border: 1px solid rgba(255,208,80,0.2);
+            font-size: 0.72rem; font-weight: 600; color: var(--gold);
+            margin: 0.2rem 0.2rem 0.2rem 0;
+        }
+
+        .milestones-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .milestone-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0.85rem 0.75rem;
+            display: flex; flex-direction: column; gap: 0.35rem;
+            transition: border-color var(--transition), background var(--transition);
+        }
+        .milestone-card.earned {
+            background: linear-gradient(135deg, var(--green-bg), var(--surface));
+            border-color: var(--green-border);
+        }
+        .milestone-card.locked { opacity: 0.45; }
+        .milestone-icon { font-size: 1.5rem; }
+        .milestone-title { font-size: 0.8rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+        .milestone-desc { font-size: 0.65rem; color: var(--text3); line-height: 1.4; }
+        .milestone-reward { font-size: 0.65rem; font-weight: 700; color: var(--gold); }
+        .milestone-progress {
+            height: 4px; border-radius: 100px; background: var(--surface2);
+            overflow: hidden; margin-top: 0.25rem;
+        }
+        .milestone-progress-fill {
+            height: 100%; background: var(--green); border-radius: 100px;
+            transition: width 0.5s;
+        }
+
+        .referral-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 0.65rem;
+        }
+        .referral-card-title { font-size: 0.85rem; font-weight: 700; color: var(--green); }
+        .referral-code-badge {
+            background: rgba(255,107,26,0.15);
+            border: 1px solid rgba(255,107,26,0.25);
+            border-radius: var(--radius-pill);
+            padding: 0.15rem 0.6rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--green);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .referral-desc { font-size: 0.73rem; color: var(--text3); margin-bottom: 0.8rem; }
+        .referral-stats {
+            display: flex; gap: 1rem; margin-bottom: 0.8rem;
+        }
+        .referral-stat { text-align: center; flex: 1; }
+        .referral-stat-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem; font-weight: 700; color: var(--text);
+            display: block;
+        }
+        .referral-stat-lbl { font-size: 0.68rem; color: var(--text3); margin-top: 0.1rem; display: block; }
+        .referral-url-row {
+            display: flex; gap: 0.5rem; align-items: center;
+        }
+        .referral-url-input {
+            flex: 1; background: var(--bg2); border: 1px solid var(--border);
+            border-radius: var(--radius-pill); padding: 0.45rem 0.75rem;
+            font-family: 'Space Mono', monospace; font-size: 0.7rem;
+            color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            cursor: pointer;
+        }
+        .referral-copy-btn {
+            background: var(--green); color: #0a0a1a;
+            border: none; border-radius: var(--radius-pill);
+            padding: 0.45rem 0.9rem; font-size: 0.75rem; font-weight: 700;
+            cursor: pointer; flex-shrink: 0; white-space: nowrap;
+        }
+        .referral-copy-btn.copied { background: var(--text3); }
+        .referral-empty {
+            text-align: center; padding: 0.5rem 0;
+            font-size: 0.78rem; color: var(--text3);
+        }
+        .referral-empty-btn {
+            display: inline-block; margin-top: 0.6rem;
+            background: rgba(255,107,26,0.12); color: var(--green);
+            border: 1px solid rgba(255,107,26,0.25);
+            border-radius: var(--radius-pill);
+            padding: 0.4rem 1rem; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer;
         }
 
         .stat-card {
@@ -223,6 +452,12 @@
             text-transform: uppercase;
             letter-spacing: 0.06em;
         }
+        .stat-sub {
+            font-size: 0.6rem;
+            color: var(--text3);
+            margin-top: 0.1rem;
+        }
+        .stat-empty { opacity: 0.45; }
 
         /* ──────────────────────────────────────────
            ACTION GRID
@@ -237,52 +472,68 @@
             margin-top: 0.25rem;
         }
 
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+        /* ──────────────────────────────────────────
+           PROFILE SECTION CARDS (replaces action-grid)
+        ────────────────────────────────────────── */
+        .profile-sections {
+            display: flex;
+            flex-direction: column;
             gap: 0.6rem;
-            margin-bottom: 1rem;
         }
-
-        .action-card {
+        .section-card {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: var(--radius-btn);
-            padding: 1.1rem 0.6rem;
-            text-align: center;
+            border-radius: var(--radius-card);
+            padding: 0.85rem 1rem;
             text-decoration: none;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 0.5rem;
+            color: inherit;
+            transition: border-color var(--transition), background var(--transition);
+        }
+        .section-card:hover { border-color: var(--border2); }
+        .section-card:active { transform: scale(0.98); }
+        .section-card-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+        .section-card-text { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+        .section-card-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+        .section-card-desc { font-size: 0.78rem; color: var(--text2); }
+        .section-card-arrow { font-size: 1.2rem; color: var(--text2); flex-shrink: 0; }
+
+        /* ──────────────────────────────────────────
+           LEADERBOARD SNIPPET (profile page)
+        ────────────────────────────────────────── */
+        .lb-snippet-cat-bar {
+            display: flex; gap: 0.5rem; margin-bottom: 0.75rem;
+        }
+        .lb-snippet-row {
+            display: grid; grid-template-columns: 44px 1fr auto;
+            gap: 0.65rem; align-items: center;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.6rem 0.75rem;
             box-shadow: var(--shadow-card);
-            transition: all var(--transition);
-            position: relative;
-            overflow: hidden;
-            min-height: 90px;
         }
-        .action-card:active { transform: scale(0.94); box-shadow: none; }
-        .action-card:hover { border-color: var(--border2); }
-        [data-theme="dark"] .action-card:hover {
+        .lb-snippet-row.is-me {
+            background: linear-gradient(135deg, var(--green-bg), var(--surface));
             border-color: var(--green-border);
-            box-shadow: 0 0 20px var(--green-glow), var(--shadow-card);
         }
-
-        .action-card.primary { border-color: rgba(60,168,60,0.3); background: linear-gradient(135deg, rgba(60,168,60,0.06) 0%, var(--surface) 100%); }
-        [data-theme="dark"] .action-card.primary { border-color: rgba(76,223,60,0.25); background: linear-gradient(135deg, rgba(76,223,60,0.07) 0%, var(--surface) 100%); }
-
-        .action-card.gold-card { border-color: rgba(224,165,0,0.25); background: linear-gradient(135deg, rgba(224,165,0,0.07) 0%, var(--surface) 100%); }
-        .action-card.orange-card { border-color: rgba(232,96,32,0.25); background: linear-gradient(135deg, rgba(232,96,32,0.06) 0%, var(--surface) 100%); }
-
-        .action-icon { font-size: 1.75rem; line-height: 1; }
-        .action-label {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--text2);
-            letter-spacing: 0.01em;
+        .lb-snippet-row.rank-gold { border-color: rgba(212,160,23,0.28); }
+        .lb-snippet-row.rank-silver { border-color: rgba(110,117,128,0.22); }
+        .lb-snippet-row.rank-bronze { border-color: rgba(160,82,45,0.2); }
+        .lb-snippet-my-rank {
+            position: sticky; bottom: 0;
+            background: var(--surface);
+            border: 1px solid var(--green-border);
+            border-radius: 12px; padding: 0.65rem 0.85rem;
+            backdrop-filter: blur(8px);
+            display: flex; align-items: center; gap: 0.6rem;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.18);
+            font-size: 0.85rem; font-weight: 700;
         }
-        .action-card.primary .action-label { color: var(--green); }
-        .action-card.gold-card .action-label { color: var(--gold); }
-        .action-card.orange-card .action-label { color: var(--orange); }
+        .lb-snippet-my-rank .rank-num {
+            font-family: 'Space Mono', monospace; font-size: 0.95rem; font-weight: 700;
+            color: var(--green);
+        }
 
         /* Active boost chips */
         .boost-row {
@@ -411,7 +662,7 @@
             padding: 0.18rem 0.45rem; border-radius: var(--radius-pill);
             background: var(--surface2); color: var(--text3); border: 1px solid var(--border);
         }
-        .challenge-diff.easy       { color: var(--green);   border-color: rgba(60,168,60,0.3);   background: rgba(60,168,60,0.08); }
+        .challenge-diff.easy       { color: var(--green);   border-color: rgba(255,107,26,0.3);  background: rgba(255,107,26,0.08); }
         .challenge-diff.medium     { color: var(--gold);    border-color: rgba(224,165,0,0.25);  background: rgba(224,165,0,0.07); }
         .challenge-diff.hard       { color: var(--orange);  border-color: rgba(232,96,32,0.25);  background: rgba(232,96,32,0.07); }
         .challenge-diff.legendary  { color: var(--diamond); border-color: rgba(107,154,240,0.25); background: rgba(107,154,240,0.08); }
@@ -473,10 +724,10 @@
         .flag-chip {
             font-size: 0.62rem; padding: 0.1rem 0.4rem;
             border-radius: var(--radius-pill);
-            background: rgba(60,168,60,0.08); color: var(--green);
-            border: 1px solid rgba(60,168,60,0.2);
+            background: rgba(255,107,26,0.08); color: var(--green);
+            border: 1px solid rgba(255,107,26,0.2);
         }
-        [data-theme="dark"] .flag-chip { background: rgba(76,223,60,0.08); border-color: rgba(76,223,60,0.2); }
+        [data-theme="dark"] .flag-chip { background: rgba(255,107,26,0.08); border-color: rgba(255,107,26,0.2); }
         .checkin-xp { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--green); white-space: nowrap; margin-left: 0.75rem; }
 
         /* ──────────────────────────────────────────
@@ -513,8 +764,8 @@
             border-color: var(--green-border);
             box-shadow: 0 0 16px var(--green-glow), var(--shadow-card);
         }
-        .dist-ach-item.earned  { border-color: rgba(60,168,60,0.3); }
-        [data-theme="dark"] .dist-ach-item.earned { border-color: rgba(76,223,60,0.25); }
+        .dist-ach-item.earned  { border-color: rgba(255,107,26,0.3); }
+        [data-theme="dark"] .dist-ach-item.earned { border-color: rgba(255,107,26,0.25); }
         .dist-ach-item.locked  { opacity: 0.45; filter: grayscale(0.4); }
         .dist-ach-item-icon { font-size: 1.6rem; flex-shrink: 0; }
         .dist-ach-item-
@@ -522,7 +773,7 @@
         .dist-ach-item-desc { font-size: 0.73rem; color: var(--text3); margin-top: 0.1rem; }
         .dist-ach-item-reward { font-size: 0.7rem; color: var(--gold); margin-top: 0.15rem; }
         .dist-ach-badge { font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: var(--radius-pill); flex-shrink: 0; align-self: flex-start; }
-        .dist-ach-badge.earned { background: rgba(60,168,60,0.1); color: var(--green); border: 1px solid rgba(60,168,60,0.3); }
+        .dist-ach-badge.earned { background: rgba(255,107,26,0.1); color: var(--green); border: 1px solid rgba(255,107,26,0.3); }
         .dist-ach-badge.locked { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
 
         /* ──────────────────────────────────────────
@@ -550,12 +801,12 @@
             font-size: 0.95rem; font-weight: 700;
             text-decoration: none; cursor: pointer;
             transition: all var(--transition);
-            box-shadow: 0 4px 16px rgba(60,168,60,0.35);
+            box-shadow: 0 4px 16px rgba(255,107,26,0.35);
         }
         .btn-primary:active { transform: scale(0.97); box-shadow: none; }
         .btn-primary:hover  { background: var(--green-bright); }
         [data-theme="dark"] .btn-primary:hover {
-            box-shadow: 0 0 24px rgba(76,223,60,0.35), 0 4px 16px rgba(76,223,60,0.2);
+            box-shadow: 0 0 24px rgba(255,107,26,0.35), 0 4px 16px rgba(255,107,26,0.2);
         }
 
         /* ──────────────────────────────────────────
@@ -621,7 +872,7 @@
         .lu-num { font-family: 'Space Mono', monospace; font-size: 4rem; font-weight: 700; color: var(--green); line-height: 1; margin-bottom: 0.2rem; }
         .lu-title-text { font-size: 1.35rem; font-weight: 800; color: var(--text); margin-bottom: 1.5rem; }
         .lu-close { background: var(--green); color: #fff; border: none; border-radius: var(--radius-btn); padding: 0.8rem 2.25rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all var(--transition); }
-        [data-theme="dark"] .lu-close:hover { box-shadow: 0 0 20px rgba(76,223,60,0.3); }
+        [data-theme="dark"] .lu-close:hover { box-shadow: 0 0 20px rgba(255,107,26,0.3); }
         .lu-close:active { transform: scale(0.96); }
         .particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
         .particle { position: absolute; width: 5px; height: 5px; border-radius: 50%; animation: pflyout 1.4s ease-out forwards; }
@@ -835,9 +1086,7 @@
            RESPONSIVE TWEAKS
         ────────────────────────────────────────── */
         @media (max-width: 380px) {
-            .action-grid { grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
-            .action-icon { font-size: 1.5rem; }
-            .action-card { min-height: 82px; padding: 0.9rem 0.4rem; }
+            /* intentionally left empty — section cards flow naturally */
         }
     </style>
 <!-- Blocking theme init: prevents Flash of Wrong Theme during navigation -->
@@ -848,7 +1097,7 @@
     <!-- TOP HEADER -->
     <header class="top-header">
         <a href="/" class="header-logo">
-            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            <img src="/logo.png?v=7" alt="Disc Golf Go" width="32" height="32" loading="eager">
             Disc Golf <span class="go">Go</span>
         </a>
         <div class="header-actions">
@@ -893,6 +1142,7 @@
                             <span id="level-title-icon">🥏</span>
                             <span class="level-title-text" id="level-title-text">Rookie</span>
                         </div>
+                        <div class="skill-tier-pill" id="skill-tier-pill" style="display:none;"></div>
                         <div class="streak-row" id="streak-row"></div>
                     </div>
                 </div>
@@ -920,58 +1170,183 @@
                 </a>
             </div>
 
-            <!-- ═══ STATS ROW ═══ -->
+            <!-- ═══ STATS ROW — Training First ═══ -->
             <div class="stats-row">
-                <div class="stat-card"><div class="stat-num" id="stat-checkins">0</div><div class="stat-lbl">Check-ins</div></div>
-                <div class="stat-card"><div class="stat-num" id="stat-courses">0</div><div class="stat-lbl">Courses</div></div>
-                <div class="stat-card"><div class="stat-num" id="stat-rounds">0</div><div class="stat-lbl">Rounds</div></div>
-                <div class="stat-card"><div class="stat-num" id="stat-battles">0</div><div class="stat-lbl">Wins</div></div>
-                <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-lbl">Streak</div></div>
-                <div class="stat-card"><div class="stat-num" id="stat-badges">0</div><div class="stat-lbl">Badges</div></div>
+                <!-- Primary row: training metrics -->
+                <div class="stat-card" id="stat-card-lessons">
+                    <div class="stat-num" id="stat-lessons">0</div>
+                    <div class="stat-lbl">Lessons</div>
+                    <div class="stat-sub" id="stat-lessons-sub">—</div>
+                </div>
+                <div class="stat-card" id="stat-card-streak">
+                    <div class="stat-num" id="stat-streak">0</div>
+                    <div class="stat-lbl">Streak</div>
+                    <div class="stat-sub" id="stat-streak-sub">🔥 days</div>
+                </div>
+                <div class="stat-card" id="stat-card-xp">
+                    <div class="stat-num" id="stat-xp">0</div>
+                    <div class="stat-lbl">Total XP</div>
+                    <div class="stat-sub" id="stat-xp-sub">—</div>
+                </div>
+            </div>
+            <div class="stats-row">
+                <!-- Secondary row: applied training + badges -->
+                <div class="stat-card" id="stat-card-cats">
+                    <div class="stat-num" id="stat-cats">0</div>
+                    <div class="stat-lbl">Categories</div>
+                    <div class="stat-sub" id="stat-cats-sub">mastered</div>
+                </div>
+                <div class="stat-card" id="stat-card-rounds">
+                    <div class="stat-num" id="stat-rounds">0</div>
+                    <div class="stat-lbl">Rounds</div>
+                    <div class="stat-sub" id="stat-rounds-sub">played</div>
+                </div>
+                <div class="stat-card" id="stat-card-badges">
+                    <div class="stat-num" id="stat-badges">0</div>
+                    <div class="stat-lbl">Badges</div>
+                    <div class="stat-sub" id="stat-badges-sub">earned</div>
+                </div>
+            </div>
+
+            <!-- ═══ THIS WEEK RECAP ═══ -->
+            <div id="this-week-card" style="display:none;margin-bottom:1rem;">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);padding:0.85rem 1rem;">
+                    <div style="font-size:0.78rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">📅 This Week</div>
+                    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:80px;text-align:center;">
+                            <div style="font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700;color:var(--green);" id="week-xp-num">—</div>
+                            <div style="font-size:0.68rem;color:var(--text3);">XP Earned</div>
+                        </div>
+                        <div style="flex:1;min-width:80px;text-align:center;">
+                            <div style="font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700;color:var(--green);" id="week-lessons-num">—</div>
+                            <div style="font-size:0.68rem;color:var(--text3);">Lessons Done</div>
+                        </div>
+                        <div style="flex:1;min-width:80px;text-align:center;">
+                            <div style="font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700;color:var(--gold);" id="week-source-num">—</div>
+                            <div style="font-size:0.68rem;color:var(--text3);">Top Source</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ REFERRAL ═══ -->
+            <div class="section-label">Bring a Friend</div>
+            <div class="referral-card" id="referral-card">
+                <div id="referral-content"></div>
             </div>
 
             <!-- Active Boosts -->
             <div class="boost-row" id="boost-row"></div>
 
-            <!-- ═══ QUICK ACTIONS ═══ -->
+            <!-- ═══ XP BREAKDOWN ═══ -->
+            <div class="section-label" style="margin-top:1.25rem;">XP Breakdown</div>
+            <div class="xp-breakdown-card" id="xp-breakdown-card">
+                <div class="xp-total-row" id="xp-total-row">
+                    <span class="xp-total-label">Total XP</span>
+                    <span class="xp-total-num" id="xp-total-num">—</span>
+                </div>
+                <div id="xp-source-rows"></div>
+                <div class="xp-divider"></div>
+                <div class="xp-next-tier-row" id="xp-next-tier-row">
+                    <span class="xnt-label" id="xnt-label">Next tier:</span>
+                    <span class="xnt-info" id="xnt-info">—</span>
+                </div>
+                <div id="xp-milestone-list" style="margin-top:0.75rem;"></div>
+            </div>
+
+            <!-- ═══ TRAINING PROFILE ═══ -->
+            <div class="section-label" style="margin-top:1.25rem;">🎯 Training Profile</div>
+            <div class="training-profile-card" id="training-profile-card">
+                <!-- Skill tier badge row -->
+                <div class="tp-header">
+                    <span class="tp-title">Skill Level</span>
+                    <span class="tp-badge" id="tp-skill-badge"></span>
+                </div>
+                <!-- Overall progress bar -->
+                <div class="tp-overall-row">
+                    <span class="tp-overall-label" id="tp-overall-label">Overall Progress</span>
+                    <span class="tp-overall-pct" id="tp-overall-pct">0%</span>
+                </div>
+                <div class="tp-track">
+                    <div class="tp-fill" id="tp-overall-fill" style="width:0%"></div>
+                </div>
+                <!-- Per-category progress -->
+                <div class="tp-cat-list" id="tp-cat-list"></div>
+                <!-- Next recommended lesson -->
+                <a class="tp-next-row" id="tp-next-lesson" href="/training">
+                    <span class="tp-next-icon" id="tp-nl-icon">🎯</span>
+                    <div class="tp-next-body">
+                        <div class="tp-next-label">Next Up</div>
+                        <div class="tp-next-title" id="tp-nl-title">—</div>
+                        <div class="tp-next-cat" id="tp-nl-cat">—</div>
+                    </div>
+                    <div class="tp-next-xp" id="tp-nl-xp">+0 XP</div>
+                    <div class="tp-next-arrow">→</div>
+                </a>
+                <!-- Streak info -->
+                <div class="tp-streak" id="tp-streak" style="display:none;">
+                    <span class="fire">🔥</span>
+                    <span id="tp-streak-text">0-day training streak</span>
+                </div>
+            </div>
+
+            <!-- ═══ TRAINING MILESTONES ═══ -->
+            <div class="section-label" style="margin-top:1.25rem;" id="milestones-label">🏅 Training Milestones</div>
+            <div class="milestones-grid" id="milestones-grid"></div>
+
+            <!-- ═══ PROFILE SECTION CARDS ═══ -->
             <div class="section-label">Quick Actions</div>
-            <div class="action-grid">
-                <a href="/story" class="action-card" style="border-color:rgba(160,80,255,0.3);background:linear-gradient(135deg,rgba(160,80,255,0.09) 0%,var(--surface) 100%);">
-                    <div class="action-icon">📖</div>
-                    <div class="action-label" style="color:var(--purple);">Career Mode</div>
+            <div class="profile-sections">
+                <a href="/leaderboard" class="section-card">
+                    <span class="section-card-icon">🏆</span>
+                    <span class="section-card-text">
+                        <span class="section-card-title">Leaderboard</span>
+                        <span class="section-card-desc">See where you rank</span>
+                    </span>
+                    <span class="section-card-arrow">›</span>
                 </a>
-                <a href="/scorecard" class="action-card primary">
-                    <div class="action-icon">🥏</div>
-                    <div class="action-label">Play Round</div>
+                <a href="/vault" class="section-card">
+                    <span class="section-card-icon">🏪</span>
+                    <span class="section-card-text">
+                        <span class="section-card-title">Vault</span>
+                        <span class="section-card-desc">Unlock premium tips & disc guides</span>
+                    </span>
+                    <span class="section-card-arrow">›</span>
                 </a>
-                <a href="/challenges" class="action-card orange-card">
-                    <div class="action-icon">🎯</div>
-                    <div class="action-label">Quests</div>
+                <a href="/play" class="section-card">
+                    <span class="section-card-icon">🥏</span>
+                    <span class="section-card-text">
+                        <span class="section-card-title">Play Round</span>
+                        <span class="section-card-desc">Track your next round</span>
+                    </span>
+                    <span class="section-card-arrow">›</span>
                 </a>
-                <a href="/battles" class="action-card primary">
-                    <div class="action-icon">⚔️</div>
-                    <div class="action-label">Battles</div>
+                <a href="/rounds" class="section-card">
+                    <span class="section-card-icon">📋</span>
+                    <span class="section-card-text">
+                        <span class="section-card-title">Rounds</span>
+                        <span class="section-card-desc">View your round history</span>
+                    </span>
+                    <span class="section-card-arrow">›</span>
                 </a>
-                <a href="/leaderboard" class="action-card primary">
-                    <div class="action-icon">🏆</div>
-                    <div class="action-label">Leaderboard</div>
-                </a>
-                <a href="/vault" class="action-card gold-card">
-                    <div class="action-icon">🏪</div>
-                    <div class="action-label">Vault</div>
-                </a>
-                <a href="/map" class="action-card primary">
-                    <div class="action-icon">🌍</div>
-                    <div class="action-label">Map</div>
-                </a>
-                <a href="/rounds" class="action-card primary">
-                    <div class="action-icon">📋</div>
-                    <div class="action-label">Rounds</div>
-                </a>
-                <a href="/crews" class="action-card" style="border-color:rgba(107,154,240,0.28);background:linear-gradient(135deg,rgba(107,154,240,0.08) 0%,var(--surface) 100%);">
-                    <div class="action-icon">👥</div>
-                    <div class="action-label" style="color:var(--diamond);">Crews</div>
-                </a>
+            </div>
+
+            <!-- ═══ LEADERBOARD SNIPPET ═══ -->
+            <div class="section-block" id="lb-snippet-section">
+                <div class="section-header">
+                    <span class="section-title">🏆 Leaderboard</span>
+                </div>
+                <div class="lb-snippet-cat-bar">
+                    <select id="lb-snippet-cat" onchange="loadLbSnippet()" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:0.35rem 0.6rem;color:var(--text2);font-size:0.8rem;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;">
+                        <option value="overall">⭐ Overall XP</option>
+                        <option value="rounds">🔄 Rounds</option>
+                        <option value="birdies">🐦 Birdies</option>
+                        <option value="checkins">📍 Check-ins</option>
+                    </select>
+                </div>
+                <div id="lb-snippet-content">
+                    <div class="loading-state" style="padding:2rem;">Loading…</div>
+                </div>
             </div>
 
             <!-- ═══ BADGES ═══ -->
@@ -1092,32 +1467,25 @@
     </main>
 
     <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
-    <nav class="bottom-tab-bar">
-    <a class="tab-item" href="/crews">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label">Crews</span>
-    </a>
-    <a class="tab-item" href="/battles">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Battles</span>
+    <!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
     </a>
     <a class="tab-item" href="/scorecard">
         <span class="tab-icon">🥏</span>
         <span class="tab-label">Play</span>
     </a>
-    <a class="tab-item active" href="/profile">
-        <span class="tab-icon">👤</span>
-        <span class="tab-label">Profile</span>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
     </a>
-    <a class="tab-item" href="/challenges">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-label">Quests</span>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
     </a>
-    <a class="tab-item" href="/map">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Map</span>
-    </a>
-</nav>
+    </nav>
 
     <!-- Toast -->
     <div class="toast" id="toast"></div>
@@ -1234,6 +1602,7 @@
 
     // ── AUTH ─────────────────────────────────────────────────────
     function getToken() { return localStorage.getItem('dggo_token'); }
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function authHeaders() {
         var t = getToken(), h = {};
         if (t) h['Authorization'] = 'Bearer ' + t;
@@ -1545,6 +1914,117 @@
     // ── LOAD PROFILE ──────────────────────────────────────────────
     // Helper: fetch with explicit timeout (avoids indefinite hanging in webview)
     
+    async function loadTrainingProfile() {
+        var token = getToken(); if (!token) return;
+        try {
+            var res = await fetch('/api/training/recommendations', { headers: authHeaders() });
+            if (!res.ok) return;
+            var data = await res.json();
+
+            // Skill tier badge
+            var badge = document.getElementById('tp-skill-badge');
+            var tierIcon = data.skill_tier_icon || '🥏';
+            var tierTitle = (data.skill_tier || 'rookie').charAt(0).toUpperCase() + (data.skill_tier || 'rookie').slice(1);
+            var tierColor = { rookie: '#6a7a6a', player: '#FF6B1A', advanced: '#ffd050', pro: '#ff7070' }[data.skill_tier] || '#6a7a6a';
+            badge.textContent = tierIcon + ' ' + tierTitle;
+            badge.style.background = tierColor + '22';
+            badge.style.color = tierColor;
+            badge.style.border = '1px solid ' + tierColor + '44';
+
+            // Overall progress
+            var cats = data.categories || [];
+            var totalDone = 0, totalLessons = 0;
+            cats.forEach(function(c) { totalDone += c.completed_lessons || 0; totalLessons += c.total_lessons || 0; });
+            var overallPct = totalLessons > 0 ? Math.round((totalDone / totalLessons) * 100) : 0;
+            document.getElementById('tp-overall-label').textContent = totalLessons + ' lessons across ' + cats.length + ' categories';
+            document.getElementById('tp-overall-pct').textContent = overallPct + '%';
+            setTimeout(function() { document.getElementById('tp-overall-fill').style.width = overallPct + '%'; }, 100);
+
+            // Category rows
+            var catList = document.getElementById('tp-cat-list');
+            catList.innerHTML = cats.map(function(c) {
+                var pct = c.pct_complete || 0;
+                var done = pct >= 100;
+                return '<div class="tp-cat-row">' +
+                    '<span class="tp-cat-icon">' + esc(c.icon || '📚') + '</span>' +
+                    '<span class="tp-cat-name">' + esc(c.name) + '</span>' +
+                    '<div class="tp-cat-right">' +
+                    '<span class="tp-cat-pct' + (done ? ' done' : '') + '">' + (done ? '✓ ' : '') + c.completed_lessons + '/' + c.total_lessons + '</span>' +
+                    '</div></div>';
+            }).join('');
+
+            // Next recommended lesson
+            var topRec = (data.recommendations || []).find(function(r) { return r.type === 'lesson'; });
+            if (topRec && topRec.lesson) {
+                var l = topRec.lesson;
+                var typeIcon = { tip_card: '💡', guide: '📝', video_embed: '🎬', quiz: '❓' }[l.content_type] || '📄';
+                document.getElementById('tp-nl-icon').textContent = typeIcon;
+                document.getElementById('tp-nl-title').textContent = l.title;
+                document.getElementById('tp-nl-cat').textContent = l.category_name;
+                document.getElementById('tp-nl-xp').textContent = '+' + l.xp_reward + ' XP';
+                var link = document.getElementById('tp-next-lesson');
+                link.href = '/training/' + esc(l.category_slug) + '/' + esc(l.slug);
+            }
+
+            // Streak
+            if (data.streak_days && data.streak_days > 0) {
+                document.getElementById('tp-streak').style.display = 'flex';
+                document.getElementById('tp-streak-text').textContent = data.streak_days + '-day training streak';
+            }
+        } catch(e) {
+            console.error('[profile] Training profile load failed:', e);
+        }
+
+        // Load milestones
+        loadMilestones();
+    }
+
+    async function loadMilestones() {
+        var token = getToken(); if (!token) return;
+        try {
+            var res = await fetch('/api/training/milestones', { headers: authHeaders() });
+            if (!res.ok) return;
+            var data = await res.json();
+            var milestones = data.milestones || [];
+            var grid = document.getElementById('milestones-grid');
+            if (!grid) return;
+
+            // Always render milestone grid — even empty shows locked badges
+            if (!milestones.length) {
+                milestones = [
+                    { key: 'first_lesson',        title: 'First Lesson',        desc: 'Complete your first training lesson',    earned: false, progress: 0, total: 1,  gold: 0  },
+                    { key: 'getting_started',      title: 'Getting Started',      desc: 'Complete 5 lessons — way to go!',        earned: false, progress: 0, total: 5,  gold: 25 },
+                    { key: 'half_way_there',       title: 'Half Way There',      desc: 'Completed 10 lessons — serious commitment', earned: false, progress: 0, total: 10, gold: 50 },
+                    { key: 'training_machine',     title: 'Training Machine',    desc: 'Completed 25 lessons — unstoppable!',      earned: false, progress: 0, total: 25, gold: 100 },
+                    { key: 'legend',               title: 'Legend',              desc: 'Completed 50 lessons — disc golf scholar', earned: false, progress: 0, total: 50, gold: 250 },
+                    { key: 'cat_form_technique',   title: 'Form Master',         desc: 'Complete all Form & Technique lessons',  earned: false, progress: 0, total: 7,  gold: 50 },
+                    { key: 'cat_disc_selection',   title: 'Disc Expert',        desc: 'Complete all Disc Selection lessons',    earned: false, progress: 0, total: 7,  gold: 50 },
+                    { key: 'cat_course_strategy',   title: 'Course Strategist',  desc: 'Complete all Course Strategy lessons',   earned: false, progress: 0, total: 10, gold: 50 },
+                ];
+            }
+            var earnedCount = milestones.filter(function(m) { return m.earned; }).length;
+            if (earnedCount > 0) {
+                document.getElementById('milestones-label').innerHTML = '🏅 Training Milestones <span style="font-size:0.7rem;font-weight:700;color:var(--green);background:var(--green-bg);border:1px solid var(--green-border);border-radius:20px;padding:0.1rem 0.45rem;margin-left:0.25rem;">' + earnedCount + '/' + milestones.length + '</span>';
+            }
+
+            grid.innerHTML = milestones.slice(0, 8).map(function(m) {
+                var cls = m.earned ? 'earned' : 'locked';
+                var pct = m.total > 0 ? Math.min(100, Math.round((m.progress / m.total) * 100)) : 0;
+                var icon = m.earned ? '🏅' : '🔒';
+                var rewardStr = m.gold > 0 ? '🎁 ' + m.gold + ' Gold' : '⭐';
+                return '<div class="milestone-card ' + cls + '">' +
+                    '<div class="milestone-icon">' + icon + '</div>' +
+                    '<div class="milestone-title">' + esc(m.title || m.key) + '</div>' +
+                    '<div class="milestone-desc">' + esc(m.desc || m.title) + '</div>' +
+                    '<div class="milestone-reward">' + rewardStr + '</div>' +
+                    '<div class="milestone-progress"><div class="milestone-progress-fill" style="width:' + pct + '%"></div></div>' +
+                '</div>';
+            }).join('');
+        } catch(e) {
+            console.error('[profile] Milestones load failed:', e);
+        }
+    }
+
     async function loadProfile() {
         var token = getToken(), legacyUuid = localStorage.getItem('dggo_player_uuid');
         if (!token && !legacyUuid) {
@@ -1566,6 +2046,9 @@
             } catch(e) { /* non-fatal — profile renders without badges */ }
 
             renderProfile(data, badgeCategories);
+            loadXpHistory();
+            loadTrainingProfile();
+            loadLbSnippet();
         } catch(e) {
             console.error('loadProfile error:', e.message || e.name || String(e));
             document.getElementById('no-profile').style.display = 'block';
@@ -1590,6 +2073,23 @@
         document.getElementById('level-title-icon').textContent = levelTitleIcon;
         document.getElementById('level-title-text').textContent = levelTitle;
 
+        // Skill tier badge — API returns plain string (rookie/player/advanced/pro), not an object
+        var tierPill = document.getElementById('skill-tier-pill');
+        if (data.skill_tier) {
+            var tierMap = {
+                rookie:   { icon: '🥏', title: 'Rookie',   color: '#6a7a6a' },
+                player:   { icon: '⛳', title: 'Player',   color: '#FF6B1A' },
+                advanced: { icon: '🎯', title: 'Advanced', color: '#ffd050' },
+                pro:      { icon: '🥇', title: 'Pro',      color: '#ff7070' },
+            };
+            var t = tierMap[data.skill_tier] || tierMap.rookie;
+            tierPill.textContent = t.icon + ' ' + t.title;
+            tierPill.style.display = 'inline-flex';
+            tierPill.style.background = t.color + '22';
+            tierPill.style.color = t.color;
+            tierPill.style.border = '1px solid ' + t.color + '44';
+        }
+
         var sr = document.getElementById('streak-row');
         sr.innerHTML = '';
         if (data.login_streak > 0) {
@@ -1611,12 +2111,66 @@
         if (goldEl) goldEl.textContent = (data.gold || 0).toLocaleString() + ' Gold';
 
         var stats = data.stats || {};
-        document.getElementById('stat-checkins').textContent = stats.total_checkins || 0;
-        document.getElementById('stat-courses').textContent = stats.unique_courses || 0;
-        document.getElementById('stat-rounds').textContent = stats.total_rounds || 0;
-        document.getElementById('stat-battles').textContent = data.battle_wins || 0;
-        document.getElementById('stat-streak').textContent = data.login_streak || 0;
-        document.getElementById('stat-badges').textContent = data.badge_count || (data.badges || []).length;
+        var trainingStats = data.training_stats || {};
+        var totalLessons = trainingStats.total_lessons || 40; // fallback if not in response
+        var lessonsDone = stats.lessons_completed || trainingStats.lessons_completed || 0;
+        var streakDays = data.login_streak || stats.login_streak || 0;
+        var catsMastered = stats.categories_mastered || trainingStats.categories_mastered || 0;
+
+        // Primary row: Lessons | Streak | Total XP
+        var lessonsNum = document.getElementById('stat-lessons');
+        if (lessonsNum) {
+            lessonsNum.textContent = lessonsDone;
+            var card = document.getElementById('stat-card-lessons');
+            var sub = document.getElementById('stat-lessons-sub');
+            if (lessonsDone === 0) {
+                if (card) card.classList.add('stat-empty');
+                if (sub) sub.innerHTML = '<a class="stat-cta-link" href="/training">Start Training →</a>';
+            } else {
+                if (sub) sub.textContent = 'of ' + totalLessons;
+            }
+        }
+
+        var streakNum = document.getElementById('stat-streak');
+        if (streakNum) {
+            streakNum.textContent = streakDays;
+            var card2 = document.getElementById('stat-card-streak');
+            var sub2 = document.getElementById('stat-streak-sub');
+            if (streakDays === 0) {
+                if (card2) card2.classList.add('stat-empty');
+                if (sub2) sub2.textContent = '🔥 days';
+            }
+        }
+
+        var xpNum = document.getElementById('stat-xp');
+        if (xpNum) {
+            xpNum.textContent = (data.xp || 0).toLocaleString();
+            var sub3 = document.getElementById('stat-xp-sub');
+            if (sub3) sub3.textContent = 'earned';
+        }
+
+        // Secondary row: Categories Mastered | Rounds | Badges
+        var catsNum = document.getElementById('stat-cats');
+        if (catsNum) {
+            catsNum.textContent = catsMastered;
+            var card3 = document.getElementById('stat-card-cats');
+            if (catsMastered === 0 && card3) card3.classList.add('stat-empty');
+        }
+
+        var roundsNum = document.getElementById('stat-rounds');
+        if (roundsNum) {
+            roundsNum.textContent = stats.total_rounds || 0;
+            var card4 = document.getElementById('stat-card-rounds');
+            if ((stats.total_rounds || 0) === 0 && card4) card4.classList.add('stat-empty');
+        }
+
+        var badgesCount = data.badge_count || (data.badges || []).length;
+        var badgesNum = document.getElementById('stat-badges');
+        if (badgesNum) {
+            badgesNum.textContent = badgesCount;
+            var card5 = document.getElementById('stat-card-badges');
+            if (badgesCount === 0 && card5) card5.classList.add('stat-empty');
+        }
 
         if (badgeCategories) renderBadges(badgeCategories);
         renderChallenges(data.active_challenges || []);
@@ -1637,6 +2191,196 @@
 
         // loadRecentRounds, loadDistanceStats, loadVaultWidget removed — they
         // triggered loading circles that weren't there before May 28 changes.
+        loadReferralProgram();
+    }
+
+    // ── REFERRAL PROGRAM ────────────────────────────────────────────────────────
+
+    async function loadReferralProgram() {
+        var token = getToken();
+        if (!token) return;
+        try {
+            var res = await fetch('/api/referrals/me', { headers: authHeaders() });
+            if (!res.ok) return;
+            var data = await res.json();
+            renderReferralCard(data);
+        } catch (e) {
+            console.error('[profile] Referral load failed:', e);
+        }
+    }
+
+    function renderReferralCard(data) {
+        var el = document.getElementById('referral-content');
+        if (!el) return;
+
+        if (!data.codes || data.codes.length === 0) {
+            el.innerHTML =
+                '<div class="referral-empty">' +
+                    '<div style="font-size:0.85rem;color:var(--text3);margin-bottom:0.3rem;">Share your code — earn 200 gold when a friend plays their first 9+ hole round</div>' +
+                    '<button class="referral-empty-btn" onclick="generateMyCode()">Generate My Code</button>' +
+                '</div>';
+            return;
+        }
+
+        var code = data.codes[0].code;
+        var referralUrl = data.codes[0].referral_url;
+        var stats = data.stats || {};
+        var refs = data.referrals || [];
+
+        el.innerHTML =
+            '<div class="referral-card-header">' +
+                '<span class="referral-card-title">🎁 Bring a Friend</span>' +
+                '<span class="referral-code-badge">' + code + '</span>' +
+            '</div>' +
+            '<div class="referral-desc">You &amp; your friend each earn rewards when they complete a 9+ hole round</div>' +
+            '<div class="referral-stats">' +
+                '<div class="referral-stat">' +
+                    '<span class="referral-stat-num">' + (stats.activated_count || 0) + '</span>' +
+                    '<span class="referral-stat-lbl">Friends Joined</span>' +
+                '</div>' +
+                '<div class="referral-stat">' +
+                    '<span class="referral-stat-num">' + (stats.rewarded_count || 0) + '</span>' +
+                    '<span class="referral-stat-lbl">Rewards Earned</span>' +
+                '</div>' +
+                '<div class="referral-stat">' +
+                    '<span class="referral-stat-num">' + (stats.total_rewards_gold || 0) + '</span>' +
+                    '<span class="referral-stat-lbl">Gold Earned</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="referral-url-row">' +
+                '<div class="referral-url-input" id="ref-url" onclick="copyRefUrl()" title="Tap to copy">' + referralUrl + '</div>' +
+                '<button class="referral-copy-btn" id="ref-copy-btn" onclick="copyRefUrl()">Copy</button>' +
+            '</div>';
+    }
+
+    async function generateMyCode() {
+        var token = getToken();
+        if (!token) return;
+        try {
+            var res = await fetch('/api/referrals/generate', {
+                method: 'POST',
+                headers: authHeaders(),
+            });
+            if (!res.ok) return;
+            var data = await res.json();
+            loadReferralProgram();
+        } catch (e) {
+            console.error('[profile] Generate code failed:', e);
+        }
+    }
+
+    function copyRefUrl() {
+        var input = document.getElementById('ref-url');
+        var btn = document.getElementById('ref-copy-btn');
+        if (!input) return;
+        var url = input.textContent.trim();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                if (btn) { btn.textContent = 'Copied!'; btn.className = 'referral-copy-btn copied'; }
+                setTimeout(function() {
+                    if (btn) { btn.textContent = 'Copy'; btn.className = 'referral-copy-btn'; }
+                }, 2000);
+            });
+        } else {
+            // Fallback: select the text
+            var range = document.createRange();
+            range.selectNodeContents(input);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }
+
+    // XP breakdown loader
+    async function loadXpHistory() {
+        var token = getToken();
+        if (!token) return;
+        try {
+            var res = await fetch('/api/players/xp-history', { headers: authHeaders() });
+            if (!res.ok) return;
+            var data = await res.json();
+            renderXpBreakdown(data);
+        } catch (e) {
+            console.error('[profile] xp-history load failed:', e);
+        }
+    }
+
+    function renderXpBreakdown(data) {
+        var xpTotal = document.getElementById('xp-total-num');
+        var sourceRows = document.getElementById('xp-source-rows');
+        var nextTierRow = document.getElementById('xp-next-tier-row');
+        var milestoneList = document.getElementById('xp-milestone-list');
+
+        if (!xpTotal) return;
+
+        var totalXp = 0;
+        if (data.breakdown) {
+            data.breakdown.forEach(function(b) { totalXp += b.total_xp; });
+        }
+
+        xpTotal.textContent = (totalXp || 0).toLocaleString();
+
+        // Source breakdown
+        if (sourceRows) {
+            var iconMap = {
+                training: '🎯', checkin: '📍', battle: '⚔️', challenge: '🏆',
+                streak: '🔥', milestone: '🎖️', training_streak: '🔥', unknown: '⭐', other: '⭐'
+            };
+            var labelMap = {
+                training: 'Training', checkin: 'Check-ins', battle: 'Battles',
+                challenge: 'Challenges', streak: 'Streaks', milestone: 'Milestones',
+                training_streak: 'Streak Bonuses', unknown: 'Other', other: 'Bonus XP'
+            };
+            sourceRows.innerHTML = (data.breakdown || []).map(function(b) {
+                var icon = iconMap[b.source] || '⭐';
+                var label = labelMap[b.source] || (b.source ? b.source.charAt(0).toUpperCase() + b.source.slice(1) : 'Other');
+                return '<div class="xp-source-row">' +
+                    '<span class="xp-source-name"><span class="xsrc-icon">' + icon + '</span>' + label + '</span>' +
+                    '<span class="xp-source-num">+' + b.total_xp.toLocaleString() + ' XP</span>' +
+                '</div>';
+            }).join('');
+        }
+
+        // Next tier info
+        if (nextTierRow && data.skill_progress) {
+            var sp = data.skill_progress;
+            var xntLabel = document.getElementById('xnt-label');
+            var xntInfo = document.getElementById('xnt-info');
+            if (xntLabel && xntInfo && sp.maxXp < 99999) {
+                xntLabel.textContent = 'Next tier:';
+                xntInfo.textContent = sp.title + ' at ' + sp.maxXp.toLocaleString() + ' XP';
+                xntInfo.style.color = sp.color;
+            } else if (sp.maxXp >= 99999) {
+                xntLabel.textContent = 'Max tier reached!';
+                xntInfo.textContent = '🏆 Pro';
+                xntInfo.style.color = '#ff7070';
+            }
+        }
+
+        // Milestones
+        if (milestoneList && data.milestones && data.milestones.length) {
+            milestoneList.innerHTML = (data.milestones || []).map(function(m) {
+                var label = m.event.replace(/_/g, ' ');
+                return '<span class="xp-milestone-chip">🏅 ' + label + '</span>';
+            }).join('');
+        }
+
+        // This Week recap — populate the recap card
+        var weekCard = document.getElementById('this-week-card');
+        if (weekCard) {
+            var weeklyXp = data.weekly_xp || 0;
+            var lessonsDone = (data.training_stats && data.training_stats.lessons_completed) || 0;
+            var topSource = (data.breakdown && data.breakdown.length) ? (data.breakdown[0].source || 'other') : null;
+            var iconMap2 = { training: '🎯', checkin: '📍', battle: '⚔️', challenge: '🏆', streak: '🔥', milestone: '🎖️', training_streak: '🔥', unknown: '⭐', other: '⭐' };
+            if (weeklyXp > 0 || lessonsDone > 0) {
+                document.getElementById('week-xp-num').textContent = weeklyXp.toLocaleString();
+                document.getElementById('week-lessons-num').textContent = lessonsDone;
+                document.getElementById('week-source-num').textContent = topSource ? (iconMap2[topSource] || '⭐') : '—';
+                weekCard.style.display = 'block';
+            } else {
+                weekCard.style.display = 'none';
+            }
+        }
     }
 
     // Level-up from check-in redirect
@@ -1670,7 +2414,7 @@
 <div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
 <div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
-    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(255,107,26,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
     <div style="flex:1;min-width:0;">
       <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
       <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
@@ -1709,6 +2453,129 @@
       })
       .catch(function(){});
 })();
+</script>
+
+<script>
+// ── Leaderboard snippet ─────────────────────────────────────────────────────
+function getAuthHeaders() {
+    var token = localStorage.getItem('token') || localStorage.getItem('dggo_token');
+    var h = {};
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    else {
+        var uuid = localStorage.getItem('dggo_player_uuid');
+        if (uuid) h['X-Player-Id'] = uuid;
+    }
+    return h;
+}
+
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getRankTier(rank) {
+    if (rank === null || rank === undefined) return null;
+    if (rank <= 3) return 'gold';
+    if (rank <= 10) return 'silver';
+    if (rank <= 30) return 'bronze';
+    return null;
+}
+
+function rankTierBadge(tier) {
+    if (tier === 'gold') return '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px;background:rgba(212,160,23,0.15);color:#d4a017;border:1px solid rgba(212,160,23,0.3);">🥇 Gold</span>';
+    if (tier === 'silver') return '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px;background:rgba(110,117,128,0.12);color:#8a9199;border:1px solid rgba(110,117,128,0.25);">🥈 Silver</span>';
+    if (tier === 'bronze') return '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px;background:rgba(160,82,45,0.12);color:#a0522d;border:1px solid rgba(160,82,45,0.25);">🥉 Bronze</span>';
+    return '';
+}
+
+function lbSnippetInitials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2) || '?';
+}
+
+function renderLbSnippetRow(p, tier) {
+    var medal = '';
+    if (p.rank === 1) medal = '<span style="font-size:1rem;">🥇</span>';
+    else if (p.rank === 2) medal = '<span style="font-size:1rem;">🥈</span>';
+    else if (p.rank === 3) medal = '<span style="font-size:1rem;">🥉</span>';
+    else medal = '<span style="font-family:\\'Space Mono\\',monospace;font-size:0.8rem;font-weight:700;color:var(--text3);">#' + p.rank + '</span>';
+
+    var avatar = p.profile_photo_url
+        ? '<div style="width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);overflow:hidden;flex-shrink:0;"><img src="' + escHtml(p.profile_photo_url) + '" style="width:100%;height:100%;object-fit:cover;" alt=""></div>'
+        : '<div style="width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;">' + lbSnippetInitials(p.display_name) + '</div>';
+
+    var tierClass = tier ? ' rank-' + tier : '';
+    var meClass = p.is_me ? ' is-me' : '';
+    var stat = Number(p.stat_value || 0).toLocaleString();
+
+    return '<div class="lb-snippet-row' + meClass + tierClass + '">' +
+        '<div style="text-align:center;width:44px;flex-shrink:0;">' + medal + rankTierBadge(tier) + '</div>' +
+        '<div style="display:flex;align-items:center;gap:0.5rem;min-width:0;">' +
+            avatar +
+            '<div style="min-width:0;">' +
+                '<div style="font-size:0.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(p.display_name) + (p.is_me ? ' <span style="font-size:0.65rem;font-weight:700;background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);border-radius:100px;padding:0.08rem 0.35rem;text-transform:uppercase;letter-spacing:0.05em;">You</span>' : '') + '</div>' +
+                '<div style="font-size:0.7rem;color:var(--text3);">' + (p.username ? '@' + escHtml(p.username) : 'Lvl ' + (p.level || 1)) + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div style="text-align:right;font-family:\\'Space Mono\\',monospace;font-weight:700;font-size:0.9rem;flex-shrink:0;">' + stat + ' <span style="font-size:0.65rem;color:var(--text3);font-weight:400;">XP</span></div>' +
+    '</div>';
+}
+
+function renderLbSnippetMiniPodium(players) {
+    var top3 = players.filter(function(p){ return p.rank <= 3 && !p.out_of_top; }).slice(0,3);
+    if (top3.length < 2) return '';
+    // Reorder: 2, 1, 3
+    var order = [top3[1], top3[0], top3[2]].filter(Boolean);
+    var crowns = ['🥈','🥇','🥉'];
+    var rankClasses = ['rank-2','rank-1','rank-3'];
+    var slots = order.map(function(p, i) {
+        var initials = lbSnippetInitials(p.display_name);
+        var avatar = p.profile_photo_url
+            ? '<img src="' + escHtml(p.profile_photo_url) + '" style="width:100%;height:100%;object-fit:cover;" alt="">'
+            : escHtml(initials);
+        var crown = crowns[i];
+        var stat = Number(p.stat_value || 0).toLocaleString();
+        return '<div style="flex:1;max-width:160px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0.8rem 0.4rem 0.7rem;position:relative;overflow:hidden;box-shadow:var(--shadow-card);' + (i === 1 ? 'border-color:rgba(212,160,23,0.35);background:linear-gradient(160deg,rgba(212,160,23,0.08),var(--surface));' : '') + '">' +
+            '<span style="font-size:1.2rem;display:block;margin-bottom:0.25rem;">' + crown + '</span>' +
+            '<div style="width:40px;height:40px;border-radius:50%;background:var(--surface2);border:2px solid ' + (i === 1 ? 'var(--gold)' : 'var(--border2)') + ';display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;margin:0 auto 0.4rem;overflow:hidden;">' + avatar + '</div>' +
+            '<div style="font-size:0.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(p.display_name) + '</div>' +
+            '<div style="font-size:1rem;font-weight:700;font-family:\\'Space Mono\\',monospace;color:' + (i === 1 ? 'var(--gold)' : i === 0 ? 'var(--silver)' : 'var(--bronze)') + ';">' + stat + '</div>' +
+            '<div style="font-size:0.6rem;color:var(--text3);">XP</div>' +
+        '</div>';
+    });
+    return '<div style="display:flex;gap:0.5rem;align-items:flex-end;justify-content:center;margin-bottom:0.75rem;">' + slots.join('') + '</div>';
+}
+
+async function loadLbSnippet() {
+    var cat = document.getElementById('lb-snippet-cat') ? document.getElementById('lb-snippet-cat').value : 'overall';
+    var content = document.getElementById('lb-snippet-content');
+    if (!content) return;
+
+    try {
+        var res = await fetch('/api/leaderboard?category=' + cat + '&period=overall', { headers: getAuthHeaders() });
+        if (!res.ok) { content.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);">Failed to load</div>'; return; }
+        var data = await res.json();
+        var players = data.players || [];
+        var myRow = players.find(function(p){ return p.out_of_top; });
+        var top5 = players.filter(function(p){ return !p.out_of_top; }).slice(0, 5);
+
+        var html = '';
+        html += renderLbSnippetMiniPodium(players);
+        html += '<div style="display:flex;flex-direction:column;gap:0.35rem;">';
+        top5.forEach(function(p) {
+            var tier = getRankTier(p.rank);
+            html += renderLbSnippetRow(p, tier);
+        });
+        html += '</div>';
+        if (myRow) {
+            var tier = getRankTier(myRow.rank);
+            html += '<div style="margin-top:0.6rem;">' + renderLbSnippetRow(myRow, tier) + '</div>';
+        }
+        content.innerHTML = html;
+    } catch(e) {
+        content.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);">Failed to load</div>';
+    }
+}
 </script>
 
 <script>

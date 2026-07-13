@@ -4,10 +4,10 @@
 // Does NOT own launcher icons — that's generate-android-icons.js.
 //
 // Produces splash.png at every density + orientation variant so Capacitor defaults
-// (white splash) are fully overwritten. Each is: branded dark teal (#0d2b33) with
+// (white splash) are fully overwritten. Each is: branded charcoal (#1E1E1E) with
 // the circular logo emblem centered at ~40% of the shorter dimension.
-// The source logo has an opaque light-teal square behind the circular emblem —
-// a circular mask removes that square so only the emblem survives.
+// The source logo already has the charcoal background baked in;
+// a circular mask shapes the emblem for the splash.
 
 const sharp = require('sharp');
 const https = require('https');
@@ -18,7 +18,10 @@ const path = require('path');
 const BG_COLOR = { r: 13, g: 43, b: 51 };
 
 const SOURCE_URL =
-  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/e8cdbbcc-19dc-4fc4-bac5-4016fb74ce13.png';
+  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/46faf86b-5de0-4152-8b2b-ad4a265e8881.png';
+
+// Local fallback — committed AppIcon PNG, always present in the repo.
+const LOCAL_SOURCE = path.join(__dirname, '..', 'resources', 'AppIcon.appiconset', 'AppIcon-1024x1024.png');
 
 // All density-qualified variants so no Capacitor default splash survives.
 // Covers: base fallback, portrait (all densities), landscape (all densities),
@@ -41,10 +44,24 @@ const SPLASH_SIZES = {
   'drawable-land-xhdpi':   { w: 1280, h: 720  },
   'drawable-land-xxhdpi':  { w: 1920, h: 1080 },
   'drawable-land-xxxhdpi': { w: 2560, h: 1440 },
+  // night/dark variants — same dimensions as their day counterparts
+  'drawable-night':              { w: 320,  h: 480  },
+  'drawable-port-night-ldpi':    { w: 200,  h: 320  },
+  'drawable-port-night-mdpi':    { w: 320,  h: 480  },
+  'drawable-port-night-hdpi':    { w: 480,  h: 800  },
+  'drawable-port-night-xhdpi':   { w: 720,  h: 1280 },
+  'drawable-port-night-xxhdpi':  { w: 1080, h: 1920 },
+  'drawable-port-night-xxxhdpi': { w: 1440, h: 2560 },
+  'drawable-land-night-ldpi':    { w: 320,  h: 200  },
+  'drawable-land-night-mdpi':    { w: 480,  h: 320  },
+  'drawable-land-night-hdpi':    { w: 800,  h: 480  },
+  'drawable-land-night-xhdpi':   { w: 1280, h: 720  },
+  'drawable-land-night-xxhdpi':  { w: 1920, h: 1080 },
+  'drawable-land-night-xxxhdpi': { w: 2560, h: 1440 },
 };
 
-// Logo occupies ~40% of the shorter canvas dimension
-const LOGO_RATIO = 0.40;
+// Logo occupies ~55% of the shorter canvas dimension (bold, prominent treatment)
+const LOGO_RATIO = 0.55;
 
 const RES_BASE = path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'res');
 
@@ -78,12 +95,24 @@ async function circularMask(buf) {
     .toBuffer();
 }
 
+function createGlowSvg(diameter) {
+  const r = diameter / 2;
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}">` +
+    `<defs><radialGradient id="g" cx="50%" cy="50%" r="50%">` +
+    `<stop offset="0%" stop-color="#FF6B1A" stop-opacity="0.55"/>` +
+    `<stop offset="45%" stop-color="#FF6B1A" stop-opacity="0.20"/>` +
+    `<stop offset="100%" stop-color="#FF6B1A" stop-opacity="0"/>` +
+    `</radialGradient></defs>` +
+    `<circle cx="${r}" cy="${r}" r="${r}" fill="url(#g)"/></svg>`,
+    'utf8'
+  );
+}
+
 async function generateSplash(sourceBuffer, w, h) {
   const shorter = Math.min(w, h);
   const logoSize = Math.round(shorter * LOGO_RATIO);
 
-  // Resize logo to target size, then apply circular mask to remove the
-  // opaque light-teal square that sits behind the circular emblem in the source.
   const resized = await sharp(sourceBuffer)
     .resize(logoSize, logoSize, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
@@ -91,25 +120,26 @@ async function generateSplash(sourceBuffer, w, h) {
 
   const logoBuffer = await circularMask(resized);
 
-  // Get actual logo dimensions after resize
   const logoMeta = await sharp(logoBuffer).metadata();
   const lw = logoMeta.width;
   const lh = logoMeta.height;
 
-  // Center logo on canvas
   const left = Math.floor((w - lw) / 2);
-  const top = Math.floor((h - lh) / 2);
+  const top  = Math.floor((h - lh) / 2);
 
-  // Build canvas: solid branded background + circular logo composite
+  // Orange glow halo — 1.8× the logo diameter, centered
+  const glowDiam = Math.round(Math.max(lw, lh) * 1.8);
+  const glowLeft = Math.floor((w - glowDiam) / 2);
+  const glowTop  = Math.floor((h - glowDiam) / 2);
+  const glowBuffer = await sharp(createGlowSvg(glowDiam)).png().toBuffer();
+
   return sharp({
-    create: {
-      width: w,
-      height: h,
-      channels: 4,
-      background: { ...BG_COLOR, alpha: 255 },
-    },
+    create: { width: w, height: h, channels: 4, background: { ...BG_COLOR, alpha: 255 } },
   })
-    .composite([{ input: logoBuffer, left, top }])
+    .composite([
+      { input: glowBuffer, left: glowLeft, top: glowTop },
+      { input: logoBuffer, left, top },
+    ])
     .png()
     .toBuffer();
 }
@@ -139,17 +169,9 @@ function writeStylesXml() {
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <!-- Android 12+ system splash: dark teal bg matching the brand -->
-        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
-        <!-- Android 12+ animated icon: use the adaptive launcher icon (properly sized
-             foreground at 60% canvas = fits within 66dp safe zone + circular mask).
-             Do NOT use @drawable/splash here — that's a full-screen image that gets
-             mangled by the mandatory circular crop. -->
+        <item name="windowSplashScreenBackground">#0d2b33</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
-        <!-- After system splash dismisses, switch to the normal no-action-bar theme -->
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
-        <!-- Pre-12 window background: full branded splash PNG -->
-        <item name="android:background">@drawable/splash</item>
     </style>
 </resources>
 `;
@@ -159,9 +181,29 @@ function writeStylesXml() {
 }
 
 async function main() {
-  console.log('Downloading source logo…');
-  const sourceBuffer = await downloadBuffer(SOURCE_URL);
-  console.log(`Downloaded ${sourceBuffer.length} bytes`);
+  let sourceBuffer;
+  try {
+    console.log('Downloading source logo from R2…');
+    sourceBuffer = await downloadBuffer(SOURCE_URL);
+    console.log(`Downloaded ${sourceBuffer.length} bytes from R2`);
+  } catch (r2err) {
+    console.warn(`R2 download failed (${r2err.message}) — falling back to local AppIcon`);
+    if (!fs.existsSync(LOCAL_SOURCE)) {
+      throw new Error(
+        `Neither R2 source nor local fallback exists at ${LOCAL_SOURCE}. ` +
+        'Cannot generate Android splash.'
+      );
+    }
+    sourceBuffer = fs.readFileSync(LOCAL_SOURCE);
+    console.log(`Loaded ${sourceBuffer.length} bytes from local fallback`);
+  }
+
+  if (sourceBuffer.length < 1000) {
+    throw new Error(
+      `Source buffer too small (${sourceBuffer.length} bytes) — likely corrupt. ` +
+      'Check that AppIcon-1024x1024.png in resources/AppIcon.appiconset/ is valid.'
+    );
+  }
 
   for (const [dir, { w, h }] of Object.entries(SPLASH_SIZES)) {
     const outDir = path.join(RES_BASE, dir);

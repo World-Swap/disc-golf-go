@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -22,7 +24,7 @@
         /* Intro summary card — top of crews landing */
         .crew-intro-card {
             background: var(--surface);
-            border: 1px solid rgba(60,168,60,0.18);
+            border: 1px solid rgba(255,107,26,0.18);
             border-radius: var(--radius-card);
             box-shadow: var(--shadow-card);
             padding: 1.1rem 1.2rem;
@@ -45,7 +47,7 @@
         /* My Crew banner (shown when in a crew) */
         .my-crew-banner {
             background: var(--surface);
-            border: 1px solid rgba(60,168,60,0.25);
+            border: 1px solid rgba(255,107,26,0.25);
             border-radius: var(--radius-card);
             box-shadow: var(--shadow-card);
             padding: 1rem 1.1rem;
@@ -179,7 +181,7 @@
 <body>
     <header class="top-header">
         <a href="/" class="header-logo">
-            <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+            <img src="/logo.png?v=7" alt="Disc Golf Go" width="32" height="32" loading="eager">
             Disc Golf <span class="go">Go</span>
         </a>
         <div class="header-actions">
@@ -232,32 +234,25 @@
         </div>
     </main>
 
-    <nav class="bottom-tab-bar">
-    <a class="tab-item active" href="/crews">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label">Crews</span>
-    </a>
-    <a class="tab-item" href="/battles">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Battles</span>
+    <!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
     </a>
     <a class="tab-item" href="/scorecard">
         <span class="tab-icon">🥏</span>
         <span class="tab-label">Play</span>
     </a>
-    <a class="tab-item" href="/profile">
-        <span class="tab-icon">👤</span>
-        <span class="tab-label">Profile</span>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
     </a>
-    <a class="tab-item" href="/challenges">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-label">Quests</span>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
     </a>
-    <a class="tab-item" href="/map">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Map</span>
-    </a>
-</nav>
+    </nav>
 
     <!-- Notification popup -->
     <div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
@@ -267,7 +262,7 @@
             <button id="notifPopupClose" style="background:none;border:none;cursor:pointer;color:var(--text3,#78787a);font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
         </div>
         <div id="notifPopupMsg" style="font-size:0.88rem;color:var(--text2,#c4c4bc);line-height:1.55;margin-bottom:16px;"></div>
-        <button id="notifPopupDismissBtn" style="width:100%;padding:10px;background:var(--green,#7ed957);border:none;border-radius:10px;font-size:0.9rem;font-weight:700;color:#111;cursor:pointer;">Got it</button>
+        <button id="notifPopupDismissBtn" style="width:100%;padding:10px;background:var(--green,#FF6B1A);border:none;border-radius:10px;font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;">Got it</button>
     </div>
     <div id="toast"></div>
 
@@ -289,12 +284,12 @@
                 var next = isDark ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('dggo_theme', next);
-                themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+                themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
             });
             var saved = localStorage.getItem('dggo_theme');
-            if (saved === 'dark') themeToggle.textContent = '🌙';
-            else if (saved === 'light') themeToggle.textContent = '☀️';
-            else themeToggle.textContent = window.matchMedia('(prefers-color-scheme: dark)').matches ? '🌙' : '☀️';
+            if (saved === 'dark') themeToggle.textContent = '☀️';
+            else if (saved === 'light') themeToggle.textContent = '🌙';
+            else themeToggle.textContent = window.matchMedia('(prefers-color-scheme: dark)').matches ? '☀️' : '🌙';
         }
         if (!token) { window.location.href = '/login'; return; }
         var authHeaders = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };

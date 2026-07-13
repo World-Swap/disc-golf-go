@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Let's Play — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#1E1E1E">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>
+    /* ── RESET / TOKENS ─────────────────────────────────────────────── */
+    :root {
+        --ob-bg: #1E1E1E;
+        --ob-surface: #2A2A2A;
+        --ob-border: rgba(255,255,255,0.08);
+        --ob-text: #f0f4f0;
+        --ob-text2: #b8c8b8;
+        --ob-text3: #6a7a6a;
+        --ob-green: #FF6B1A;
+        --ob-green-glow: rgba(255,107,26,0.15);
+        --ob-gold: #ffd050;
+        --ob-safe-t: env(safe-area-inset-top, 0px);
+        --ob-safe-b: env(safe-area-inset-bottom, 0px);
+        --ob-transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        background: var(--ob-bg);
+        color: var(--ob-text);
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Scanline overlay */
+    body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: 0;
+        background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+        pointer-events: none;
+    }
+
+    /* ── SCREENS ───────────────────────────────────────────────────── */
+    .screen {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: calc(var(--ob-safe-t) + 1.5rem) 1.5rem calc(var(--ob-safe-b) + 1.5rem);
+        opacity: 0; pointer-events: none;
+        transition: opacity var(--ob-transition);
+        z-index: 1;
+    }
+    .screen.active {
+        opacity: 1; pointer-events: all;
+    }
+
+    /* ── SCREEN 1: WELCOME ─────────────────────────────────────────── */
+    .welcome-grid {
+        position: fixed; inset: 0; z-index: 0;
+        background-image:
+            linear-gradient(rgba(255,107,26,0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,107,26,0.015) 1px, transparent 1px);
+        background-size: 48px 48px;
+        pointer-events: none;
+    }
+    .welcome-grid::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(ellipse at center, transparent 20%, var(--ob-bg) 80%);
+    }
+
+    .welcome-inner {
+        position: relative; z-index: 1;
+        text-align: center; max-width: 400px;
+        display: flex; flex-direction: column;
+        align-items: center;
+    }
+
+    .ob-badge {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: rgba(255,107,26,0.1);
+        border: 1px solid rgba(255,107,26,0.3);
+        border-radius: 100px;
+        padding: 0.3rem 0.85rem;
+        font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--ob-green);
+        margin-bottom: 1.5rem;
+        animation: blink-dot 2s ease-in-out infinite;
+    }
+    @keyframes blink-dot {
+        0%,100%{opacity:1} 50%{opacity:0.4}
+    }
+    .ob-badge::before {
+        content: ''; width: 6px; height: 6px; border-radius: 50%;
+        background: var(--ob-green); box-shadow: 0 0 6px var(--ob-green);
+    }
+
+    .ob-logo {
+        width: 100px; height: 100px;
+        margin-bottom: 1.5rem;
+        filter: drop-shadow(0 0 24px rgba(255,107,26,0.5)) drop-shadow(0 0 8px rgba(255,107,26,0.8));
+        animation: ob-logo-pulse 3s ease-in-out infinite;
+    }
+    @keyframes ob-logo-pulse {
+        0%,100% { filter: drop-shadow(0 0 20px rgba(255,107,26,0.5)) drop-shadow(0 0 6px rgba(255,107,26,0.8)); }
+        50%      { filter: drop-shadow(0 0 40px rgba(255,107,26,0.8)) drop-shadow(0 0 10px rgba(255,107,26,1)); }
+    }
+
+    .ob-title {
+        font-size: 2.6rem; font-weight: 800; letter-spacing: -0.04em;
+        line-height: 1; margin-bottom: 0.75rem;
+        color: var(--ob-text);
+    }
+    .ob-title .green { color: var(--ob-green); text-shadow: 0 0 40px rgba(255,107,26,0.4); }
+
+    .ob-sub {
+        color: var(--ob-text2); font-size: 0.95rem;
+        line-height: 1.55; margin-bottom: 2.5rem;
+        max-width: 340px;
+    }
+
+    .ob-cta-col {
+        display: flex; flex-direction: column; gap: 0.75rem;
+        width: 100%; max-width: 300px;
+        margin-bottom: 1rem;
+    }
+
+    .btn-guest {
+        display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        width: 100%; padding: 1.05rem 1.75rem;
+        background: var(--ob-green); color: #fff;
+        border: none; border-radius: 16px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.05rem; font-weight: 800;
+        cursor: pointer; transition: all var(--ob-transition);
+        box-shadow: 0 0 28px rgba(255,107,26,0.35), 0 4px 20px rgba(255,107,26,0.2);
+        letter-spacing: -0.01em;
+    }
+    .btn-guest:hover { background: #E55A0D; transform: translateY(-2px); box-shadow: 0 0 48px rgba(255,107,26,0.5), 0 8px 32px rgba(255,107,26,0.3); }
+    .btn-guest:active { transform: scale(0.98); }
+    .btn-guest:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-signup {
+        display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        width: 100%; padding: 1rem 1.75rem;
+        background: transparent; border: 1px solid var(--ob-border);
+        color: var(--ob-text2); border-radius: 16px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.95rem; font-weight: 600;
+        cursor: pointer; text-decoration: none;
+        transition: all var(--ob-transition);
+    }
+    .btn-signup:hover { border-color: rgba(255,107,26,0.4); color: var(--ob-green); background: var(--ob-green-glow); }
+
+    .btn-google {
+        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+        width: 100%; padding: 1rem 1.75rem;
+        background: #ffffff; color: #3c4043;
+        border: none; border-radius: 16px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.95rem; font-weight: 600;
+        cursor: pointer; text-decoration: none;
+        transition: all var(--ob-transition);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .btn-google:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
+
+    .ob-divider {
+        display: flex; align-items: center; gap: 1rem;
+        width: 100%; max-width: 300px; margin: 0.5rem 0;
+        color: var(--ob-text3); font-size: 0.8rem;
+    }
+    .ob-divider::before, .ob-divider::after {
+        content: ''; flex: 1; height: 1px; background: var(--ob-border);
+    }
+
+    .ob-skip {
+        background: none; border: none;
+        color: var(--ob-text3); font-size: 0.82rem;
+        cursor: pointer; text-decoration: underline;
+        text-underline-offset: 3px;
+        padding: 0.5rem;
+        transition: color var(--ob-transition);
+    }
+    .ob-skip:hover { color: var(--ob-text2); }
+
+    /* ── SCREEN 2: EXPERIENCE SELECT ───────────────────────────────── */
+    .exp-inner {
+        position: relative; z-index: 1;
+        text-align: center; max-width: 420px;
+        width: 100%;
+    }
+
+    .exp-question {
+        font-size: clamp(1.8rem, 7vw, 2.8rem); font-weight: 800;
+        letter-spacing: -0.04em; line-height: 1.05;
+        margin-bottom: 0.75rem;
+        color: var(--ob-text);
+    }
+
+    .exp-sub {
+        color: var(--ob-text2); font-size: 0.95rem;
+        line-height: 1.55; margin-bottom: 2.5rem;
+    }
+
+    .exp-grid {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 1rem; margin-bottom: 1.5rem;
+    }
+
+    .exp-card {
+        background: var(--ob-surface);
+        border: 2px solid var(--ob-border);
+        border-radius: 20px; padding: 1.75rem 1rem;
+        cursor: pointer; text-align: center;
+        transition: all var(--ob-transition);
+        display: flex; flex-direction: column;
+        align-items: center; gap: 0.75rem;
+    }
+    .exp-card:hover, .exp-card:active {
+        border-color: rgba(255,107,26,0.35);
+        transform: translateY(-2px);
+    }
+    .exp-card.selected {
+        border-color: var(--ob-green);
+        background: var(--ob-green-glow);
+        box-shadow: 0 0 24px rgba(255,107,26,0.2);
+    }
+
+    .exp-icon { font-size: 3rem; line-height: 1; }
+    .exp-card-title {
+        font-size: 1rem; font-weight: 700; color: var(--ob-text);
+    }
+    .exp-card-sub { font-size: 0.78rem; color: var(--ob-text3); line-height: 1.4; }
+
+    .exp-skip-link {
+        background: none; border: none;
+        color: var(--ob-text3); font-size: 0.82rem;
+        cursor: pointer; text-decoration: underline;
+        text-underline-offset: 3px;
+        padding: 0.5rem;
+    }
+    .exp-skip-link:hover { color: var(--ob-text2); }
+
+    /* ── SCREEN 3: TUTORIAL (NEW PLAYERS) ──────────────────────────── */
+    .tutorial-arena {
+        position: relative; z-index: 1;
+        display: flex; flex-direction: column;
+        align-items: center; width: 100%; max-width: 500px;
+        min-height: 70vh;
+    }
+
+    .tutorial-progress {
+        display: flex; gap: 0.5rem; align-items: center;
+        margin-bottom: 2rem;
+    }
+    .prog-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--ob-border);
+        transition: background var(--ob-transition);
+    }
+    .prog-dot.done { background: var(--ob-green); }
+    .prog-dot.active { background: var(--ob-green); box-shadow: 0 0 8px var(--ob-green); }
+
+    .tutorial-step-label {
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--ob-text3); margin-bottom: 0.5rem;
+    }
+
+    .tutorial-instruction {
+        font-size: 1.1rem; font-weight: 600;
+        color: var(--ob-text2); margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    /* Disc throw zone */
+    .throw-zone {
+        position: relative;
+        width: 280px; height: 280px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(255,107,26,0.08) 0%, transparent 70%);
+        border: 2px solid var(--ob-border);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: all var(--ob-transition);
+        margin-bottom: 1.5rem;
+        user-select: none;
+    }
+    .throw-zone::before {
+        content: '';
+        position: absolute; inset: 0; border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(255,107,26,0.06) 0%, transparent 60%);
+    }
+    .throw-zone.tappable:active { transform: scale(0.95); border-color: rgba(255,107,26,0.5); }
+    .throw-zone.launching { animation: throw-fade 0.8s ease forwards; }
+    @keyframes throw-fade {
+        0% { border-color: var(--ob-border); }
+        30% { border-color: var(--ob-green); box-shadow: 0 0 40px rgba(255,107,26,0.5); }
+        100% { opacity: 0.4; border-color: var(--ob-border); }
+    }
+
+    .disc-emoji {
+        font-size: 4rem; line-height: 1;
+        transition: transform 0.3s ease;
+        animation: disc-idle 2s ease-in-out infinite;
+        filter: drop-shadow(0 4px 12px rgba(255,107,26,0.3));
+    }
+    @keyframes disc-idle {
+        0%,100% { transform: translateY(0) rotate(-5deg); }
+        50% { transform: translateY(-8px) rotate(5deg); }
+    }
+    .disc-emoji.flying {
+        animation: disc-fly 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+    @keyframes disc-fly {
+        0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+        40%  { transform: translate(120px, -80px) rotate(360deg) scale(1.1); opacity: 1; }
+        70%  { transform: translate(180px, -20px) rotate(540deg) scale(1); opacity: 1; }
+        100% { transform: translate(240px, 0px) rotate(720deg) scale(0.6); opacity: 0; }
+    }
+    .disc-emoji.landed {
+        animation: disc-land 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes disc-land {
+        0%   { transform: translate(240px, 0px) scale(0.6); opacity: 0; }
+        40%  { transform: translate(0, 0) scale(1.3); opacity: 1; }
+        70%  { transform: translate(0, -20px) scale(0.9); opacity: 1; }
+        100% { transform: translate(0, 0) scale(1); opacity: 1; }
+    }
+
+    .trail {
+        position: absolute;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        background: rgba(255,107,26,0.3);
+        pointer-events: none;
+        animation: trail-fade 0.6s ease forwards;
+    }
+    @keyframes trail-fade {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(0.3); opacity: 0; }
+    }
+
+    /* Target basket indicator */
+    .basket-icon {
+        position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+        font-size: 2.5rem; opacity: 0.6;
+        animation: basket-bob 2s ease-in-out infinite;
+    }
+    @keyframes basket-bob {
+        0%,100% { transform: translateY(-50%) translateX(0); }
+        50% { transform: translateY(-50%) translateX(-5px); }
+    }
+
+    /* Tooltip */
+    .ob-tooltip {
+        position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%);
+        background: var(--ob-surface);
+        border: 1px solid var(--ob-border);
+        border-radius: 12px; padding: 0.65rem 1rem;
+        font-size: 0.8rem; color: var(--ob-text2);
+        white-space: nowrap;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        animation: tooltip-in 0.3s ease;
+    }
+    .ob-tooltip::before {
+        content: ''; position: absolute; top: -5px; left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        width: 9px; height: 9px; background: var(--ob-surface);
+        border-top: 1px solid var(--ob-border); border-left: 1px solid var(--ob-border);
+    }
+    @keyframes tooltip-in {
+        from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* ── SCREEN 4: CELEBRATION ──────────────────────────────────────── */
+    .celeb-inner {
+        position: relative; z-index: 1;
+        text-align: center; max-width: 400px;
+    }
+
+    .celeb-badge {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        background: rgba(255,107,26,0.15);
+        border: 1px solid rgba(255,107,26,0.3);
+        border-radius: 100px;
+        padding: 0.4rem 1rem;
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+        text-transform: uppercase; color: var(--ob-green);
+        margin-bottom: 2rem;
+        animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes pop-in {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .celeb-icon {
+        font-size: 5rem; line-height: 1;
+        margin-bottom: 1.25rem;
+        animation: celeb-bounce 0.7s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes celeb-bounce {
+        0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+        60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+        80% { transform: scale(0.9) rotate(-3deg); }
+        100% { transform: scale(1) rotate(0deg); }
+    }
+
+    .celeb-title {
+        font-size: 2rem; font-weight: 800;
+        letter-spacing: -0.03em; margin-bottom: 0.5rem;
+        animation: fade-up 0.5s 0.3s ease both;
+    }
+    .celeb-sub {
+        color: var(--ob-text2); font-size: 0.95rem;
+        margin-bottom: 2.5rem; line-height: 1.5;
+        animation: fade-up 0.5s 0.4s ease both;
+    }
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SCREEN 5: SIGN UP PROMPT ───────────────────────────────────── */
+    .signup-prompt {
+        position: relative; z-index: 1;
+        text-align: center; max-width: 400px;
+    }
+
+    .signup-card {
+        background: var(--ob-surface);
+        border: 1px solid var(--ob-border);
+        border-radius: 24px; padding: 2.5rem 1.75rem;
+        position: relative; overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    .signup-card::before {
+        content: ''; position: absolute; top: -50%; left: 50%; transform: translateX(-50%);
+        width: 80%; height: 200px;
+        background: radial-gradient(ellipse, rgba(255,107,26,0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .sp-title {
+        font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em;
+        margin-bottom: 0.5rem; color: var(--ob-text);
+    }
+    .sp-sub { color: var(--ob-text2); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem; }
+
+    .ob-rewards {
+        display: flex; flex-direction: column; gap: 0.6rem;
+        background: rgba(255,107,26,0.07); border-radius: 14px;
+        padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+        text-align: left;
+    }
+    .ob-reward-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: var(--ob-text2); }
+    .ob-reward-row .icon { font-size: 1.2rem; }
+    .ob-reward-row .val { margin-left: auto; font-weight: 700; color: var(--ob-green); }
+
+    .btn-sso {
+        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+        width: 100%; padding: 0.95rem 1.5rem;
+        background: var(--ob-surface); border: 1px solid var(--ob-border);
+        color: var(--ob-text); border-radius: 14px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.95rem; font-weight: 600;
+        cursor: pointer; text-decoration: none;
+        transition: all var(--ob-transition);
+        margin-bottom: 0.75rem;
+    }
+    .btn-sso:hover { border-color: rgba(255,107,26,0.35); background: var(--ob-green-glow); }
+    .btn-sso svg { width: 20px; height: 20px; }
+
+    .sp-guest-btn {
+        background: none; border: none;
+        color: var(--ob-text3); font-size: 0.85rem;
+        cursor: pointer; text-decoration: underline;
+        text-underline-offset: 3px;
+        padding: 0.5rem;
+        transition: color var(--ob-transition);
+    }
+    .sp-guest-btn:hover { color: var(--ob-text2); }
+
+    /* ── LOADING / ERROR ───────────────────────────────────────────── */
+    .ob-loading {
+        display: flex; flex-direction: column; align-items: center; gap: 1rem;
+        color: var(--ob-text3); font-size: 0.9rem;
+    }
+    .ob-spinner {
+        width: 36px; height: 36px; border-radius: 50%;
+        border: 2px solid var(--ob-border);
+        border-top-color: var(--ob-green);
+        animation: ob-spin 0.8s linear infinite;
+    }
+    @keyframes ob-spin { to { transform: rotate(360deg); } }
+
+    .ob-error {
+        color: #ff6b6b; font-size: 0.85rem;
+        text-align: center; max-width: 280px;
+        margin: 0.5rem auto;
+    }
+
+    /* ── GOING TO SCORECARD TRANSITION ─────────────────────────────── */
+    .transition-screen {
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        text-align: center; gap: 1rem;
+    }
+    .transition-screen .check-icon {
+        font-size: 4rem; animation: pop 0.5s ease;
+    }
+    .transition-screen h2 { font-size: 1.4rem; font-weight: 700; }
+    .transition-screen p { color: var(--ob-text2); font-size: 0.9rem; }
+    @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* Responsive */
+    @media (max-width: 400px) {
+        .exp-grid { grid-template-columns: 1fr; }
+        .ob-cta-col, .btn-guest, .btn-signup { max-width: 100%; }
+        .throw-zone { width: 220px; height: 220px; }
+        .disc-emoji { font-size: 3rem; }
+        @keyframes disc-fly {
+            0%   { transform: translate(0,0) rotate(0deg) scale(1); opacity:1; }
+            40%  { transform: translate(80px,-60px) rotate(360deg) scale(1.1); opacity:1; }
+            70%  { transform: translate(130px,-10px) rotate(540deg) scale(1); opacity:1; }
+            100% { transform: translate(180px,0px) rotate(720deg) scale(0.6); opacity:0; }
+        }
+    }
+    </style>
+</head>
+<body>
+
+<!-- ── SCREEN 1: WELCOME ─────────────────────────────────────────── -->
+<div class="screen active" id="screen-welcome">
+    <div class="welcome-grid"></div>
+    <div class="welcome-inner">
+        <div class="ob-badge">Disc Golf · Let's Play</div>
+        <img src="/logo.png?v=7" alt="Disc Golf Go" class="ob-logo" width="100" height="100" loading="eager">
+        <h1 class="ob-title">Hit <span class="green">The</span><br>Course.</h1>
+        <p class="ob-sub">Play free. No account needed to start. Save your progress anytime.</p>
+        <div class="ob-cta-col">
+            <button class="btn-guest" id="btn-guest" onclick="startAsGuest()">
+                🥏 &nbsp; Play as Guest
+            </button>
+            <button class="btn-signup" onclick="goToRegister()">
+                ✉️ &nbsp; Sign up free
+            </button>
+        </div>
+        <button class="ob-skip" onclick="goToScorecard()">Skip to course select →</button>
+    </div>
+</div>
+
+<!-- ── SCREEN 2: EXPERIENCE LEVEL ──────────────────────────────── -->
+<div class="screen" id="screen-experience">
+    <div class="welcome-grid"></div>
+    <div class="exp-inner">
+        <div class="ob-badge">Quick Question</div>
+        <h2 class="exp-question">Have you played <span class="green">disc golf</span> before?</h2>
+        <p class="exp-sub">This helps us show you the right first steps.</p>
+        <div class="exp-grid">
+            <div class="exp-card" id="exp-experienced" onclick="selectExperience('experienced')">
+                <div class="exp-icon">🏆</div>
+                <div class="exp-card-title">Yes — experienced</div>
+                <div class="exp-card-sub">I know how to play. Skip the tutorial.</div>
+            </div>
+            <div class="exp-card" id="exp-new" onclick="selectExperience('new')">
+                <div class="exp-icon">🌱</div>
+                <div class="exp-card-title">No — first time</div>
+                <div class="exp-card-sub">Show me the basics in 30 seconds.</div>
+            </div>
+        </div>
+        <div id="exp-error" class="ob-error" style="display:none;"></div>
+        <button class="ob-skip-link" onclick="goToScorecard()">Skip — go straight to courses →</button>
+    </div>
+</div>
+
+<!-- ── SCREEN 3: TUTORIAL (NEW PLAYERS) ─────────────────────────── -->
+<div class="screen" id="screen-tutorial">
+    <div class="welcome-grid"></div>
+    <div class="tutorial-arena">
+        <div class="tutorial-progress">
+            <div class="prog-dot" id="dot-1"></div>
+            <div class="prog-dot" id="dot-2"></div>
+            <div class="prog-dot" id="dot-3"></div>
+        </div>
+        <div class="tutorial-step-label">Step 1 of 1</div>
+        <p class="tutorial-instruction" id="tut-instruction">Tap the disc to throw it!</p>
+
+        <div class="throw-zone" id="throw-zone" onclick="handleThrow(event)">
+            <div class="disc-emoji" id="disc">🥏</div>
+            <div class="basket-icon">🗑️</div>
+        </div>
+
+        <div class="ob-tooltip" id="ob-tooltip" style="display:none;">Tap here to throw your disc</div>
+    </div>
+</div>
+
+<!-- ── SCREEN 4: CELEBRATION ─────────────────────────────────────── -->
+<div class="screen" id="screen-celebration">
+    <div class="welcome-grid"></div>
+    <div class="celeb-inner">
+        <div class="celeb-badge">✅ First Throw Complete</div>
+        <div class="celeb-icon">🎉</div>
+        <h2 class="celeb-title">Nice shot!</h2>
+        <p class="celeb-sub">You just played your first disc.<br>Ready to hit a real course?</p>
+        <div class="ob-cta-col">
+            <button class="btn-guest" onclick="proceedToScorecard()">
+                🥏 &nbsp; Start Playing
+            </button>
+        </div>
+        <button class="ob-skip" onclick="proceedToScorecard()">Continue as guest →</button>
+    </div>
+</div>
+
+<!-- ── SCREEN 5: SIGN UP PROMPT (POST-FIRST-THROW) ───────────────── -->
+<div class="screen" id="screen-signup-prompt">
+    <div class="welcome-grid"></div>
+    <div class="signup-prompt">
+        <div class="signup-card">
+            <h2 class="sp-title">Save your progress</h2>
+            <p class="sp-sub">Your rounds are tracked locally. Sign up free to sync across devices and unlock rewards.</p>
+            <div class="ob-rewards">
+                <div class="ob-reward-row"><span class="icon">🥏</span>All your rounds synced<span class="val">Free</span></div>
+                <div class="ob-reward-row"><span class="icon">🏆</span>Leaderboard access<span class="val">Free</span></div>
+                <div class="ob-reward-row"><span class="icon">👥</span>Crews &amp; battles<span class="val">Free</span></div>
+            </div>
+            <button class="btn-sso" onclick="goToRegister()">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Sign up with Google
+            </button>
+            <button class="btn-sso" onclick="goToRegister()">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" fill="currentColor"/></svg>
+                Sign up with Apple
+            </button>
+            <div class="ob-divider">or</div>
+            <button class="btn-sso" onclick="goToRegister()" style="background: var(--ob-surface); border: 1px solid var(--ob-border); color: var(--ob-text2);">
+                ✉️ &nbsp; Email &amp; password
+            </button>
+        </div>
+        <button class="sp-guest-btn" onclick="proceedToScorecard()">Continue as guest — no account needed</button>
+    </div>
+</div>
+
+<!-- ── LOADING ─────────────────────────────────────────────────── -->
+<div class="screen" id="screen-loading">
+    <div class="ob-loading">
+        <div class="ob-spinner"></div>
+        <span>Starting your game…</span>
+    </div>
+</div>
+
+<!-- ── TRANSITION (experienced path) ─────────────────────────────── -->
+<div class="screen" id="screen-transition">
+    <div class="transition-screen">
+        <div class="check-icon">✅</div>
+        <h2>You're ready to play!</h2>
+        <p>Loading the course selector…</p>
+    </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────
+const Session = (() => {
+  const KEY = 'dggo_ob_session';
+  return {
+    get() {
+      try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; }
+    },
+    set(data) {
+      localStorage.setItem(KEY, JSON.stringify({ ...this.get(), ...data }));
+    },
+    clear() { localStorage.removeItem(KEY); }
+  };
+})();
+
+const state = {
+  playerId: null,
+  playerUuid: null,
+  token: null,
+  guestUuid: null,
+  isGuest: false,
+  experienceLevel: null,
+  tutorialStep: 0,
+  hasThrown: false,
+  sessionId: 'ob_' + Math.random().toString(36).slice(2, 10),
+};
+
+// Restore session if returning
+(function restoreSession() {
+  const s = Session.get();
+  if (s.guestUuid) state.guestUuid = s.guestUuid;
+  if (s.token) state.token = s.token;
+  if (s.playerId) state.playerId = s.playerId;
+  if (s.playerUuid) state.playerUuid = s.playerUuid;
+  if (s.isGuest !== undefined) state.isGuest = s.isGuest;
+  if (s.experienceLevel) state.experienceLevel = s.experienceLevel;
+  if (s.hasThrown) state.hasThrown = s.hasThrown;
+})();
+
+// ── TRACKING ──────────────────────────────────────────────────────
+async function trackEvent(eventType, extra = {}) {
+  try {
+    const body = {
+      event_type: eventType,
+      session_id: state.sessionId,
+      ...extra,
+    };
+    if (state.playerId) body.player_id = state.playerId;
+    if (state.guestUuid) body.guest_uuid = state.guestUuid;
+    if (state.experienceLevel) body.experience_level = state.experienceLevel;
+
+    fetch('/api/onboarding/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch(() => {});
+  } catch (_) {}
+}
+
+// ── SCREEN MANAGEMENT ────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── STEP 1: PLAY AS GUEST ─────────────────────────────────────────
+async function startAsGuest() {
+  const btn = document.getElementById('btn-guest');
+  btn.disabled = true;
+  btn.textContent = 'Starting…';
+
+  try {
+    const res = await fetch('/api/auth/guest', { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok || !data.token) {
+      showError('Could not start game. Please try again.');
+      btn.disabled = false; btn.textContent = '🥏  Play as Guest';
+      return;
+    }
+
+    state.token = data.token;
+    state.playerId = data.player.id;
+    state.isGuest = true;
+    state.guestUuid = data.player.player_uuid;
+    state.hasThrown = false;
+
+    try { localStorage.setItem('dggo_token', data.token); } catch(_) {}
+    try { localStorage.setItem('dggo_player_id', String(data.player.id)); } catch(_) {}
+    try { localStorage.setItem('dggo_guest_uuid', data.player.player_uuid); } catch(_) {}
+    try { localStorage.setItem('dggo_player_uuid', data.player.player_uuid); } catch(_) {}
+
+    Session.set({
+      token: data.token,
+      playerId: data.player.id,
+      playerUuid: data.player.player_uuid,
+      guestUuid: data.player.player_uuid,
+      isGuest: true,
+      hasThrown: false,
+      experienceLevel: null,
+    });
+
+    await trackEvent('onboard_loaded');
+    showScreen('screen-experience');
+  } catch (err) {
+    showError('Connection error. Check your internet and try again.');
+    btn.disabled = false; btn.textContent = '🥏  Play as Guest';
+  }
+}
+
+function showError(msg) {
+  // Simple inline error — no full error view needed
+  console.error('[onboard]', msg);
+}
+
+// ── STEP 2: EXPERIENCE LEVEL ─────────────────────────────────────
+async function selectExperience(level) {
+  // Clear selected state
+  document.querySelectorAll('.exp-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById('exp-' + level).classList.add('selected');
+
+  state.experienceLevel = level;
+  Session.set({ experienceLevel: level });
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    if (state.guestUuid) headers['X-Guest-UUID'] = state.guestUuid;
+
+    await fetch('/api/onboarding/experience', {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ experience_level: level }),
+    });
+  } catch (_) {}
+
+  await trackEvent('experience_selected', { experience_level: level });
+
+  if (level === 'experienced') {
+    // Skip tutorial — go directly to scorecard
+    await completeOnboarding();
+    showScreen('screen-transition');
+    setTimeout(() => { window.location.href = '/home'; }, 1500);
+  } else {
+    // New player — show tutorial
+    await trackEvent('tutorial_started');
+    showScreen('screen-tutorial');
+    startTutorial();
+  }
+}
+
+// ── STEP 3: TUTORIAL (NEW PLAYERS) ──────────────────────────────
+function startTutorial() {
+  state.tutorialStep = 1;
+  updateTutorialDots();
+
+  // Show tooltip after a short delay (discourages skipping)
+  const zone = document.getElementById('throw-zone');
+  const tooltip = document.getElementById('ob-tooltip');
+  setTimeout(() => {
+    tooltip.style.display = 'block';
+    zone.classList.add('tappable');
+    // Hide tooltip on first interaction
+    zone.addEventListener('click', () => { tooltip.style.display = 'none'; }, { once: true });
+  }, 800);
+}
+
+function updateTutorialDots() {
+  const dots = [1, 2, 3];
+  dots.forEach(i => {
+    const dot = document.getElementById('dot-' + i);
+    dot.classList.remove('done', 'active');
+    if (i < state.tutorialStep) dot.classList.add('done');
+    if (i === state.tutorialStep) dot.classList.add('active');
+  });
+}
+
+async function handleThrow(event) {
+  if (state.hasThrown) return;
+  state.hasThrown = true;
+  state.tutorialStep = 2;
+  Session.set({ hasThrown: true });
+
+  const zone = document.getElementById('throw-zone');
+  const disc = document.getElementById('disc');
+  const tooltip = document.getElementById('ob-tooltip');
+  tooltip.style.display = 'none';
+  zone.classList.remove('tappable');
+  zone.classList.add('launching');
+
+  // Animate disc flying
+  disc.classList.add('flying');
+
+  // Trail particles
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const trail = document.createElement('div');
+      trail.className = 'trail';
+      // Position roughly along the flight arc
+      const x = 60 + i * 45;
+      const y = 90 - i * 20;
+      trail.style.left = (zone.offsetWidth / 2 - 18 + x * 0.5) + 'px';
+      trail.style.top = (zone.offsetHeight / 2 - 18 + y * 0.5) + 'px';
+      zone.appendChild(trail);
+      setTimeout(() => trail.remove(), 600);
+    }, i * 80);
+  }
+
+  // Disc lands
+  setTimeout(() => {
+    disc.classList.remove('flying');
+    disc.classList.add('landed');
+    disc.textContent = '✅';
+  }, 1500);
+
+  // Mark tutorial complete
+  await trackEvent('tutorial_completed');
+  await completeOnboarding();
+
+  // Show celebration after disc lands
+  setTimeout(() => {
+    updateTutorialDots();
+    disc.textContent = '🥏';
+    disc.classList.remove('landed', 'flying');
+    disc.style.animation = 'disc-idle 2s ease-in-out infinite';
+    zone.classList.remove('launching');
+    showScreen('screen-celebration');
+    trackEvent('guest_played_first_throw');
+  }, 2200);
+}
+
+// ── STEP 4: PROCEED ───────────────────────────────────────────────
+async function completeOnboarding() {
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    if (state.guestUuid) headers['X-Guest-UUID'] = state.guestUuid;
+
+    await fetch('/api/onboarding/complete', {
+      method: 'POST',
+      headers,
+    });
+  } catch (_) {}
+
+  Session.set({ onboardingCompleted: true });
+}
+
+async function proceedToScorecard() {
+  await trackEvent('signup_prompted');
+  // Guest is already authenticated via localStorage keys — send them into the app
+  window.location.href = '/home';
+}
+
+// ── DIRECT PATHS ──────────────────────────────────────────────────
+function goToRegister() {
+  // Preserve guest session so they can return and claim it post-signup
+  if (state.guestUuid) Session.set({ pending_signup: true });
+  window.location.href = '/register';
+}
+
+async function goToScorecard() {
+  // If no session, create guest first
+  if (!state.token && !state.guestUuid) {
+    showScreen('screen-loading');
+    try {
+      const res = await fetch('/api/auth/guest', { method: 'POST' });
+      const data = await res.json();
+      if (data.token) {
+        state.token = data.token;
+        state.playerId = data.player.id;
+        state.isGuest = true;
+        state.guestUuid = data.player.player_uuid;
+        try { localStorage.setItem('dggo_token', data.token); } catch(_) {}
+        try { localStorage.setItem('dggo_player_id', String(data.player.id)); } catch(_) {}
+        try { localStorage.setItem('dggo_guest_uuid', data.player.player_uuid); } catch(_) {}
+        try { localStorage.setItem('dggo_player_uuid', data.player.player_uuid); } catch(_) {}
+        Session.set({
+          token: data.token, playerId: data.player.id,
+          playerUuid: data.player.player_uuid,
+          guestUuid: data.player.player_uuid, isGuest: true,
+        });
+      }
+    } catch (_) {}
+  }
+  await completeOnboarding();
+  window.location.href = '/home';
+}
+
+// ── POLSIA ANALYTICS ──────────────────────────────────────────────
+(function() {
+    var slug = 'disc-golf-go';
+    var vid = localStorage.getItem('polsia_vid');
+    if (!vid) {
+        vid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        localStorage.setItem('polsia_vid', vid);
+    }
+    new Image().src = 'https://polsia.com/api/beacon/pixel?s=' + encodeURIComponent(slug) + '&v=' + encodeURIComponent(vid);
+})();
+</script>
+
+</body>
+</html>

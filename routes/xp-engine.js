@@ -611,6 +611,39 @@ async function grantGold(client, playerId, eventType, metadata = {}, overrideAmo
   return { base, multiplier, amount, newGold: result.rows[0].gold };
 }
 
+// ──────────────────────────────────────────────
+// SKILL TIERS (from total XP, used across all surfaces)
+// ──────────────────────────────────────────────
+const SKILL_TIERS = [
+  { key: 'rookie',     title: 'Rookie',     minXp: 0,     maxXp: 499,   icon: '🥏', color: '#6a7a6a', desc: 'New to disc golf' },
+  { key: 'player',     title: 'Player',     minXp: 500,   maxXp: 1999,  icon: '⛳', color: '#4cdf3c', desc: 'Can play competently' },
+  { key: 'advanced',    title: 'Advanced',   minXp: 2000,  maxXp: 4999,  icon: '🎯', color: '#ffd050', desc: 'Consistent player' },
+  { key: 'pro',        title: 'Pro',        minXp: 5000,  maxXp: 99999, icon: '🥇', color: '#ff7070', desc: 'Tournament-level' },
+];
+
+function getSkillTier(xp) {
+  for (let i = SKILL_TIERS.length - 1; i >= 0; i--) {
+    if (xp >= SKILL_TIERS[i].minXp) return SKILL_TIERS[i];
+  }
+  return SKILL_TIERS[0];
+}
+
+function getSkillTierProgress(xp) {
+  const tier = getSkillTier(xp);
+  if (!tier) return null;
+  // Progress within current tier
+  const base = tier.minXp;
+  const range = tier.maxXp - tier.minXp + 1;
+  const progress = Math.min(xp - base, range);
+  return {
+    ...tier,
+    currentXp: xp,
+    tierXp: progress,
+    tierXpNeeded: range,
+    pct: Math.min(100, Math.round((progress / range) * 100)),
+  };
+}
+
 module.exports = {
   totalXpForLevel,
   getLevelFromXp,
@@ -630,4 +663,7 @@ module.exports = {
   getCourseMilestone,
   getRoundMilestone,
   getStateMilestone,
+  SKILL_TIERS,
+  getSkillTier,
+  getSkillTierProgress,
 };

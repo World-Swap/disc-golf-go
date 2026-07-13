@@ -73,7 +73,7 @@ module.exports = ({ pool }) => {
 
   // POST /api/auth/signup
   router.post('/auth/signup', signupLimiter, sanitizeFields('display_name'), async (req, res) => {
-    const { display_name, username, email, password } = req.body;
+    const { display_name, username, email, password, referral_code } = req.body;
 
     // Validation
     if (!display_name || !username || !email || !password) {
@@ -119,6 +119,19 @@ module.exports = ({ pool }) => {
       const player = result.rows[0];
 
       const token = createToken({ id: player.id, player_uuid: player.player_uuid });
+
+      // Fire-and-forget referral claim — don't block signup on referral processing
+      if (referral_code && typeof referral_code === 'string') {
+        const baseUrl = process.env.APP_URL || 'https://disc-golf-go.polsia.app';
+        fetch(`${baseUrl}/api/referrals/claim`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ code: referral_code }),
+        }).catch(err => console.error('[auth] Referral claim failed:', err.message));
+      }
 
       res.status(201).json({
         token,
@@ -339,6 +352,80 @@ module.exports = ({ pool }) => {
     } catch (err) {
       console.error('Verify reset token error:', err.message);
       res.status(500).json({ valid: false, error: 'server_error' });
+    }
+  });
+
+  // POST /api/auth/guest
+  // Creates a guest player (no email/password) so they can play immediately.
+  // Onboarding_completed stays false — they'll be prompted to sign up after
+  // their first throw lands. Guest players can convert to full accounts later.
+  router.post('/auth/guest', async (req, res) => {
+    try {
+      const guestUuid = generateUUID();
+
+      const result = await pool.query(
+        `INSERT INTO players (player_uuid, display_name, username, email, is_guest, guest_uuid)
+         VALUES ($1, $2, $3, NULL, true, $1)
+         RETURNING id, player_uuid, display_name, xp, created_at`,
+        [guestUuid, 'Guest Player', 'guest_' + guestUuid.slice(0, 8)]
+      );
+
+      const player = result.rows[0];
+      const token = createToken({ id: player.id, player_uuid: player.player_uuid });
+
+      res.status(201).json({
+        token,
+        player: {
+          id: player.id,
+          display_name: player.display_name,
+          is_guest: true,
+          xp: player.xp,
+          level: getLevel(player.xp),
+          level_progress: getLevelProgress(player.xp)
+        }
+      });
+    } catch (err) {
+      console.error('Guest creation error:', err.message);
+      res.status(500).json({ error: 'Failed to create guest player' });
+    }
+  });
+
+  // GET /api/auth/guest-status
+  // Returns whether the guest_uuid stored in localStorage is still valid.
+  // Used to persist guest identity across sessions before conversion.
+  router.get('/auth/guest-status', async (req, res) => {
+    const guestUuid = req.headers['x-guest-uuid'];
+    if (!guestUuid) return res.status(400).json({ valid: false, error: 'guest_uuid required' });
+
+    try {
+      const result = await pool.query(
+        `SELECT id, player_uuid, display_name, xp, is_guest, onboarding_completed, experience_level
+         FROM players WHERE guest_uuid = $1 LIMIT 1`,
+        [guestUuid]
+      );
+
+      if (result.rows.length === 0) {
+        return res.json({ valid: false });
+      }
+
+      const p = result.rows[0];
+      return res.json({
+        valid: true,
+        player: {
+          id: p.id,
+          player_uuid: p.player_uuid,
+          display_name: p.display_name,
+          xp: p.xp,
+          is_guest: p.is_guest,
+          onboarding_completed: p.onboarding_completed,
+          experience_level: p.experience_level,
+          level: getLevel(p.xp),
+          level_progress: getLevelProgress(p.xp)
+        }
+      });
+    } catch (err) {
+      console.error('Guest status error:', err.message);
+      res.status(500).json({ valid: false, error: 'server error' });
     }
   });
 

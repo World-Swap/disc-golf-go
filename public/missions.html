@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Training Missions — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <script>
+    (function() {
+        var saved = localStorage.getItem('dggo_theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+    })();
+    </script>
+    <style>
+        /* ── HEADER ── */
+        .theme-btn:active { background: var(--surface); border-color: var(--green); }
+
+        /* ── CONTENT ── */
+        .page-content {
+            max-width: 520px; margin: 0 auto;
+            padding: 1rem 1rem 1.5rem;
+        }
+
+        /* ── HERO ── */
+        .missions-hero {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            position: relative; overflow: hidden;
+        }
+        .missions-hero::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright), var(--gold));
+        }
+        .missions-hero-title {
+            display: flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.25rem;
+        }
+        .missions-hero-title .emoji { font-size: 2rem; }
+        .missions-hero-title h1 {
+            font-size: 1.5rem; font-weight: 700; color: var(--text);
+            letter-spacing: -0.02em; margin: 0;
+        }
+        .missions-hero-sub {
+            font-size: 0.84rem; color: var(--text3); margin-bottom: 1.1rem;
+        }
+        .missions-stats-row {
+            display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;
+        }
+        .missions-stat {
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: var(--radius-pill); padding: 0.3rem 0.8rem;
+            font-size: 0.8rem; font-weight: 600; color: var(--text2);
+        }
+        .missions-stat .val { color: var(--green); font-family: 'Space Mono', monospace; }
+        .missions-stat.gold .val { color: var(--gold); }
+        .missions-progress-wrap { }
+        .missions-progress-header {
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-bottom: 0.4rem;
+        }
+        .missions-progress-label { font-size: 0.72rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
+        .missions-progress-value { font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--green); }
+        .missions-bar-track { height: 10px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+        .missions-bar-fill {
+            height: 100%; border-radius: 100px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright));
+            width: 0%; transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── DAILY CHALLENGE ── */
+        .daily-challenge {
+            background: linear-gradient(135deg, rgba(255,107,26,0.12) 0%, rgba(245,200,66,0.1) 100%);
+            border: 2px solid var(--green);
+            border-radius: var(--radius-card);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+        .daily-challenge.completed {
+            background: linear-gradient(135deg, rgba(245,200,66,0.12) 0%, rgba(126,217,87,0.08) 100%);
+            border-color: var(--gold);
+        }
+        .daily-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.6rem;
+        }
+        .daily-badge {
+            background: var(--green); color: #fff;
+            border-radius: var(--radius-pill);
+            font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 0.2rem 0.6rem;
+        }
+        .daily-challenge.completed .daily-badge {
+            background: var(--gold); color: #1a1a1a;
+        }
+        .daily-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+        .daily-desc { font-size: 0.8rem; color: var(--text2); margin-bottom: 0.75rem; line-height: 1.4; }
+        .daily-progress-row {
+            display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;
+        }
+        .daily-progress-track {
+            flex: 1; height: 10px; background: var(--surface2);
+            border-radius: 100px; overflow: hidden;
+        }
+        .daily-progress-fill {
+            height: 100%; border-radius: 100px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright));
+            width: 0%; transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+        .daily-challenge.completed .daily-progress-fill {
+            background: linear-gradient(90deg, var(--gold), #f5c842);
+            width: 100% !important;
+        }
+        .daily-progress-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem; font-weight: 700; color: var(--text2);
+            white-space: nowrap; min-width: 40px; text-align: right;
+        }
+        .daily-rewards {
+            display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;
+        }
+        .daily-reward-chip {
+            font-size: 0.72rem; font-weight: 700;
+            background: var(--green-glow); border: 1px solid var(--green);
+            color: var(--green); border-radius: var(--radius-pill); padding: 0.18rem 0.5rem;
+        }
+        .daily-challenge.completed .daily-reward-chip {
+            background: var(--gold-glow); border-color: var(--gold); color: var(--gold);
+        }
+        .daily-cta {
+            display: inline-block; margin-top: 0.75rem;
+            background: var(--green); color: #fff;
+            border: none; border-radius: 10px;
+            padding: 0.5rem 1.25rem;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem;
+            font-weight: 700; text-decoration: none; cursor: pointer;
+            transition: opacity var(--transition);
+        }
+        .daily-cta:active { opacity: 0.8; }
+
+        /* ── MISSION SECTIONS ── */
+        .mission-section-label {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text3);
+            margin: 1.25rem 0 0.75rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .mission-section-label::after {
+            content: ''; flex: 1; height: 1px; background: var(--border2);
+        }
+        .mission-section-count {
+            font-family: 'Space Mono', monospace; font-size: 0.7rem;
+            color: var(--green); font-weight: 700;
+        }
+
+        /* ── MISSION CARD ── */
+        .mission-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex; align-items: flex-start; gap: 0.75rem;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .mission-card:hover { border-color: var(--border2); }
+        .mission-card.completed {
+            opacity: 0.7;
+            background: linear-gradient(135deg, var(--surface), rgba(255,107,26,0.04));
+        }
+        .mission-card.in-progress {
+            border-color: var(--green);
+            box-shadow: 0 0 0 1px var(--green-glow);
+        }
+
+        .mission-icon {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--surface2); border: 2px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; flex-shrink: 0;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .mission-card.watch_and_learn .mission-icon { background: rgba(255,107,26,0.10); border-color: var(--green); }
+        .mission-card.skill_check .mission-icon { background: rgba(147,112,219,0.12); border-color: #9370db; }
+        .mission-card.course_apply .mission-icon { background: rgba(245,200,66,0.1); border-color: var(--gold); }
+        .mission-card.completed .mission-icon { background: var(--green-glow); border-color: var(--green); }
+
+        .mission-info { flex: 1; min-width: 0; }
+        .mission-top-row {
+            display: flex; align-items: center; gap: 0.4rem;
+            margin-bottom: 0.2rem;
+        }
+        .mission-type-badge {
+            font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.07em; border-radius: var(--radius-pill);
+            padding: 0.1rem 0.4rem;
+        }
+        .mission-type-badge.watch_and_learn { background: var(--green-glow); color: var(--green); }
+        .mission-type-badge.daily_challenge { background: var(--gold-glow); color: var(--gold); }
+        .mission-type-badge.skill_check { background: rgba(147,112,219,0.15); color: #9370db; }
+        .mission-type-badge.course_apply { background: var(--gold-glow); color: var(--gold); }
+        .mission-title {
+            font-size: 0.9rem; font-weight: 700; color: var(--text);
+            line-height: 1.3;
+        }
+        .mission-card.completed .mission-title { color: var(--text3); }
+        .mission-desc {
+            font-size: 0.74rem; color: var(--text3); line-height: 1.4;
+            margin-bottom: 0.6rem;
+        }
+
+        /* Progress bar for in-progress missions */
+        .mission-progress-wrap {
+            margin-bottom: 0.5rem;
+        }
+        .mission-progress-header {
+            display: flex; justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+        .mission-progress-label-sm {
+            font-size: 0.65rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .mission-progress-val {
+            font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700; color: var(--green);
+        }
+        .mission-progress-track {
+            height: 6px; background: var(--surface2); border-radius: 100px; overflow: hidden;
+        }
+        .mission-progress-fill {
+            height: 100%; border-radius: 100px;
+            background: linear-gradient(90deg, var(--green), var(--green-bright));
+            width: 0%; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        .mission-card.completed .mission-progress-fill { background: var(--green); }
+
+        .mission-rewards {
+            display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .mission-reward-chip {
+            font-size: 0.65rem; font-weight: 700;
+            background: var(--surface2); border: 1px solid var(--border2);
+            color: var(--text3); border-radius: var(--radius-pill); padding: 0.15rem 0.45rem;
+        }
+        .mission-reward-chip.xp { color: var(--green); border-color: var(--green); background: var(--green-glow); }
+        .mission-reward-chip.gold { color: var(--gold); border-color: var(--gold); background: var(--gold-glow); }
+        .mission-reward-chip.badge { color: #9370db; border-color: #9370db; background: rgba(147,112,219,0.12); }
+
+        /* Training link button */
+        .mission-train-link {
+            display: inline-block; margin-top: 0.6rem;
+            font-size: 0.72rem; font-weight: 700;
+            background: var(--green); color: #fff;
+            border: none; border-radius: 8px; padding: 0.35rem 0.75rem;
+            cursor: pointer; text-decoration: none;
+            transition: opacity var(--transition);
+        }
+        .mission-train-link:active { opacity: 0.8; }
+
+        /* ── NO AUTH ── */
+        .no-auth {
+            display: none; text-align: center; padding: 4rem 2rem;
+        }
+        .no-auth-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .no-auth h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
+        .no-auth p { color: var(--text3); font-size: 0.88rem; margin-bottom: 1.5rem; }
+        .btn-primary {
+            display: inline-block; background: var(--green); color: #fff;
+            border: none; border-radius: 14px; padding: 0.75rem 1.75rem;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem;
+            font-weight: 700; text-decoration: none; cursor: pointer;
+            transition: opacity var(--transition);
+        }
+        .btn-primary:active { opacity: 0.85; }
+
+        /* ── BOTTOM TAB BAR ── */
+    </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="top-header">
+    <a class="header-logo" href="/">
+        <img src="/logo.png?v=7" alt="Disc Golf Go">
+        Disc Golf <span class="go">Go</span>
+    </a>
+    <div class="header-actions">
+        <a href="/checkin" class="checkin-btn" title="Check In" aria-label="Check In">📍</a>
+        <div class="notif-bell-wrap" id="notifWrap">
+            <button class="notif-bell-btn" id="notifBell" title="Notifications" aria-label="Notifications">🔔</button>
+            <span class="notif-badge" id="notifBadge" hidden></span>
+            <div class="notif-panel" id="notifPanel">
+                <div class="notif-panel-header">
+                    <span class="notif-panel-title">Notifications</span>
+                    <button class="notif-panel-close" id="notifClose" aria-label="Close">&#x2715;</button>
+                </div>
+                <div class="notif-list" id="notifList"></div>
+            </div>
+        </div>
+        <button class="theme-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </div>
+</header>
+
+<!-- ── PAGE CONTENT ── -->
+<main class="page-content" id="main-content">
+
+    <!-- Not signed in -->
+    <div class="no-auth" id="no-auth">
+        <div class="no-auth-icon">🎯</div>
+        <h2>Training Missions Await</h2>
+        <p>Sign in to complete training missions, earn XP, and level up your disc golf skills.</p>
+        <a href="/login" class="btn-primary">Sign In</a>
+    </div>
+
+    <!-- Missions content -->
+    <div id="missions-content" style="display:none">
+
+        <!-- Hero stats -->
+        <div class="missions-hero">
+            <div class="missions-hero-title">
+                <span class="emoji">🎯</span>
+                <h1>Training Missions</h1>
+            </div>
+            <div class="missions-hero-sub" id="hero-sub">Level up your game — one mission at a time.</div>
+
+            <div class="missions-stats-row">
+                <span class="missions-stat">XP <span class="val" id="stat-xp">0</span></span>
+                <span class="missions-stat gold">💰 <span class="val" id="stat-gold">0</span></span>
+                <span class="missions-stat">⛳ <span class="val" id="stat-rounds">0</span> rounds</span>
+                <span class="missions-stat">⚔️ <span class="val" id="stat-wins">0</span> wins</span>
+            </div>
+
+            <div class="missions-progress-wrap">
+                <div class="missions-progress-header">
+                    <span class="missions-progress-label">Mission Progress</span>
+                    <span class="missions-progress-value" id="xp-pct">0%</span>
+                </div>
+                <div class="missions-bar-track">
+                    <div class="missions-bar-fill" id="xp-bar"></div>
+                </div>
+                <div style="margin-top:0.5rem;font-size:0.78rem;color:var(--text3)">
+                    <span id="missions-completed" style="font-weight:700;color:var(--green)">0</span>
+                    missions completed · <span id="missions-total" style="font-weight:700;color:var(--green)">0</span> total
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Challenge -->
+        <div id="daily-challenge-wrap"></div>
+
+        <!-- Mission sections -->
+        <div id="missions-sections"></div>
+
+    </div>
+</main>
+
+<!-- ── BOTTOM TAB BAR ── -->
+<!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="bottom-tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
+    </a>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
+    </a>
+    </nav>
+
+<script>
+// ── DARK MODE ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const next = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('dggo_theme', next);
+            themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+        });
+        const saved = localStorage.getItem('dggo_theme');
+        if (saved === 'dark') themeToggle.textContent = '☀️';
+        else if (saved === 'light') themeToggle.textContent = '🌙';
+        else themeToggle.textContent = window.matchMedia('(prefers-color-scheme: dark)').matches ? '☀️' : '🌙';
+    }
+});
+
+// ── AUTH ─────────────────────────────────────────────────────────────
+const TOKEN = localStorage.getItem('dggo_token');
+
+function authHeaders() {
+    const h = {};
+    if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+    return h;
+}
+
+async function checkAuth() {
+    if (!TOKEN) return false;
+    try {
+        const res = await fetch('/api/players/me', { headers: authHeaders() });
+        if (res.ok) return true;
+    } catch (_) {}
+    return false;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+async function init() {
+    const authed = await checkAuth();
+    if (!authed) {
+        document.getElementById('no-auth').style.display = 'block';
+        return;
+    }
+    await loadMissions();
+}
+
+async function loadMissions() {
+    try {
+        const res = await fetch('/api/story/missions', { headers: authHeaders() });
+        if (!res.ok) throw new Error('Failed to load');
+        const data = await res.json();
+        renderMissions(data);
+    } catch (err) {
+        console.error('loadMissions error:', err);
+        document.getElementById('no-auth').style.display = 'block';
+    }
+}
+
+// ── RENDER ──────────────────────────────────────────────────────────
+function renderMissions(data) {
+    document.getElementById('missions-content').style.display = 'block';
+
+    // Stats
+    document.getElementById('stat-xp').textContent = (data.playerXp || 0).toLocaleString();
+    document.getElementById('stat-gold').textContent = (data.playerGold || 0).toLocaleString();
+    document.getElementById('stat-rounds').textContent = data.totalRounds || 0;
+    document.getElementById('stat-wins').textContent = data.battleWins || 0;
+
+    // Progress bar
+    const total = data.totalMissions || 1;
+    const completed = data.completedCount || 0;
+    const pct = Math.round((completed / total) * 100);
+    document.getElementById('xp-pct').textContent = pct + '%';
+    document.getElementById('xp-bar').style.width = pct + '%';
+    document.getElementById('missions-completed').textContent = completed;
+    document.getElementById('missions-total').textContent = total;
+
+    // Hero sub text
+    const sub = document.getElementById('hero-sub');
+    if (completed >= total) {
+        sub.textContent = '🏆 All missions complete. Legend status achieved.';
+    } else {
+        sub.textContent = 'Level up your game — one mission at a time.';
+    }
+
+    // Daily challenge
+    renderDailyChallenge(data.dailyChallenge);
+
+    // Mission sections
+    renderMissionSections(data.missions);
+}
+
+function renderDailyChallenge(daily) {
+    const wrap = document.getElementById('daily-challenge-wrap');
+    if (!daily) {
+        wrap.innerHTML = '';
+        return;
+    }
+    const completed = daily.completed;
+    const pct = daily.target_value > 0 ? Math.min(100, Math.round((daily.progress / daily.target_value) * 100)) : 0;
+    const typeLabel = {
+        watch_and_learn: 'Watch & Learn',
+        skill_check: 'Skill Check',
+        course_apply: 'Course Apply',
+        general: 'Daily Challenge',
+    }[daily.challenge_type] || 'Daily';
+
+    const trainLink = daily.training_slug
+        ? `<a href="/training?category=${daily.training_slug}" class="daily-cta">Go to Training</a>`
+        : (daily.challenge_type === 'course_apply'
+            ? `<a href="/scorecard" class="daily-cta">Start a Round</a>`
+            : (daily.challenge_type === 'general' && daily.target_value > 1
+                ? `<a href="/scorecard" class="daily-cta">Play a Round</a>`
+                : `<a href="/training" class="daily-cta">Train Now</a>`));
+
+    wrap.innerHTML = `
+        <div class="daily-challenge ${completed ? 'completed' : ''}">
+            <div class="daily-header">
+                <span class="daily-badge">${completed ? '✓ Done' : 'Today'}</span>
+                <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3)">${typeLabel}</span>
+            </div>
+            <div class="daily-title">${daily.title}</div>
+            <div class="daily-desc">${daily.description}</div>
+            <div class="daily-progress-row">
+                <div class="daily-progress-track">
+                    <div class="daily-progress-fill" style="width:${pct}%"></div>
+                </div>
+                <span class="daily-progress-label">${daily.progress}/${daily.target_value}</span>
+            </div>
+            <div class="daily-rewards">
+                <span class="daily-reward-chip">+${daily.xp_reward} XP</span>
+                ${daily.gold_reward > 0 ? `<span class="daily-reward-chip">+${daily.gold_reward} 💰</span>` : ''}
+            </div>
+            ${!completed ? trainLink : ''}
+        </div>
+    `;
+}
+
+function renderMissionSections(missions) {
+    const container = document.getElementById('missions-sections');
+    container.innerHTML = '';
+
+    const inProgress = missions.filter(m => !m.completed && m.progress > 0);
+    const notStarted = missions.filter(m => !m.completed && (!m.progress || m.progress === 0));
+    const completed = missions.filter(m => m.completed);
+
+    function typeLabel(type) {
+        return { watch_and_learn: 'Watch & Learn', skill_check: 'Skill Check', course_apply: 'Apply', general: 'General' }[type] || '';
+    }
+
+    function missionIcon(m) {
+        if (m.completed) return '✅';
+        const map = { watch_and_learn: '📖', skill_check: '🧠', course_apply: '⛳', general: '🎯' };
+        return map[m.mission_type] || '⬜';
+    }
+
+    function renderCard(m) {
+        const completed = m.completed;
+        const pct = m.target_value > 0 ? Math.min(100, Math.round(((m.progress || 0) / m.target_value) * 100)) : 0;
+        const mt = m.mission_type || '';
+        const trainHref = m.training_link ? `/training?category=${m.training_link}` : (m.mission_type === 'course_apply' ? '/scorecard' : '/training');
+        const ctaLabel = m.mission_type === 'course_apply' ? 'Play a Round' : 'Go to Training';
+        const trainBtn = !completed && m.mission_type !== 'general'
+            ? `<a href="${trainHref}" class="mission-train-link">${ctaLabel}</a>` : '';
+
+        return `
+            <div class="mission-card ${mt} ${completed ? 'completed' : (m.progress > 0 ? 'in-progress' : '')}">
+                <div class="mission-icon">${missionIcon(m)}</div>
+                <div class="mission-info">
+                    <div class="mission-top-row">
+                        ${mt ? `<span class="mission-type-badge ${mt}">${typeLabel(mt)}</span>` : ''}
+                    </div>
+                    <div class="mission-title">${m.title}</div>
+                    <div class="mission-desc">${m.objective}</div>
+                    ${m.target_value > 1 || m.progress > 0 ? `
+                    <div class="mission-progress-wrap">
+                        <div class="mission-progress-header">
+                            <span class="mission-progress-label-sm">Progress</span>
+                            <span class="mission-progress-val">${m.progress || 0}/${m.target_value}</span>
+                        </div>
+                        <div class="mission-progress-track">
+                            <div class="mission-progress-fill" style="width:${pct}%"></div>
+                        </div>
+                    </div>` : ''}
+                    <div class="mission-rewards">
+                        ${m.reward_xp > 0 ? `<span class="mission-reward-chip xp">+${m.reward_xp} XP</span>` : ''}
+                        ${m.reward_gold > 0 ? `<span class="mission-reward-chip gold">+${m.reward_gold} 💰</span>` : ''}
+                        ${m.reward_badge_key ? `<span class="mission-reward-chip badge">🏅 Badge</span>` : ''}
+                        ${m.reward_item_key ? `<span class="mission-reward-chip badge">🎁 Item</span>` : ''}
+                    </div>
+                    ${trainBtn}
+                </div>
+            </div>
+        `;
+    }
+
+    if (inProgress.length) {
+        container.innerHTML += `<div class="mission-section-label">In Progress <span class="mission-section-count">${inProgress.length}</span></div>`;
+        container.innerHTML += inProgress.map(renderCard).join('');
+    }
+    if (notStarted.length) {
+        container.innerHTML += `<div class="mission-section-label">Available <span class="mission-section-count">${notStarted.length}</span></div>`;
+        container.innerHTML += notStarted.map(renderCard).join('');
+    }
+    if (completed.length) {
+        container.innerHTML += `<div class="mission-section-label">Completed <span class="mission-section-count">${completed.length}</span></div>`;
+        container.innerHTML += completed.map(renderCard).join('');
+    }
+}
+
+// Init
+init();
+</script>
+
+<script>
+// Notification bell
+(function() {
+    var token = localStorage.getItem('dggo_token');
+    var bell = document.getElementById('notifBell');
+    var badge = document.getElementById('notifBadge');
+    var panel = document.getElementById('notifPanel');
+    var list = document.getElementById('notifList');
+    var closeBtn = document.getElementById('notifClose');
+    if (!bell || !token) return;
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        var diff = (new Date() - d) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function updateBadge(count) {
+        if (!count) { badge.hidden = true; return; }
+        badge.hidden = false;
+        badge.textContent = count > 9 ? '' : String(count);
+    }
+
+    var notifs = [];
+    function loadNotifs() {
+        fetch('/api/notifications/all', { headers: { Authorization: 'Bearer ' + token } })
+            .then(function(r) { return r.ok ? r.json() : { notifications: [] }; })
+            .then(function(data) {
+                notifs = data.notifications || [];
+                updateBadge(notifs.length);
+            }).catch(function() {});
+    }
+
+    function renderPanel() {
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><span>&#x1F514;</span>No new notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.map(function(n) {
+            return '<div class="notif-item" data-id="' + n.id + '">' +
+                '<div class="notif-item-title">' + n.title + '</div>' +
+                '<div class="notif-item-body">' + n.message + '</div>' +
+                '<div class="notif-item-time">' + fmtTime(n.created_at) + '</div>' +
+                '</div>';
+        }).join('');
+        list.querySelectorAll('.notif-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-id');
+                el.classList.add('read');
+                fetch('/api/notifications/' + id + '/dismiss', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token }
+                }).catch(function() {});
+                notifs = notifs.filter(function(n) { return String(n.id) !== id; });
+                updateBadge(notifs.length);
+                setTimeout(function() {
+                    el.remove();
+                    if (!list.querySelectorAll('.notif-item').length) renderPanel();
+                }, 350);
+            });
+        });
+    }
+
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        if (!isOpen) renderPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(e) { e.stopPropagation(); panel.classList.remove('open'); });
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
+    });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadNotifs);
+    } else {
+        loadNotifs();
+    }
+})();
+</script>
+</body>
+</html>

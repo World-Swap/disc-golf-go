@@ -1,11 +1,11 @@
 {
   "name": "Disc Golf Go",
   "short_name": "Disc Golf Go",
-  "description": "Every Course is a Quest",
+  "description": "Disc Golf Go is a structured disc golf training platform. Build skills, track progress, and improve your game with 72 expert-guided lessons.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a1a",
-  "theme_color": "#7ed957",
+  "background_color": "#1E1E1E",
+  "theme_color": "#FF6B1A",
   "icons": [
     {
       "src": "/favicon-192x192.png",

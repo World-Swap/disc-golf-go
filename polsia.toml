@@ -7,3 +7,23 @@ healthcheck_path = "/api/health"
 
 [env]
 DATABASE_URL = { source = "rdbms" }
+
+[[crons]]
+name = "training-daily-tip"
+schedule = "0 8 * * *"
+command = "node scripts/training-daily-tip.js"
+
+[[crons]]
+name = "training-reminder"
+schedule = "0 10 * * *"
+command = "node scripts/training-reminder.js"
+
+[[crons]]
+name = "training-reengagement"
+schedule = "0 12 * * *"
+command = "node scripts/training-reengagement.js"
+
+[[crons]]
+name = "daily-challenge-assign"
+schedule = "0 0 * * *"
+command = "node scripts/daily-challenge-assign.js"

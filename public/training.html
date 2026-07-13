@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Training Hub — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#1E1E1E">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>
+    :root {
+        --th-bg: #1E1E1E;
+        --th-surface: #2A2A2A;
+        --th-surface2: #333333;
+        --th-border: rgba(255,255,255,0.08);
+        --th-text: #f0f4f0;
+        --th-text2: #D0D0D0;
+        --th-text3: #A0A0A0;
+        --th-green: #FF6B1A;
+        --th-green-glow: rgba(255,107,26,0.18);
+        --th-gold: #ffd050;
+        --th-gold-bg: rgba(255,208,80,0.10);
+        --th-orange: #e86020;
+        --th-safe-t: env(safe-area-inset-top, 0px);
+        --th-safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; }
+    body {
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        background: var(--th-bg);
+        color: var(--th-text);
+        min-height: 100%;
+        display: flex; flex-direction: column;
+    }
+    body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: 0;
+        background-image:
+            linear-gradient(rgba(255,107,26,0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,107,26,0.015) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+    }
+    #app { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+    /* ── HEADER ──────────────────────────────────────────────── */
+    header {
+        position: sticky; top: 0; z-index: 10;
+        background: rgba(30,30,30,0.95);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--th-border);
+        padding: calc(var(--th-safe-t) + 12px) 20px 12px;
+    }
+    .header-inner {
+        display: flex; align-items: center; justify-content: space-between;
+        max-width: 680px; margin: 0 auto;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .back-btn {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        color: var(--th-text2); font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+        text-decoration: none; cursor: pointer; transition: background 0.2s;
+    }
+    .back-btn:hover { background: var(--th-surface2); }
+    h1.header-title {
+        font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
+        background: linear-gradient(135deg, var(--th-green), #FF9A5C);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    #player-xp-badge {
+        font-size: 12px; font-family: 'Space Mono', monospace;
+        color: var(--th-gold); background: var(--th-gold-bg);
+        border: 1px solid rgba(255,208,80,0.2);
+        border-radius: 8px; padding: 3px 9px;
+        white-space: nowrap;
+    }
+
+    /* ── MAIN ────────────────────────────────────────────────── */
+    main { flex: 1; padding: 20px 20px calc(var(--th-safe-b) + 90px); max-width: 680px; margin: 0 auto; width: 100%; }
+
+    /* ── HERO ─────────────────────────────────────────────────── */
+    .hero {
+        background: var(--th-surface);
+        border: 1px solid var(--th-border);
+        border-radius: 20px; padding: 24px 20px;
+        margin-bottom: 20px;
+        background-image: radial-gradient(ellipse at 85% 20%, rgba(255,107,26,0.08) 0%, transparent 60%);
+    }
+    .hero-label {
+        font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+        text-transform: uppercase; color: var(--th-green); margin-bottom: 6px;
+    }
+    .hero h2 { font-size: 22px; font-weight: 800; line-height: 1.2; margin-bottom: 4px; }
+    .hero p { font-size: 14px; color: var(--th-text2); line-height: 1.6; }
+
+    .overall-progress { margin-top: 16px; }
+    .progress-label-row {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+    .progress-label { font-size: 13px; color: var(--th-text2); font-weight: 500; }
+    .progress-stats { font-size: 13px; color: var(--th-text3); font-family: 'Space Mono', monospace; }
+    .progress-stats .accent { color: var(--th-green); font-weight: 700; }
+    .progress-bar-track {
+        height: 8px; border-radius: 100px; background: rgba(255,255,255,0.08); overflow: hidden;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #7ED957, #9FE875);
+        border-radius: 100px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+        min-width: 0;
+    }
+
+    /* ── TABS ────────────────────────────────────────────────── */
+    .tabs {
+        display: flex; gap: 6px; margin-bottom: 16px;
+        overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+        flex-shrink: 0; padding: 7px 16px; border-radius: 100px;
+        font-size: 13px; font-weight: 600; border: 1px solid var(--th-border);
+        background: var(--th-surface); color: var(--th-text2);
+        cursor: pointer; transition: all 0.2s;
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+    }
+    .tab-btn.active { background: var(--th-green); color: #fff; border-color: var(--th-green); }
+    .tab-btn:hover:not(.active) { border-color: rgba(255,107,26,0.25); }
+
+    /* ── CATEGORY CARDS ─────────────────────────────────────── */
+    .category-list { display: flex; flex-direction: column; gap: 12px; }
+    .category-card {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 16px; padding: 16px 18px;
+        display: flex; align-items: center; gap: 14px;
+        cursor: pointer; transition: border-color 0.2s, background 0.2s;
+        text-decoration: none; color: inherit; position: relative; overflow: hidden;
+    }
+    .category-card:hover { border-color: rgba(255,107,26,0.30); }
+    .category-card:active { background: var(--th-surface2); }
+    .cat-arrow {
+        position: absolute; right: 18px; color: var(--th-text3); font-size: 18px;
+        transition: color 0.2s, transform 0.2s;
+    }
+    .category-card:hover .cat-arrow { color: var(--th-green); transform: translateX(4px); }
+    .category-icon {
+        width: 50px; height: 50px; border-radius: 14px;
+        background: var(--th-green-glow); border: 1px solid rgba(255,107,26,0.20);
+        display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
+    }
+    .category-info { flex: 1; min-width: 0; }
+    .category-name { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+    .category-meta { font-size: 12px; color: var(--th-text3); }
+    .category-meta span { display: flex; align-items: center; gap: 3px; }
+    .category-progress { flex-shrink: 0; text-align: right; }
+    .category-pct { font-size: 16px; font-weight: 800; font-family: 'Space Mono', monospace; color: var(--th-green); }
+    .category-pct-done { color: var(--th-text3); }
+    .mini-bar { height: 4px; border-radius: 100px; width: 60px; margin-top: 5px; background: rgba(255,255,255,0.08); margin-left: auto; }
+    .mini-bar-fill { height: 100%; background: #7ED957; border-radius: 100px; transition: width 0.5s; }
+
+    /* ── LESSON LIST ─────────────────────────────────────────── */
+    .lesson-list { display: flex; flex-direction: column; gap: 10px; }
+    .lesson-item {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 14px; padding: 14px 16px;
+        display: flex; align-items: center; gap: 12px;
+        cursor: pointer; transition: border-color 0.2s;
+        text-decoration: none; color: inherit;
+    }
+    .lesson-item:hover { border-color: rgba(255,107,26,0.25); }
+    .lesson-item:active { background: var(--th-surface2); }
+    .lesson-num {
+        width: 32px; height: 32px; border-radius: 10px;
+        background: var(--th-green-glow); border: 1px solid rgba(255,107,26,0.15);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 700; font-family: 'Space Mono', monospace;
+        color: var(--th-green); flex-shrink: 0;
+    }
+    .lesson-item.completed .lesson-num {
+        background: rgba(255,107,26,0.20); color: var(--th-green);
+    }
+    .lesson-item.completed .lesson-num::after { content: '✓'; font-size: 16px; }
+    .lesson-info { flex: 1; min-width: 0; }
+    .lesson-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .lesson-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .badge {
+        display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 6px;
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-beginner { background: rgba(255,107,26,0.12); color: var(--th-green); }
+    .badge-intermediate { background: rgba(255,208,80,0.12); color: var(--th-gold); }
+    .badge-advanced { background: rgba(255,80,80,0.10); color: #ff7070; }
+    .badge-all_levels { background: rgba(255,107,26,0.06); color: var(--th-text2); }
+    .xp-chip {
+        font-size: 11px; font-weight: 700; font-family: 'Space Mono', monospace;
+        color: var(--th-gold);
+    }
+    .lesson-check {
+        width: 28px; height: 28px; border-radius: 50%;
+        border: 2px solid var(--th-border); flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-size: 14px;
+        color: var(--th-text3);
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .lesson-item.completed .lesson-check { background: var(--th-green); border-color: var(--th-green); color: #fff; }
+    .lesson-check.done { background: var(--th-green); border-color: var(--th-green); color: #fff; }
+
+    /* ── LESSON VIEW ─────────────────────────────────────────── */
+    .lesson-view { display: none; }
+    .lesson-view.active { display: block; }
+    .lesson-header { margin-bottom: 24px; }
+    .lesson-breadcrumb {
+        font-size: 12px; color: var(--th-text3); margin-bottom: 10px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .lesson-breadcrumb a { color: var(--th-green); text-decoration: none; }
+    .lesson-type-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+        background: var(--th-surface2); border: 1px solid var(--th-border); color: var(--th-text2);
+        margin-bottom: 12px; text-transform: capitalize;
+    }
+    .lesson-title-text { font-size: 26px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+    .lesson-desc { font-size: 15px; color: var(--th-text2); line-height: 1.6; }
+
+    /* Content body */
+    .content-body {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 18px; padding: 24px 20px; margin-bottom: 20px;
+    }
+    .content-headline {
+        font-size: 18px; font-weight: 700; color: var(--th-green);
+        margin-bottom: 14px; line-height: 1.3;
+    }
+    .content-text { font-size: 15px; color: var(--th-text2); line-height: 1.75; white-space: pre-wrap; margin-bottom: 16px; }
+    .key-points { margin-bottom: 16px; }
+    .key-points h4 { font-size: 13px; font-weight: 700; color: var(--th-text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .key-points ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .key-points li {
+        font-size: 14px; color: var(--th-text); padding: 10px 12px;
+        background: rgba(255,107,26,0.06); border-radius: 10px;
+        border-left: 3px solid var(--th-green);
+        line-height: 1.5;
+    }
+    .content-tip {
+        background: linear-gradient(135deg, rgba(255,208,80,0.10), rgba(255,208,80,0.05));
+        border: 1px solid rgba(255,208,80,0.20);
+        border-radius: 12px; padding: 14px 16px;
+    }
+    .content-tip-label { font-size: 11px; font-weight: 700; color: var(--th-gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .content-tip-text { font-size: 14px; color: var(--th-text2); line-height: 1.6; }
+
+    /* Section blocks (guide type) */
+    .guide-section { margin-bottom: 20px; }
+    .guide-section h3 { font-size: 16px; font-weight: 700; color: var(--th-text); margin-bottom: 8px; }
+    .guide-section p { font-size: 14px; color: var(--th-text2); line-height: 1.7; }
+
+    /* Watch section */
+    .watch-section { margin: 20px 0 24px; }
+    .watch-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--th-text3); margin-bottom: 10px;
+    }
+    .watch-card {
+      position: relative; border-radius: 16px; overflow: hidden;
+      background: var(--th-surface); border: 1px solid var(--th-border);
+      cursor: pointer; transition: border-color 0.2s;
+      display: block; text-decoration: none;
+    }
+    .watch-card:hover { border-color: rgba(255,107,26,0.30); }
+    .watch-thumbnail {
+      width: 100%; aspect-ratio: 16/9; object-fit: cover;
+      display: block; background: var(--th-surface2);
+    }
+    .watch-play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35); transition: background 0.2s;
+    }
+    .watch-card:hover .watch-play-overlay { background: rgba(0,0,0,0.50); }
+    .watch-play-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,255,255,0.95);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: #050a05;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .watch-info { padding: 12px 14px; }
+    .watch-title { font-size: 14px; font-weight: 700; color: var(--th-text); margin-bottom: 4px; line-height: 1.3; }
+    .watch-channel { font-size: 12px; color: var(--th-text3); }
+
+    /* Further Reading section */
+    .further-reading-section { margin: 20px 0 24px; }
+    .fr-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--th-text3); margin-bottom: 10px;
+    }
+    .resource-card {
+      display: block; width: 100%;
+      background: var(--th-surface); border: 1px solid var(--th-border);
+      border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+      cursor: pointer; transition: border-color 0.2s;
+      text-decoration: none; color: inherit;
+    }
+    .resource-card:hover { border-color: rgba(255,107,26,0.30); }
+    .resource-title { font-size: 14px; font-weight: 700; color: var(--th-text); }
+    .resource-meta { font-size: 12px; color: var(--th-text3); margin-top: 4px; }
+    .resource-notes { margin-top: 6px; font-size: 13px; color: var(--th-text3); font-style: italic; }
+
+    /* Complete button */
+    .complete-section { margin: 24px 0; }
+    .btn-complete {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        width: 100%; padding: 16px; border-radius: 14px;
+        font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', system-ui, sans-serif;
+        border: none; cursor: pointer; transition: all 0.2s;
+        background: var(--th-green); color: #fff;
+    }
+    .btn-complete:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-complete:active { transform: translateY(0); }
+    .btn-complete:disabled { background: var(--th-surface2); color: var(--th-text3); cursor: default; transform: none; }
+    .btn-complete.done {
+        background: rgba(255,107,26,0.20); color: var(--th-green);
+        border: 2px solid var(--th-green);
+    }
+    .btn-next-lesson {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        width: 100%; padding: 16px; border-radius: 14px;
+        font-size: 16px; font-weight: 700; font-family: 'Space Grotesk', system-ui, sans-serif;
+        border: 1px solid var(--th-border); background: var(--th-surface);
+        color: var(--th-text); text-decoration: none; transition: all 0.2s;
+    }
+    .btn-next-lesson:hover { border-color: var(--th-green); color: var(--th-green); }
+
+    /* Share Challenge button */
+    .btn-share {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; padding: 14px; border-radius: 14px;
+        font-size: 15px; font-weight: 700; font-family: 'Space Grotesk', system-ui, sans-serif;
+        border: 1px solid rgba(255,107,26,0.35); background: transparent;
+        color: var(--th-text); cursor: pointer; transition: all 0.2s;
+        margin-top: 10px;
+    }
+    .btn-share:hover { border-color: var(--th-green); color: var(--th-green); }
+    .btn-share:active { background: rgba(255,107,26,0.08); }
+    .btn-share:disabled { opacity: 0.5; cursor: default; }
+
+    /* XP Toast */
+    #xp-toast {
+        position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+        background: linear-gradient(135deg, #1E1E1E, #2A2A2A);
+        border: 1px solid rgba(255,107,26,0.40); border-radius: 14px; padding: 12px 22px;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: 0 8px 32px rgba(255,107,26,0.25);
+        opacity: 0; transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none; z-index: 100;
+        font-weight: 800; font-size: 16px; color: var(--th-green); white-space: nowrap;
+    }
+    #xp-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Level-up celebration */
+    #level-up-toast {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+        background: linear-gradient(135deg, #1E1E1E, #2A2A2A);
+        border: 2px solid rgba(255,215,0,0.5); border-radius: 20px; padding: 28px 36px;
+        display: none; flex-direction: column; align-items: center; gap: 10px;
+        box-shadow: 0 20px 60px rgba(255,215,0,0.3);
+        z-index: 200; text-align: center;
+        animation: levelUpPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes levelUpPop {
+        from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+        to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    #level-up-toast .lutu-icon { font-size: 48px; }
+    #level-up-toast .lutu-title { font-size: 13px; font-weight: 600; color: var(--th-gold); letter-spacing: 1px; text-transform: uppercase; }
+    #level-up-toast .lutu-level { font-size: 36px; font-weight: 800; font-family: 'Space Mono', monospace; color: var(--th-green); }
+    #level-up-toast .lutu-sub { font-size: 13px; color: var(--th-text3); }
+
+    /* Skeleton */
+    .skeleton-card {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 16px; padding: 18px; margin-bottom: 12px;
+        animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* Empty */
+    .empty-state { text-align: center; padding: 48px 20px; }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--th-text2); margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; color: var(--th-text3); line-height: 1.6; }
+
+    /* Bottom Nav */
+    .tab-bar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: calc(var(--th-safe-b) + 64px);
+        padding-bottom: var(--th-safe-b);
+        background: rgba(30,30,30,0.97); backdrop-filter: blur(20px);
+        border-top: 1px solid var(--th-border);
+        display: flex; justify-content: space-around; align-items: center; z-index: 10;
+    }
+    .tab-item {
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        text-decoration: none; color: var(--th-text3);
+        font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+        transition: color 0.2s; padding: 6px 8px; min-width: 56px;
+    }
+    .tab-item .tab-icon { font-size: 22px; }
+    .tab-item .tab-label { font-size: 9px; }
+    .tab-item.active { color: var(--th-green); }
+
+    /* ── BELL ───────────────────────────────────────────────────── */
+    #bell-btn {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        color: var(--th-text2); font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; position: relative; transition: background 0.2s;
+        text-decoration: none;
+    }
+    #bell-btn:hover { background: var(--th-surface2); }
+    #bell-btn .bell-dot {
+        position: absolute; top: 4px; right: 4px;
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--th-green);
+        border: 1px solid var(--th-bg);
+        display: none;
+    }
+    #bell-btn.has-unread .bell-dot { display: block; }
+
+    /* ── NOTIFICATION PANEL ──────────────────────────────────────── */
+    #notif-panel {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: min(380px, 100vw);
+        background: var(--th-bg);
+        border-left: 1px solid var(--th-border);
+        z-index: 50;
+        display: none; flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    #notif-panel.open {
+        display: flex;
+        transform: translateX(0);
+    }
+    .notif-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; border-bottom: 1px solid var(--th-border);
+        background: var(--th-surface);
+    }
+    .notif-header h2 { font-size: 17px; font-weight: 700; }
+    .notif-list { flex: 1; overflow-y: auto; }
+    .notif-item {
+        padding: 14px 20px; border-bottom: 1px solid var(--th-border);
+        cursor: pointer; transition: background 0.15s;
+    }
+    .notif-item:hover { background: var(--th-surface); }
+    .notif-item.unread { background: rgba(255,107,26,0.04); }
+    .notif-type {
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+        color: var(--th-text3); margin-bottom: 4px;
+    }
+    .notif-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .notif-msg { font-size: 13px; color: var(--th-text2); line-height: 1.5; margin-bottom: 4px; }
+    .notif-time { font-size: 11px; color: var(--th-text3); font-family: 'Space Mono', monospace; }
+    .notif-empty { padding: 48px 20px; text-align: center; color: var(--th-text3); }
+    .notif-empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .notif-footer {
+        padding: 12px 20px; border-top: 1px solid var(--th-border);
+        text-align: center;
+    }
+    .notif-footer button {
+        background: none; border: none; color: var(--th-green);
+        font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+    }
+
+    /* ── SETTINGS VIEW ──────────────────────────────────────────── */
+    #settings-view { display: none; }
+    #settings-view.active { display: block; }
+    .settings-section {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 16px; margin-bottom: 16px;
+    }
+    .settings-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 16px; border-bottom: 1px solid var(--th-border);
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-left { flex: 1; }
+    .settings-row-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .settings-row-sub { font-size: 12px; color: var(--th-text3); }
+    .toggle-switch {
+        width: 44px; height: 24px; border-radius: 12px; position: relative;
+        background: var(--th-surface2); border: 1px solid var(--th-border);
+        cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+    }
+    .toggle-switch.on { background: var(--th-green); border-color: var(--th-green); }
+    .toggle-switch::after {
+        content: ''; position: absolute; top: 2px; left: 2px;
+        width: 18px; height: 18px; border-radius: 50%; background: #fff;
+        transition: transform 0.2s;
+    }
+    .toggle-switch.on::after { transform: translateX(20px); }
+    .freq-select {
+        padding: 8px 12px; border-radius: 10px; background: var(--th-surface2);
+        border: 1px solid var(--th-border); color: var(--th-text);
+        font-size: 13px; font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+    }
+    .settings-back-row {
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 20px; cursor: pointer; color: var(--th-green);
+        font-size: 13px; font-weight: 600;
+    }
+
+    /* Overlay backdrop */
+    #panel-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+        z-index: 40; display: none;
+    }
+    #panel-backdrop.show { display: block; }
+    </style>
+</head>
+<body>
+<div id="app">
+    <header>
+        <div class="header-inner">
+            <div class="header-left">
+                <a href="/home" class="header-logo" style="display:flex;align-items:center;gap:6px;text-decoration:none;">
+                    <img src="/logo.png?v=7" alt="Disc Golf Go" width="32" height="32" loading="eager">
+                </a>
+                <a href="#" id="back-btn" class="back-btn" style="display:none;">←</a>
+                <h1 class="header-title" id="header-title">Training Hub</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span id="player-xp-badge" style="display:none;">— XP</span>
+                <button id="bell-btn" aria-label="Training notifications">
+                    🔔<span class="bell-dot"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- ── Loading ──────────────────────────────────────── -->
+        <div id="skeleton-view">
+            <div class="skeleton-card" style="height:130px; margin-bottom:20px;"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+        </div>
+
+        <!-- ── HUB VIEW (categories) ───────────────────────── -->
+        <div id="hub-view" style="display:none;">
+
+            <div class="hero">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <div class="hero-label">Your Training Hub</div>
+                    <span class="skill-tier-pill" id="hub-skill-tier" style="display:none;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:700;"></span>
+                </div>
+                <h2 id="hub-title">Master the Course</h2>
+                <p id="hub-subtitle">Complete lessons to earn XP and level up faster — no GPS needed.</p>
+                <div class="overall-progress">
+                    <div class="progress-label-row">
+                        <span class="progress-label">Overall Progress</span>
+                        <span class="progress-stats">
+                            <span class="accent" id="hub-pct">0</span>% ·
+                            <span id="hub-done">0</span>/<span id="hub-total">0</span> lessons
+                        </span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="hub-bar" style="width:0%"></div>
+                    </div>
+                </div>
+                <!-- Streak card -->
+                <div id="streak-card" style="display:none;margin-top:14px;padding:12px 14px;background:linear-gradient(135deg,rgba(232,96,32,0.12),rgba(232,96,32,0.05));border:1px solid rgba(232,96,32,0.22);border-radius:12px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:20px;">🔥</span>
+                        <div style="flex:1;">
+                            <div id="streak-count" style="font-size:16px;font-weight:800;font-family:'Space Mono',monospace;color:var(--th-orange,#e86020);"></div>
+                            <div id="streak-desc" style="font-size:11px;color:var(--th-text3);margin-top:2px;"></div>
+                        </div>
+                        <div id="streak-bonus" style="font-size:11px;font-weight:700;color:var(--th-gold);background:rgba(255,208,80,0.12);border:1px solid rgba(255,208,80,0.2);border-radius:8px;padding:3px 8px;"></div>
+                    </div>
+                </div>
+                <!-- Recommended for you -->
+                <div id="hub-recommendation" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(255,107,26,0.08);border:1px solid rgba(255,107,26,0.18);border-radius:12px;cursor:pointer;transition:border-color 0.2s;" onclick="">
+                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--th-green);margin-bottom:5px;">Recommended for You</div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span id="hub-rec-icon" style="font-size:20px;">🎯</span>
+                        <div style="flex:1;min-width:0;">
+                            <div id="hub-rec-reason" style="font-size:10px;color:var(--th-text3);margin-bottom:2px;"></div>
+                            <div id="hub-rec-title" style="font-size:13px;font-weight:700;"></div>
+                        </div>
+                        <span id="hub-rec-xp" style="font-size:11px;font-weight:700;font-family:'Space Mono',monospace;color:var(--th-gold);"></span>
+                        <span style="color:var(--th-text3);font-size:16px;">→</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs" id="hub-tabs">
+                <button class="tab-btn active" data-filter="all">All</button>
+                <button class="tab-btn" data-filter="beginner">Beginner</button>
+                <button class="tab-btn" data-filter="intermediate">Intermediate</button>
+                <button class="tab-btn" data-filter="advanced">Advanced</button>
+                <button class="tab-btn" data-filter="all_levels">All Levels</button>
+            </div>
+
+            <div id="category-list" class="category-list"></div>
+        </div>
+
+        <!-- ── CATEGORY VIEW (lessons) ─────────────────────── -->
+        <div id="cat-view" style="display:none;">
+            <div class="hero" id="cat-hero" style="padding:20px;">
+                <div class="hero-label" id="cat-icon-label">📚</div>
+                <h2 id="cat-name-title" style="font-size:20px;margin-bottom:4px;">—</h2>
+                <p id="cat-desc" style="font-size:14px;">—</p>
+                <div class="overall-progress" style="margin-top:14px;">
+                    <div class="progress-label-row">
+                        <span class="progress-label" id="cat-progress-label">Progress</span>
+                        <span class="progress-stats"><span class="accent" id="cat-pct">0</span>%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="cat-bar" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs" id="cat-tabs">
+                <button class="tab-btn active" data-filter="all">All</button>
+                <button class="tab-btn" data-filter="beginner">Beginner</button>
+                <button class="tab-btn" data-filter="intermediate">Intermediate</button>
+                <button class="tab-btn" data-filter="advanced">Advanced</button>
+                <button class="tab-btn" data-filter="all_levels">All Levels</button>
+            </div>
+
+            <div id="lesson-list" class="lesson-list"></div>
+        </div>
+
+        <!-- ── LESSON VIEW ──────────────────────────────────── -->
+        <div id="lesson-view" style="display:none;">
+            <div class="lesson-view active">
+                <div class="lesson-header">
+                    <div class="lesson-breadcrumb">
+                        <a href="#" id="lesson-cat-link">Training</a>
+                        <span>›</span>
+                        <span id="lesson-cat-name">—</span>
+                    </div>
+                    <div class="lesson-type-badge" id="lesson-type-badge">📝 Guide</div>
+                    <h2 class="lesson-title-text" id="lesson-title-text">—</h2>
+                    <p class="lesson-desc" id="lesson-desc">—</p>
+                </div>
+
+                <div id="lesson-content" class="content-body">
+                    <!-- Rendered by JS -->
+                </div>
+
+                <div class="complete-section">
+                    <button class="btn-complete" id="btn-complete">⚡ Mark Complete &amp; Earn XP</button>
+                    <a class="btn-next-lesson" id="btn-next" href="#" style="display:none; margin-top:10px;">
+                        Next Lesson →
+                    </a>
+                </div>
+
+                <div id="completion-success" style="display:none; text-align:center; padding:16px; background:var(--th-surface); border-radius:14px; border:1px solid var(--th-border);">
+                    <div style="font-size:28px; margin-bottom:8px;">🏆</div>
+                    <div style="font-size:16px; font-weight:700; color:var(--th-green);">Lesson Complete!</div>
+                    <div style="font-size:13px; color:var(--th-text2); margin-top:4px;">You've earned this.</div>
+                    <button class="btn-share" id="btn-share">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        Share Challenge on X
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Error ───────────────────────────────────────── -->
+        <div id="error-view" style="display:none;">
+            <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <h3>Something went wrong</h3>
+                <p id="error-msg">Failed to load. Check your connection and try again.</p>
+                <a href="/training" style="display:inline-block; margin-top:16px; padding:10px 20px; background:var(--th-green); color:#fff; border-radius:10px; font-weight:700; text-decoration:none;">Back to Training</a>
+            </div>
+        </div>
+
+        <!-- ── NOTIFICATION PANEL ─────────────────────────────────── -->
+        <div id="panel-backdrop"></div>
+        <div id="notif-panel">
+            <div class="notif-header">
+                <h2>Notifications</h2>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button id="mark-all-read-btn" style="background:none;border:none;color:var(--th-green);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Mark all read</button>
+                    <button id="notif-settings-btn" style="background:none;border:none;color:var(--th-text2);font-size:16px;cursor:pointer;" title="Notification settings">⚙️</button>
+                    <button id="close-notif-panel" style="background:none;border:none;color:var(--th-text2);font-size:20px;cursor:pointer;padding:4px;">✕</button>
+                </div>
+            </div>
+            <div id="notif-list" class="notif-list"></div>
+            <div class="notif-footer" id="notif-footer" style="display:none;">
+                <button id="clear-all-notifs">Clear all notifications</button>
+            </div>
+        </div>
+
+        <!-- ── NOTIFICATION SETTINGS VIEW ──────────────────────────── -->
+        <div id="settings-view">
+            <div class="settings-back-row" id="settings-back-btn">
+                <span>←</span><span>Back</span>
+            </div>
+            <h2 style="font-size:20px;font-weight:800;margin-bottom:16px;">Notification Settings</h2>
+            <div class="settings-section">
+                <div class="settings-row">
+                    <div class="settings-row-left">
+                        <div class="settings-row-title">Daily Training Tips</div>
+                        <div class="settings-row-sub">Short tips delivered to your notification feed</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <select class="freq-select" id="tips-freq-select" style="display:none;">
+                            <option value="daily">Daily</option>
+                            <option value="every_2_days">Every 2 days</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                        <div class="toggle-switch" id="tips-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-row-left">
+                        <div class="settings-row-title">Training Reminders</div>
+                        <div class="settings-row-sub">Alerts when your streak is at risk</div>
+                    </div>
+                    <div class="toggle-switch" id="reminders-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-row-left">
+                        <div class="settings-row-title">Mission Alerts</div>
+                        <div class="settings-row-sub">Notify when a new daily challenge is available</div>
+                    </div>
+                    <div class="toggle-switch" id="mission-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-row-left">
+                        <div class="settings-row-title">Achievement Alerts</div>
+                        <div class="settings-row-sub">Level-ups, vault unlocks, and milestones</div>
+                    </div>
+                    <div class="toggle-switch" id="achievement-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-row">
+                    <div class="settings-row-left">
+                        <div class="settings-row-title">Push Notifications</div>
+                        <div class="settings-row-sub">Get alerts on your device (browser support required)</div>
+                    </div>
+                    <div class="toggle-switch" id="push-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+                </div>
+            </div>
+            <button id="save-settings-btn" style="width:100%;padding:14px;border-radius:12px;background:var(--th-green);color:#fff;border:none;font-size:15px;font-weight:800;font-family:'Space Grotesk',sans-serif;cursor:pointer;margin-top:4px;">Save Settings</button>
+        </div>
+    </main>
+
+    <div id="xp-toast"><span style="font-size:22px;">⚡</span><span id="xp-toast-text">+10 XP!</span></div>
+
+    <!-- Level-up celebration overlay -->
+    <div id="level-up-toast">
+        <div class="lutu-icon">🎉</div>
+        <div class="lutu-title">Level Up!</div>
+        <div class="lutu-level">Level <span id="lutu-level-num">—</span></div>
+        <div class="lutu-sub">Keep the momentum going</div>
+    </div>
+
+    <!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
+    </a>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
+    </a>
+    </nav>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    const API = '';
+
+    // ── Auth ───────────────────────────────────────────────────
+    function getToken() { return localStorage.getItem('dggo_token') || null; }
+    function getGuestId() { return localStorage.getItem('dggo_guest_uuid') || null; }
+    function authHeaders() {
+        const t = getToken(); if (t) return { 'Authorization': 'Bearer ' + t };
+        const g = getGuestId(); if (g) return { 'X-Guest-UUID': g };
+        return {};
+    }
+
+    // ── Fetch ──────────────────────────────────────────────────
+    async function api(url) {
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json', ...authHeaders() } });
+        if (res.status === 401) return null;
+        if (!res.ok) throw new Error(url + ' → ' + res.status);
+        return res.json();
+    }
+
+    // ── View management ─────────────────────────────────────────
+    function showView(id) {
+        ['hub-view','cat-view','lesson-view','error-view','skeleton-view'].forEach(v => {
+            const el = document.getElementById(v);
+            if (el) el.style.display = 'none';
+        });
+        const target = document.getElementById(id);
+        if (target) target.style.display = id === 'lesson-view' ? 'block' : 'block';
+    }
+
+    // ── XP Toast ───────────────────────────────────────────────
+    function showXP(amount) {
+        const el = document.getElementById('xp-toast');
+        document.getElementById('xp-toast-text').textContent = '+' + amount + ' XP!';
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    function showLevelUp(newLevel) {
+        const el = document.getElementById('level-up-toast');
+        if (!el) return;
+        document.getElementById('lutu-level-num').textContent = newLevel;
+        el.style.display = 'flex';
+        setTimeout(() => {
+            el.style.display = 'none';
+        }, 4000);
+    }
+
+    // ── Parse route from URL ────────────────────────────────────
+    // Path is /training or /training/cat-slug or /training/cat-slug/lesson-slug
+    function parseRoute() {
+        const path = location.pathname; // e.g. /training/form-technique
+        const parts = path.replace(/^\/training\/?/, '').split('/').filter(Boolean);
+        if (parts.length === 0) return { view: 'hub' };
+        if (parts.length === 1) return { view: 'cat', slug: parts[0] };
+        if (parts.length === 2) return { view: 'lesson', slug: parts[0], lessonSlug: parts[1] };
+        return { view: 'hub' };
+    }
+
+    // ── Render helpers ──────────────────────────────────────────
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function appendUtm(url, opts) {
+        if (!url || typeof url !== 'string') return url;
+        if (!opts || !opts.campaign) return url;
+        const params = new URLSearchParams();
+        params.set('utm_source', opts.source || 'disc_golf_go');
+        params.set('utm_medium', opts.medium || 'app');
+        params.set('utm_campaign', opts.campaign);
+        if (opts.content) params.set('utm_content', opts.content);
+        if (opts.term) params.set('utm_term', opts.term);
+        return url + (url.includes('?') ? '&' : '?') + params.toString();
+    }
+
+    function diffBadge(d) {
+        const map = {
+            beginner: ['beginner', '🌱 Beginner'],
+            intermediate: ['intermediate', '⭐ Intermediate'],
+            advanced: ['advanced', '🔥 Advanced'],
+            all_levels: ['all_levels', '🌐 All Levels'],
+        };
+        const [cls, label] = map[d] || ['beginner', '🌱 ' + d];
+        return '<span class="badge badge-' + cls + '">' + esc(label) + '</span>';
+    }
+
+    function contentTypeIcon(type) {
+        return { tip_card: '💡', guide: '📝', video_embed: '🎬', quiz: '❓' }[type] || '📄';
+    }
+
+    // ── Render tip_card content_body ───────────────────────────
+    function renderTipCard(body) {
+        return `
+            <div class="content-headline">${esc(body.headline)}</div>
+            ${body.body ? '<div class="content-text">' + esc(body.body) + '</div>' : ''}
+            ${body.key_points && body.key_points.length ? `
+                <div class="key-points">
+                    <h4>Key Points</h4>
+                    <ul>${body.key_points.map(p => '<li>' + esc(p) + '</li>').join('')}</ul>
+                </div>` : ''}
+            ${body.tip ? `
+                <div class="content-tip">
+                    <div class="content-tip-label">💡 Pro Tip</div>
+                    <div class="content-tip-text">${esc(body.tip)}</div>
+                </div>` : ''}
+        `;
+    }
+
+    // ── Render guide content_body ─────────────────────────────
+    function renderGuide(body) {
+        let html = '';
+        if (body.intro) html += '<div class="content-text" style="margin-bottom:20px;">' + esc(body.intro) + '</div>';
+        if (body.sections) {
+            html += body.sections.map(s => `
+                <div class="guide-section">
+                    <h3>${esc(s.heading)}</h3>
+                    <p>${esc(s.body)}</p>
+                </div>`).join('');
+        }
+        if (body.summary) html += '<div class="content-tip"><div class="content-tip-label">📋 Summary</div><div class="content-tip-text">' + esc(body.summary) + '</div></div>';
+        return html;
+    }
+
+    function renderLessonContent(type, body) {
+        if (type === 'tip_card') return renderTipCard(body);
+        if (type === 'guide') return renderGuide(body);
+        if (type === 'video_embed') return '<div class="content-text">Video: ' + esc(body.url || body.embed_url || '') + '</div>';
+        return '<div class="content-text">' + esc(JSON.stringify(body)) + '</div>';
+    }
+
+    // ── Watch section ─────────────────────────────────────────
+    function renderWatchSection(lesson) {
+        if (!lesson.youtube_url) return '';
+        var thumb = lesson.youtube_url.match(/(?:v=|youtu.be\/)([^&?]+)/);
+        var videoId = thumb ? thumb[1] : null;
+        var thumbUrl = videoId ? 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg' : '';
+        return '<div class="watch-section">' +
+            '<div class="watch-label">🎬 Watch</div>' +
+            '<a class="watch-card" href="' + esc(lesson.youtube_url) + '" target="_blank" rel="noopener noreferrer" data-utm-campaign="training_lesson_video" data-utm-medium="video" data-utm-source="youtube">' +
+            (thumbUrl ? '<img class="watch-thumbnail" src="' + thumbUrl + '" alt="Video thumbnail" loading="lazy">' : '') +
+            '<div class="watch-play-overlay"><div class="watch-play-icon">▶</div></div>' +
+            '<div class="watch-info">' +
+            '<div class="watch-title">' + esc(lesson.youtube_title || '') + '</div>' +
+            (lesson.youtube_channel ? '<div class="watch-channel">' + esc(lesson.youtube_channel) + '</div>' : '') +
+            '</div></a></div>';
+    }
+
+    // ── Further Reading section ───────────────────────────────
+    function renderFurtherReadingSection(resources) {
+        if (!resources || !resources.length) return '';
+        return '<div class="further-reading-section">' +
+            '<div class="fr-label">📚 Further Reading</div>' +
+            resources.map(function(r) {
+                var badgeColors = {
+                    article:  '#4A9EFF',
+                    video:    '#FF6B1A',
+                    guide:    '#9FE875',
+                    official: '#ffd050',
+                    research: '#ff7070',
+                };
+                var color = badgeColors[r.resource_type] || '#4A9EFF';
+                return '<a class="resource-card" href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer" data-utm-campaign="training_lesson_reading" data-utm-medium="external_link">' +
+                    '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">' +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<div class="resource-title">' + esc(r.title) + '</div>' +
+                    (r.author ? '<div class="resource-meta">' + esc(r.author) + (r.credentials ? ' · ' + esc(r.credentials) : '') + '</div>' : '') +
+                    '</div>' +
+                    (r.resource_type ? '<span style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;">' + esc(r.resource_type) + '</span>' : '') +
+                    '</div>' +
+                    (r.notes ? '<div class="resource-notes">' + esc(r.notes) + '</div>' : '') +
+                    '</a>';
+            }).join('') +
+            '</div>';
+    }
+
+    // ── HUB VIEW ───────────────────────────────────────────────
+    async function loadHub() {
+        showView('skeleton-view');
+        try {
+            const [catData, recData, streakData] = await Promise.all([
+                api(API + '/api/training/categories'),
+                getToken() ? api(API + '/api/training/recommendations') : Promise.resolve(null),
+                getToken() ? api(API + '/api/training/streak') : Promise.resolve(null),
+            ]);
+            if (!catData) { renderHubPublic([]); return; }
+            renderHub(catData.categories || [], recData, streakData);
+            loadXPBadge();
+            showView('hub-view');
+        } catch(e) {
+            console.error(e);
+            showView('error-view');
+            document.getElementById('error-msg').textContent = 'Failed to load training. Check your connection.';
+        }
+    }
+
+    function renderHubPublic(cats) {
+        renderHub(cats.map(c => ({ ...c, completed_count: 0 })), null, null);
+        showView('hub-view');
+    }
+
+    function renderHub(categories, recData, streakData) {
+        document.getElementById('skeleton-view').style.display = 'none';
+        document.getElementById('hub-view').style.display = 'block';
+
+        // Skill tier
+        if (recData && recData.skill_tier) {
+            var tierPill = document.getElementById('hub-skill-tier');
+            tierPill.textContent = recData.skill_tier_icon + ' ' + recData.skill_tier.charAt(0).toUpperCase() + recData.skill_tier.slice(1);
+            var tierColor = { rookie: '#6a7a6a', player: '#FF6B1A', advanced: '#ffd050', pro: '#ff7070' }[recData.skill_tier] || '#6a7a6a';
+            tierPill.style.display = 'inline-flex';
+            tierPill.style.background = tierColor + '22';
+            tierPill.style.color = tierColor;
+            tierPill.style.border = '1px solid ' + tierColor + '44';
+        }
+
+        // Tier-appropriate headline
+        if (recData && recData.skill_tier === 'pro') {
+            document.getElementById('hub-title').textContent = 'Pro Training';
+            document.getElementById('hub-subtitle').textContent = 'Fine-tune your game with advanced technique and strategy.';
+        } else if (recData && recData.skill_tier === 'advanced') {
+            document.getElementById('hub-title').textContent = 'Advanced Training';
+            document.getElementById('hub-subtitle').textContent = 'Push your limits with intermediate and advanced content.';
+        } else if (recData && recData.skill_tier === 'player') {
+            document.getElementById('hub-title').textContent = 'Level Up Your Game';
+            document.getElementById('hub-subtitle').textContent = 'Build solid fundamentals and start thinking like a competitor.';
+        }
+
+        // Streak display
+        if (streakData && streakData.current_streak > 0) {
+            const card = document.getElementById('streak-card');
+            card.style.display = 'block';
+            document.getElementById('streak-count').textContent = streakData.current_streak + '-day streak';
+            document.getElementById('streak-desc').textContent = streakData.is_active ? 'Active today!' : 'Last trained ' + (streakData.last_training_date || 'recently');
+            const bonus = document.getElementById('streak-bonus');
+            if (streakData.days_until_bonus === 0) {
+                bonus.textContent = '+25 XP bonus!';
+            } else {
+                bonus.textContent = streakData.days_until_bonus + ' day' + (streakData.days_until_bonus > 1 ? 's' : '') + ' to bonus';
+            }
+        }
+
+        // Recommendations card
+        if (recData && recData.recommendations && recData.recommendations.length) {
+            var topRec = recData.recommendations.find(function(r) { return r.type === 'lesson' && r.lesson; });
+            if (topRec) {
+                var l = topRec.lesson;
+                var typeIcon = { tip_card: '💡', guide: '📝', video_embed: '🎬', quiz: '❓' }[l.content_type] || '📄';
+                document.getElementById('hub-rec-icon').textContent = typeIcon;
+                document.getElementById('hub-rec-reason').textContent = topRec.reason || 'Recommended';
+                document.getElementById('hub-rec-title').textContent = l.title;
+                document.getElementById('hub-rec-xp').textContent = '+' + l.xp_reward + ' XP';
+                var recEl = document.getElementById('hub-recommendation');
+                recEl.style.display = 'block';
+                recEl.onclick = function() { location.href = '/training/' + esc(l.category_slug) + '/' + esc(l.slug); };
+            }
+        }
+
+        // Hub tab filtering — re-fetch with level filter
+        let hubCategoriesCache = categories; // keep full data for level-free renders
+        document.getElementById('hub-tabs').addEventListener('click', async e => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            document.querySelectorAll('#hub-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+            if (filter === 'all') {
+                // show all categories with full lesson counts
+                renderHubCategoryList(hubCategoriesCache);
+                return;
+            }
+            // fetch filtered — show only categories that have lessons at this level
+            try {
+                const url = filter === 'all_levels'
+                    ? API + '/api/training/categories'
+                    : API + '/api/training/categories?level=' + encodeURIComponent(filter);
+                const catData = await api(url);
+                if (catData && catData.categories) {
+                    // use completed_count from the filtered response or fall back to 0
+                    renderHubCategoryList(catData.categories.map(c => ({ ...c, completed_count: c.completed_count || 0 })));
+                }
+            } catch(err) {
+                console.error('hub filter error', err);
+            }
+        });
+
+        // default: render the full category list
+        renderHubCategoryList(hubCategoriesCache);
+    }
+
+    function renderHubCategoryList(cats) {
+        const list = document.getElementById('category-list');
+        const total = cats.reduce((s,c) => s + (Number(c.lesson_count)||0), 0);
+        const done  = cats.reduce((s,c) => s + (c.completed_count||0), 0);
+        const pct   = total > 0 ? Math.round((done/total)*100) : 0;
+        document.getElementById('hub-done').textContent = done;
+        document.getElementById('hub-total').textContent = total;
+        document.getElementById('hub-pct').textContent = pct;
+        document.getElementById('hub-bar').style.width = pct + '%';
+        list.innerHTML = cats.map(c => {
+            const pct2 = c.lesson_count > 0 ? Math.round((c.completed_count/c.lesson_count)*100) : 0;
+            const pctLabel = pct2 === 100 ? '✓' : pct2 + '%';
+            const pctClass = pct2 === 100 ? 'category-pct-done' : 'category-pct';
+            const skillBadge = c.skill_level && c.skill_level !== 'all_levels'
+                ? diffBadge(c.skill_level)
+                : '';
+            return `<a href="/training/${c.slug}" class="category-card">
+                <div class="category-icon">${esc(c.icon)}</div>
+                <div class="category-info">
+                    <div class="category-name">${esc(c.name)} ${skillBadge}</div>
+                    <div class="category-meta"><span>📚 ${c.lesson_count} lessons</span></div>
+                </div>
+                <div class="category-progress">
+                    <div class="${pctClass}">${pctLabel}</div>
+                    <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct2}%"></div></div>
+                </div>
+            </a>`;
+        }).join('');
+    }
+
+    async function loadXPBadge() {
+        const t = getToken(); if (!t) return;
+        try {
+            const res = await fetch(API + '/api/players/me', { headers: { 'Authorization': 'Bearer ' + t } });
+            if (res.ok) {
+                const d = await res.json();
+                const badge = document.getElementById('player-xp-badge');
+                badge.style.display = 'block';
+                badge.textContent = d.xp.toLocaleString() + ' XP';
+            }
+        } catch(_) {}
+    }
+
+    // ── CATEGORY VIEW ─────────────────────────────────────────
+    async function loadCategory(slug) {
+        showView('skeleton-view');
+        try {
+            const data = await api(API + '/api/training/categories/' + slug + '/lessons');
+            if (!data) { showView('error-view'); return; }
+            renderCategory(data.category, data.lessons || []);
+            showView('cat-view');
+        } catch(e) {
+            console.error(e);
+            showView('error-view');
+        }
+    }
+
+    function renderCategory(cat, lessons) {
+        document.getElementById('skeleton-view').style.display = 'none';
+        document.getElementById('cat-view').style.display = 'block';
+        document.getElementById('header-title').textContent = cat.name;
+
+        document.getElementById('cat-icon-label').textContent = cat.icon;
+        document.getElementById('cat-name-title').textContent = cat.name;
+        document.getElementById('cat-desc').textContent = cat.description;
+
+        const done = lessons.filter(l => l.completed).length;
+        const total = lessons.length;
+        const pct = total > 0 ? Math.round((done/total)*100) : 0;
+        document.getElementById('cat-pct').textContent = pct + '%';
+        document.getElementById('cat-bar').style.width = pct + '%';
+        document.getElementById('cat-progress-label').textContent = done + '/' + total + ' complete';
+
+        document.getElementById('back-btn').style.display = 'flex';
+        document.getElementById('back-btn').href = '/training';
+        document.getElementById('back-btn').onclick = null;
+
+        renderLessonList(lessons, cat.slug);
+
+        document.getElementById('cat-tabs').addEventListener('click', e => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            document.querySelectorAll('#cat-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+            const filtered = filter === 'all' ? lessons : lessons.filter(l => l.difficulty === filter);
+            renderLessonList(filtered, cat.slug, filter === 'all' ? null : filter);
+        });
+    }
+
+    function renderLessonList(lessons, catSlug, difficultyFilter) {
+        const list = document.getElementById('lesson-list');
+        if (!lessons.length) {
+            list.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><h3>No lessons at this level</h3><p>More coming soon.</p></div>';
+            return;
+        }
+        list.innerHTML = lessons.map((l, i) => {
+            const num = i + 1;
+            const check = l.completed ? '✓' : (num);
+            return `
+            <a href="/training/${catSlug}/${l.slug}" class="lesson-item${l.completed ? ' completed' : ''}">
+                <div class="lesson-num" style="${l.completed ? 'font-size:15px;' : ''}">${l.completed ? '' : num}</div>
+                <div class="lesson-info">
+                    <div class="lesson-title">${esc(l.title)}</div>
+                    <div class="lesson-meta">
+                        ${diffBadge(l.difficulty)}
+                        <span class="xp-chip">+${l.xp_reward} XP</span>
+                    </div>
+                </div>
+                <div class="lesson-check${l.completed ? ' done' : ''}">${check}</div>
+            </a>`;
+        }).join('');
+    }
+
+    // ── LESSON VIEW ────────────────────────────────────────────
+    async function loadLesson(slug, lessonSlug) {
+        showView('skeleton-view');
+        document.getElementById('lesson-view').style.display = 'block';
+        document.getElementById('skeleton-view').style.display = 'none';
+        document.getElementById('header-title').textContent = 'Lesson';
+        document.getElementById('back-btn').style.display = 'flex';
+
+        try {
+            // Find lesson by slug in category's lesson list
+            const catData = await api(API + '/api/training/categories/' + slug + '/lessons');
+            if (!catData) { showView('error-view'); return; }
+
+            const lessonMeta = catData.lessons?.find(l => l.slug === lessonSlug);
+            if (!lessonMeta) { showView('error-view'); return; }
+
+            const fullData = await api(API + '/api/training/lessons/' + lessonMeta.id);
+            if (!fullData) { showView('error-view'); return; }
+
+            // Fetch resources for this lesson
+            let resources = [];
+            try {
+                resources = await api(API + '/api/training/lessons/' + lessonMeta.id + '/resources') || [];
+            } catch(_) {}
+            fullData.resources = resources;
+
+            renderLesson(fullData, catData.category);
+        } catch(e) {
+            console.error(e);
+            showView('error-view');
+        }
+    }
+
+    function renderLesson(lesson, category) {
+        document.getElementById('lesson-view').style.display = 'block';
+        document.getElementById('back-btn').href = '/training/' + esc(category.slug);
+
+        document.getElementById('lesson-cat-link').href = '/training';
+        document.getElementById('lesson-cat-name').textContent = category.name;
+        document.getElementById('lesson-type-badge').innerHTML = contentTypeIcon(lesson.content_type) + ' ' + esc(lesson.content_type.replace('_',' '));
+        document.getElementById('lesson-title-text').textContent = lesson.title;
+        document.getElementById('lesson-desc').textContent = lesson.description;
+
+        const body = typeof lesson.content_body === 'string'
+            ? JSON.parse(lesson.content_body)
+            : lesson.content_body;
+        document.getElementById('lesson-content').innerHTML = renderLessonContent(lesson.content_type, body);
+
+        // Inject Watch section below content
+        var watchHtml = renderWatchSection(lesson);
+        if (watchHtml) {
+            var contentEl = document.getElementById('lesson-content');
+            contentEl.insertAdjacentHTML('afterend', watchHtml);
+        }
+
+        // Inject Further Reading section below Watch, above complete-section
+        var frEl = document.getElementById('further-reading-section');
+        if (frEl) frEl.remove();
+        var frHtml = renderFurtherReadingSection(lesson.resources || []);
+        if (frHtml) {
+            var completeEl = document.querySelector('.complete-section');
+            if (completeEl) completeEl.insertAdjacentHTML('beforebegin', '<div id="further-reading-section">' + frHtml + '</div>');
+        }
+
+        const btn = document.getElementById('btn-complete');
+        const btnNext = document.getElementById('btn-next');
+        const successBox = document.getElementById('completion-success');
+
+        if (lesson.is_completed) {
+            btn.className = 'btn-complete done';
+            btn.textContent = '✓ Completed';
+            btn.disabled = true;
+            successBox.style.display = 'block';
+            document.querySelector('.complete-section').style.display = 'block';
+        } else {
+            btn.className = 'btn-complete';
+            btn.textContent = '⚡ Mark Complete & Earn XP';
+            btn.disabled = false;
+            successBox.style.display = 'none';
+        }
+
+        btn.onclick = () => completeLesson(lesson.id, lesson.xp_reward);
+
+        if (lesson.next_lesson) {
+            btnNext.style.display = 'flex';
+            btnNext.href = '/training/' + esc(category.slug) + '/' + esc(lesson.next_lesson.slug);
+        } else {
+            btnNext.style.display = 'none';
+        }
+    }
+
+    async function shareLesson(lesson, category) {
+        const btn = document.getElementById('btn-share');
+        if (!btn) return;
+        btn.disabled = true;
+
+        try {
+            // Get player's skill tier from /api/players/me
+            let skillTier = 'rookie';
+            try {
+                const meRes = await fetch(API + '/api/players/me', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+                if (meRes.ok) {
+                    const meData = await meRes.json();
+                    skillTier = meData.skill_tier || 'rookie';
+                }
+            } catch (_) {}
+
+            // Build deep link and tweet text
+            const deepLink = appendUtm('https://discgolfgo.app/training/' + esc(category.slug) + '/' + esc(lesson.slug), { source: 'twitter', medium: 'social', campaign: 'training_share' });
+            const tierLabel = skillTier.charAt(0).toUpperCase() + skillTier.slice(1);
+            const tweetText = 'I just completed "' + lesson.title + '" on Disc Golf Go! 🎯 ' + tierLabel + ' tier — time to level up!';
+            const tweetUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweetText) + '&url=' + encodeURIComponent(deepLink) + '&hashtags=DiscGolf%2CDiscGolfGo';
+
+            // Open Twitter intent in a popup
+            window.open(tweetUrl, 'twitter-share', 'width=600,height=400');
+
+            // Record share and award XP
+            const res = await fetch(API + '/api/training/completions/' + lesson.id + '/share', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.shared) {
+                    showXP(data.xp_bonus);
+                    const successBox = document.getElementById('completion-success');
+                    if (successBox) {
+                        const xpLine = document.createElement('div');
+                        xpLine.style.cssText = 'margin-top:8px;font-size:12px;color:var(--th-gold);font-weight:600;';
+                        xpLine.textContent = '+' + data.xp_bonus + ' XP for sharing!';
+                        successBox.appendChild(xpLine);
+                    }
+                }
+            } else if (res.status === 409) {
+                // Already shared — silently ignore
+            }
+        } catch (e) {
+            console.error('share error', e);
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function completeLesson(lessonId, xpReward) {
+        const btn = document.getElementById('btn-complete');
+        const prevLevel = Math.floor(parseInt(document.getElementById('player-xp-badge').textContent.replace(/,/g,'').match(/\//) ? 0 : 0) / 500) + 1;
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        try {
+            const res = await fetch(API + '/api/training/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify({ lesson_id: lessonId }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                btn.className = 'btn-complete done';
+                btn.textContent = '✓ Completed';
+                document.getElementById('completion-success').style.display = 'block';
+
+                // Show XP toast(s)
+                const totalXp = (data.xp_awarded || 0) + (data.bonus_xp || 0);
+                if (totalXp > 0) showXP(totalXp);
+
+                // Bonus info (streak, category complete)
+                if (data.bonus_xp > 0 && data.bonus_reason) {
+                    const bonusEl = document.getElementById('completion-success');
+                    if (bonusEl) {
+                        const reasons = [];
+                        if (data.bonus_reason.includes('streak')) reasons.push('🔥 ' + data.streak_days + '-day streak bonus');
+                        if (data.category_complete_bonus > 0) reasons.push('🏆 Category complete bonus');
+                        if (reasons.length) {
+                            const bonusLine = document.createElement('div');
+                            bonusLine.style.cssText = 'margin-top:8px;font-size:12px;color:var(--th-gold);font-weight:600;';
+                            bonusLine.textContent = reasons.join(' · ');
+                            bonusEl.appendChild(bonusLine);
+                        }
+                    }
+                }
+
+                // Check for level-up
+                const newLevel = Math.floor((data.current_xp || 0) / 500) + 1;
+                const prevLevelCalc = Math.floor(((data.current_xp || 0) - (data.xp_awarded || 0) - (data.bonus_xp || 0)) / 500) + 1;
+                if (newLevel > prevLevelCalc) showLevelUp(newLevel);
+
+                loadXPBadge();
+
+                // Wire share button if lesson data is in scope
+                const shareBtn = document.getElementById('btn-share');
+                if (shareBtn && typeof lesson !== 'undefined' && typeof category !== 'undefined') {
+                    shareBtn.addEventListener('click', function() { shareLesson(lesson, category); });
+                }
+            } else {
+                btn.disabled = false;
+                btn.textContent = '⚡ Mark Complete & Earn XP';
+                alert(data.error || 'Failed to save. Try again.');
+            }
+        } catch(e) {
+            btn.disabled = false;
+            btn.textContent = '⚡ Mark Complete & Earn XP';
+            alert('Connection error. Try again.');
+        }
+    }
+
+    // ── Route ─────────────────────────────────────────────────
+    async function init() {
+        const route = parseRoute();
+
+        if (route.view === 'hub') {
+            document.getElementById('back-btn').style.display = 'none';
+            await loadHub();
+        } else if (route.view === 'cat') {
+            document.getElementById('back-btn').style.display = 'flex';
+            document.getElementById('back-btn').href = '/training';
+            await loadCategory(route.slug);
+        } else if (route.view === 'lesson') {
+            document.getElementById('back-btn').style.display = 'flex';
+            await loadLesson(route.slug, route.lessonSlug);
+        }
+
+        // Load unread count for bell indicator (authenticated users only)
+        loadUnreadCount();
+    }
+
+    init();
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────
+    let notifPanelOpen = false;
+
+    function openNotifPanel() {
+        notifPanelOpen = true;
+        document.getElementById('notif-panel').classList.add('open');
+        document.getElementById('panel-backdrop').classList.add('show');
+        document.getElementById('settings-view').classList.remove('active');
+        loadNotifications();
+    }
+
+    function closeNotifPanel() {
+        notifPanelOpen = false;
+        document.getElementById('notif-panel').classList.remove('open');
+        document.getElementById('panel-backdrop').classList.remove('show');
+        document.getElementById('settings-view').classList.remove('active');
+    }
+
+    document.getElementById('bell-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (notifPanelOpen) { closeNotifPanel(); return; }
+        openNotifPanel();
+    });
+
+    document.getElementById('close-notif-panel').addEventListener('click', closeNotifPanel);
+    document.getElementById('panel-backdrop').addEventListener('click', closeNotifPanel);
+
+    async function loadUnreadCount() {
+        try {
+            const res = await fetch(API + '/api/training/notifications/unread-count', { headers: authHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                const btn = document.getElementById('bell-btn');
+                if (data.unread_count > 0) {
+                    btn.classList.add('has-unread');
+                } else {
+                    btn.classList.remove('has-unread');
+                }
+            }
+        } catch (_) {}
+    }
+
+    async function loadNotifications() {
+        const list = document.getElementById('notif-list');
+        try {
+            const res = await fetch(API + '/api/training/notifications?limit=30', { headers: authHeaders() });
+            if (!res.ok) { list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">⚠️</div><p>Failed to load</p></div>'; return; }
+            const data = await res.json();
+            if (!data.notifications || !data.notifications.length) {
+                list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div><h3 style="font-size:15px;font-weight:700;margin-bottom:6px;">All caught up</h3><p style="font-size:13px;">No training notifications yet.</p></div>';
+                return;
+            }
+            list.innerHTML = data.notifications.map(function(n) {
+                const typeLabel = { daily_tip: '💡 Tip', training_reminder: '⏰ Reminder', mission_alert: '⚡ Mission', achievement: '🏆 Achievement', reengagement: '📩 Re-engagement' }[n.type] || '🔔';
+                const timeAgo = timeAgoStr(n.created_at);
+                return '<div class="notif-item' + (n.is_read ? '' : ' unread') + '" data-id="' + n.id + '">' +
+                    '<div class="notif-type">' + typeLabel + '</div>' +
+                    '<div class="notif-title">' + esc(n.title) + '</div>' +
+                    '<div class="notif-msg">' + esc(n.message) + '</div>' +
+                    '<div class="notif-time">' + timeAgo + '</div>' +
+                '</div>';
+            }).join('');
+
+            // Click to mark as read and navigate
+            list.querySelectorAll('.notif-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    const id = item.dataset.id;
+                    item.classList.remove('unread');
+                    fetch(API + '/api/training/notifications/' + id + '/read', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }
+                    }).catch(function() {});
+                    if (n.lesson_slug) {
+                        location.href = '/training/' + n.lesson_slug;
+                    }
+                });
+            });
+
+            document.getElementById('notif-footer').style.display = data.notifications.length ? 'block' : 'none';
+        } catch(_) {
+            list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">⚠️</div><p>Connection error</p></div>';
+        }
+    }
+
+    function timeAgoStr(dateStr) {
+        var d = new Date(dateStr);
+        var secs = Math.floor((Date.now() - d) / 1000);
+        if (secs < 60) return 'just now';
+        if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+        if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+        return Math.floor(secs / 86400) + 'd ago';
+    }
+
+    // Mark all read
+    document.getElementById('mark-all-read-btn').addEventListener('click', function() {
+        fetch(API + '/api/training/notifications/read-all', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }
+        }).then(function() {
+            loadNotifications();
+            document.getElementById('bell-btn').classList.remove('has-unread');
+        }).catch(function() {});
+    });
+
+    // Clear all
+    document.getElementById('clear-all-notifs').addEventListener('click', function() {
+        var items = document.querySelectorAll('#notif-list .notif-item');
+        items.forEach(function(item) { item.classList.remove('unread'); });
+        document.getElementById('notif-list').innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div><h3 style="font-size:15px;font-weight:700;margin-bottom:6px;">All cleared</h3><p style="font-size:13px;">No training notifications.</p></div>';
+        document.getElementById('bell-btn').classList.remove('has-unread');
+    });
+
+    // ── NOTIFICATION SETTINGS ─────────────────────────────────
+    function openSettings() {
+        closeNotifPanel();
+        document.getElementById('settings-view').classList.add('active');
+        loadSettings();
+    }
+
+    document.getElementById('notif-settings-btn').addEventListener('click', openSettings);
+    document.getElementById('settings-back-btn').addEventListener('click', function() {
+        document.getElementById('settings-view').classList.remove('active');
+    });
+
+    var settingsState = {
+        tips_enabled: true, tips_frequency: 'daily',
+        reminders_enabled: true, mission_alerts_enabled: true,
+        achievement_alerts_enabled: true, push_enabled: false
+    };
+
+    async function loadSettings() {
+        try {
+            var res = await fetch(API + '/api/training/notifications/settings', { headers: authHeaders() });
+            if (res.ok) {
+                var data = await res.json();
+                settingsState = { ...settingsState, ...data };
+            }
+        } catch(_) {}
+        applySettingsUI();
+    }
+
+    function applySettingsUI() {
+        var s = settingsState;
+        document.getElementById('tips-toggle').classList.toggle('on', !!s.tips_enabled);
+        document.getElementById('reminders-toggle').classList.toggle('on', !!s.reminders_enabled);
+        document.getElementById('mission-toggle').classList.toggle('on', !!s.mission_alerts_enabled);
+        document.getElementById('achievement-toggle').classList.toggle('on', !!s.achievement_alerts_enabled);
+        document.getElementById('push-toggle').classList.toggle('on', !!s.push_enabled);
+        var freqSel = document.getElementById('tips-freq-select');
+        freqSel.style.display = s.tips_enabled ? 'block' : 'none';
+        freqSel.value = s.tips_frequency || 'daily';
+    }
+
+    // Toggle click handlers
+    function setupToggle(id, key) {
+        var el = document.getElementById(id);
+        el.addEventListener('click', function() {
+            settingsState[key] = !settingsState[key];
+            el.classList.toggle('on', !!settingsState[key]);
+            if (key === 'tips_enabled') {
+                document.getElementById('tips-freq-select').style.display = settingsState.tips_enabled ? 'block' : 'none';
+            }
+        });
+        el.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
+        });
+    }
+    setupToggle('tips-toggle', 'tips_enabled');
+    setupToggle('reminders-toggle', 'reminders_enabled');
+    setupToggle('mission-toggle', 'mission_alerts_enabled');
+    setupToggle('achievement-toggle', 'achievement_alerts_enabled');
+    setupToggle('push-toggle', 'push_enabled');
+
+    document.getElementById('tips-freq-select').addEventListener('change', function() {
+        settingsState.tips_frequency = this.value;
+    });
+
+    document.getElementById('save-settings-btn').addEventListener('click', async function() {
+        var btn = document.getElementById('save-settings-btn');
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        try {
+            var res = await fetch(API + '/api/training/notifications/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify(settingsState)
+            });
+            if (res.ok) {
+                btn.textContent = '✓ Saved!';
+                setTimeout(function() {
+                    btn.textContent = 'Save Settings';
+                    btn.disabled = false;
+                }, 1500);
+            } else {
+                btn.textContent = 'Save Settings';
+                btn.disabled = false;
+                alert('Failed to save settings. Try again.');
+            }
+        } catch(_) {
+            btn.textContent = 'Save Settings';
+            btn.disabled = false;
+            alert('Connection error. Try again.');
+        }
+    });
+
+})();
+</script>
+
+<script src="/js/utm.js" defer></script>
+<script>document.addEventListener('DOMContentLoaded', function(){ window.DGGO_UTM && window.DGGO_UTM.bindOutboundTracking(); });</script>
+
+</body>
+</html>

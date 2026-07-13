@@ -8,12 +8,14 @@ function createToken(payload) {
 
 // Middleware: require JWT auth. Sets req.player = { id, player_uuid }.
 // Also accepts legacy X-Player-Id UUID header for backward compat.
+// Stores the raw Bearer token in req.rawToken for downstream use.
 function requireAuth(pool) {
   return async (req, res, next) => {
     // 1. Try JWT Bearer token
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
+      req.rawToken = token;
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.player = { id: decoded.id, player_uuid: decoded.player_uuid };

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Disc Golf Go</title>
+  <meta name="application-name" content="Disc Golf Go">
+  <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
+  <meta http-equiv="refresh" content="1;url=/">
+  <style>
+    body { background: #1E1E1E; color: #FAFAFA; font-family: system-ui, sans-serif;
+           display: flex; align-items: center; justify-content: center;
+           min-height: 100vh; margin: 0; }
+    p { font-size: 1rem; opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <p>Loading Disc Golf Go...</p>
+  <script>
+    (function() {
+      var code = new URLSearchParams(window.location.search).get('code') || '';
+      var base = 'https://disc-golf-go.polsia.app';
+      if (code.length >= 4 && code.length <= 12) {
+        // Fire click event (non-blocking) then redirect to register page
+        fetch('/api/referrals/click?code=' + encodeURIComponent(code))
+          .catch(function() {})
+          .finally(function() {
+            window.location.replace(base + '/register?ref=' + encodeURIComponent(code));
+          });
+      } else {
+        window.location.replace(base + '/');
+      }
+    })();
+  </script>
+</body>
+</html>

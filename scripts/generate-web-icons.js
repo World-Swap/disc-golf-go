@@ -9,8 +9,12 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Primary source URL (R2 — may go stale; fallback is local AppIcon-1024x1024.png)
 const SOURCE_URL =
-  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/e8cdbbcc-19dc-4fc4-bac5-4016fb74ce13.png';
+  'https://pub-629428d185ca4960a0a73c850d32294b.r2.dev/company_104974/images/46faf86b-5de0-4152-8b2b-ad4a265e8881.png';
+
+// Local fallback — committed AppIcon PNG, always present in the repo.
+const LOCAL_SOURCE = path.join(__dirname, '..', 'resources', 'AppIcon.appiconset', 'AppIcon-1024x1024.png');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const IOS_ICON_DIR = path.join(__dirname, '..', 'resources', 'AppIcon.appiconset');
@@ -31,9 +35,29 @@ function downloadBuffer(url) {
 }
 
 async function main() {
-  console.log('Downloading source logo…');
-  const sourceBuffer = await downloadBuffer(SOURCE_URL);
-  console.log(`Downloaded ${sourceBuffer.length} bytes`);
+  let sourceBuffer;
+  try {
+    console.log('Downloading source logo from R2…');
+    sourceBuffer = await downloadBuffer(SOURCE_URL);
+    console.log(`Downloaded ${sourceBuffer.length} bytes from R2`);
+  } catch (r2err) {
+    console.warn(`R2 download failed (${r2err.message}) — falling back to local AppIcon`);
+    if (!fs.existsSync(LOCAL_SOURCE)) {
+      throw new Error(
+        `Neither R2 source nor local fallback exists at ${LOCAL_SOURCE}. ` +
+        'Cannot generate web icons.'
+      );
+    }
+    sourceBuffer = fs.readFileSync(LOCAL_SOURCE);
+    console.log(`Loaded ${sourceBuffer.length} bytes from local fallback`);
+  }
+
+  if (sourceBuffer.length < 1000) {
+    throw new Error(
+      `Source buffer too small (${sourceBuffer.length} bytes) — likely corrupt. ` +
+      'Check that AppIcon-1024x1024.png in resources/AppIcon.appiconset/ is valid.'
+    );
+  }
 
   // ── Web favicons ──────────────────────────────────────────────────────
   const WEB_SIZES = {
@@ -47,7 +71,7 @@ async function main() {
   for (const [filename, size] of Object.entries(WEB_SIZES)) {
     const outPath = path.join(PUBLIC_DIR, filename);
     await sharp(sourceBuffer)
-      .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .resize(size, size)
       .png()
       .toFile(outPath);
     console.log(`  ✓ public/${filename} (${size}x${size})`);
@@ -56,7 +80,7 @@ async function main() {
   // apple-touch-icon (180x180, same as favicon-180x180 but separate file)
   const appleTouchPath = path.join(PUBLIC_DIR, 'apple-touch-icon.png');
   await sharp(sourceBuffer)
-    .resize(180, 180, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(180, 180)
     .png()
     .toFile(appleTouchPath);
   console.log('  ✓ public/apple-touch-icon.png (180x180)');
@@ -64,7 +88,7 @@ async function main() {
   // logo.png (180x180 — matches existing size)
   const logoPath = path.join(PUBLIC_DIR, 'logo.png');
   await sharp(sourceBuffer)
-    .resize(180, 180, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(180, 180)
     .png()
     .toFile(logoPath);
   console.log('  ✓ public/logo.png (180x180)');
@@ -72,14 +96,14 @@ async function main() {
   // logo-original-1080.png (high-res backup)
   const logoOrigPath = path.join(PUBLIC_DIR, 'logo-original-1080.png');
   await sharp(sourceBuffer)
-    .resize(1080, 1080, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(1080, 1080)
     .png()
     .toFile(logoOrigPath);
   console.log('  ✓ public/logo-original-1080.png (1080x1080)');
 
   // favicon.ico — 32x32 PNG wrapped as ICO (modern browsers accept PNG-in-ICO)
   const ico32 = await sharp(sourceBuffer)
-    .resize(32, 32, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(32, 32)
     .png()
     .toBuffer();
 
@@ -107,7 +131,7 @@ async function main() {
   fs.mkdirSync(IOS_ICON_DIR, { recursive: true });
   const iosIconPath = path.join(IOS_ICON_DIR, 'AppIcon-1024x1024.png');
   await sharp(sourceBuffer)
-    .resize(1024, 1024, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(1024, 1024)
     .png()
     .toFile(iosIconPath);
   console.log('  ✓ resources/AppIcon.appiconset/AppIcon-1024x1024.png (1024x1024)');

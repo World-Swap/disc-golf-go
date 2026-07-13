@@ -8,29 +8,29 @@
 /* ── DESIGN TOKENS — Light Mode (default) ─────────────────────────────── */
 :root {
     /* Backgrounds — cool off-white with subtle green tint */
-    --bg:            #f4f7f4;
-    --bg2:           #ffffff;
-    --surface:       #ffffff;
-    --surface2:      #eef2ee;
-    --surface3:      #e4eae4;
+    --bg:            #1E1E1E;
+    --bg2:           #2A2A2A;
+    --surface:       #2A2A2A;
+    --surface2:      #333333;
+    --surface3:      #3A3A3A;
 
     /* Borders */
-    --border:        rgba(0,0,0,0.06);
-    --border2:       rgba(0,0,0,0.10);
+    --border:        rgba(255,255,255,0.06);
+    --border2:       rgba(255,255,255,0.10);
 
     /* Text */
-    --text:          #0a110a;
-    --text2:         #3a4a3a;
-    --text3:         #7a8a7a;
+    --text:          #FAFAFA;
+    --text2:         #D0D0D0;
+    --text3:         #A0A0A0;
 
     /* Primary: green — matches landing page palette */
-    --green:         #3ca83c;
-    --green-bright:  #5ec95e;
-    --green-dim:     #2a7a20;
-    --green-glow:    rgba(60,168,60,0.15);
-    --green-glow2:   rgba(60,168,60,0.08);
-    --green-bg:      rgba(60,168,60,0.08);
-    --green-border:  rgba(60,168,60,0.22);
+    --green:         #FF6B1A;
+    --green-bright:  #7ED957;
+    --green-dim:     #E55A0D;
+    --green-glow:    rgba(255,107,26,0.15);
+    --green-glow2:   rgba(255,107,26,0.08);
+    --green-bg:      rgba(255,107,26,0.08);
+    --green-border:  rgba(255,107,26,0.22);
 
     /* Accent colors */
     --gold:          #d4a020;
@@ -73,8 +73,8 @@
     --radius-pill:   100px;
 
     /* Shadows — refined for premium feel */
-    --shadow-card:   0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
-    --shadow-lg:     0 8px 32px rgba(0,0,0,0.10);
+    --shadow-card:   0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.25);
+    --shadow-lg:     0 8px 32px rgba(0,0,0,0.4);
     --shadow-modal:  0 20px 60px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.10);
 
     /* Motion */
@@ -83,36 +83,38 @@
     /* Font stacks */
     --font-body:     'Space Grotesk', system-ui, sans-serif;
     --font-mono:     'Space Mono', monospace;
+
+    --bg-deep:       #141414;
 }
 
 /* ── DESIGN TOKENS — Dark Mode ────────────────────────────────────────── */
 /* Aligned with landing page: deep green-tinted backgrounds, bright greens */
 [data-theme="dark"] {
     /* Backgrounds — green-tinted deep darks from landing page */
-    --bg-deep:      #050a05;
-    --bg:            #0a0f0a;
-    --bg2:           #111811;
-    --surface:       #151d15;
-    --surface2:      #1a231a;
-    --surface3:      #212b21;
+    --bg-deep:      #141414;
+    --bg:            #1E1E1E;
+    --bg2:           #252525;
+    --surface:       #2A2A2A;
+    --surface2:      #333333;
+    --surface3:      #3A3A3A;
 
     /* Borders — subtle white at low opacity */
     --border:        rgba(255,255,255,0.06);
     --border2:       rgba(255,255,255,0.12);
 
     /* Text — landing page palette */
-    --text:          #f0f4f0;
-    --text2:         #b8c8b8;
-    --text3:         #6a7a6a;
+    --text:          #FAFAFA;
+    --text2:         #D0D0D0;
+    --text3:         #A0A0A0;
 
     /* Primary: green — landing page colors */
-    --green:         #4cdf3c;
-    --green-bright:  #7ed957;
-    --green-dim:     #2a7a20;
-    --green-glow:    rgba(76,223,60,0.15);
-    --green-glow2:   rgba(76,223,60,0.08);
-    --green-bg:      rgba(76,223,60,0.08);
-    --green-border:  rgba(76,223,60,0.25);
+    --green:         #FF6B1A;
+    --green-bright:  #7ED957;
+    --green-dim:     #E55A0D;
+    --green-glow:    rgba(255,107,26,0.15);
+    --green-glow2:   rgba(255,107,26,0.08);
+    --green-bg:      rgba(255,107,26,0.08);
+    --green-border:  rgba(255,107,26,0.25);
 
     /* Accent colors — bright for dark backgrounds */
     --gold:          #ffd050;
@@ -209,7 +211,7 @@ a { color: inherit; text-decoration: none; }
 
 /* Dark mode header gets subtle green top accent line */
 [data-theme="dark"] .top-header {
-    background: rgba(17,24,17,0.92);
+    background: rgba(30,30,30,0.95);
 }
 
 .header-logo {
@@ -231,7 +233,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 [data-theme="dark"] .header-logo img {
-    filter: drop-shadow(0 0 8px rgba(76,223,60,0.3));
+    filter: drop-shadow(0 0 8px rgba(255,107,26,0.35));
 }
 
 .header-logo .go {
@@ -287,7 +289,7 @@ a { color: inherit; text-decoration: none; }
 .checkin-btn:hover,
 .checkin-btn:active {
     background: var(--green-glow);
-    border-color: rgba(60,168,60,0.4);
+    border-color: rgba(255,107,26,0.4);
     color: var(--green);
 }
 
@@ -464,7 +466,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 [data-theme="dark"] .bottom-tab-bar {
-    background: rgba(17,24,17,0.95);
+    background: rgba(30,30,30,0.97);
     border-top-color: rgba(255,255,255,0.06);
 }
 
@@ -507,7 +509,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 [data-theme="dark"] .tab-item.active {
-    text-shadow: 0 0 12px rgba(76,223,60,0.4);
+    text-shadow: 0 0 12px rgba(255,107,26,0.4);
 }
 
 .tab-icon {
@@ -567,20 +569,20 @@ a { color: inherit; text-decoration: none; }
 
 .btn-primary {
     background: var(--green);
-    color: #050a05;
-    box-shadow: 0 2px 12px rgba(60,168,60,0.2);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(255,107,26,0.2);
 }
 [data-theme="dark"] .btn-primary {
-    box-shadow: 0 0 20px rgba(76,223,60,0.25), 0 2px 12px rgba(76,223,60,0.15);
+    box-shadow: 0 0 20px rgba(255,107,26,0.25), 0 2px 12px rgba(255,107,26,0.15);
     text-shadow: 0 1px 0 rgba(255,255,255,0.1);
 }
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(60,168,60,0.3);
+    box-shadow: 0 4px 20px rgba(255,107,26,0.3);
 }
 [data-theme="dark"] .btn-primary:hover {
     background: var(--green-bright);
-    box-shadow: 0 0 32px rgba(76,223,60,0.35), 0 4px 20px rgba(76,223,60,0.2);
+    box-shadow: 0 0 32px rgba(255,107,26,0.35), 0 4px 20px rgba(255,107,26,0.2);
 }
 
 .btn-secondary {
@@ -674,7 +676,7 @@ textarea:focus {
 [data-theme="dark"] input:focus,
 [data-theme="dark"] select:focus,
 [data-theme="dark"] textarea:focus {
-    box-shadow: 0 0 0 3px var(--green-glow), 0 0 16px rgba(76,223,60,0.08);
+    box-shadow: 0 0 0 3px var(--green-glow), 0 0 16px rgba(255,107,26,0.08);
 }
 
 ::placeholder {
@@ -699,8 +701,8 @@ textarea:focus {
 }
 
 [data-theme="dark"] .card:hover {
-    border-color: rgba(76,223,60,0.15);
-    box-shadow: var(--shadow-card), 0 0 24px rgba(76,223,60,0.04);
+    border-color: rgba(255,107,26,0.15);
+    box-shadow: var(--shadow-card), 0 0 24px rgba(255,107,26,0.04);
 }
 
 /* ── PAGE LAYOUT — shared page structure ─────────────────────────────── */
@@ -727,7 +729,7 @@ textarea:focus {
 }
 
 [data-theme="dark"] .page-title {
-    text-shadow: 0 0 40px rgba(76,223,60,0.06);
+    text-shadow: 0 0 40px rgba(255,107,26,0.06);
 }
 
 /* Section eyebrow — like landing page */
@@ -823,7 +825,7 @@ textarea:focus {
 
 [data-theme="dark"] .tab.active {
     background: var(--surface);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(76,223,60,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,107,26,0.08);
 }
 
 .tab .badge {
@@ -1003,7 +1005,7 @@ textarea:focus {
 }
 
 [data-theme="dark"] .stat-value {
-    text-shadow: 0 0 12px rgba(76,223,60,0.3);
+    text-shadow: 0 0 12px rgba(255,107,26,0.3);
 }
 
 .stat-label {
@@ -1027,10 +1029,11 @@ textarea:focus {
 /* ── AUTH PAGES — Login, Register, Forgot-Password, Reset-Password ─── */
 /* These pages use a fullscreen layout with auth-wrap container */
 body.auth-page {
-    padding-bottom: 0;
+    padding-bottom: calc(1rem + var(--safe-b));
     display: flex;
     flex-direction: column;
     background: var(--bg-deep);
+    overflow-y: auto;
 }
 
 [data-theme="dark"] body.auth-page {
@@ -1040,9 +1043,11 @@ body.auth-page {
 .auth-wrap {
     position: relative;
     max-width: 440px;
-    margin: 2rem auto 0;
+    margin: 0 auto;
     padding: 0 1.25rem 2rem;
     flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 /* Radial green glow behind auth card — game UI aesthetic */
@@ -1054,7 +1059,7 @@ body.auth-page {
     transform: translateX(-50%);
     width: 120%;
     height: 320px;
-    background: radial-gradient(ellipse at center top, rgba(76,223,60,0.08) 0%, transparent 65%);
+    background: radial-gradient(ellipse at center top, rgba(255,107,26,0.08) 0%, transparent 65%);
     pointer-events: none;
     z-index: 0;
 }
@@ -1174,7 +1179,7 @@ input::placeholder {
     cursor: pointer;
     transition: all var(--transition);
     margin-top: 0.5rem;
-    box-shadow: 0 4px 16px rgba(60,168,60,0.25);
+    box-shadow: 0 4px 16px rgba(255,107,26,0.25);
 }
 
 .auth-wrap .btn-primary:hover {
@@ -1342,11 +1347,12 @@ input::placeholder {
 /* ── CONTACT FOOTER — Shared footer for auth pages ───────────────── */
 .contact-footer {
     border-top: 1px solid var(--border);
-    padding: 0.85rem 1rem 0.5rem;
+    padding: 0.85rem 1rem calc(0.5rem + var(--safe-b));
     text-align: center;
     font-size: 0.76rem;
     color: var(--text3);
     font-family: var(--font-body);
+    margin-top: auto;
 }
 
 .contact-footer a {
@@ -1415,6 +1421,16 @@ body.full-page {
     display: flex;
     flex-direction: column;
 }
+
+/* ── RANK TIERS ───────────────────────────────────────────────────────── */
+/* Applied via data-tier attribute on .player-row elements */
+.player-row[data-tier="gold"]  { border-color: rgba(212,160,23,0.35); background: linear-gradient(135deg, rgba(212,160,23,0.07), var(--surface)); }
+.player-row[data-tier="silver"] { border-color: rgba(110,117,128,0.25); }
+.player-row[data-tier="bronze"] { border-color: rgba(160,82,45,0.22); }
+
+[data-theme="dark"] .player-row[data-tier="gold"]  { border-color: rgba(251,191,36,0.25); }
+[data-theme="dark"] .player-row[data-tier="silver"] { border-color: rgba(156,163,175,0.2); }
+[data-theme="dark"] .player-row[data-tier="bronze"] { border-color: rgba(205,124,47,0.2); }
 
 /* ── RESPONSIVE ──────────────────────────────────────────────────────── */
 @media (max-width: 480px) {

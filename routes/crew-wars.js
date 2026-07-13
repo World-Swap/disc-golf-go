@@ -333,17 +333,59 @@ module.exports = ({ pool }) => {
         scheduledStart = d;
       }
 
+      // Resolve layout and specific holes for locked_parameters.
+      // Use provided layout_id or fall back to the course default.
+      const resolvedLayoutId = layout_id || (await client.query(
+        `SELECT id FROM course_layouts WHERE course_id = $1 AND is_default = TRUE LIMIT 1`,
+        [course_id]
+      )).rows[0]?.id || null;
+
+      let holesCountInt = holes_count ? parseInt(holes_count) : null;
+      let lockedHoles = [];
+      let parPerHole = [];
+      let totalPar = 0;
+
+      if (resolvedLayoutId && holesCountInt) {
+        const resolvedHoles = await client.query(
+          `SELECT hole_number, par
+           FROM course_holes
+           WHERE layout_id = $1
+           ORDER BY hole_number ASC
+           LIMIT $2`,
+          [resolvedLayoutId, holesCountInt]
+        );
+        lockedHoles = resolvedHoles.rows.map(h => parseInt(h.hole_number));
+        parPerHole = resolvedHoles.rows.map(h => parseInt(h.par));
+        totalPar = parPerHole.reduce((sum, p) => sum + p, 0);
+      } else if (holesCountInt) {
+        // No layout data: lock hole numbers without par
+        lockedHoles = Array.from({ length: holesCountInt }, (_, i) => i + 1);
+        parPerHole = [];
+        totalPar = 0;
+      }
+
+      const lockedParameters = holesCountInt ? JSON.stringify({
+        course_id: parseInt(course_id),
+        layout_id: resolvedLayoutId,
+        hole_count_option: String(holesCountInt),
+        holes: lockedHoles,
+        par_per_hole: parPerHole,
+        total_par: totalPar,
+        scoring_type: 'stroke',
+      }) : null;
+
       const warRes = await client.query(
         `INSERT INTO crew_wars
            (challenging_crew_id, defending_crew_id, course_id,
             challenge_type, duration_hours, window_duration_hours,
-            status, created_by_player_id, scheduled_start_at, layout_id, holes_count)
-         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10)
+            status, created_by_player_id, scheduled_start_at, layout_id, holes_count,
+            locked_parameters)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11)
          RETURNING *`,
         [myCrew.crew_id, defendingCrewId, course_id,
          challenge_type, parseInt(duration_hours), parseInt(window_duration_hours) || null,
-         req.player.id, scheduledStart, layout_id || null,
-         holes_count ? parseInt(holes_count) : null]
+         req.player.id, scheduledStart, resolvedLayoutId,
+         holesCountInt, lockedParameters]
       );
 
       const createdWar = warRes.rows[0];
@@ -1009,6 +1051,56 @@ module.exports = ({ pool }) => {
     } catch (err) {
       console.error('GET /crew/wars/:id error:', err.message);
       res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // GET /api/crew/wars/:id/locked-params — fetch locked course/layout/holes for a crew war
+  // Used by scorecard.html to pre-lock the UI when playing for a crew war round.
+  router.get('/crew/wars/:id/locked-params', requireAuth(pool), async (req, res) => {
+    const warId = parseInt(req.params.id);
+    try {
+      const r = await pool.query(
+        `SELECT cw.locked_parameters, cw.course_id, cw.holes_count
+         FROM crew_wars cw
+         JOIN crew_members cm ON cm.player_id = $2 AND cm.crew_id IN (cw.challenging_crew_id, cw.defending_crew_id)
+         WHERE cw.id = $1
+           AND cw.locked_parameters IS NOT NULL
+           AND cw.status = 'active'
+           AND cw.ends_at > NOW()`,
+        [warId, req.player.id]
+      );
+      if (r.rows.length === 0) {
+        return res.status(404).json({ error: 'No active crew war with locked parameters found' });
+      }
+      const { locked_parameters, course_id, holes_count } = r.rows[0];
+      const locked = typeof locked_parameters === 'string'
+        ? JSON.parse(locked_parameters) : locked_parameters;
+
+      const courseRes = await pool.query(
+        `SELECT name, city, state FROM courses WHERE id = $1`, [course_id]
+      );
+      const courseName = courseRes.rows[0]?.name || null;
+
+      let layoutName = null;
+      if (locked?.layout_id) {
+        const layoutRes = await pool.query(
+          `SELECT name FROM course_layouts WHERE id = $1`, [locked.layout_id]
+        );
+        layoutName = layoutRes.rows[0]?.name || null;
+      }
+
+      res.json({
+        crew_war_id: warId,
+        course_id,
+        course_name: courseName,
+        layout_id: locked?.layout_id || null,
+        layout_name: layoutName,
+        holes: locked?.holes || [],
+        hole_count: holes_count,
+      });
+    } catch (err) {
+      console.error('Get crew war locked-params error:', err.message);
+      res.status(500).json({ error: 'Failed to get locked parameters' });
     }
   });
 

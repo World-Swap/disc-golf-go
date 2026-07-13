@@ -10,7 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#7ed957">
+    <meta name="theme-color" content="#FF6B1A">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -18,6 +20,7 @@
     <!-- Leaflet for walk map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="/js/offline-utils.js"></script>
     <style>        h1,h2,h3,h4 { font-family: 'Space Grotesk', system-ui, sans-serif; }
 
         .page-wrap { max-width: 820px; margin: 0 auto; padding: 0 1.25rem 2rem; }
@@ -36,8 +39,10 @@
             font-family: 'Space Grotesk', system-ui, sans-serif;
             font-size: 1rem; outline: none; transition: border-color 0.2s; cursor: pointer;
         }
-        .course-search:focus { border-color: rgba(60,168,60,0.45); cursor: text; }
+        .course-search:focus { border-color: rgba(255,107,26,0.45); cursor: text; }
         .course-search::placeholder { color: var(--text3); }
+        .course-search--locked { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+        .course-search--locked::after { content: ' (locked)'; color: var(--text3); font-size: 0.8rem; font-style: italic; }
         .course-search-icon {
             position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
             font-size: 1rem; pointer-events: none; opacity: 0.5;
@@ -74,7 +79,7 @@
             font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600;
         }
         .holes-opt.selected { background: var(--green-glow); border-color: var(--green); color: var(--green); }
-        .holes-opt:hover { border-color: rgba(60,168,60,0.4); }
+        .holes-opt:hover { border-color: rgba(255,107,26,0.4); }
         .holes-opt .hole-num { font-size: 1.4rem; font-family: 'Space Mono', monospace; }
         .holes-opt .hole-label { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
         .holes-picker--disabled { pointer-events: none; opacity: 0.45; }
@@ -84,22 +89,7 @@
             font-style: italic;
         }
 
-        /* Mode toggle: radio-style Holes Count vs Layout */
-        .setup-mode-toggle { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-        .mode-tab {
-            flex: 1; padding: 0.6rem 0.5rem; border: 2px solid var(--border);
-            border-radius: 10px; background: var(--surface); cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; font-weight: 600;
-            color: var(--text3); transition: all 0.2s; text-align: center;
-        }
-        .mode-tab--active { border-color: var(--green); background: var(--green-glow); color: var(--green); }
-        .mode-tab:active { background: var(--surface2); }
-
-        /* Sections locked when the other mode is active */
-        .layout-section--disabled { opacity: 0.4; pointer-events: none; }
-        #holes-section.holes-section--disabled { opacity: 0.4; pointer-events: none; }
-
-        /* Layout picker */
+        /* Layout picker — always layout-based, no hole-level selection */
         #layout-picker-section { display: none; margin-bottom: 1.5rem; }
         .layout-picker-label { font-size: 0.85rem; color: var(--text3); margin-bottom: 0.6rem; }
         .layout-picker-list { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -108,16 +98,26 @@
             background: var(--surface); border: 2px solid var(--border);
             border-radius: 12px; cursor: pointer; transition: all 0.2s; user-select: none;
         }
-        .layout-opt:hover { border-color: rgba(60,168,60,0.3); }
+        .layout-opt:hover { border-color: rgba(255,107,26,0.3); }
         .layout-opt.selected { background: var(--green-glow); border-color: var(--green); }
         .layout-opt-name { flex: 1; font-weight: 600; font-size: 0.95rem; }
-        .layout-opt-meta { font-size: 0.75rem; color: var(--text3); }
+        .layout-opt-meta { display: flex; flex-direction: column; gap: 2px; }
+        .layout-opt-meta-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text3); }
         .layout-opt-check {
             width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--border2);
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
             transition: all 0.2s; font-size: 0.8rem;
         }
         .layout-opt.selected .layout-opt-check { background: var(--green); border-color: var(--green); color: #fff; }
+        /* Source badge */
+        .source-badge {
+            display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+            padding: 1px 6px; border-radius: 4px; text-transform: uppercase;
+        }
+        .source-badge.pdga { background: rgba(255,107,26,0.12); color: var(--green); border: 1px solid rgba(255,107,26,0.2); }
+        .source-badge.dgcr { background: rgba(30,144,255,0.1); color: #1e90ff; border: 1px solid rgba(30,144,255,0.2); }
+        .source-badge.udisc { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+        .source-badge.unknown { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
 
         /* Player picker */
         #player-picker-section { display: none; margin-bottom: 1.5rem; }
@@ -135,7 +135,7 @@
             background: var(--surface); border: 2px solid var(--border);
             border-radius: 12px; cursor: pointer; transition: all 0.2s; user-select: none;
         }
-        .player-pick-card:hover { border-color: rgba(60,168,60,0.3); }
+        .player-pick-card:hover { border-color: rgba(255,107,26,0.3); }
         .player-pick-card.selected { background: var(--green-glow); border-color: var(--green); }
         .player-pick-avatar {
             width: 36px; height: 36px; border-radius: 50%; background: var(--green-glow);
@@ -163,11 +163,11 @@
         /* Add Players button */
         .btn-add-players-round {
             display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.6rem;
-            padding: 0.4rem 0.8rem; background: var(--green-glow); border: 1px solid rgba(60,168,60,0.25);
+            padding: 0.4rem 0.8rem; background: var(--green-glow); border: 1px solid rgba(255,107,26,0.25);
             border-radius: 8px; color: var(--green); font-size: 0.8rem; font-weight: 600;
             cursor: pointer; transition: all 0.2s; font-family: 'Space Grotesk', system-ui, sans-serif;
         }
-        .btn-add-players-round:hover { background: rgba(60,168,60,0.22); border-color: rgba(60,168,60,0.4); }
+        .btn-add-players-round:hover { background: rgba(255,107,26,0.22); border-color: rgba(255,107,26,0.4); }
 
         /* Add Players modal */
         .add-players-modal {
@@ -240,7 +240,7 @@
         .hole-num-badge {
             font-family: 'Space Mono', monospace; font-size: 1.05rem; font-weight: 700;
             color: var(--green); background: var(--green-glow);
-            border: 1px solid rgba(60,168,60,0.25); border-radius: 8px;
+            border: 1px solid rgba(255,107,26,0.25); border-radius: 8px;
             padding: 0.3rem 0.75rem; letter-spacing: 0.03em;
         }
         .hole-meta-chips { display: flex; gap: 0.5rem; align-items: center; }
@@ -252,7 +252,7 @@
             -webkit-tap-highlight-color: transparent;
             transition: background 0.15s, border-color 0.15s;
         }
-        .hole-meta-chip.tappable:active { background: var(--green-glow); border-color: rgba(60,168,60,0.35); }
+        .hole-meta-chip.tappable:active { background: var(--green-glow); border-color: rgba(255,107,26,0.35); }
         .hole-meta-chip-label { font-size: 0.6rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
         .hole-meta-chip-value { font-size: 1.05rem; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--text); margin-top: 1px; }
         .hole-meta-chip-value.dim { color: var(--text3); }
@@ -265,11 +265,12 @@
             border: 1px solid var(--border); border-radius: 12px;
             transition: border-color 0.2s;
         }
-        .player-score-row.host { border-color: rgba(60,168,60,0.2); }
+        .player-score-row.host { border-color: rgba(255,107,26,0.2); }
+        .player-score-row.host:hover { border-color: rgba(255,107,26,0.3); }
         .player-avatar {
             width: 36px; height: 36px; border-radius: 50%;
             background: var(--green-glow);
-            border: 2px solid rgba(60,168,60,0.3);
+            border: 2px solid rgba(255,107,26,0.3);
             display: flex; align-items: center; justify-content: center;
             font-size: 0.85rem; font-weight: 700;
             color: var(--green); flex-shrink: 0; overflow: hidden;
@@ -289,8 +290,8 @@
         }
         .score-btn.minus { background: rgba(240,82,82,0.1); color: #fc8181; border: 1px solid rgba(240,82,82,0.2); }
         .score-btn.minus:active { background: rgba(240,82,82,0.22); transform: scale(0.9); }
-        .score-btn.plus { background: rgba(60,168,60,0.1); color: var(--green); border: 1px solid rgba(60,168,60,0.2); }
-        .score-btn.plus:active { background: rgba(60,168,60,0.22); transform: scale(0.9); }
+        .score-btn.plus { background: rgba(255,107,26,0.10); color: var(--green); border: 1px solid rgba(255,107,26,0.20); }
+        .score-btn.plus:active { background: rgba(255,107,26,0.22); transform: scale(0.9); }
         .score-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .score-display-wrap { display: flex; flex-direction: column; align-items: center; min-width: 44px; }
@@ -349,7 +350,7 @@
         .finish-score { font-size: 1.1rem; color: var(--text2); margin-bottom: 1.25rem; }
         .xp-banner {
             display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem;
-            background: var(--green-glow); border: 1px solid rgba(60,168,60,0.3); border-radius: 30px;
+            background: var(--green-glow); border: 1px solid rgba(255,107,26,0.3); border-radius: 30px;
             margin-bottom: 1.25rem; font-family: 'Space Mono', monospace; font-weight: 700; color: var(--green);
         }
 
@@ -370,7 +371,7 @@
         .drop-desc { font-size: 0.78rem; color: var(--text2); margin-top: 0.1rem; }
         .drop-rarity { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 4px; flex-shrink: 0; align-self: flex-start; }
         .drop-rarity.rarity-common { background: rgba(150,150,150,0.15); color: #aaa; border: 1px solid rgba(150,150,150,0.25); }
-        .drop-rarity.rarity-uncommon { background: rgba(76,223,60,0.1); color: #7ed957; border: 1px solid rgba(76,223,60,0.2); }
+        .drop-rarity.rarity-uncommon { background: rgba(255,107,26,0.1); color: #7ed957; border: 1px solid rgba(255,107,26,0.2); }
         .drop-rarity.rarity-rare { background: rgba(30,144,255,0.12); color: #1e90ff; border: 1px solid rgba(30,144,255,0.25); }
         .drop-rarity.rarity-epic { background: rgba(160,80,255,0.12); color: #a050ff; border: 1px solid rgba(160,80,255,0.3); }
         .drop-rarity.rarity-legendary { background: rgba(255,165,0,0.12); color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
@@ -403,7 +404,7 @@
         .mp-rank.first { color: #ffd700; }
         .mp-rank.second { color: #c0c0c0; }
         .mp-rank.third { color: #cd7f32; }
-        .mp-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--green-glow); border: 1px solid rgba(60,168,60,0.25); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--green); flex-shrink: 0; overflow: hidden; }
+        .mp-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--green-glow); border: 1px solid rgba(255,107,26,0.25); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--green); flex-shrink: 0; overflow: hidden; }
         .mp-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
         .mp-name { flex: 1; font-size: 0.9rem; font-weight: 600; }
         .mp-score-total { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; }
@@ -418,7 +419,7 @@
             text-decoration: none; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600; font-size: 0.95rem;
             margin-bottom: 0.75rem; transition: border-color 0.2s; cursor: pointer;
         }
-        .btn-view-challenges:hover { border-color: rgba(60,168,60,0.35); }
+        .btn-view-challenges:hover { border-color: rgba(255,107,26,0.35); }
         .btn-new-round {
             display: block; width: 100%; padding: 1rem; background: var(--green);
             color: #fff; border: none; border-radius: 12px;
@@ -453,7 +454,7 @@
         /* Distance achievement card */
         .dist-achievement-card {
             display: flex; align-items: center; gap: 0.75rem;
-            background: var(--green-glow); border: 1px solid rgba(60,168,60,0.35); border-radius: 14px;
+            background: var(--green-glow); border: 1px solid rgba(255,107,26,0.35); border-radius: 14px;
             padding: 0.85rem 1.1rem; margin-bottom: 0.6rem; text-align: left;
             animation: achieveIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -470,8 +471,8 @@
         .personal-records-wrap { margin-bottom: 1rem; }
         .personal-record-card {
             display: flex; align-items: center; gap: 0.65rem;
-            background: linear-gradient(135deg, rgba(76,223,60,0.12), rgba(46,204,64,0.06));
-            border: 1px solid rgba(76,223,60,0.3); border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255,107,26,0.12), rgba(255,107,26,0.06));
+            border: 1px solid rgba(255,107,26,0.3); border-radius: 12px;
             padding: 0.75rem 1rem; margin-bottom: 0.5rem; text-align: left;
             animation: prCardIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             opacity: 0;
@@ -505,7 +506,7 @@
         .share-card-course { font-size: 0.85rem; color: var(--text2); margin-top: 0.3rem; }
         .share-card-chips { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.65rem; }
         .share-chip { font-size: 0.76rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 100px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
-        .share-chip.green { background: rgba(76,223,60,0.1); border-color: rgba(76,223,60,0.3); color: var(--green); }
+        .share-chip.green { background: rgba(255,107,26,0.1); border-color: rgba(255,107,26,0.3); color: var(--green); }
         /* Canvas preview wrapper */
         .share-canvas-wrap {
             width: 100%; max-width: 320px; margin: 0 auto 0.85rem;
@@ -529,9 +530,9 @@
             font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.9rem; font-weight: 600;
             cursor: pointer; transition: border-color 0.2s, color 0.2s; text-decoration: none;
         }
-        .btn-share-round:hover { border-color: rgba(76,223,60,0.4); color: var(--green); }
+        .btn-share-round:hover { border-color: rgba(255,107,26,0.4); color: var(--green); }
         .btn-share-round.primary {
-            background: linear-gradient(135deg, #3ca83c, #2d8a20);
+            background: linear-gradient(135deg, #FF6B1A, #E55A0D);
             border-color: transparent; color: #fff;
         }
         .btn-share-round.primary:hover { opacity: 0.9; color: #fff; border-color: transparent; }
@@ -663,7 +664,7 @@
 <!-- TOP HEADER -->
 <header class="top-header">
     <a href="/" class="header-logo">
-        <img src="/logo.png?v=3" alt="Disc Golf Go" width="32" height="32" loading="eager">
+        <img src="/logo.png?v=7" alt="Disc Golf Go" width="32" height="32" loading="eager">
         Disc Golf <span class="go">Go</span>
     </a>
     <div class="header-actions">
@@ -714,7 +715,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
             <p class="screen-sub">Pick your course and start logging holes</p>
 
             <!-- Admin preview mode banner (hidden by default, shown via JS) -->
-            <div id="preview-mode-banner" style="display:none; align-items:flex-start; gap:0.75rem; padding:0.85rem 1.1rem; background:linear-gradient(135deg,rgba(76,223,60,0.12),rgba(46,204,64,0.05)); border:1px solid rgba(76,223,60,0.4); border-radius:12px; margin-bottom:1.25rem; font-size:0.88rem; color:rgba(180,255,150,0.95); line-height:1.4;">
+            <div id="preview-mode-banner" style="display:none; align-items:flex-start; gap:0.75rem; padding:0.85rem 1.1rem; background:linear-gradient(135deg,rgba(255,107,26,0.12),rgba(255,107,26,0.05)); border:1px solid rgba(255,107,26,0.4); border-radius:12px; margin-bottom:1.25rem; font-size:0.88rem; color:rgba(255,200,150,0.95); line-height:1.4;">
                 <span style="font-size:1.3rem; flex-shrink:0; margin-top:1px;">🎯</span>
                 <div>
                     <strong style="color:#7ed957;">Admin Preview Mode</strong><br>
@@ -728,37 +729,41 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
                 <a href="/checkin" id="btn-checkin-link" style="flex-shrink:0; padding:0.45rem 0.9rem; background:#7ed957; color:#111; border:none; border-radius:8px; font-size:0.82rem; font-weight:700; text-decoration:none; font-family:inherit; white-space:nowrap;">📍 Check In</a>
             </div>
 
+            <!-- Quest requirements banner — shown after course selection when quests apply -->
+            <div id="quest-info-banner" style="display:none; align-items:flex-start; gap:0.75rem; padding:0.85rem 1.1rem; background:linear-gradient(135deg,rgba(255,200,0,0.1),rgba(255,165,0,0.05)); border:1px solid rgba(255,165,0,0.35); border-radius:12px; margin-bottom:1.25rem; font-size:0.88rem; color:rgba(255,220,150,0.98); line-height:1.4;">
+                <span id="quest-info-icon" style="font-size:1.3rem; flex-shrink:0;">📋</span>
+                <div>
+                    <strong id="quest-info-label" style="color:#ffd700;"></strong><br>
+                    <span id="quest-info-detail"></span>
+                </div>
+            </div>
+
+            <!-- Battle/Crew War locked indicator — hidden by default, shown via JS when battle_id/crew_war_id in URL -->
+            <div id="locked-params-banner" style="display:none; align-items:flex-start; gap:0.75rem; padding:0.85rem 1.1rem; background:linear-gradient(135deg,rgba(120,60,220,0.15),rgba(80,40,180,0.08)); border:1px solid rgba(130,80,240,0.5); border-radius:12px; margin-bottom:1.25rem; font-size:0.88rem; color:rgba(200,180,255,0.98); line-height:1.4;">
+                <span id="locked-icon" style="font-size:1.3rem; flex-shrink:0;">⚔️</span>
+                <div>
+                    <strong id="locked-label" style="color:#a080ff;"></strong><br>
+                    <span id="locked-detail"></span>
+                </div>
+            </div>
+
             <div class="course-search-wrap">
                 <span class="course-search-icon">🔍</span>
                 <input type="text" class="course-search" id="course-search" placeholder="Tap to browse or search courses..." autocomplete="off" readonly>
                 <div class="course-dropdown" id="course-dropdown"></div>
             </div>
-            <div id="selected-course-display" style="display:none; padding:0.75rem 1rem; background:rgba(46,204,64,0.1); border:1px solid rgba(76,223,60,0.3); border-radius:10px; margin-bottom:1.25rem; font-size:0.9rem;">
+            <div id="selected-course-display" style="display:none; padding:0.75rem 1rem; background:rgba(255,107,26,0.1); border:1px solid rgba(255,107,26,0.3); border-radius:10px; margin-bottom:1.25rem; font-size:0.9rem;">
                 <strong id="sel-name"></strong> — <span id="sel-loc" style="color:var(--muted)"></span>
             </div>
 
-            <!-- Mode toggle: pick one or the other, never both -->
-            <div class="setup-mode-toggle" id="setup-mode-toggle" style="display:none; margin-bottom:1rem;">
-                <button class="mode-tab mode-tab--active" id="mode-holes-btn" onclick="setSetupMode('holes_count')">
-                    <span class="mode-tab-label">🎯 Holes Count</span>
-                </button>
-                <button class="mode-tab" id="mode-layout-btn" onclick="setSetupMode('layout')">
-                    <span class="mode-tab-label">🗺️ Layout</span>
-                </button>
-            </div>
-
-            <!-- Holes section — disabled when Layout mode is active -->
-            <div id="holes-section">
-                <p class="holes-section-label">Holes</p>
-                <div class="holes-picker holes-picker--disabled" id="holes-picker">
-                    <div class="holes-placeholder">Select a course first</div>
+            <!-- Layout picker: always shown once a course with layouts is selected -->
+            <div id="layout-picker-section" style="display:none; margin-bottom:1.5rem;">
+                <p class="layout-picker-label">🗺️ Course Layout <span id="layout-select-hint" style="font-weight:400;color:var(--text3);font-size:0.78rem;margin-left:0.35rem;">— select one to continue</span></p>
+                <div class="layout-picker-list" id="layout-picker-list">
+                    <div class="layout-empty-msg" id="layout-empty-msg" style="display:none; padding:0.85rem 1rem; text-align:center; font-size:0.88rem; color:var(--text3); border:1px dashed var(--border2); border-radius:12px; font-style:italic;">
+                        No layouts available for this course yet.
+                    </div>
                 </div>
-            </div>
-
-            <!-- Layout picker: shown only when course has multiple layouts, disabled in Holes mode -->
-            <div id="layout-picker-section" class="layout-section--disabled">
-                <p class="layout-picker-label">🗺️ Course Layout</p>
-                <div class="layout-picker-list" id="layout-picker-list"></div>
             </div>
 
             <!-- Player picker: shows other checked-in players at selected course -->
@@ -826,7 +831,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
             <h2 class="finish-title" id="finish-title">Round Complete!</h2>
             <p class="finish-score" id="finish-score"></p>
             <!-- Preview mode: shown instead of XP/gold banners -->
-            <div id="preview-finish-banner" style="display:none; padding:0.6rem 1rem; background:rgba(76,223,60,0.1); border:1px solid rgba(76,223,60,0.3); border-radius:10px; margin:0.4rem 0 0.5rem; font-size:0.88rem; color:#7ed957; text-align:center;">🎯 Preview Mode — Round discarded, no XP or gold awarded</div>
+            <div id="preview-finish-banner" style="display:none; padding:0.6rem 1rem; background:rgba(255,107,26,0.1); border:1px solid rgba(255,107,26,0.3); border-radius:10px; margin:0.4rem 0 0.5rem; font-size:0.88rem; color:#FF6B1A; text-align:center;">🎯 Preview Mode — Round discarded, no XP or gold awarded</div>
             <div class="xp-banner" id="xp-banner" style="display:none">
                 ⭐ <span id="xp-amount"></span> XP earned
             </div>
@@ -975,14 +980,23 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
 const API = '';
 let token = localStorage.getItem('dggo_token');
 let myPlayerId = parseInt(localStorage.getItem('dggo_player_id') || '0');
+const guestUuid = localStorage.getItem('dggo_guest_uuid') || localStorage.getItem('dggo_player_uuid');
+
+// ── Offline: register service worker ──────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 let activeRound = null;
 let holes = [];            // host's hole scores [{hole_number, par, score}]
 let selectedCourseId = null;
-let selectedLayoutId = null;  // resolved layout for the round being started
-let selectedHoles = 9;
-let setupMode = 'holes_count'; // 'holes_count' or 'layout' — radio-style toggle
+let selectedLayoutId = null;  // required — layout is the unit, not holes
+let selectedHoles = null;      // derived from selectedLayoutId once layout is loaded
 let allCourses = [];
 let currentHole = 1;       // 1-indexed, which hole is displayed
+
+// ── Battle / Crew War locked params (set on init if URL has battle_id or crew_war_id) ──
+let lockedParams = null; // { battle_id, crew_war_id, course_id, course_name, layout_id, layout_name, holes[] }
+let layoutPickerLocked = false; // true when locked params set a specific layout — prevents fetchLayouts from overwriting it
 
 // ── Preview Mode (admin bypass of GPS gate) ─────────────────────────────────
 // Activated by ?preview=1 in URL + dgg_admin_token in localStorage.
@@ -1475,14 +1489,73 @@ if (_urlParams.get('preview') === '1' && !isPreviewMode) {
     window.location.href = '/login';
 }
 
+// ── Offline: watch connectivity, flush pending rounds ──────────────────────────
+if (typeof OFFLINE_DB !== 'undefined') {
+  OFFLINE_DB.startQueueWatcher(token, (msg) => {
+    const banner = OFFLINE_DB.showOfflineBanner(msg);
+    if (msg.endsWith('✓')) {
+      setTimeout(() => OFFLINE_DB.hideOfflineBanner(), 3000);
+    }
+  });
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 async function init() {
+    // Show pending count badge if any rounds are queued
+    const pendingCount = typeof OFFLINE_DB !== 'undefined' ? OFFLINE_DB.getPendingCount() : 0;
+    if (pendingCount > 0) {
+      OFFLINE_DB.showOfflineBanner(`${pendingCount} saved round${pendingCount > 1 ? 's' : ''} pending — will submit when online`);
+    }
     // Preview mode: show banner, skip active round check (start fresh)
     if (isPreviewMode) {
         document.getElementById('preview-mode-banner').style.display = 'flex';
         document.getElementById('checkin-info-banner').style.display = 'none';
         document.getElementById('setup-title').textContent = 'Preview Scorecard';
         document.getElementById('btn-start').textContent = 'Launch Preview Round';
+        await loadCourses();
+        show('setup-screen');
+        return;
+    }
+
+    // ── Onboarding guard: redirect new players through the intro flow ──
+    // Unauthenticated or onboarding_incomplete → /onboard
+    // Check uses guest_uuid header as fallback for guest players without JWT.
+    const guestUuid = localStorage.getItem('dggo_player_uuid');
+    const guestHeaders = guestUuid ? { 'X-Guest-UUID': guestUuid } : {};
+    const hasToken = !!token;
+    const hasGuestUuid = !!guestUuid;
+
+    if (!hasToken && !hasGuestUuid) {
+        // No auth at all — send to onboarding
+        window.location.href = '/onboard';
+        return;
+    }
+
+    // Has session — check if onboarding is complete
+    try {
+        const obHeaders = { 'Content-Type': 'application/json' };
+        if (token) obHeaders['Authorization'] = 'Bearer ' + token;
+        if (guestUuid) obHeaders['X-Guest-UUID'] = guestUuid;
+
+        const obRes = await fetch('/api/onboarding/status', { headers: obHeaders });
+        if (obRes.ok) {
+            const obData = await obRes.json();
+            if (obData.needs_onboarding) {
+                window.location.href = '/onboard';
+                return;
+            }
+        }
+    } catch (_) {
+        // Network error — don't block, let them through
+    }
+
+    // ── Battle / Crew War locked params ────────────────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const battleId = urlParams.get('battle_id');
+    const crewWarId = urlParams.get('crew_war_id');
+
+    if (battleId || crewWarId) {
+        await applyLockedParams(battleId, crewWarId);
         await loadCourses();
         show('setup-screen');
         return;
@@ -1511,6 +1584,11 @@ async function init() {
             ]);
             showRoundScreen();
             startGpsTracking(activeRound.id);
+            // Show toast for co-players who were added to a group round
+            if (data.is_group_round && !data.is_host) {
+                const courseName = activeRound.course_name || 'a course';
+                showToast(`You were added to a group round at ${courseName}!`, 6000);
+            }
         } else {
             await loadCourses();
             show('setup-screen');
@@ -1522,12 +1600,129 @@ async function init() {
     }
 }
 
+// ── Locked params: fetch battle/crew war requirements and lock the UI ───────
+async function applyLockedParams(battleId, crewWarId) {
+    let params = null;
+    let source = null;
+
+    if (battleId) {
+        try {
+            const res = await fetch(`/api/battles/${battleId}/locked-params`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+                params = await res.json();
+                source = 'battle';
+            }
+        } catch (e) { console.error('Failed to fetch battle locked params:', e); }
+    } else if (crewWarId) {
+        try {
+            const res = await fetch(`/api/crew/wars/${crewWarId}/locked-params`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+                params = await res.json();
+                source = 'crew_war';
+            }
+        } catch (e) { console.error('Failed to fetch crew war locked params:', e); }
+    }
+
+    if (!params) return; // Could not resolve locked params — fall through to normal UI
+
+    lockedParams = { ...params, source };
+    // Guard layout picker from being overwritten by fetchLayouts
+    if (params.layout_id) {
+        selectedLayoutId = params.layout_id;
+        layoutPickerLocked = true;
+    }
+
+    // Pre-populate course selection
+    selectedCourseId = params.course_id;
+    selectedCourseName = params.course_name || '';
+    selectedCourseLoc = '';
+
+    // Set hole count from locked params
+    if (params.holes && params.holes.length > 0) {
+        selectedHoles = params.holes.length;
+    } else if (params.hole_count) {
+        selectedHoles = params.hole_count;
+    }
+
+    // Show locked indicator banner
+    const banner = document.getElementById('locked-params-banner');
+    const icon = document.getElementById('locked-icon');
+    const label = document.getElementById('locked-label');
+    const detail = document.getElementById('locked-detail');
+    const title = document.getElementById('setup-title');
+    const sub = document.querySelector('.screen-sub');
+
+    const layoutSuffix = params.layout_name ? ` — ${params.layout_name} layout locked` : ' — layout locked';
+    if (source === 'battle') {
+        banner.style.display = 'flex';
+        icon.textContent = '⚔️';
+        label.textContent = 'Battle Round';
+        detail.textContent = `Playing ${params.course_name || 'the required course'}${layoutSuffix}`;
+    } else if (source === 'crew_war') {
+        banner.style.display = 'flex';
+        icon.textContent = '🏴';
+        label.textContent = 'Crew War Round';
+        detail.textContent = `Playing ${params.course_name || 'the required course'}${layoutSuffix}`;
+    }
+
+    if (title) title.textContent = 'Locked Round';
+    if (sub) sub.textContent = 'Course and layout are locked — you cannot change them';
+
+    // Lock course search: hide dropdown trigger, mark as locked
+    const courseSearch = document.getElementById('course-search');
+    if (courseSearch) {
+        courseSearch.classList.add('course-search--locked');
+        courseSearch.placeholder = params.course_name || 'Course locked';
+        // Show selected course display inline
+        const display = document.getElementById('selected-course-display');
+        if (display) {
+            display.style.display = 'flex';
+            const nameEl = document.getElementById('sel-name');
+            const locEl = document.getElementById('sel-loc');
+            if (nameEl) nameEl.textContent = params.course_name || `Course #${params.course_id}`;
+            if (locEl) locEl.textContent = '';
+        }
+    }
+
+    // Hide layout picker (layout is locked by battle/crew war requirements)
+    const layoutSection = document.getElementById('layout-picker-section');
+    if (layoutSection) layoutSection.style.display = 'none';
+
+    // Hide player picker (multiplayer disabled for battle/crew war locked rounds)
+    const playerSection = document.getElementById('player-picker-section');
+    if (playerSection) playerSection.style.display = 'none';
+
+    // Update Start button
+    const btnStart = document.getElementById('btn-start');
+    if (btnStart) {
+        btnStart.disabled = false;
+        btnStart.textContent = source === 'battle' ? 'Start Battle Round' : 'Start Crew War Round';
+    }
+
+    hasCheckedIn = false; // will be verified on btn-start click
+}
+
+// ── Lock hole picker to specific required holes ─────────────────────────────
+// For battle/crew war: sets selectedHoles from locked params (layout already set).
+// Layout picker is hidden when locked, so no DOM updates needed.
+function lockHolePicker(requiredHoles) {
+    if (!requiredHoles || requiredHoles.length === 0) return;
+    selectedHoles = requiredHoles.length;
+}
+
 async function loadCourses() {
     try {
         const res = await fetch('/api/courses');
         const data = await res.json();
         allCourses = Array.isArray(data) ? data : (data.courses || []);
-    } catch(e) {}
+    } catch(e) {
+        showToast('Could not load courses. Check your connection and refresh.', 4000);
+        allCourses = [];
+    }
 }
 
 // Load co-players for a round (for multiplayer; silent if not available)
@@ -1668,86 +1863,104 @@ let selectedCourseLoc = '';
 let courseHoleDetails = [];
 
 // ── Layout picker ──────────────────────────────────────────────────────────
-// Fetches course layouts and shows the picker when the course has >1 layout.
-// Auto-selects the single/default layout silently otherwise.
+// Layout is the mandatory unit — no hole-level selection. Fetches course layouts
+// and shows the picker. If the course has zero layouts, shows empty state.
+// When layoutPickerLocked is true, respects the locked layout silently.
 async function fetchLayouts(courseId) {
     const section = document.getElementById('layout-picker-section');
     const list = document.getElementById('layout-picker-list');
-    const modeToggle = document.getElementById('setup-mode-toggle');
-    selectedLayoutId = null;
-    courseHoleDetails = []; // will be populated from layout holes below
+    const hint = document.getElementById('layout-select-hint');
+    const emptyMsg = document.getElementById('layout-empty-msg');
+
+    if (!layoutPickerLocked) {
+        selectedLayoutId = null;
+        selectedHoles = null;
+    }
+    courseHoleDetails = [];
+
+    // When locked, don't show the layout picker — just load the locked layout's holes
+    if (layoutPickerLocked && selectedLayoutId) {
+        section.style.display = 'none';
+        await loadLayoutHoles(selectedLayoutId);
+        return;
+    }
 
     try {
         const res = await fetch(`/api/courses/${courseId}/layouts`);
-        if (!res.ok) { section.style.display = 'none'; modeToggle.style.display = 'none'; return; }
+        if (!res.ok) { section.style.display = 'none'; return; }
         const layouts = await res.json();
         if (!Array.isArray(layouts) || layouts.length === 0) {
-            section.style.display = 'none';
-            modeToggle.style.display = 'none';
+            // Course has no layouts — show empty state but allow start with AUTO fallback
+            section.style.display = 'block';
+            if (emptyMsg) emptyMsg.style.display = 'block';
+            if (hint) hint.style.display = 'none';
+            list.innerHTML = '';
+            selectedLayoutId = 'AUTO';
+            selectedHoles = null;
+            updateStartButton();
             return;
         }
+
+        section.style.display = 'block';
+        if (emptyMsg) emptyMsg.style.display = 'none';
+        if (hint) hint.style.display = 'inline';
 
         // Default or first layout — always use as starting selection
         const defaultLayout = layouts.find(l => l.is_default) || layouts[0];
         selectedLayoutId = defaultLayout.id;
+        selectedHoles = defaultLayout.hole_count || defaultLayout.total_holes || null;
 
         // If only one layout exists, select silently — no picker needed
         if (layouts.length === 1) {
             section.style.display = 'none';
-            modeToggle.style.display = 'none';
             await loadLayoutHoles(selectedLayoutId);
             return;
         }
 
-        // Multiple layouts — show mode toggle + layout picker
-        modeToggle.style.display = 'flex';
-        setSetupMode('holes_count'); // start in holes_count mode (layout locked)
-        section.style.display = 'block';
+        // Multiple layouts — show layout picker
         renderLayoutPicker(list, layouts, selectedLayoutId);
         await loadLayoutHoles(selectedLayoutId);
     } catch(_) {
         section.style.display = 'none';
-        modeToggle.style.display = 'none';
     }
 }
 
 function renderLayoutPicker(container, layouts, activeId) {
     container.innerHTML = layouts.map(l => {
-        const holeMeta = l.hole_count ? `${l.hole_count} holes` : '';
-        const defBadge = l.is_default ? ' · Default' : '';
-        const meta = holeMeta + defBadge;
+        const holeCount = l.hole_count || l.total_holes || 0;
+        const totalPar = l.total_par ? `Par ${l.total_par}` : '';
+        const source = (l.source_tag || 'PDGA').toLowerCase();
         const sel = l.id === activeId ? ' selected' : '';
-        return `<div class="layout-opt${sel}" data-lid="${l.id}" data-hole-count="${l.hole_count || ''}">
+        return `<div class="layout-opt${sel}" data-lid="${l.id}" data-hole-count="${holeCount}">
             <div class="layout-opt-name">${esc(l.name)}</div>
-            ${meta ? `<div class="layout-opt-meta">${esc(meta)}</div>` : ''}
+            <div class="layout-opt-meta">
+                <div class="layout-opt-meta-row">
+                    <span>${holeCount} hole${holeCount !== 1 ? 's' : ''}</span>
+                    ${totalPar ? `<span>·</span><span>${totalPar}</span>` : ''}
+                </div>
+                <div class="layout-opt-meta-row">
+                    <span class="source-badge ${source}">${esc(l.source_tag || 'PDGA')}</span>
+                    ${l.is_default ? '<span style="font-size:0.7rem;color:var(--green);margin-left:0.2rem;">· Default</span>' : ''}
+                </div>
+            </div>
             <div class="layout-opt-check">${sel ? '✓' : ''}</div>
         </div>`;
     }).join('');
 
     container.querySelectorAll('.layout-opt').forEach(opt => {
         opt.addEventListener('click', async () => {
+            if (layoutPickerLocked) return;
             const lid = parseInt(opt.dataset.lid);
-            if (lid === selectedLayoutId && setupMode === 'layout') return;
+            if (lid === selectedLayoutId) return;
             selectedLayoutId = lid;
+            selectedHoles = parseInt(opt.dataset.holeCount) || null;
             container.querySelectorAll('.layout-opt').forEach(o => {
                 const isSel = parseInt(o.dataset.lid) === lid;
                 o.classList.toggle('selected', isSel);
                 o.querySelector('.layout-opt-check').textContent = isSel ? '✓' : '';
             });
-            // Auto-select the holes option that matches the layout's hole count
-            const layoutHoleCount = parseInt(opt.dataset.holeCount) || null;
-            if (layoutHoleCount) {
-                const picker = document.getElementById('holes-picker');
-                const matchBtn = picker.querySelector(`[data-holes="${layoutHoleCount}"]`);
-                if (matchBtn) {
-                    picker.querySelectorAll('.holes-opt').forEach(o => o.classList.remove('selected'));
-                    matchBtn.classList.add('selected');
-                    selectedHoles = layoutHoleCount;
-                }
-            }
-            // Switch to layout mode (locks holes picker)
-            setSetupMode('layout');
             await loadLayoutHoles(lid);
+            updateStartButton();
         });
     });
 }
@@ -1768,6 +1981,19 @@ async function loadLayoutHoles(layoutId) {
                 distance_ft: h.distance_ft || null,
                 notes: h.notes || null,
             }));
+            // ── Offline: cache course/layout data locally ──────────────────────
+            if (typeof OFFLINE_DB !== 'undefined' && selectedCourseId) {
+              const layoutHoles = data.holes.map(h => ({
+                hole_number: h.hole_number,
+                par: h.par,
+                distance_ft: h.distance_ft || null,
+              }));
+              OFFLINE_DB.setCachedCourse(selectedCourseId, {
+                name: selectedCourseName,
+                city: selectedCourseLoc,
+                layouts: [{ id: layoutId, name: data.layout_name || 'Default', holes: layoutHoles }],
+              });
+            }
         }
         // No holes defined yet → leave courseHoleDetails as-is (legacy JSONB fallback below)
     } catch(_) {}
@@ -1779,7 +2005,6 @@ courseDropdown.addEventListener('click', async e => {
     selectedCourseId = parseInt(item.dataset.id);
     selectedCourseName = item.dataset.name;
     selectedCourseLoc = item.dataset.loc || '';
-    const courseHoles = parseInt(item.dataset.holes) || 18;
     courseSearch.value = item.dataset.name;
     courseSearch.setAttribute('readonly', '');
     courseDropdown.classList.remove('open');
@@ -1787,9 +2012,9 @@ courseDropdown.addEventListener('click', async e => {
     document.getElementById('sel-name').textContent = item.dataset.name;
     document.getElementById('sel-loc').textContent = item.dataset.loc;
     display.style.display = 'block';
-    renderHoleOptions(courseHoles);
-    // Fetch layouts (sets courseHoleDetails from layout holes if available)
+    // Fetch layouts — layout picker becomes visible; start button stays disabled until layout selected
     await fetchLayouts(selectedCourseId);
+    updateStartButton();
     // Fallback: if no layout holes were loaded, try legacy hole_details JSONB
     if (courseHoleDetails.length === 0) {
         try {
@@ -1803,6 +2028,8 @@ courseDropdown.addEventListener('click', async e => {
         } catch(_) {}
     }
     await checkCheckinStatus(selectedCourseId, item.dataset.name);
+    // Fetch active quests for this course and show requirements banner
+    await fetchActiveQuests(selectedCourseId);
     // Fetch other players checked in at this course for multiplayer selection
     fetchCheckedInPlayers(selectedCourseId);
 });
@@ -1814,29 +2041,38 @@ async function checkCheckinStatus(courseId, courseName) {
     // Preview mode: skip GPS check-in entirely
     if (isPreviewMode) {
         hasCheckedIn = true;
-        if (btnStart) btnStart.disabled = false;
+        updateStartButton();
         if (infoBanner) infoBanner.style.display = 'none';
         return;
     }
 
-    if (btnStart) btnStart.disabled = true;
+    btnStart.disabled = true;
     try {
         const res = await fetch('/api/checkins/status?course_id=' + courseId, { headers: { Authorization: 'Bearer ' + token } });
         const data = await res.json();
         if (data.checked_in) {
             hasCheckedIn = true;
-            if (btnStart) btnStart.disabled = false;
-            if (infoBanner) infoBanner.style.display = 'none';
         } else {
             hasCheckedIn = false;
-            if (btnStart) btnStart.disabled = true;
             if (infoBanner) infoBanner.style.display = 'flex';
         }
     } catch (e) {
         hasCheckedIn = false;
-        if (btnStart) btnStart.disabled = true;
         if (infoBanner) infoBanner.style.display = 'flex';
     }
+    updateStartButton();
+}
+
+// ── Start button enabled only when course + layout + check-in are all ready ─
+function updateStartButton() {
+    const btnStart = document.getElementById('btn-start');
+    if (!btnStart) return;
+    const layoutReady = selectedLayoutId !== null;
+    const checkinReady = hasCheckedIn || isPreviewMode;
+    btnStart.disabled = !(layoutReady && checkinReady);
+    if (!layoutReady) btnStart.textContent = 'Pick a course to start';
+    else if (!checkinReady) btnStart.textContent = 'Check in to start';
+    else btnStart.textContent = 'Start Round';
 }
 
 
@@ -1882,7 +2118,8 @@ async function fetchCheckedInPlayers(courseId) {
         badge.style.display = 'inline';
         renderPlayerCards(list, availablePlayersAtCourse, 'setup');
     } catch (e) {
-        section.style.display = 'none';
+        list.innerHTML = '<div class="player-picker-empty">Couldn\'t load other players — solo round only</div>';
+        badge.style.display = 'none';
     }
 }
 
@@ -1930,6 +2167,81 @@ function renderPlayerCards(container, players, mode) {
             }
         });
     });
+}
+
+// ── Active Quest Requirements ─────────────────────────────────────────────
+async function fetchActiveQuests(courseId) {
+    const banner = document.getElementById('quest-info-banner');
+    const iconEl = document.getElementById('quest-info-icon');
+    const labelEl = document.getElementById('quest-info-label');
+    const detailEl = document.getElementById('quest-info-detail');
+
+    if (!banner) return;
+
+    // Hide if no quest context or if already locked by battle/crew war
+    if (lockedParams) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    if (!token) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/rounds/active-quests?course_id=${courseId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) { banner.style.display = 'none'; return; }
+        const data = await res.json();
+        const quests = data.quests || [];
+
+        if (quests.length === 0) {
+            banner.style.display = 'none';
+            return;
+        }
+
+        // Prioritize course-specific quests (COURSE_REPEAT), then hole-count requirements
+        const courseSpecific = quests.filter(q => q.course_specific);
+        const holeConstrained = quests.filter(q => q.constraint && q.min_holes);
+        const battleActive = quests.filter(q =>
+            q.trigger_event === 'BATTLE_WIN' || q.trigger_event === 'BATTLE_COMPLETE' || q.trigger_event === 'BATTLE_STARTED'
+        );
+
+        if (courseSpecific.length > 0) {
+            // COURSE_REPEAT: player needs multiple rounds at this specific course
+            const q = courseSpecific[0];
+            banner.style.display = 'flex';
+            iconEl.textContent = '🔄';
+            labelEl.textContent = 'Course Repeat Quest Active';
+            detailEl.textContent = `"${q.title}" — ${q.constraint}. This round will count.`;
+        } else if (holeConstrained.length > 0) {
+            // Hole-count requirements (e.g. ROUND_18_HOLES, HOLES_LOGGED with min_holes)
+            const minReq = Math.max(...holeConstrained.map(q => q.min_holes || 3));
+            banner.style.display = 'flex';
+            iconEl.textContent = '📋';
+            labelEl.textContent = 'Quest Hole Requirement';
+            detailEl.textContent = `${holeConstrained.map(q => q.title).join(', ')} require${holeConstrained.length === 1 ? 's' : ''} at least ${minReq} holes per round.`;
+        } else if (battleActive.length > 0) {
+            // Active battle at this course — surface the quest connection
+            const q = battleActive[0];
+            banner.style.display = 'flex';
+            iconEl.textContent = '⚔️';
+            labelEl.textContent = 'Battle Quest Active';
+            detailEl.textContent = `"${q.title}" — ${q.constraint}. Playing for the battle earns progress.`;
+        } else {
+            // Generic round quests — no specific constraints, just surface what's active
+            const titles = quests.slice(0, 2).map(q => q.title).join(', ');
+            banner.style.display = 'flex';
+            iconEl.textContent = '📋';
+            labelEl.textContent = 'Active Quests';
+            detailEl.textContent = titles + (quests.length > 2 ? ` +${quests.length - 2} more` : '');
+        }
+    } catch (e) {
+        console.error('fetchActiveQuests error:', e);
+        banner.style.display = 'none';
+    }
 }
 
 // ── Mid-round Add Players modal ────────────────────────────────────────────
@@ -2005,71 +2317,62 @@ document.getElementById('add-players-modal')?.addEventListener('click', e => {
     if (e.target === document.getElementById('add-players-modal')) closeAddPlayersModal();
 });
 
-// ── Setup mode toggle (Holes Count vs Layout — radio-style) ────────────────
-function setSetupMode(mode) {
-    setupMode = mode;
-    const holesBtn = document.getElementById('mode-holes-btn');
-    const layoutBtn = document.getElementById('mode-layout-btn');
-    if (holesBtn) holesBtn.classList.toggle('mode-tab--active', mode === 'holes_count');
-    if (layoutBtn) layoutBtn.classList.toggle('mode-tab--active', mode === 'layout');
-    const holesSection = document.getElementById('holes-section');
-    const layoutSection = document.getElementById('layout-picker-section');
-    if (holesSection) holesSection.classList.toggle('holes-section--disabled', mode === 'layout');
-    if (layoutSection) layoutSection.classList.toggle('layout-section--disabled', mode === 'holes_count');
-}
-
-// ── Holes picker ───────────────────────────────────────────────────────────
-function renderHoleOptions(courseTotal) {
-    const picker = document.getElementById('holes-picker');
-    picker.classList.remove('holes-picker--disabled');
-    if (setupMode === 'layout') picker.classList.add('holes-picker--disabled');
-    const options = [];
-    for (let h = 9; h < courseTotal; h += 9) options.push({ holes: h, isFull: false });
-    options.push({ holes: courseTotal, isFull: true });
-    const seen = new Set();
-    const deduped = options.filter(o => { if (seen.has(o.holes)) return false; seen.add(o.holes); return true; });
-    function label(o) {
-        if (o.isFull) { if (o.holes === 9) return 'Front 9'; if (o.holes === 18) return 'Full Round'; return 'Full Course'; }
-        if (o.holes === 9) return 'Front 9'; if (o.holes === 18) return '18 Holes'; return `${o.holes} Holes`;
-    }
-    picker.innerHTML = deduped.map((o, i) =>
-        `<div class="holes-opt${i === 0 ? ' selected' : ''}" data-holes="${o.holes}">
-            <div class="hole-num">${o.holes}</div>
-            <div class="hole-label">${label(o)}</div>
-        </div>`
-    ).join('');
-    selectedHoles = deduped[0].holes;
-    picker.querySelectorAll('.holes-opt').forEach(opt => {
-        opt.addEventListener('click', () => {
-            if (setupMode === 'layout') setSetupMode('holes_count');
-            picker.querySelectorAll('.holes-opt').forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            selectedHoles = parseInt(opt.dataset.holes);
-        });
-    });
-}
 
 // ── Start round ────────────────────────────────────────────────────────────
 document.getElementById('btn-start').addEventListener('click', async () => {
     if (!selectedCourseId) return;
     if (!hasCheckedIn && !isPreviewMode) { showToast('You must check in at this course first!', 3500); return; }
+
+    // Pre-submission validation: ensure locked params are respected before hitting the server
+    if (lockedParams) {
+        if (selectedCourseId !== lockedParams.course_id) {
+            showToast(`Select "${lockedParams.course_name || `Course #${lockedParams.course_id}`}" — it\u2019s locked for this battle.`, 5000);
+            return;
+        }
+        if (lockedParams.layout_id && selectedLayoutId !== lockedParams.layout_id) {
+            const lockedName = lockedParams.layout_name || `Layout #${lockedParams.layout_id}`;
+            showToast(`${lockedName} is locked for this battle. Please use the correct layout.`, 5000);
+            return;
+        }
+        const expectedHoles = lockedParams.holes?.length || lockedParams.hole_count;
+        if (expectedHoles && selectedHoles !== expectedHoles) {
+            showToast(`${expectedHoles} hole${expectedHoles !== 1 ? 's' : ''} required for this battle — you selected ${selectedHoles}.`, 5000);
+            return;
+        }
+    }
+
     try {
         const endpoint = isPreviewMode ? '/api/admin/rounds/preview-start' : '/api/rounds/start';
-        const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        else if (guestUuid) headers['X-Guest-UUID'] = guestUuid;
         if (isPreviewMode) headers['x-admin-token'] = _adminToken;
+
+        const body = {
+            course_id: selectedCourseId,
+            layout_id: selectedLayoutId === 'AUTO' ? null : selectedLayoutId,
+            // holes_count derived server-side from layout if not provided
+            ...(selectedHoles !== null ? { holes_count: selectedHoles } : {}),
+            co_player_ids: lockedParams ? [] : [...selectedCoPlayerIds],
+        };
+
+        // Include battle_id or crew_war_id when playing a locked round
+        if (lockedParams?.battle_id) body.battle_id = lockedParams.battle_id;
+        if (lockedParams?.crew_war_id) body.crew_war_id = lockedParams.crew_war_id;
+
         const res = await fetch(endpoint, {
             method: 'POST',
             headers,
-            body: JSON.stringify({
-                course_id: selectedCourseId,
-                holes_count: selectedHoles,
-                layout_id: selectedLayoutId || undefined,
-                co_player_ids: [...selectedCoPlayerIds],
-            }),
+            body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok) {
             if (data.requires_checkin) { showToast('GPS check-in required! Check in at the course first.', 4000); return; }
+            if (res.status === 422) {
+                // Server's data.message says "battle requirements" or "crew war requirements"
+                showToast(data.message || 'This round doesn\u2019t match the battle requirements. Please make sure you\u2019re playing the correct course and holes.', 5000);
+                return;
+            }
             showToast('Error: ' + (data.error || 'Failed to start round')); return;
         }
         activeRound = data.round;
@@ -2091,6 +2394,14 @@ document.getElementById('btn-start').addEventListener('click', async () => {
             }
         }
         holes = []; coPlayers = []; Object.keys(coPlayerHoles).forEach(k => delete coPlayerHoles[k]);
+        // Populate co-players from the creation response so they appear immediately
+        if (data.players && data.players.length > 1) {
+            coPlayers = data.players;
+            for (const p of data.players) {
+                if (p.is_host) continue;
+                coPlayerHoles[p.player_id] = {};
+            }
+        }
         selectedCoPlayerIds.clear();
         currentHole = 1;
         hide('setup-screen');
@@ -2364,6 +2675,11 @@ function adjustScore(holeNum, dir, isHost, playerId) {
 }
 
 async function saveHole(holeNum, par, score, extraPlayerScores) {
+    // ── Offline: always persist score locally first ─────────────────────────
+    if (typeof OFFLINE_DB !== 'undefined' && activeRound) {
+      OFFLINE_DB.saveHoleScore(activeRound.id, holeNum, score, par);
+    }
+
     try {
         const body = { hole_number: holeNum, par, score };
         if (extraPlayerScores && extraPlayerScores.length) {
@@ -2460,7 +2776,28 @@ async function completeRound() {
         stopGpsTracking();
         hide('round-screen');
         showFinishScreen(data);
-    } catch(e) { showToast('Failed to complete round'); if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = 'Finish Round 🏁'; } }
+        // ── Online success: clear local scores ──────────────────────────────
+        if (typeof OFFLINE_DB !== 'undefined' && activeRound) {
+          OFFLINE_DB.clearHoleScores(activeRound.id);
+          OFFLINE_DB.removePendingRound(activeRound.id);
+        }
+    } catch(e) {
+        // ── Offline: queue round and show indicator ───────────────────────
+        if (typeof OFFLINE_DB !== 'undefined' && activeRound) {
+          const payload = {
+            roundId: activeRound.id,
+            courseId: activeRound.course_id,
+            layoutId: activeRound.layout_id,
+            holesCount: activeRound.holes_count,
+            holes: holes.map(h => ({ hole_number: h.hole_number, par: h.par, score: h.score })),
+            coPlayers: coPlayers.map(p => p.player_id),
+          };
+          OFFLINE_DB.addPendingRound(activeRound.id, payload);
+          OFFLINE_DB.showOfflineBanner('Offline — round saved locally');
+        }
+        showToast('Offline: round saved and will submit when back online');
+        if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = 'Finish Round 🏁'; }
+    }
 }
 
 // ── Abandon ────────────────────────────────────────────────────────────────
@@ -2703,7 +3040,7 @@ function drawShareCard(s) {
     ctx.fillRect(0, 0, W, H);
 
     // Subtle dot texture
-    ctx.fillStyle = 'rgba(76,223,60,0.025)';
+    ctx.fillStyle = 'rgba(255,107,26,0.015)';
     for (let x = 27; x < W; x += 54) {
         for (let y = 27; y < H; y += 54) {
             ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2); ctx.fill();
@@ -2712,8 +3049,8 @@ function drawShareCard(s) {
 
     // Top green accent bar
     const topBar = ctx.createLinearGradient(0, 0, W, 0);
-    topBar.addColorStop(0, '#3ca83c');
-    topBar.addColorStop(1, '#22c55e');
+    topBar.addColorStop(0, '#FF6B1A');
+    topBar.addColorStop(1, '#E55A0D');
     ctx.fillStyle = topBar;
     ctx.fillRect(0, 0, W, 8);
 
@@ -2778,7 +3115,7 @@ function drawShareCard(s) {
     ctx.fillText(`${vsLabel}  ·  ${s.total_score} strokes  ·  ${s.holes_played} holes`, W / 2, contentTop + 340);
 
     // ── Divider ───────────────────────────────────────────────────────────────
-    ctx.strokeStyle = 'rgba(76,223,60,0.18)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(80, contentTop + 372); ctx.lineTo(W - 80, contentTop + 372); ctx.stroke();
 
@@ -2922,7 +3259,7 @@ function drawShareCard(s) {
     }
 
     // ── Branding footer ───────────────────────────────────────────────────────
-    ctx.strokeStyle = 'rgba(76,223,60,0.12)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(80, H - 120); ctx.lineTo(W - 80, H - 120); ctx.stroke();
 
@@ -3083,32 +3420,25 @@ init();
 </footer>
 
 <!-- BOTTOM TAB BAR — uses plain <a> tags, no JS, no compositing layers -->
+<!-- BOTTOM TAB BAR — 4 tabs -->
 <nav class="bottom-tab-bar">
-    <a class="tab-item" href="/crews">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label">Crews</span>
-    </a>
-    <a class="tab-item" href="/battles">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Battles</span>
-    </a>
-    <a class="tab-item active" href="/scorecard">
-        <span class="tab-icon">🥏</span>
-        <span class="tab-label">Play</span>
-    </a>
     <a class="tab-item" href="/profile">
         <span class="tab-icon">👤</span>
         <span class="tab-label">Profile</span>
     </a>
-    <a class="tab-item" href="/challenges">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-label">Quests</span>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
     </a>
-    <a class="tab-item" href="/map">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Map</span>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
     </a>
-</nav>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
+    </a>
+    </nav>
 
 <script>
 // Polsia Analytics
@@ -3129,7 +3459,7 @@ init();
 <div id="notifPopupOverlay" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"></div>
 <div id="notifPopup" style="display:none;position:fixed;z-index:9991;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:420px;max-height:85vh;overflow-y:auto;padding:20px;background:var(--surface,#232320);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text,#f0efe9);">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
-    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(76,223,60,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
+    <div style="width:36px;height:36px;flex-shrink:0;background:var(--green-glow,rgba(255,107,26,0.18));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📣</div>
     <div style="flex:1;min-width:0;">
       <div id="notifPopupTitle" style="font-weight:700;font-size:1rem;line-height:1.3;margin-bottom:4px;"></div>
       <div id="notifPopupMsg" style="font-size:0.875rem;color:var(--text2,#c4c4bc);line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>

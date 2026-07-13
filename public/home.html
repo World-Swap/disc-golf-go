@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Home — Disc Golf Go</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#1E1E1E">
+    <meta name="application-name" content="Disc Golf Go">
+    <meta name="apple-mobile-web-app-title" content="Disc Golf Go">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app.css">
+    <style>
+    :root {
+        --th-bg: #1E1E1E;
+        --th-surface: #2A2A2A;
+        --th-surface2: #333333;
+        --th-border: rgba(255,255,255,0.08);
+        --th-text: #f0f4f0;
+        --th-text2: #D0D0D0;
+        --th-text3: #A0A0A0;
+        --th-green: #FF6B1A;
+        --th-green-glow: rgba(255,107,26,0.18);
+        --th-gold: #ffd050;
+        --th-gold-bg: rgba(255,208,80,0.10);
+        --th-safe-t: env(safe-area-inset-top, 0px);
+        --th-safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; }
+    body {
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        background: var(--th-bg);
+        color: var(--th-text);
+        min-height: 100%;
+        display: flex; flex-direction: column;
+    }
+    body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: 0;
+        background-image:
+            linear-gradient(rgba(255,107,26,0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,107,26,0.015) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+    }
+    #app { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+    /* ── HEADER ──────────────────────────────────────────────── */
+    header {
+        position: sticky; top: 0; z-index: 10;
+        background: rgba(30,30,30,0.95);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--th-border);
+        padding: calc(var(--th-safe-t) + 12px) 20px 12px;
+    }
+    .header-inner {
+        display: flex; align-items: center; justify-content: space-between;
+        max-width: 680px; margin: 0 auto;
+    }
+    .header-logo-wrap { display: flex; align-items: center; gap: 8px; }
+    .header-logo { width: 28px; height: 28px; }
+    .header-brand { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; }
+    .header-brand .go { color: var(--th-green); }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    #bell-btn {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        color: var(--th-text2); font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; position: relative; transition: background 0.2s;
+    }
+    #bell-btn:hover { background: var(--th-surface2); }
+    #bell-btn .bell-dot {
+        position: absolute; top: 4px; right: 4px;
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--th-green);
+        border: 1px solid var(--th-bg);
+        display: none;
+    }
+    #bell-btn.has-unread .bell-dot { display: block; }
+
+    /* Notification panel */
+    #panel-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 40; display: none;
+    }
+    #panel-backdrop.show { display: block; }
+    #notif-panel {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: min(380px, 100vw);
+        background: var(--th-bg); border-left: 1px solid var(--th-border);
+        z-index: 50; display: none; flex-direction: column;
+        transform: translateX(100%); transition: transform 0.3s;
+    }
+    #notif-panel.open { display: flex; transform: translateX(0); }
+    .notif-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; border-bottom: 1px solid var(--th-border); background: var(--th-surface);
+    }
+    .notif-header h2 { font-size: 17px; font-weight: 700; }
+    .notif-list { flex: 1; overflow-y: auto; }
+    .notif-item {
+        padding: 14px 20px; border-bottom: 1px solid var(--th-border);
+        cursor: pointer; transition: background 0.15s;
+    }
+    .notif-item:hover { background: var(--th-surface); }
+    .notif-item.unread { background: rgba(255,107,26,0.04); }
+    .notif-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--th-text3); margin-bottom: 4px; }
+    .notif-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .notif-msg { font-size: 13px; color: var(--th-text2); line-height: 1.5; margin-bottom: 4px; }
+    .notif-time { font-size: 11px; color: var(--th-text3); font-family: 'Space Mono', monospace; }
+    .notif-empty { padding: 48px 20px; text-align: center; }
+    .notif-empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .notif-footer { padding: 12px 20px; border-top: 1px solid var(--th-border); text-align: center; }
+    .notif-footer button { background: none; border: none; color: var(--th-green); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
+    .gold-chip {
+        display: flex; align-items: center; gap: 5px;
+        background: var(--th-gold-bg); border: 1px solid rgba(255,208,80,0.25);
+        border-radius: 20px; padding: 4px 10px;
+        font-size: 12px; font-weight: 700; font-family: 'Space Mono', monospace;
+        color: var(--th-gold);
+    }
+    .gold-chip .coin { font-size: 14px; }
+
+    /* ── MAIN ────────────────────────────────────────────────── */
+    main { flex: 1; padding: 16px 20px calc(var(--th-safe-b) + 80px); max-width: 680px; margin: 0 auto; width: 100%; }
+
+    /* ── SKIP LOGIN CTA ──────────────────────────────────────── */
+    .skip-cta {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 16px; padding: 16px;
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 16px;
+    }
+    .skip-cta-icon { font-size: 28px; }
+    .skip-cta-text { flex: 1; }
+    .skip-cta-text .cta-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .skip-cta-text .cta-sub { font-size: 12px; color: var(--th-text3); }
+    .btn-sign-in {
+        padding: 8px 16px; background: var(--th-green); color: #fff;
+        border: none; border-radius: 10px; font-family: 'Space Grotesk', sans-serif;
+        font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ── LEVEL BANNER ────────────────────────────────────────── */
+    .level-banner {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 18px; padding: 16px 18px; margin-bottom: 14px;
+        background-image: radial-gradient(ellipse at 90% 0%, rgba(255,107,26,0.08) 0%, transparent 60%);
+        position: relative; overflow: hidden;
+    }
+    .level-banner::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, var(--th-green), #FF9A5C, var(--th-green));
+    }
+    .level-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .level-info { display: flex; align-items: center; gap: 12px; }
+    .level-badge {
+        width: 52px; height: 52px; border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255,107,26,0.20), rgba(255,107,26,0.08));
+        border: 2px solid rgba(255,107,26,0.4);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; font-weight: 800; font-family: 'Space Mono', monospace;
+        color: var(--th-green);
+    }
+    .level-text .level-num { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .level-text .level-xp { font-size: 12px; color: var(--th-text3); font-family: 'Space Mono', monospace; }
+    .skill-tier-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px; border-radius: 20px;
+        font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+        margin-left: 6px;
+    }
+    .level-stats { display: flex; gap: 16px; align-items: center; }
+    .level-stat { text-align: center; }
+    .level-stat .stat-num { font-size: 16px; font-weight: 800; color: var(--th-green); font-family: 'Space Mono', monospace; }
+    .level-stat .stat-label { font-size: 10px; color: var(--th-text3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .xp-progress { margin-top: 0; }
+    .xp-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .xp-bar-label { font-size: 11px; color: var(--th-text3); font-weight: 600; }
+    .xp-bar-nums { font-size: 11px; font-family: 'Space Mono', monospace; color: var(--th-text2); }
+    .xp-bar-nums .current { color: var(--th-green); font-weight: 700; }
+    .xp-bar-track { height: 6px; border-radius: 100px; background: rgba(255,255,255,0.08); overflow: hidden; }
+    .xp-bar-fill {
+        height: 100%; border-radius: 100px;
+        background: linear-gradient(90deg, #7ED957, #9FE875);
+        transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── DAILY CHALLENGE ─────────────────────────────────────── */
+    .daily-challenge {
+        background: linear-gradient(135deg, rgba(255,208,80,0.08), rgba(255,208,80,0.03));
+        border: 1px solid rgba(255,208,80,0.20);
+        border-radius: 16px; padding: 14px 16px; margin-bottom: 14px;
+        display: flex; align-items: center; gap: 12px;
+        cursor: pointer; transition: border-color 0.2s;
+    }
+    .daily-challenge:hover { border-color: rgba(255,208,80,0.35); }
+    .daily-icon { font-size: 28px; flex-shrink: 0; }
+    .daily-body { flex: 1; min-width: 0; }
+    .daily-label { font-size: 10px; font-weight: 700; color: var(--th-gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .daily-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .daily-sub { font-size: 12px; color: var(--th-text3); }
+    .daily-arrow { color: var(--th-text3); font-size: 18px; transition: transform 0.2s, color 0.2s; }
+    .daily-challenge:hover .daily-arrow { color: var(--th-gold); transform: translateX(4px); }
+
+    /* ── TRAINING SECTION ───────────────────────────────────── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .section-title { font-size: 15px; font-weight: 700; color: var(--th-text); }
+    .section-link { font-size: 12px; color: var(--th-green); text-decoration: none; font-weight: 600; }
+
+    .training-summary {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 16px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .overall-bar { margin-bottom: 12px; }
+    .overall-bar-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .overall-bar-name { font-size: 13px; font-weight: 600; color: var(--th-text); }
+    .overall-bar-pct { font-size: 13px; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--th-green); }
+    .overall-bar-done { font-size: 11px; color: var(--th-text3); }
+    .bar-track { height: 8px; border-radius: 100px; background: rgba(255,255,255,0.08); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, #7ED957, #9FE875); transition: width 0.6s; }
+
+    .category-rows { display: flex; flex-direction: column; gap: 8px; }
+    .cat-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 10px; border-radius: 10px;
+        background: var(--th-surface2); border: 1px solid var(--th-border);
+        cursor: pointer; transition: border-color 0.2s;
+    }
+    .cat-row:hover { border-color: rgba(255,107,26,0.30); }
+    .cat-row-icon { font-size: 18px; flex-shrink: 0; }
+    .cat-row-name { flex: 1; font-size: 13px; font-weight: 600; }
+    .cat-row-right { text-align: right; flex-shrink: 0; }
+    .cat-row-pct { font-size: 13px; font-weight: 800; font-family: 'Space Mono', monospace; color: var(--th-green); }
+    .cat-row-pct.done { color: var(--th-text3); }
+    .cat-row-mini-bar { height: 3px; border-radius: 100px; background: rgba(255,255,255,0.08); width: 52px; margin-top: 3px; }
+    .cat-row-mini-fill { height: 100%; background: var(--th-green); border-radius: 100px; }
+
+    /* ── RECOMMENDED LESSON ─────────────────────────────────── */
+    .next-lesson {
+        background: var(--th-surface); border: 1px solid rgba(255,107,26,0.20);
+        border-radius: 14px; padding: 14px;
+        display: flex; align-items: center; gap: 12px;
+        cursor: pointer; transition: border-color 0.2s, background 0.2s;
+        margin-bottom: 14px;
+    }
+    .next-lesson:hover { border-color: rgba(255,107,26,0.35); background: var(--th-surface2); }
+    .nl-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        background: var(--th-green-glow); border: 1px solid rgba(255,107,26,0.20);
+        display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .nl-body { flex: 1; min-width: 0; }
+    .nl-badge {
+        display: inline-flex; padding: 2px 7px; border-radius: 6px;
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        background: rgba(255,107,26,0.15); color: var(--th-green); margin-bottom: 4px;
+    }
+    .nl-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .nl-meta { font-size: 11px; color: var(--th-text3); }
+    .nl-xp { font-size: 12px; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--th-gold); white-space: nowrap; }
+    .nl-arrow { color: var(--th-text3); font-size: 16px; }
+
+    /* ── APPLY YOUR TRAINING ────────────────────────────────── */
+    .apply-section { margin-bottom: 14px; }
+    .apply-card {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 16px; padding: 16px;
+        display: flex; align-items: center; gap: 14px;
+        cursor: pointer; transition: border-color 0.2s;
+        text-decoration: none; color: inherit;
+    }
+    .apply-card:hover { border-color: rgba(255,107,26,0.30); }
+    .apply-icon {
+        width: 48px; height: 48px; border-radius: 14px;
+        background: rgba(255,107,26,0.10); border: 1px solid rgba(255,107,26,0.15);
+        display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
+    }
+    .apply-body { flex: 1; }
+    .apply-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .apply-sub { font-size: 12px; color: var(--th-text3); }
+    .apply-arrow { color: var(--th-text3); font-size: 20px; transition: color 0.2s, transform 0.2s; }
+    .apply-card:hover .apply-arrow { color: var(--th-green); transform: translateX(4px); }
+
+    /* ── RECENT ROUNDS ──────────────────────────────────────── */
+    .recent-round-item {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 12px; padding: 12px 14px;
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 8px;
+    }
+    .rr-score-badge {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: 800; font-family: 'Space Mono', monospace;
+        flex-shrink: 0;
+    }
+    .rr-score-badge.under { background: rgba(76,223,60,0.12); color: var(--th-green); border: 1px solid rgba(76,223,60,0.2); }
+    .rr-score-badge.over { background: rgba(255,80,80,0.10); color: #ff7070; border: 1px solid rgba(255,80,80,0.2); }
+    .rr-score-badge.even { background: var(--th-surface2); color: var(--th-text2); border: 1px solid var(--th-border); }
+    .rr-info { flex: 1; min-width: 0; }
+    .rr-course { font-size: 14px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rr-meta { font-size: 11px; color: var(--th-text3); }
+    .rr-vs-par { font-size: 13px; font-weight: 700; font-family: 'Space Mono', monospace; flex-shrink: 0; }
+
+    /* ── SKELETON ────────────────────────────────────────────── */
+    .skeleton-card {
+        background: var(--th-surface); border: 1px solid var(--th-border);
+        border-radius: 16px; padding: 18px; margin-bottom: 12px;
+        animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .skel { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.05); margin-bottom: 8px; }
+    .skel.wide { width: 80%; }
+    .skel.short { width: 40%; }
+
+    /* ── EMPTY ──────────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 32px 20px; }
+    .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 16px; font-weight: 700; color: var(--th-text2); margin-bottom: 6px; }
+    .empty-state p { font-size: 13px; color: var(--th-text3); line-height: 1.6; }
+
+    /* ── DIVIDER ─────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--th-border); margin: 16px 0; }
+
+    /* ── XP TOAST ─────────────────────────────────────────────── */
+    #xp-toast {
+        position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+        background: linear-gradient(135deg, #1E1E1E, #2A2A2A);
+        border: 1px solid rgba(255,107,26,0.40); border-radius: 14px; padding: 12px 22px;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: 0 8px 32px rgba(255,107,26,0.25);
+        opacity: 0; transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none; z-index: 100;
+        font-weight: 800; font-size: 16px; color: var(--th-green); white-space: nowrap;
+    }
+    #xp-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── BOTTOM NAV ──────────────────────────────────────────── */
+    .tab-bar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: calc(var(--th-safe-b) + 64px);
+        padding-bottom: var(--th-safe-b);
+        background: rgba(30,30,30,0.97); backdrop-filter: blur(20px);
+        border-top: 1px solid var(--th-border);
+        display: flex; justify-content: space-around; align-items: center; z-index: 10;
+    }
+    .tab-item {
+        display: flex; flex-direction: column; align-items: center; gap: 2px;
+        text-decoration: none; color: var(--th-text3);
+        font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+        transition: color 0.2s; padding: 6px 6px; min-width: 54px;
+    }
+    .tab-item .tab-icon { font-size: 22px; }
+    .tab-item.active { color: var(--th-green); }
+    .tab-item .tab-label { font-size: 9px; }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <header>
+        <div class="header-inner">
+            <div class="header-logo-wrap">
+                <img src="/logo.png?v=7" alt="Disc Golf Go" class="header-logo" loading="eager">
+                <span class="header-brand">Disc Golf <span class="go">Go</span></span>
+            </div>
+            <div class="header-right">
+                <div class="gold-chip" id="gold-chip" style="display:none;">
+                    <span class="coin">🪙</span>
+                    <span id="header-gold">0</span>
+                </div>
+                <button id="bell-btn" aria-label="Training notifications">
+                    🔔<span class="bell-dot"></span>
+                </button>
+                <a href="/profile" style="color:var(--th-text2);text-decoration:none;font-size:18px;" aria-label="Profile">👤</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Skeleton loading -->
+        <div id="skeleton-view">
+            <div class="skeleton-card" style="height:140px;"></div>
+            <div class="skeleton-card" style="height:80px;"></div>
+            <div class="skeleton-card" style="height:200px;"></div>
+        </div>
+
+        <!-- Sign-in prompt (unauthenticated) -->
+        <div id="signin-view" style="display:none;">
+            <div class="skip-cta">
+                <span class="skip-cta-icon">🎯</span>
+                <div class="skip-cta-text">
+                    <div class="cta-title">Track your training progress</div>
+                    <div class="cta-sub">Sign in to earn XP and level up faster</div>
+                </div>
+                <a href="/login" class="btn-sign-in">Sign In</a>
+            </div>
+            <div id="anon-training-list"></div>
+            <a href="/scorecard" class="apply-card" style="margin-top:8px;">
+                <div class="apply-icon">🥏</div>
+                <div class="apply-body">
+                    <div class="apply-title">Play a Round</div>
+                    <div class="apply-sub">Start scoring — no account needed</div>
+                </div>
+                <div class="apply-arrow">→</div>
+            </a>
+        </div>
+
+        <!-- Authenticated home -->
+        <div id="home-view" style="display:none;">
+
+            <!-- Level banner -->
+            <div class="level-banner" id="level-banner">
+                <div class="level-row">
+                    <div class="level-info">
+                        <div class="level-badge" id="player-level">1</div>
+                        <div class="level-text">
+                            <div class="level-num">Level <span id="level-num-text">1</span><span class="skill-tier-badge" id="skill-tier-badge" style="display:none;"></span></div>
+                            <div class="level-xp"><span id="player-xp">0</span> XP earned</div>
+                        </div>
+                    </div>
+                    <div class="level-stats">
+                        <div class="level-stat">
+                            <div class="stat-num" id="stat-rounds">0</div>
+                            <div class="stat-label">Rounds</div>
+                        </div>
+                        <div class="level-stat">
+                            <div class="stat-num" id="stat-courses">0</div>
+                            <div class="stat-label">Courses</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="xp-progress">
+                    <div class="xp-bar-header">
+                        <span class="xp-bar-label">Progress to Level <span id="next-level-num">2</span></span>
+                        <span class="xp-bar-nums"><span class="current" id="xp-current">0</span> / <span id="xp-next">500</span></span>
+                    </div>
+                    <div class="xp-bar-track">
+                        <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily challenge -->
+            <a class="daily-challenge" id="daily-challenge" href="/training">
+                <div class="daily-icon">⚡</div>
+                <div class="daily-body">
+                    <div class="daily-label">Daily Challenge</div>
+                    <div class="daily-title" id="daily-title">Complete 1 lesson today</div>
+                    <div class="daily-sub" id="daily-sub">Watch a tip or guide — no course needed</div>
+                </div>
+                <div class="daily-arrow">→</div>
+            </a>
+
+            <!-- Training section -->
+            <div class="section-header">
+                <span class="section-title">🎯 Training Progress</span>
+                <a href="/training" class="section-link">See all →</a>
+            </div>
+
+            <!-- Overall progress bar -->
+            <div class="training-summary">
+                <div class="overall-bar">
+                    <div class="overall-bar-label">
+                        <span class="overall-bar-name">Overall Progress</span>
+                        <span class="overall-bar-pct" id="training-pct">0%</span>
+                    </div>
+                    <div class="overall-bar-done" id="training-done">0 of 0 lessons complete</div>
+                    <div class="bar-track" style="margin-top:6px;">
+                        <div class="bar-fill" id="training-bar" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Per-category progress -->
+                <div class="category-rows" id="category-rows"></div>
+            </div>
+
+            <!-- Next recommended lesson -->
+            <div id="next-lesson-container" style="display:none;">
+                <div class="section-header">
+                    <span class="section-title">Up Next</span>
+                </div>
+                <a class="next-lesson" id="next-lesson-link">
+                    <div class="nl-icon" id="nl-icon">🎯</div>
+                    <div class="nl-body">
+                        <div class="nl-badge">Recommended</div>
+                        <div class="nl-title" id="nl-title">—</div>
+                        <div class="nl-meta" id="nl-meta">—</div>
+                    </div>
+                    <div class="nl-xp" id="nl-xp">+0 XP</div>
+                    <div class="nl-arrow">→</div>
+                </a>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Apply your training -->
+            <div class="apply-section">
+                <div class="section-header">
+                    <span class="section-title">🥏 Apply Your Training</span>
+                </div>
+                <a href="/scorecard" class="apply-card">
+                    <div class="apply-icon">🥏</div>
+                    <div class="apply-body">
+                        <div class="apply-title">Hit the Course</div>
+                        <div class="apply-sub">GPS check-in required · Score your round</div>
+                    </div>
+                    <div class="apply-arrow">→</div>
+                </a>
+            </div>
+
+            <!-- Recent rounds -->
+            <div id="recent-section" style="display:none;">
+                <div class="section-header">
+                    <span class="section-title">📊 Recent Rounds</span>
+                    <a href="/rounds" class="section-link">See all →</a>
+                </div>
+                <div id="recent-rounds-list"></div>
+            </div>
+
+            <!-- Quick links -->
+            <div class="section-header" style="margin-top:8px;">
+                <span class="section-title">Explore</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <a href="/map" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--th-surface);border:1px solid var(--th-border);border-radius:12px;text-decoration:none;color:inherit;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(255,107,26,0.30)'" onmouseout="this.style.borderColor='var(--th-border)'">
+                    <span style="font-size:20px;">🗺️</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:14px;font-weight:700;">Course Map</div>
+                        <div style="font-size:11px;color:var(--th-text3);">Find courses near you</div>
+                    </div>
+                    <span style="color:var(--th-text3);font-size:16px;">→</span>
+                </a>
+                <a href="/leaderboard" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--th-surface);border:1px solid var(--th-border);border-radius:12px;text-decoration:none;color:inherit;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(255,107,26,0.30)'" onmouseout="this.style.borderColor='var(--th-border)'">
+                    <span style="font-size:20px;">🏆</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:14px;font-weight:700;">Leaderboard</div>
+                        <div style="font-size:11px;color:var(--th-text3);">See how you rank</div>
+                    </div>
+                    <span style="color:var(--th-text3);font-size:16px;">→</span>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Notification panel -->
+        <div id="panel-backdrop"></div>
+        <div id="notif-panel">
+            <div class="notif-header">
+                <h2>Notifications</h2>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button id="mark-all-read-btn" style="background:none;border:none;color:var(--th-green);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Mark all read</button>
+                    <button id="notif-settings-btn" style="background:none;border:none;color:var(--th-text2);font-size:16px;cursor:pointer;" title="Settings">⚙️</button>
+                    <button id="close-notif-panel" style="background:none;border:none;color:var(--th-text2);font-size:20px;cursor:pointer;padding:4px;">✕</button>
+                </div>
+            </div>
+            <div id="notif-list" class="notif-list"></div>
+            <div class="notif-footer" style="display:none;">
+                <button id="clear-all-notifs">Clear all notifications</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- BOTTOM TAB BAR — 4 tabs -->
+<nav class="tab-bar">
+    <a class="tab-item" href="/profile">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+    </a>
+    <a class="tab-item" href="/scorecard">
+        <span class="tab-icon">🥏</span>
+        <span class="tab-label">Play</span>
+    </a>
+    <a class="tab-item" href="/training">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-label">Training</span>
+    </a>
+    <a class="tab-item" href="/vault">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Vault</span>
+    </a>
+    </nav>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    // If no auth token or guest uuid, redirect to landing page
+    var token = localStorage.getItem('dggo_token') || null;
+    var guestId = localStorage.getItem('dggo_guest_uuid') || null;
+    if (!token && !guestId) {
+        // Show the landing page via the index route instead of this authenticated home
+        window.location.replace('/');
+        return;
+    }
+
+    const API = '';
+
+    function getToken() { return token; }
+    function getGuestId() { return guestId; }
+    function authHeaders() {
+        const t = getToken(); if (t) return { 'Authorization': 'Bearer ' + t };
+        const g = getGuestId(); if (g) return { 'X-Guest-UUID': g };
+        return {};
+    }
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fmtNum(n) { return Number(n||0).toLocaleString(); }
+
+    function showXP(amount) {
+        const el = document.getElementById('xp-toast');
+        document.getElementById('xp-toast-text').textContent = '+' + amount + ' XP!';
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    // XP level threshold: level N starts at (N-1)*500 XP
+    function levelOf(xp) { return Math.floor(xp / 500) + 1; }
+    function xpForLevel(n) { return (n - 1) * 500; }
+
+    // Skill tier thresholds: Rookie 0–499, Player 500–1999, Advanced 2000–4999, Pro 5000+
+    function getSkillTier(xp) {
+        if (xp >= 5000) return { key: 'pro', title: 'Pro', icon: '🥇', color: '#ff7070' };
+        if (xp >= 2000) return { key: 'advanced', title: 'Advanced', icon: '🎯', color: '#ffd050' };
+        if (xp >= 500)  return { key: 'player', title: 'Player', icon: '⛳', color: '#FF6B1A' };
+        return { key: 'rookie', title: 'Rookie', icon: '🥏', color: '#6a7a6a' };
+    }
+
+    function renderHome(data) {
+        document.getElementById('skeleton-view').style.display = 'none';
+        document.getElementById('home-view').style.display = 'block';
+
+        const p = data.player;
+        const lvl = p.level || 1;
+        const nextLvlXp = xpForLevel(lvl + 1);
+        const prevLvlXp = xpForLevel(lvl);
+        const xpInLevel = Math.max(0, p.xp - prevLvlXp);
+        const xpNeeded = nextLvlXp - prevLvlXp;
+        const xpPct = xpNeeded > 0 ? Math.round((xpInLevel / xpNeeded) * 100) : 100;
+
+        document.getElementById('player-level').textContent = lvl;
+        document.getElementById('level-num-text').textContent = lvl;
+        document.getElementById('player-xp').textContent = fmtNum(p.xp);
+
+        // Skill tier badge
+        const tier = p.skill_tier
+          ? { key: p.skill_tier, ...getSkillTier(p.xp) }
+          : getSkillTier(p.xp);
+        const tierBadge = document.getElementById('skill-tier-badge');
+        tierBadge.textContent = tier.icon + ' ' + tier.title;
+        tierBadge.style.display = 'inline-flex';
+        tierBadge.style.background = tier.color + '22';
+        tierBadge.style.color = tier.color;
+        tierBadge.style.border = '1px solid ' + tier.color + '44';
+        document.getElementById('stat-rounds').textContent = p.total_rounds;
+        document.getElementById('stat-courses').textContent = p.total_courses_visited;
+        document.getElementById('next-level-num').textContent = lvl + 1;
+        document.getElementById('xp-current').textContent = fmtNum(p.xp);
+        document.getElementById('xp-next').textContent = fmtNum(nextLvlXp);
+        document.getElementById('xp-bar-fill').style.width = xpPct + '%';
+
+        // Gold
+        if (p.gold_balance > 0) {
+            document.getElementById('gold-chip').style.display = 'flex';
+            document.getElementById('header-gold').textContent = fmtNum(p.gold_balance);
+        }
+
+        // Training overall
+        const tp = data.training.overall;
+        const trPct = tp.total_lessons > 0 ? Math.round((tp.completed_lessons / tp.total_lessons) * 100) : 0;
+        document.getElementById('training-pct').textContent = trPct + '%';
+        document.getElementById('training-done').textContent = tp.completed_lessons + ' of ' + tp.total_lessons + ' lessons complete';
+        document.getElementById('training-bar').style.width = trPct + '%';
+
+        // Daily challenge — adjusts based on progress
+        const remaining = tp.total_lessons - tp.completed_lessons;
+        const dailyTitle = document.getElementById('daily-title');
+        const dailySub = document.getElementById('daily-sub');
+        if (remaining === 0) {
+            dailyTitle.textContent = 'All lessons complete!';
+            dailySub.textContent = 'Check back for new content soon';
+            document.getElementById('daily-challenge').style.cursor = 'default';
+        } else if (tp.completed_lessons > 0) {
+            dailyTitle.textContent = 'Keep the momentum going';
+            dailySub.textContent = 'You completed ' + tp.completed_lessons + ' lesson' + (tp.completed_lessons !== 1 ? 's' : '') + ' — ' + remaining + ' more to go';
+        } else {
+            dailyTitle.textContent = 'Complete 1 lesson today';
+            dailySub.textContent = 'Watch a tip or guide — no course needed';
+        }
+
+        // Category rows
+        const catRows = document.getElementById('category-rows');
+        if (data.training.categories && data.training.categories.length) {
+            catRows.innerHTML = data.training.categories.map(c => {
+                const pct = c.pct_complete || 0;
+                const isDone = pct === 100;
+                return `<a href="/training/${esc(c.slug)}" class="cat-row">
+                    <span class="cat-row-icon">${esc(c.icon||'📚')}</span>
+                    <span class="cat-row-name">${esc(c.name)}</span>
+                    <div class="cat-row-right">
+                        <div class="cat-row-pct${isDone ? ' done' : ''}">${isDone ? '✓' : pct + '%'}</div>
+                        <div class="cat-row-mini-bar"><div class="cat-row-mini-fill" style="width:${pct}%"></div></div>
+                    </div>
+                </a>`;
+            }).join('');
+        } else {
+            catRows.innerHTML = '<div class="empty-state" style="padding:16px;"><div class="empty-icon">📚</div><h3>No lessons yet</h3><p>Check back soon — more training content coming.</p></div>';
+        }
+
+        // Next lesson
+        const nl = data.training.next_lesson;
+        if (nl) {
+            document.getElementById('next-lesson-container').style.display = 'block';
+            document.getElementById('nl-icon').textContent = { tip_card: '💡', guide: '📝', video_embed: '🎬', quiz: '❓' }[nl.content_type] || '📄';
+            document.getElementById('nl-title').textContent = nl.title;
+            document.getElementById('nl-meta').textContent = nl.category_name;
+            document.getElementById('nl-xp').textContent = '+' + nl.xp_reward + ' XP';
+            document.getElementById('next-lesson-link').href = '/training/' + esc(nl.category_slug) + '/' + esc(nl.slug);
+        }
+
+        // Recent rounds
+        if (data.recent_rounds && data.recent_rounds.length) {
+            document.getElementById('recent-section').style.display = 'block';
+            const roundList = document.getElementById('recent-rounds-list');
+            roundList.innerHTML = data.recent_rounds.map(r => {
+                const vsPar = r.score_vs_par;
+                const scoreLabel = r.total_score != null ? r.total_score : '—';
+                let badgeClass = 'even', vsLabel = '—';
+                if (vsPar !== null && vsPar !== undefined) {
+                    if (vsPar < 0) { badgeClass = 'under'; vsLabel = vsPar; }
+                    else if (vsPar > 0) { badgeClass = 'over'; vsLabel = '+' + vsPar; }
+                    else { vsLabel = 'E'; }
+                }
+                return `<div class="recent-round-item">
+                    <div class="rr-score-badge ${badgeClass}">${esc(String(scoreLabel))}</div>
+                    <div class="rr-info">
+                        <div class="rr-course">${esc(r.course_name || '—')}</div>
+                        <div class="rr-meta">${esc(r.day_label || '')} · ${esc(r.city || '')}${r.state ? ', ' + esc(r.state) : ''}</div>
+                    </div>
+                    <div class="rr-vs-par" style="color:${vsPar < 0 ? 'var(--th-green)' : vsPar > 0 ? '#ff7070' : 'var(--th-text3)'}">${esc(vsLabel)}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // Listen for XP toast from localStorage (cross-tab)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'dggo_xp_award') {
+                try {
+                    const d = JSON.parse(e.newValue);
+                    if (d && d.amount) showXP(d.amount);
+                } catch(_) {}
+                localStorage.removeItem('dggo_xp_award');
+            }
+        });
+    }
+
+    function renderPublic() {
+        document.getElementById('skeleton-view').style.display = 'none';
+        document.getElementById('signin-view').style.display = 'block';
+
+        // Show training categories without completion
+        fetch(API + '/api/training/categories')
+            .then(function(r) { return r.ok ? r.json() : { categories: [] }; })
+            .then(function(data) {
+                const el = document.getElementById('anon-training-list');
+                if (!data.categories || !data.categories.length) return;
+                el.innerHTML = '<div class="section-header"><span class="section-title">🎯 Training Hub</span></div>' +
+                    data.categories.map(function(c) {
+                        return '<a href="/training/' + esc(c.slug) + '" class="cat-row" style="margin-bottom:8px;">' +
+                            '<span class="cat-row-icon">' + esc(c.icon||'📚') + '</span>' +
+                            '<span class="cat-row-name">' + esc(c.name) + '</span>' +
+                            '<span class="cat-row-pct" style="color:var(--th-text3)">' + c.lesson_count + ' lessons</span>' +
+                            '</a>';
+                    }).join('');
+            })
+            .catch(function() {});
+    }
+
+    async function loadHome() {
+        try {
+            const res = await fetch(API + '/api/home/state', { headers: authHeaders() });
+            if (res.status === 401) {
+              localStorage.removeItem('dggo_token');
+              window.location.replace('/login');
+              return;
+            }
+            if (!res.ok) { renderPublic(); return; }
+            const data = await res.json();
+
+            if (!data.authenticated) {
+                renderPublic();
+                return;
+            }
+
+            renderHome(data);
+        } catch(e) {
+            console.error(e);
+            renderPublic();
+        }
+    }
+
+    loadHome();
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────
+    var notifPanelOpen = false;
+
+    function openNotifPanel() {
+        notifPanelOpen = true;
+        document.getElementById('notif-panel').classList.add('open');
+        document.getElementById('panel-backdrop').classList.add('show');
+        loadHomeNotifications();
+    }
+
+    function closeNotifPanel() {
+        notifPanelOpen = false;
+        document.getElementById('notif-panel').classList.remove('open');
+        document.getElementById('panel-backdrop').classList.remove('show');
+    }
+
+    document.getElementById('bell-btn').addEventListener('click', function() {
+        if (notifPanelOpen) { closeNotifPanel(); return; }
+        openNotifPanel();
+    });
+    document.getElementById('close-notif-panel').addEventListener('click', closeNotifPanel);
+    document.getElementById('panel-backdrop').addEventListener('click', closeNotifPanel);
+
+    document.getElementById('notif-settings-btn').addEventListener('click', function() {
+        closeNotifPanel();
+        location.href = '/training';
+    });
+
+    // Load unread count
+    (function loadUnread() {
+        var token = getToken(); if (!token) return;
+        fetch('' + '/api/training/notifications/unread-count', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).then(function(r) { return r.ok ? r.json() : {}; }).then(function(data) {
+            var btn = document.getElementById('bell-btn');
+            if (data.unread_count > 0) btn.classList.add('has-unread');
+        }).catch(function() {});
+    })();
+
+    function loadHomeNotifications() {
+        var token = getToken(); if (!token) return;
+        var list = document.getElementById('notif-list');
+        fetch('' + '/api/training/notifications?limit=20', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).then(function(r) { return r.ok ? r.json() : { notifications: [] }; }).then(function(data) {
+            if (!data.notifications || !data.notifications.length) {
+                list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div><h3 style="font-size:15px;font-weight:700;margin-bottom:6px;">All caught up</h3><p style="font-size:13px;">No training notifications yet.</p></div>';
+                return;
+            }
+            list.innerHTML = data.notifications.map(function(n) {
+                var typeLabel = { daily_tip: '💡 Tip', training_reminder: '⏰ Reminder', mission_alert: '⚡ Mission', achievement: '🏆 Achievement', reengagement: '📩 Re-engagement' }[n.type] || '🔔';
+                var timeAgo = timeAgoStr(n.created_at);
+                var link = n.lesson_slug ? '/training/' + n.lesson_slug : '#';
+                return '<div class="notif-item' + (n.is_read ? '' : ' unread') + '" onclick="location.href=\u0027' + link + '\u0027">' +
+                    '<div class="notif-type">' + typeLabel + '</div>' +
+                    '<div class="notif-title">' + esc(n.title) + '</div>' +
+                    '<div class="notif-msg">' + esc(n.message) + '</div>' +
+                    '<div class="notif-time">' + timeAgo + '</div>' +
+                '</div>';
+            }).join('');
+        }).catch(function() {});
+    }
+
+    function timeAgoStr(dateStr) {
+        var d = new Date(dateStr);
+        var secs = Math.floor((Date.now() - d) / 1000);
+        if (secs < 60) return 'just now';
+        if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+        if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+        return Math.floor(secs / 86400) + 'd ago';
+    }
+
+    document.getElementById('mark-all-read-btn').addEventListener('click', function() {
+        var token = getToken(); if (!token) return;
+        fetch('' + '/api/training/notifications/read-all', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+        }).then(function() {
+            loadHomeNotifications();
+            document.getElementById('bell-btn').classList.remove('has-unread');
+        }).catch(function() {});
+    });
+
+    document.getElementById('clear-all-notifs').addEventListener('click', function() {
+        document.getElementById('notif-list').innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div><h3 style="font-size:15px;font-weight:700;margin-bottom:6px;">All cleared</h3><p style="font-size:13px;">No training notifications.</p></div>';
+        document.getElementById('bell-btn').classList.remove('has-unread');
+    });
+})();
+</script>
+</body>
+</html>
