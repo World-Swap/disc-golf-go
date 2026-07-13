@@ -252,6 +252,118 @@ export function createTrainingRepo(db: Database) {
       return r.rows[0]?.xp ?? 0;
     },
 
+    // ── recommendations / home aggregators ──
+    async playerXpAndStreak(playerId: number) {
+      const r = await db.query<{ xp: number; training_streak_days: number | null }>('SELECT xp, training_streak_days FROM players WHERE id = $1', [playerId]);
+      return r.rows[0] ?? null;
+    },
+
+    async categoryProgressRanked(playerId: number) {
+      const r = await db.query<Record<string, string> & { id: number; pct_complete: number | null }>(
+        `SELECT c.id, c.name, c.slug, c.icon, c.description,
+                COUNT(l.id) AS total_lessons, COUNT(tc.id) AS completed_lessons,
+                ROUND(COUNT(tc.id)::numeric / NULLIF(COUNT(l.id), 0) * 100, 0)::int AS pct_complete
+         FROM training_categories c
+         LEFT JOIN training_lessons l ON l.category_id = c.id AND l.is_active = true
+         LEFT JOIN training_completions tc ON tc.lesson_id = l.id AND tc.player_id = $1
+         WHERE c.is_active = true GROUP BY c.id
+         ORDER BY pct_complete ASC NULLS FIRST, c.sort_order ASC`,
+        [playerId]
+      );
+      return r.rows;
+    },
+
+    async nextIncompleteInCategory(playerId: number, categoryId: number) {
+      const r = await db.query(
+        `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, l.description, l.content_type
+         FROM training_lessons l
+         WHERE l.category_id = $1 AND l.is_active = true
+           AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $2)
+         ORDER BY l.sort_order ASC LIMIT 1`,
+        [categoryId, playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    async topRecommendedLesson(playerId: number) {
+      const r = await db.query(
+        `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, l.description, l.content_type,
+                c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon
+         FROM training_lessons l JOIN training_categories c ON c.id = l.category_id
+         WHERE l.is_active = true AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
+           AND l.difficulty IN ('beginner', 'intermediate')
+         ORDER BY CASE l.difficulty WHEN 'beginner' THEN 1 WHEN 'intermediate' THEN 2 ELSE 3 END, l.sort_order ASC LIMIT 1`,
+        [playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    async advancedLesson(playerId: number) {
+      const r = await db.query(
+        `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, l.description, l.content_type,
+                c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon
+         FROM training_lessons l JOIN training_categories c ON c.id = l.category_id
+         WHERE l.is_active = true AND l.difficulty = 'advanced'
+           AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
+         ORDER BY l.sort_order ASC LIMIT 1`,
+        [playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    async homePlayer(playerId: number) {
+      const r = await db.query<Record<string, string> & { id: number; xp: number; level: number | null; username: string | null; experience_level: string | null }>(
+        `SELECT id, username, xp, level, experience_level,
+                COALESCE(total_distance_m, 0) AS total_distance_m,
+                COALESCE(total_rounds, 0) AS total_rounds,
+                COALESCE(total_courses_visited, 0) AS total_courses_visited,
+                COALESCE(gold, 0) AS gold_balance,
+                total_checkins, total_birdies, total_aces
+         FROM players WHERE id = $1`,
+        [playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    async nextIncompleteLesson(playerId: number) {
+      const r = await db.query(
+        `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, c.name AS category_name, c.slug AS category_slug
+         FROM training_lessons l JOIN training_categories c ON c.id = l.category_id
+         WHERE l.is_active = true AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
+         ORDER BY l.sort_order ASC LIMIT 1`,
+        [playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    async homeStreakDays(playerId: number): Promise<number> {
+      const r = await db.query<{ streak_days: string }>(
+        `WITH daily AS (
+           SELECT DISTINCT DATE(tc.completed_at) AS day FROM training_completions tc WHERE tc.player_id = $1 ORDER BY day DESC LIMIT 30
+         ), streak AS (
+           SELECT day, day - ROW_NUMBER() OVER (ORDER BY day DESC)::int AS grp FROM daily
+         )
+         SELECT COUNT(*) AS streak_days FROM streak WHERE grp = (SELECT grp FROM streak LIMIT 1)`,
+        [playerId]
+      );
+      return parseInt(r.rows[0]?.streak_days ?? '0', 10);
+    },
+
+    async recentRounds(playerId: number) {
+      const r = await db.query(
+        `SELECT r.id, r.total_score, r.total_par, r.course_id, r.layout_id,
+                COALESCE(r.total_score - r.total_par, r.total_score) AS score_vs_par,
+                to_char(r.completed_at, 'Mon D') AS day_label,
+                to_char(r.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS completed_at,
+                p.name AS course_name, p.city, p.state
+         FROM rounds r JOIN courses p ON p.id = r.course_id
+         WHERE r.player_id = $1 AND r.status = 'completed' AND r.completed_at IS NOT NULL
+         ORDER BY r.completed_at DESC LIMIT 3`,
+        [playerId]
+      );
+      return r.rows;
+    },
+
     // ── share ──
     async lessonTitle(lessonId: number): Promise<string | null> {
       const r = await db.query<{ title: string }>('SELECT title FROM training_lessons WHERE id = $1 AND is_active = true', [lessonId]);

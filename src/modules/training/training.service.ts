@@ -6,7 +6,31 @@
 import { notFound, badRequest, forbidden } from '../../http/errors';
 import { withTransaction } from '../../db/pool';
 import type { Database } from '../../db/types';
+import { getLevelFromXp, totalXpForLevel, getSkillTier, getSkillTierProgress } from '../progression';
 import { createTrainingRepo, type TrainingRepo, type SkillLevel } from './training.repo';
+
+const TIER_MESSAGES: Record<string, Array<{ type: string; title: string; body: string }>> = {
+  rookie: [
+    { type: 'tip', title: 'Start with the basics', body: 'Form & Technique covers grip, stance, and follow-through — the foundation of every great throw.' },
+    { type: 'tip', title: 'Choose your first disc', body: 'Start with a putter or midrange. Fairway drivers come later.' },
+    { type: 'action', title: 'Complete 3 lessons this week', body: 'Build a daily habit. Each lesson unlocks 10–15 XP.' },
+  ],
+  player: [
+    { type: 'tip', title: 'Fill in the gaps', body: 'Finish all lessons in your least-completed category before moving on.' },
+    { type: 'tip', title: 'Apply what you learn', body: 'Your Form & Technique training shows on the course — track your round scores to see progress.' },
+    { type: 'action', title: 'Challenge: 3 lessons in 7 days', body: 'A week of consistent training pushes you to Advanced tier.' },
+  ],
+  advanced: [
+    { type: 'tip', title: 'Master the details', body: 'You know the basics. Now focus on consistency under pressure.' },
+    { type: 'tip', title: 'Track your weak spots', body: 'Review your round stats to find which hole types cost you strokes — then revisit that lesson.' },
+    { type: 'action', title: 'Share your knowledge', body: 'Help a buddy who is just starting out. Teaching reinforces learning.' },
+  ],
+  pro: [
+    { type: 'tip', title: 'Fine-tune your game', body: 'Review your tournament rounds. Which situations cost you the most strokes?' },
+    { type: 'tip', title: 'Stay sharp', body: 'Even at Pro level, daily practice keeps your form locked in. One lesson a day maintains your edge.' },
+    { type: 'action', title: 'Compete in crew wars', body: 'Test your skills in crew battles. The pressure of competition reveals what to work on.' },
+  ],
+};
 
 const VALID_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced', 'all_levels'];
 const STREAK_BONUS_XP = 25;
@@ -323,6 +347,128 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
         }
         return { new_milestones: newMilestones, total_completed: total };
       });
+    },
+
+    async getRecommendations(playerId: number) {
+      const player = await repo.playerXpAndStreak(playerId);
+      if (!player) throw notFound('Player not found');
+      const xp = player.xp;
+      const tier = getSkillTier(xp);
+      const catProgress = await repo.categoryProgressRanked(playerId);
+
+      const incompletePerCategory: Array<{ category_id: number; category_name: string; category_slug: string; category_icon: string | null; pct_complete: number; next_lesson: unknown }> = [];
+      for (const cat of catProgress) {
+        if ((cat.pct_complete ?? 0) >= 100) continue;
+        const next = await repo.nextIncompleteInCategory(playerId, cat.id);
+        if (next) {
+          incompletePerCategory.push({
+            category_id: cat.id,
+            category_name: cat.name as unknown as string,
+            category_slug: cat.slug as unknown as string,
+            category_icon: (cat.icon as unknown as string) ?? null,
+            pct_complete: cat.pct_complete ?? 0,
+            next_lesson: next,
+          });
+        }
+      }
+
+      const recommendations: unknown[] = [];
+      const top = await repo.topRecommendedLesson(playerId);
+      if (top) recommendations.push({ reason: 'Start here', priority: 1, type: 'lesson', lesson: top });
+
+      const focus = incompletePerCategory.find((c) => c.pct_complete < 100);
+      if (focus) {
+        recommendations.push({
+          reason: 'Keep momentum going',
+          priority: 2,
+          type: 'category_focus',
+          category: { id: focus.category_id, name: focus.category_name, slug: focus.category_slug, icon: focus.category_icon, pct_complete: focus.pct_complete },
+          next_lesson: focus.next_lesson,
+        });
+      }
+
+      if (tier.key === 'advanced' || tier.key === 'pro') {
+        const adv = await repo.advancedLesson(playerId);
+        if (adv) recommendations.push({ reason: 'Time for advanced content', priority: 3, type: 'lesson', lesson: adv });
+      }
+
+      return {
+        skill_tier: tier.key,
+        skill_tier_icon: tier.icon,
+        streak_days: player.training_streak_days ?? 0,
+        recommendations,
+        tier_messages: TIER_MESSAGES[tier.key] ?? TIER_MESSAGES.rookie,
+        categories: catProgress.map((c) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          icon: c.icon,
+          description: c.description,
+          total_lessons: parseInt(c.total_lessons!, 10),
+          completed_lessons: parseInt(c.completed_lessons!, 10),
+          pct_complete: c.pct_complete ?? 0,
+          next_incomplete: incompletePerCategory.find((ic) => ic.category_id === c.id)?.next_lesson ?? null,
+        })),
+      };
+    },
+
+    async getHomeState(playerId: number | null) {
+      if (!playerId) return { authenticated: false };
+
+      const player = await repo.homePlayer(playerId);
+      if (!player) throw notFound('Player not found');
+
+      const [catRows, totals, nextLesson, streakDays, recentRounds] = await Promise.all([
+        repo.progressByCategory(playerId),
+        repo.progressTotals(playerId),
+        repo.nextIncompleteLesson(playerId),
+        repo.homeStreakDays(playerId),
+        repo.recentRounds(playerId),
+      ]);
+
+      const xp = player.xp;
+      const totalLessons = parseInt(totals.total_lessons, 10);
+      const level = getLevelFromXp(xp);
+
+      return {
+        authenticated: true,
+        player: {
+          id: player.id,
+          username: player.username,
+          xp,
+          level,
+          experience_level: player.experience_level,
+          total_distance_m: parseFloat(player.total_distance_m as unknown as string),
+          total_rounds: parseInt(player.total_rounds as unknown as string, 10),
+          total_courses_visited: parseInt(player.total_courses_visited as unknown as string, 10),
+          gold_balance: parseInt(player.gold_balance as unknown as string, 10),
+          total_checkins: parseInt(player.total_checkins as unknown as string, 10),
+          total_birdies: parseInt(player.total_birdies as unknown as string, 10),
+          total_aces: parseInt(player.total_aces as unknown as string, 10),
+          skill_tier: getSkillTier(xp).key,
+          skill_tier_progress: getSkillTierProgress(xp).pct,
+          training_streak_days: streakDays,
+        },
+        training: {
+          overall: {
+            total_lessons: totalLessons,
+            completed_lessons: parseInt(totals.completed_lessons, 10),
+            pct_complete: totalLessons > 0 ? Math.round((parseInt(totals.completed_lessons, 10) / totalLessons) * 100) : 0,
+          },
+          categories: catRows.map((r) => ({
+            category_id: (r as Record<string, string>).category_id,
+            name: r.name,
+            slug: r.slug,
+            icon: r.icon,
+            total_lessons: parseInt(r.total_lessons!, 10),
+            completed_lessons: parseInt(r.completed_lessons!, 10),
+            pct_complete: r.pct_complete ? parseInt(r.pct_complete, 10) : 0,
+          })),
+          next_lesson: nextLesson,
+        },
+        recent_rounds: recentRounds,
+        next_level_xp: totalXpForLevel(level + 1),
+      };
     },
   };
 }

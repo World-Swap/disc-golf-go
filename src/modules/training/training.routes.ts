@@ -90,5 +90,13 @@ export function createTrainingRouter(service: TrainingService, resolve: RequestH
     res.json(await service.checkMilestones(requirePlayerId(req)));
   }));
 
+  router.get('/training/recommendations', resolve, asyncHandler(async (req, res) => {
+    res.json(await service.getRecommendations(requirePlayerId(req)));
+  }));
+
+  router.get('/home/state', resolve, asyncHandler(async (req, res) => {
+    res.json(await service.getHomeState(req.player?.id ?? null));
+  }));
+
   return router;
 }
