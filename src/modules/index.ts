@@ -20,6 +20,8 @@ import { createCheckinsService } from './checkins/checkins.service';
 import { createCheckinsRouter } from './checkins/checkins.routes';
 import { createLeaderboardService } from './leaderboard/leaderboard.service';
 import { createLeaderboardRouter } from './leaderboard/leaderboard.routes';
+import { createVaultService } from './vault/vault.service';
+import { createVaultRouter } from './vault/vault.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -39,8 +41,9 @@ export function createApiRouter(db: Database): Router {
   api.use(createCheckinsRouter(checkinsService, auth));
 
   api.use(createLeaderboardRouter(createLeaderboardService(db), optAuth));
+  api.use(createVaultRouter(createVaultService(db), auth, optAuth));
 
-  // Future modules mount here: vault, training, ...
+  // Future modules mount here: training, ...
 
   return api;
 }
