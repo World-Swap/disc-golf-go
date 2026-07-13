@@ -28,12 +28,8 @@ function securityHeaders() {
 // ── Rate Limiter (in-memory, replaces express-rate-limit) ────────────────────
 // Sliding-window counter per IP. Suitable for single-instance deployments.
 // WHY in-memory: the app runs on a single Render instance, no Redis needed.
-const rateLimitStores = new Map();
-
 function rateLimit({ windowMs = 15 * 60 * 1000, max = 100, message = 'Too many requests, please try again later' } = {}) {
-  const storeName = `rl_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const store = new Map();
-  rateLimitStores.set(storeName, store);
 
   // Cleanup expired entries every windowMs
   const cleanup = setInterval(() => {
@@ -120,7 +116,7 @@ function validateNumericParams() {
 // then issues a short-lived JWT. Subsequent requests verify the JWT.
 const jwt = require('jsonwebtoken');
 
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'dggo-admin-secret-change-in-prod';
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'dev-only-insecure-admin-secret';
 const ADMIN_TOKEN_EXPIRY = '8h';
 
 function createAdminToken() {

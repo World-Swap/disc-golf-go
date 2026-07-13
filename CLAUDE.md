@@ -10,7 +10,7 @@ Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via C
 - `server.js` — app entry point; middleware + route mounts (wiring only)
 - `routes/` — one file per feature area (auth, courses, rounds, battles, challenges, players, leaderboard, checkins, admin, vault, gold, upload, xp-engine, distance-analytics, delete-account, crews, crew-wars, story, feedback, reviews, referrals, onboarding, campaign, training, training-notifications)
 - `migrations/` — node-pg-migrate SQL migration files; all DDL lives here
-- `middleware/` — auth middleware (JWT validation)
+- `middleware/` — `auth.js` (JWT validation + `createToken`; sets `req.player`), `security.js` (security headers, in-memory rate limiter, input sanitization, numeric param validation, admin JWT auth), `pageview-tracker.js` (non-blocking server-side pageview logging)
 - `public/` — static frontend assets (HTML, CSS, JS, images); `app.css` is the unified design system (tokens, shared components) linked by all app pages
 - `lib/` — shared utilities
 - `scripts/` — one-off scripts (linting, audits, iOS patch, Android branding: generate-capacitor-assets-sources.js, write-android-styles.js, generate-ios-splash.js, bump-android-version.js, ensure-android-permissions.js)
