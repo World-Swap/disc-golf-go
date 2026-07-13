@@ -6,17 +6,17 @@ import express, { type Express } from 'express';
 import { securityHeaders } from '../middleware/security';
 import { errorHandler } from './error-handler';
 import { healthRouter } from '../modules/health/health.routes';
+import { createApiRouter } from '../modules';
+import type { Database } from '../db/types';
 
-export function createApp(): Express {
+export function createApp(db: Database): Express {
   const app = express();
 
   app.use(securityHeaders);
   app.use(express.json({ limit: '1mb' }));
 
   app.use('/health', healthRouter);
-
-  // Feature routers mount here under /api as modules are built:
-  //   app.use('/api', authRouter);
+  app.use('/api', createApiRouter(db));
 
   // Error handler must be registered last.
   app.use(errorHandler);
