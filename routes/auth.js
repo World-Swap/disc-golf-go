@@ -1,37 +1,38 @@
-// routes/auth.js — owns signup, login, password reset.
-// Does NOT own: player profile, XP, sessions beyond JWT creation.
+// routes/auth.js — owns signup, login, guest accounts, password reset.
+// Does NOT own: player profile, XP curve (see xp-engine), email transport (see lib/email).
 
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { createToken } = require('../middleware/auth');
 const { rateLimit, sanitizeFields } = require('../middleware/security');
+const { getLevelFromXp, getLevelProgress } = require('./xp-engine');
+const { appBaseUrl } = require('../lib/app-url');
+const { sendEmail } = require('../lib/email');
 
-const XP_PER_LEVEL = 500;
-function getLevel(xp) { return Math.floor(xp / XP_PER_LEVEL) + 1; }
-function getLevelProgress(xp) {
-  const lvl = getLevel(xp);
-  const base = (lvl - 1) * XP_PER_LEVEL;
-  const progress = xp - base;
-  return { progress, needed: XP_PER_LEVEL, percent: Math.round((progress / XP_PER_LEVEL) * 100) };
+// Shape a player row into the public payload returned by auth endpoints.
+function publicPlayer(p, extra = {}) {
+  return {
+    id: p.id,
+    display_name: p.display_name,
+    username: p.username,
+    email: p.email,
+    profile_photo_url: p.profile_photo_url,
+    xp: p.xp,
+    level: getLevelFromXp(p.xp),
+    level_progress: getLevelProgress(p.xp),
+    ...extra,
+  };
 }
 
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
-
-// Cryptographically secure reset token (32 bytes = 64 hex chars)
+// Cryptographically secure single-use reset token (32 bytes = 64 hex chars).
 function generateResetToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-// Send password reset email via Polsia email proxy
+// Compose + send the password-reset email (transport lives in lib/email).
 async function sendResetEmail(toEmail, resetToken) {
-  const baseUrl = process.env.APP_URL || 'https://disc-golf-go.polsia.app';
-  const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+  const resetUrl = `${appBaseUrl()}/reset-password?token=${resetToken}`;
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0a0a1a;color:#fff;border-radius:12px;overflow:hidden;">
@@ -48,34 +49,26 @@ async function sendResetEmail(toEmail, resetToken) {
     </div>
   `;
 
-  await fetch('https://polsia.com/api/proxy/email/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.POLSIA_API_KEY}`,
-    },
-    body: JSON.stringify({
-      to: toEmail,
-      subject: 'Reset your Disc Golf Go password',
-      body: `Reset your Disc Golf Go password: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`,
-      html,
-    }),
+  await sendEmail({
+    to: toEmail,
+    subject: 'Reset your Disc Golf Go password',
+    text: `Reset your Disc Golf Go password: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`,
+    html,
   });
 }
 
 module.exports = ({ pool }) => {
   const router = express.Router();
 
-  // Rate limiters for auth endpoints — prevent brute force attacks
+  // Rate limiters for auth endpoints — prevent brute force attacks.
   const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 15, message: 'Too many attempts, please try again in 15 minutes' });
   const signupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: 'Too many signup attempts, please try again later' });
   const resetLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: 'Too many password reset attempts, please try again later' });
 
   // POST /api/auth/signup
-  router.post('/auth/signup', signupLimiter, sanitizeFields('display_name'), async (req, res) => {
+  router.post('/auth/signup', signupLimiter, sanitizeFields('display_name'), async (req, res, next) => {
     const { display_name, username, email, password, referral_code } = req.body;
 
-    // Validation
     if (!display_name || !username || !email || !password) {
       return res.status(400).json({ error: 'display_name, username, email, and password are required' });
     }
@@ -92,68 +85,52 @@ module.exports = ({ pool }) => {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
+    const emailLower = email.toLowerCase();
+    const usernameLower = username.toLowerCase();
+
     try {
-      // Check uniqueness
+      // Single uniqueness check; email conflict takes priority over username.
       const existing = await pool.query(
-        'SELECT id FROM players WHERE email = $1 OR username = $2 LIMIT 1',
-        [email.toLowerCase(), username.toLowerCase()]
+        'SELECT email, username FROM players WHERE email = $1 OR username = $2',
+        [emailLower, usernameLower]
       );
+      if (existing.rows.some(r => r.email === emailLower)) {
+        return res.status(409).json({ error: 'An account with that email already exists' });
+      }
       if (existing.rows.length > 0) {
-        // Which one conflicts?
-        const emailCheck = await pool.query('SELECT id FROM players WHERE email = $1', [email.toLowerCase()]);
-        if (emailCheck.rows.length > 0) {
-          return res.status(409).json({ error: 'An account with that email already exists' });
-        }
         return res.status(409).json({ error: 'That username is already taken' });
       }
 
       const password_hash = await bcrypt.hash(password, 10);
-      const player_uuid = generateUUID();
+      const player_uuid = crypto.randomUUID();
 
       const result = await pool.query(
         `INSERT INTO players (player_uuid, display_name, username, email, password_hash)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING id, player_uuid, display_name, username, email, xp, profile_photo_url, created_at`,
-        [player_uuid, display_name.trim(), username.toLowerCase(), email.toLowerCase(), password_hash]
+        [player_uuid, display_name.trim(), usernameLower, emailLower, password_hash]
       );
       const player = result.rows[0];
 
       const token = createToken({ id: player.id, player_uuid: player.player_uuid });
 
-      // Fire-and-forget referral claim — don't block signup on referral processing
+      // Fire-and-forget referral claim — don't block signup on referral processing.
       if (referral_code && typeof referral_code === 'string') {
-        const baseUrl = process.env.APP_URL || 'https://disc-golf-go.polsia.app';
-        fetch(`${baseUrl}/api/referrals/claim`, {
+        fetch(`${appBaseUrl()}/api/referrals/claim`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ code: referral_code }),
         }).catch(err => console.error('[auth] Referral claim failed:', err.message));
       }
 
-      res.status(201).json({
-        token,
-        player: {
-          id: player.id,
-          display_name: player.display_name,
-          username: player.username,
-          email: player.email,
-          profile_photo_url: player.profile_photo_url,
-          xp: player.xp,
-          level: getLevel(player.xp),
-          level_progress: getLevelProgress(player.xp)
-        }
-      });
+      res.status(201).json({ token, player: publicPlayer(player) });
     } catch (err) {
-      console.error('Signup error:', err.message);
-      res.status(500).json({ error: 'Failed to create account' });
+      next(err);
     }
   });
 
   // POST /api/auth/login
-  router.post('/auth/login', authLimiter, async (req, res) => {
+  router.post('/auth/login', authLimiter, async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -183,29 +160,15 @@ module.exports = ({ pool }) => {
 
       const token = createToken({ id: player.id, player_uuid: player.player_uuid });
 
-      res.json({
-        token,
-        player: {
-          id: player.id,
-          display_name: player.display_name,
-          username: player.username,
-          email: player.email,
-          profile_photo_url: player.profile_photo_url,
-          xp: player.xp,
-          level: getLevel(player.xp),
-          level_progress: getLevelProgress(player.xp)
-        }
-      });
+      res.json({ token, player: publicPlayer(player) });
     } catch (err) {
-      console.error('Login error:', err.message);
-      res.status(500).json({ error: 'Login failed' });
+      next(err);
     }
   });
 
   // POST /api/auth/forgot-password
-  // Rate limit: max 3 tokens per email per hour to prevent abuse.
-  // Always returns the same message — doesn't reveal whether email exists.
-  router.post('/auth/forgot-password', resetLimiter, async (req, res) => {
+  // Always returns the same response — never reveals whether the email exists.
+  router.post('/auth/forgot-password', resetLimiter, async (req, res, next) => {
     const { email } = req.body;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -215,7 +178,7 @@ module.exports = ({ pool }) => {
     const normalized = email.toLowerCase().trim();
 
     try {
-      // Rate limit: count tokens created in the last hour for this email
+      // Per-email throttle: at most 3 reset tokens per hour.
       const rateCheck = await pool.query(
         `SELECT COUNT(*) AS cnt
          FROM password_reset_tokens prt
@@ -225,15 +188,11 @@ module.exports = ({ pool }) => {
         [normalized]
       );
       if (parseInt(rateCheck.rows[0].cnt, 10) >= 3) {
-        // Still return success — don't reveal rate-limit info that could assist enumeration
+        // Still return success — don't leak rate-limit state that aids enumeration.
         return res.json({ success: true });
       }
 
-      // Look up the player (don't reveal if found or not)
-      const playerResult = await pool.query(
-        'SELECT id FROM players WHERE email = $1',
-        [normalized]
-      );
+      const playerResult = await pool.query('SELECT id FROM players WHERE email = $1', [normalized]);
 
       if (playerResult.rows.length > 0) {
         const playerId = playerResult.rows[0].id;
@@ -241,28 +200,26 @@ module.exports = ({ pool }) => {
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
         await pool.query(
-          `INSERT INTO password_reset_tokens (player_id, token, expires_at)
-           VALUES ($1, $2, $3)`,
+          `INSERT INTO password_reset_tokens (player_id, token, expires_at) VALUES ($1, $2, $3)`,
           [playerId, token, expiresAt]
         );
 
-        // Fire-and-forget — don't block the response on email delivery
-        sendResetEmail(normalized, token).catch((err) => {
-          console.error('Password reset email failed:', err.message);
+        // Fire-and-forget — don't block the response on email delivery.
+        sendResetEmail(normalized, token).catch(err => {
+          console.error('[auth] Password reset email failed:', err.message);
         });
       }
 
-      // Always the same response regardless of whether email exists
       res.json({ success: true });
     } catch (err) {
-      console.error('Forgot password error:', err.message);
-      res.status(500).json({ error: 'Something went wrong. Please try again.' });
+      next(err);
     }
   });
 
   // POST /api/auth/reset-password
-  // Validates token, updates password, invalidates token and all prior tokens for that player.
-  router.post('/auth/reset-password', resetLimiter, async (req, res) => {
+  // Validates the token, updates the password, and invalidates all of the
+  // player's outstanding reset tokens (single-use guarantee).
+  router.post('/auth/reset-password', resetLimiter, async (req, res, next) => {
     const { token, password } = req.body;
 
     if (!token || typeof token !== 'string') {
@@ -273,11 +230,8 @@ module.exports = ({ pool }) => {
     }
 
     try {
-      // Find valid, unused, non-expired token
       const tokenResult = await pool.query(
-        `SELECT id, player_id, used_at, expires_at
-         FROM password_reset_tokens
-         WHERE token = $1`,
+        `SELECT id, player_id, used_at, expires_at FROM password_reset_tokens WHERE token = $1`,
         [token]
       );
 
@@ -296,36 +250,24 @@ module.exports = ({ pool }) => {
 
       const password_hash = await bcrypt.hash(password, 10);
 
-      // Update password
-      await pool.query(
-        'UPDATE players SET password_hash = $1 WHERE id = $2',
-        [password_hash, row.player_id]
-      );
+      await pool.query('UPDATE players SET password_hash = $1 WHERE id = $2', [password_hash, row.player_id]);
 
-      // Mark token used (single-use guarantee)
-      await pool.query(
-        'UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1',
-        [row.id]
-      );
-
-      // Invalidate all other unused tokens for this player (old sessions are handled by JWT expiry —
-      // new JWTs issued from this point will carry the updated credential)
+      // Consume this token and invalidate any other outstanding tokens for the player.
       await pool.query(
         `UPDATE password_reset_tokens SET used_at = NOW()
-         WHERE player_id = $1 AND used_at IS NULL AND id != $2`,
-        [row.player_id, row.id]
+         WHERE player_id = $1 AND used_at IS NULL`,
+        [row.player_id]
       );
 
       res.json({ success: true });
     } catch (err) {
-      console.error('Reset password error:', err.message);
-      res.status(500).json({ error: 'Something went wrong. Please try again.' });
+      next(err);
     }
   });
 
   // GET /api/auth/verify-reset-token?token=xxx
   // Lets the reset-password page validate a token before showing the form.
-  router.get('/auth/verify-reset-token', async (req, res) => {
+  router.get('/auth/verify-reset-token', async (req, res, next) => {
     const { token } = req.query;
 
     if (!token) {
@@ -334,7 +276,7 @@ module.exports = ({ pool }) => {
 
     try {
       const result = await pool.query(
-        `SELECT id, used_at, expires_at FROM password_reset_tokens WHERE token = $1`,
+        `SELECT used_at, expires_at FROM password_reset_tokens WHERE token = $1`,
         [token]
       );
 
@@ -350,18 +292,17 @@ module.exports = ({ pool }) => {
       }
       res.json({ valid: true });
     } catch (err) {
-      console.error('Verify reset token error:', err.message);
-      res.status(500).json({ valid: false, error: 'server_error' });
+      next(err);
     }
   });
 
   // POST /api/auth/guest
   // Creates a guest player (no email/password) so they can play immediately.
-  // Onboarding_completed stays false — they'll be prompted to sign up after
-  // their first throw lands. Guest players can convert to full accounts later.
-  router.post('/auth/guest', async (req, res) => {
+  // onboarding_completed stays false — they're prompted to sign up after their
+  // first throw lands. Guests can convert to full accounts later.
+  router.post('/auth/guest', async (req, res, next) => {
     try {
-      const guestUuid = generateUUID();
+      const guestUuid = crypto.randomUUID();
 
       const result = await pool.query(
         `INSERT INTO players (player_uuid, display_name, username, email, is_guest, guest_uuid)
@@ -380,20 +321,19 @@ module.exports = ({ pool }) => {
           display_name: player.display_name,
           is_guest: true,
           xp: player.xp,
-          level: getLevel(player.xp),
-          level_progress: getLevelProgress(player.xp)
-        }
+          level: getLevelFromXp(player.xp),
+          level_progress: getLevelProgress(player.xp),
+        },
       });
     } catch (err) {
-      console.error('Guest creation error:', err.message);
-      res.status(500).json({ error: 'Failed to create guest player' });
+      next(err);
     }
   });
 
   // GET /api/auth/guest-status
   // Returns whether the guest_uuid stored in localStorage is still valid.
   // Used to persist guest identity across sessions before conversion.
-  router.get('/auth/guest-status', async (req, res) => {
+  router.get('/auth/guest-status', async (req, res, next) => {
     const guestUuid = req.headers['x-guest-uuid'];
     if (!guestUuid) return res.status(400).json({ valid: false, error: 'guest_uuid required' });
 
@@ -419,13 +359,12 @@ module.exports = ({ pool }) => {
           is_guest: p.is_guest,
           onboarding_completed: p.onboarding_completed,
           experience_level: p.experience_level,
-          level: getLevel(p.xp),
-          level_progress: getLevelProgress(p.xp)
-        }
+          level: getLevelFromXp(p.xp),
+          level_progress: getLevelProgress(p.xp),
+        },
       });
     } catch (err) {
-      console.error('Guest status error:', err.message);
-      res.status(500).json({ valid: false, error: 'server error' });
+      next(err);
     }
   });
 

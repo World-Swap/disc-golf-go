@@ -12,7 +12,7 @@ Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via C
 - `migrations/` — node-pg-migrate SQL migration files; all DDL lives here
 - `middleware/` — `auth.js` (JWT validation + `createToken`; sets `req.player`), `security.js` (security headers, in-memory rate limiter, input sanitization, numeric param validation, admin JWT auth), `pageview-tracker.js` (non-blocking server-side pageview logging)
 - `public/` — static frontend assets (HTML, CSS, JS, images); `app.css` is the unified design system (tokens, shared components) linked by all app pages
-- `lib/` — shared utilities
+- `lib/` — shared utilities: `email.js` (single outbound-email transport — the one place to change email providers), `app-url.js` (`appBaseUrl()` — canonical public base URL for outbound links), `normalize-state.js`, `utm.js`
 - `scripts/` — one-off scripts (linting, audits, iOS patch, Android branding: generate-capacitor-assets-sources.js, write-android-styles.js, generate-ios-splash.js, bump-android-version.js, ensure-android-permissions.js)
 - `android/` — Capacitor-generated Android native project; committed with branded icons/splash assets
 - `resources/` — @capacitor/assets source images (icon-only.png, icon-background.png, splash.png, splash-dark.png); `AppIcon.appiconset/` holds iOS 1024x1024 icon
