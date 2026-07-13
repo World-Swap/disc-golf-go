@@ -23,11 +23,15 @@ export async function query<T extends QueryResultRow = QueryResultRow>(text: str
 }
 
 /**
- * Run `fn` inside a transaction on a dedicated client. Commits on success,
- * rolls back on any throw, and always releases the client.
+ * Run `fn` inside a transaction on a dedicated client of the given database.
+ * Commits on success, rolls back on any throw, always releases the client.
+ * Takes the db explicitly so services stay testable with a fake database.
  */
-export async function withTransaction<T>(fn: (client: import('pg').PoolClient) => Promise<T>): Promise<T> {
-  const client = await pool.connect();
+export async function withTransaction<T>(
+  db: import('./types').Database,
+  fn: (client: import('pg').PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await db.connect();
   try {
     await client.query('BEGIN');
     const result = await fn(client);
