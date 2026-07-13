@@ -53,4 +53,40 @@ function requireAuth(pool) {
   };
 }
 
-module.exports = { createToken, requireAuth, JWT_SECRET };
+// Middleware: optional JWT auth. Sets req.player when a valid Bearer token or
+// legacy X-Player-Id UUID is present; otherwise continues with req.player
+// undefined. Never rejects — for endpoints that personalize when logged in
+// but still work anonymously (e.g. map pins with a "visited" flag).
+function optionalAuth(pool) {
+  return async (req, _res, next) => {
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.player = { id: decoded.id, player_uuid: decoded.player_uuid };
+        req.rawToken = token;
+        return next();
+      } catch (_) { /* invalid/expired token — continue anonymously */ }
+    }
+
+    const playerUuid = req.headers['x-player-id'];
+    if (playerUuid) {
+      try {
+        const result = await pool.query(
+          'SELECT id, player_uuid FROM players WHERE player_uuid = $1',
+          [playerUuid]
+        );
+        if (result.rows.length > 0) {
+          req.player = { id: result.rows[0].id, player_uuid: result.rows[0].player_uuid };
+        }
+      } catch (err) {
+        console.warn('[auth] optional UUID lookup failed:', err.message);
+      }
+    }
+
+    next();
+  };
+}
+
+module.exports = { createToken, requireAuth, optionalAuth, JWT_SECRET };
