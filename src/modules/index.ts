@@ -22,6 +22,8 @@ import { createLeaderboardService } from './leaderboard/leaderboard.service';
 import { createLeaderboardRouter } from './leaderboard/leaderboard.routes';
 import { createVaultService } from './vault/vault.service';
 import { createVaultRouter } from './vault/vault.routes';
+import { createTrainingService } from './training/training.service';
+import { createTrainingRouter, createTrainingResolver } from './training/training.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -43,7 +45,11 @@ export function createApiRouter(db: Database): Router {
   api.use(createLeaderboardRouter(createLeaderboardService(db), optAuth));
   api.use(createVaultRouter(createVaultService(db), auth, optAuth));
 
-  // Future modules mount here: training, ...
+  // Training. onLessonCompleted (story-mission triggers) wired when story lands.
+  const trainingService = createTrainingService({ db });
+  api.use(createTrainingRouter(trainingService, createTrainingResolver(db)));
+
+  // Future modules mount here: story, challenges, battles, ...
 
   return api;
 }
