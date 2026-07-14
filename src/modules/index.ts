@@ -42,6 +42,8 @@ import { createFeedbackRouter } from './feedback/feedback';
 import { createUploadRouter } from './upload/upload.routes';
 import { createDeleteAccountService } from './delete-account/delete-account.service';
 import { createDeleteAccountRouter } from './delete-account/delete-account.routes';
+import { createReferralsService } from './referrals/referrals.service';
+import { createReferralsRouter } from './referrals/referrals.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -86,8 +88,9 @@ export function createApiRouter(db: Database): Router {
   api.use(createFeedbackRouter(db));
   api.use(createUploadRouter(db, auth));
   api.use(createDeleteAccountRouter(createDeleteAccountService({ db }), auth));
+  api.use(createReferralsRouter(createReferralsService(db), auth));
 
-  // Future modules mount here: referrals, notifications, admin, ...
+  // Future modules mount here: notifications, admin, ...
 
   return api;
 }
