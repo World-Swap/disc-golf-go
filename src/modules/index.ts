@@ -28,6 +28,8 @@ import { createStoryService } from './story/story.service';
 import { createStoryRouter } from './story/story.routes';
 import { checkMissionsFromTraining } from './story/quest-engine';
 import { advanceDailyChallenge } from './story/daily-challenge';
+import { createChallengesService } from './challenges/challenges.service';
+import { createChallengesRouter } from './challenges/challenges.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -62,8 +64,9 @@ export function createApiRouter(db: Database): Router {
   api.use(createTrainingRouter(trainingService, createTrainingResolver(db)));
 
   api.use(createStoryRouter(createStoryService(db), auth));
+  api.use(createChallengesRouter(createChallengesService(db), auth));
 
-  // Future modules mount here: challenges, battles, crews, ...
+  // Future modules mount here: battles, crews, crew-wars, ...
 
   return api;
 }
