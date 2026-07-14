@@ -30,6 +30,8 @@ import { checkMissionsFromTraining } from './story/quest-engine';
 import { advanceDailyChallenge } from './story/daily-challenge';
 import { createChallengesService } from './challenges/challenges.service';
 import { createChallengesRouter } from './challenges/challenges.routes';
+import { createTrainingNotificationsService } from './training-notifications/training-notifications.service';
+import { createTrainingNotificationsRouter } from './training-notifications/training-notifications.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -52,7 +54,9 @@ export function createApiRouter(db: Database): Router {
   api.use(createVaultRouter(createVaultService(db), auth, optAuth));
 
   // Training — story-mission + daily-challenge triggers fire (fire-and-forget)
-  // on a brand-new lesson completion.
+  // on a brand-new lesson completion. The resolver (JWT or x-guest-uuid) is
+  // shared with training-notifications.
+  const trainingResolve = createTrainingResolver(db);
   const trainingService = createTrainingService({
     db,
     onLessonCompleted: (playerId, lesson) => {
@@ -61,12 +65,13 @@ export function createApiRouter(db: Database): Router {
       void advanceDailyChallenge(db, playerId, today, 1).catch((e) => console.error('[training] advanceDailyChallenge:', e.message));
     },
   });
-  api.use(createTrainingRouter(trainingService, createTrainingResolver(db)));
+  api.use(createTrainingRouter(trainingService, trainingResolve));
+  api.use(createTrainingNotificationsRouter(createTrainingNotificationsService(db), trainingResolve));
 
   api.use(createStoryRouter(createStoryService(db), auth));
   api.use(createChallengesRouter(createChallengesService(db), auth));
 
-  // Future modules mount here: battles, crews, crew-wars, ...
+  // Future modules mount here: onboarding, referrals, reviews, ...
 
   return api;
 }
