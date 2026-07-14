@@ -39,6 +39,9 @@ import { createOnboardingRouter } from './onboarding/onboarding.routes';
 import { createReviewsService } from './reviews/reviews.service';
 import { createReviewsRouter } from './reviews/reviews.routes';
 import { createFeedbackRouter } from './feedback/feedback';
+import { createUploadRouter } from './upload/upload.routes';
+import { createDeleteAccountService } from './delete-account/delete-account.service';
+import { createDeleteAccountRouter } from './delete-account/delete-account.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -81,8 +84,10 @@ export function createApiRouter(db: Database): Router {
   api.use(createOnboardingRouter(createOnboardingService(db), trainingResolve));
   api.use(createReviewsRouter(createReviewsService(db), auth));
   api.use(createFeedbackRouter(db));
+  api.use(createUploadRouter(db, auth));
+  api.use(createDeleteAccountRouter(createDeleteAccountService({ db }), auth));
 
-  // Future modules mount here: referrals, upload, delete-account, ...
+  // Future modules mount here: referrals, notifications, admin, ...
 
   return api;
 }
