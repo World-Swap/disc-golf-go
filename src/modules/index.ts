@@ -34,6 +34,8 @@ import { createTrainingNotificationsService } from './training-notifications/tra
 import { createTrainingNotificationsRouter } from './training-notifications/training-notifications.routes';
 import { createShopService } from './shop/shop.service';
 import { createShopRouter } from './shop/shop.routes';
+import { createOnboardingService } from './onboarding/onboarding.service';
+import { createOnboardingRouter } from './onboarding/onboarding.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -73,8 +75,9 @@ export function createApiRouter(db: Database): Router {
   api.use(createStoryRouter(createStoryService(db), auth));
   api.use(createChallengesRouter(createChallengesService(db), auth));
   api.use(createShopRouter(createShopService(db), auth));
+  api.use(createOnboardingRouter(createOnboardingService(db), trainingResolve));
 
-  // Future modules mount here: onboarding, referrals, reviews, ...
+  // Future modules mount here: referrals, reviews, upload, ...
 
   return api;
 }
