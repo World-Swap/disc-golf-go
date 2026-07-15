@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Home · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="logo topbar__spark"><span class="logo__glyph" aria-hidden="true"></span> DISCGOLFGO</span>
+      <span class="pill" id="gold">— G</span>
+    </header>
+
+    <div id="content" class="loading">Loading…</div>
+
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('home');
+      var esc = DGG.esc;
+      var content = document.getElementById('content');
+
+      function meter(pct) {
+        return '<div class="meter"><div class="meter__fill" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>';
+      }
+
+      function render(s) {
+        var p = s.player || {};
+        var tr = s.training || { overall: {}, categories: [], next_lesson: null };
+        var tier = (p.skill_tier && p.skill_tier.title) || 'Rookie';
+        var levelXpPct = p.xp && s.next_level_xp ? Math.round((p.xp / s.next_level_xp) * 100) : 0;
+        var next = tr.next_lesson;
+
+        document.getElementById('gold').textContent = (p.gold_balance != null ? p.gold_balance : 0) + ' G';
+
+        var cats = (tr.categories || []).map(function (c) {
+          return '<div class="meter-row"><span class="caption">' + esc(c.name) + '</span>' +
+            '<span class="caption">' + (c.completed_lessons || 0) + '/' + (c.total_lessons || 0) + '</span></div>' + meter(c.pct_complete || 0);
+        }).join('<div style="height:14px"></div>');
+
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div>' +
+            '<p class="section-label">' + esc(tier) + ' · Level ' + (p.level || 1) + '</p>' +
+            '<h1 class="h-display">TRAIN<br />TODAY<span class="mark" style="width:38%"></span></h1>' +
+          '</div>' +
+
+          '<div>' +
+            '<div class="meter-row"><span class="caption">XP</span><span class="caption">' + (p.xp || 0) + ' / ' + (s.next_level_xp || 0) + '</span></div>' +
+            meter(levelXpPct) +
+          '</div>' +
+
+          (next ?
+            '<a class="card card--tap" href="/training" style="display:block">' +
+              '<p class="card__eyebrow">Continue training</p>' +
+              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px">' +
+                '<span class="h-title">' + esc(next.title) + '</span>' +
+                '<span class="row__meta">+' + (next.xp_reward || 0) + ' XP</span>' +
+              '</div>' +
+              '<p class="row__sub" style="margin-top:8px">' + esc(next.category_name || '') + ' →</p>' +
+            '</a>'
+          :
+            '<a class="card card--tap" href="/training" style="display:block">' +
+              '<p class="card__eyebrow">Training</p>' +
+              '<div class="h-title" style="margin-top:10px">Browse lessons →</div>' +
+            '</a>'
+          ) +
+
+          '<div id="daily"></div>' +
+
+          '<div>' +
+            '<p class="section-label">Overall progress</p>' +
+            '<div class="card">' +
+              '<div class="meter-row"><span class="caption">' + (tr.overall.completed_lessons || 0) + ' of ' + (tr.overall.total_lessons || 0) + ' lessons</span>' +
+              '<span class="caption">' + (tr.overall.pct_complete || 0) + '%</span></div>' +
+              meter(tr.overall.pct_complete || 0) +
+              '<div style="height:18px"></div>' + cats +
+            '</div>' +
+          '</div>' +
+
+          '<div class="stats">' +
+            '<div class="stat"><div class="stat__num">' + (p.training_streak_days || 0) + '</div><div class="stat__label">Day streak</div></div>' +
+            '<div class="stat"><div class="stat__num">' + (tr.overall.completed_lessons || 0) + '</div><div class="stat__label">Lessons</div></div>' +
+            '<div class="stat"><div class="stat__num">' + (p.total_checkins || 0) + '</div><div class="stat__label">Check-ins</div></div>' +
+          '</div>';
+
+        loadDaily();
+      }
+
+      async function loadDaily() {
+        try {
+          var d = await DGG.API.get('/story/daily');
+          var pct = d.target_value ? Math.round((d.progress / d.target_value) * 100) : 0;
+          document.getElementById('daily').innerHTML =
+            '<p class="section-label">Daily challenge</p>' +
+            '<div class="card">' +
+              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">' +
+                '<span class="h-title">' + esc(d.title) + '</span>' +
+                (d.completed ? '<span class="pill pill--done">Done</span>' : '<span class="row__meta">+' + (d.xp_reward || 0) + ' XP</span>') +
+              '</div>' +
+              '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + esc(d.description || '') + '</p>' +
+              '<div style="height:14px"></div>' +
+              '<div class="meter-row"><span class="caption">Progress</span><span class="caption">' + (d.progress || 0) + '/' + (d.target_value || 0) + '</span></div>' +
+              meter(pct) +
+            '</div>';
+        } catch (e) { /* no daily challenge available */ }
+      }
+
+      DGG.API.get('/home/state').then(function (s) {
+        if (!s || s.authenticated === false) { location.replace('/login'); return; }
+        render(s);
+      }).catch(function (e) {
+        content.className = 'screen';
+        content.innerHTML = '<div class="error">' + esc(e.message || 'Could not load home') + '</div>';
+      });
+    })();
+  </script>
+</body>
+</html>
