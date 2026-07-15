@@ -12,6 +12,7 @@
     "ts:dev": "ts-node --transpile-only src/server.ts",
     "ts:start": "node dist/server.js",
     "ts:test": "node --test --import ts-node/register/transpile-only \"src/**/*.test.ts\"",
+    "schema:dump": "node scripts/dump-schema.js",
     "courses:stats": "node scripts/refresh-courses.js --stats",
     "courses:refresh": "node scripts/refresh-courses.js --apply",
     "pdga:backfill": "node scripts/backfill-pdga-ids.js",
