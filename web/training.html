@@ -90,14 +90,16 @@
       async function renderLesson(slug, id) {
         var l = await API.get('/training/lessons/' + encodeURIComponent(id));
         crumb.textContent = l.category_name || 'Lesson'; hubLink.hidden = false;
-        var bodyHtml = renderContent(l);
         content.className = 'screen stack';
         content.innerHTML =
           '<div><p class="section-label">' + esc(l.category_name || '') + ' · +' + (l.xp_reward || 0) + ' XP</p>' +
           '<h1 class="h-title">' + esc(l.title) + '</h1></div>' +
           (l.description ? '<p style="font-family:var(--font-mono);font-size:12px;line-height:1.5;color:var(--color-frost)">' + esc(l.description) + '</p>' : '') +
-          bodyHtml +
+          videoCard(l) +
+          renderContent(l) +
+          '<div id="resources"></div>' +
           '<div id="cta"></div>';
+        loadResources(id);
         var cta = document.getElementById('cta');
         if (l.is_completed) {
           cta.innerHTML = '<div class="pill pill--done" style="width:100%;justify-content:center;padding:12px">Completed ✓</div>' +
@@ -134,6 +136,35 @@
           out = '<div class="rows">' + (cb.tips || cb.points).map(function (t) { return '<div class="row"><span class="row__glyph">·</span><div class="row__body"><div class="row__sub" style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--color-frost)">' + esc(t) + '</div></div></div>'; }).join('') + '</div>';
         }
         return out;
+      }
+
+      // Pro/company video link for a lesson.
+      function videoCard(l) {
+        if (!l.youtube_url) return '';
+        return '<a class="card card--tap" href="' + esc(l.youtube_url) + '" target="_blank" rel="noopener" style="display:block">' +
+          '<p class="card__eyebrow">▷ Watch — pro instruction</p>' +
+          '<div class="h-title" style="margin-top:8px">' + esc(l.youtube_title || l.title) + '</div>' +
+          '<p class="row__sub" style="margin-top:8px">' + esc(l.youtube_channel || 'YouTube') + ' →</p></a>';
+      }
+
+      function resIcon(t) { return t === 'video' ? '▷' : (t === 'report' || t === 'study' || t === 'article' ? '▤' : '◆'); }
+
+      // Blogs / reports / research from pros & companies for the lesson.
+      async function loadResources(id) {
+        try {
+          var rs = await API.get('/training/lessons/' + encodeURIComponent(id) + '/resources');
+          if (!rs || !rs.length) return;
+          document.getElementById('resources').innerHTML =
+            '<p class="section-label">Read &amp; research</p><div class="rows">' +
+            rs.map(function (r) {
+              var by = [r.author, r.credentials].filter(Boolean).join(' · ') || (r.resource_type || 'Resource');
+              return '<a class="row" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
+                '<span class="row__glyph">' + resIcon(r.resource_type) + '</span>' +
+                '<div class="row__body"><div class="row__title">' + esc(r.title) + '</div>' +
+                '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + esc(by) + '</div></div>' +
+                '<span class="row__meta">↗</span></a>';
+            }).join('') + '</div>';
+        } catch (e) { /* no resources */ }
       }
 
       var lesson = q('lesson'), cat = q('cat');
