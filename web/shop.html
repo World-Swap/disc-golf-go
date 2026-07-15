@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Shop · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+  <style>
+    .segbar { display:flex; gap:1px; background:var(--hair); border:1px solid var(--hair); border-radius:var(--radius-sm); overflow:hidden; }
+    .seg { flex:1; background:var(--color-void); color:var(--color-ash); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; text-transform:uppercase; padding:10px 4px; text-align:center; border:none; }
+    .seg[aria-selected="true"] { background:var(--color-charcoal); color:var(--color-bone); }
+    .btn--sm { padding:8px 14px; font-size:10px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="topbar__title" href="/vault">‹ Vault</a>
+      <span class="pill" id="gold">— G</span>
+    </header>
+    <div class="screen stack">
+      <div><h1 class="h-display">SHOP<span class="mark" style="width:34%"></span></h1></div>
+      <div class="segbar" id="tabs">
+        <button class="seg" data-tab="shop" aria-selected="true">Shop</button>
+        <button class="seg" data-tab="inventory">Inventory</button>
+      </div>
+      <div id="view" class="loading">Loading…</div>
+    </div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('vault');
+      var esc = DGG.esc, API = DGG.API;
+      var view = document.getElementById('view');
+      var goldEl = document.getElementById('gold');
+      var gold = 0;
+
+      document.getElementById('tabs').addEventListener('click', function (e) {
+        var b = e.target.closest('.seg'); if (!b) return;
+        [].forEach.call(this.children, function (c) { c.setAttribute('aria-selected', c === b ? 'true' : 'false'); });
+        b.getAttribute('data-tab') === 'inventory' ? loadInventory() : loadShop();
+      });
+
+      function setGold(g) { if (g != null) { gold = g; goldEl.textContent = g + ' G'; } }
+      function loading() { view.className = 'loading'; view.textContent = 'Loading…'; }
+      function fail(e) { view.className = 'screen'; view.innerHTML = '<div class="error">' + esc(e.message || 'Error') + '</div>'; }
+
+      async function loadShop() {
+        loading();
+        try {
+          var d = await API.get('/vault/items');
+          setGold(d.player_gold);
+          view.className = 'stack';
+          view.innerHTML = (d.items || []).map(function (it) {
+            var afford = gold >= it.gold_cost;
+            return '<div class="card"><div style="display:flex;align-items:center;gap:14px">' +
+              '<span class="row__glyph">' + esc(it.icon || '◈') + '</span>' +
+              '<div class="row__body"><div class="row__title">' + esc(it.name) + '</div>' +
+              '<div class="row__sub">' + esc(it.rarity || '') + (it.duration_minutes ? ' · ' + it.duration_minutes + 'm' : '') + '</div></div>' +
+              '<button class="btn btn--sm" data-buy="' + it.id + '"' + (afford ? '' : ' disabled') + '>' + it.gold_cost + ' G</button></div>' +
+              (it.description ? '<p class="row__sub" style="margin-top:10px;text-transform:none;letter-spacing:0">' + esc(it.description) + '</p>' : '') + '</div>';
+          }).join('<div style="height:14px"></div>') || '<div class="loading">Shop is empty</div>';
+          view.querySelectorAll('[data-buy]').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+              this.disabled = true; this.textContent = '…';
+              try { var r = await API.post('/vault/buy', { item_id: Number(this.getAttribute('data-buy')) }); setGold(r.new_gold); loadShop(); }
+              catch (ex) { this.textContent = 'Retry'; this.disabled = false; }
+            });
+          });
+        } catch (e) { fail(e); }
+      }
+
+      async function loadInventory() {
+        loading();
+        try {
+          var d = await API.get('/vault/inventory');
+          setGold(d.player_gold);
+          var boosts = (d.active_boosts || []).map(function (b) {
+            return '<div class="row"><span class="row__glyph">◆</span><div class="row__body"><div class="row__title">' + esc(b.name) + '</div>' +
+              '<div class="row__sub">Active · +' + (b.effect_value || 0) + '%</div></div><span class="row__meta">' + timeLeft(b.expires_at) + '</span></div>';
+          }).join('');
+          var items = (d.inventory || []).map(function (it) {
+            return '<div class="row"><span class="row__glyph">' + esc(it.icon || '◈') + '</span>' +
+              '<div class="row__body"><div class="row__title">' + esc(it.name) + '</div><div class="row__sub">×' + (it.quantity || 1) + ' · ' + esc(it.rarity || '') + '</div></div>' +
+              (it.type && it.type.indexOf('boost') === 0 ? '<button class="btn btn--sm" data-act="' + it.id + '">Activate</button>' : '<span class="row__meta">Owned</span>') + '</div>';
+          }).join('');
+          view.className = 'stack';
+          view.innerHTML =
+            (boosts ? '<div><p class="section-label">Active boosts</p><div class="rows">' + boosts + '</div></div>' : '') +
+            '<div><p class="section-label">Items</p><div class="rows">' + (items || '<div class="row"><div class="row__body"><div class="row__sub" style="text-transform:none">No items yet</div></div></div>') + '</div></div>';
+          view.querySelectorAll('[data-act]').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+              this.disabled = true; this.textContent = '…';
+              try { await API.post('/vault/activate/' + this.getAttribute('data-act')); loadInventory(); }
+              catch (ex) { this.textContent = 'Retry'; this.disabled = false; }
+            });
+          });
+        } catch (e) { fail(e); }
+      }
+
+      function timeLeft(iso) {
+        var ms = new Date(iso) - new Date(); if (ms <= 0) return '—';
+        var m = Math.round(ms / 60000); return m >= 60 ? Math.floor(m / 60) + 'h' : m + 'm';
+      }
+
+      loadShop();
+    })();
+  </script>
+</body>
+</html>

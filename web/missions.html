@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Missions · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title">Missions</span>
+      <span class="pill" id="count">—</span>
+    </header>
+    <div id="content" class="loading">Loading…</div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('training');
+      var esc = DGG.esc, API = DGG.API;
+      var content = document.getElementById('content');
+      function meter(pct) { return '<div class="meter"><div class="meter__fill" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>'; }
+
+      API.get('/story/missions').then(function (s) {
+        document.getElementById('count').textContent = (s.completedCount || 0) + '/' + (s.totalMissions || 0);
+        var d = s.dailyChallenge;
+        var daily = d ? (
+          '<div><p class="section-label">Daily challenge</p><div class="card">' +
+            '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">' +
+              '<span class="h-title">' + esc(d.title) + '</span>' +
+              (d.completed ? '<span class="pill pill--done">Done</span>' : '<span class="row__meta">+' + (d.xp_reward || 0) + ' XP</span>') + '</div>' +
+            '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + esc(d.description || '') + '</p>' +
+            '<div style="height:14px"></div><div class="meter-row"><span class="caption">Progress</span><span class="caption">' + (d.progress || 0) + '/' + (d.target_value || 0) + '</span></div>' +
+            meter(d.target_value ? Math.round((d.progress / d.target_value) * 100) : 0) + '</div></div>'
+        ) : '';
+
+        var missions = (s.missions || []).map(function (m) {
+          var pct = m.target_value ? Math.round((m.progress / m.target_value) * 100) : 0;
+          return '<div class="card">' +
+            '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">' +
+              '<span class="row__title">' + esc(m.title) + '</span>' +
+              (m.completed ? '<span class="pill pill--done">Done</span>' : '<span class="row__meta">+' + (m.reward_xp || 0) + ' XP</span>') + '</div>' +
+            (m.description ? '<p class="row__sub" style="margin-top:6px;text-transform:none;letter-spacing:0">' + esc(m.description) + '</p>' : '') +
+            (m.mission_type ? '<p class="card__eyebrow" style="margin-top:8px">' + esc(String(m.mission_type).replace(/_/g, ' ')) + '</p>' : '') +
+            '<div style="height:12px"></div><div class="meter-row"><span class="caption">' + (m.progress || 0) + '/' + (m.target_value || 0) + '</span><span class="caption">' + pct + '%</span></div>' +
+            meter(pct) + '</div>';
+        }).join('<div style="height:14px"></div>');
+
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div><p class="section-label">Training missions</p><h1 class="h-display">MISS<br />IONS<span class="mark" style="width:42%"></span></h1></div>' +
+          daily +
+          '<div><p class="section-label">All missions</p><div class="stack">' + (missions || '<div class="loading">No missions yet</div>') + '</div></div>';
+      }).catch(function (e) {
+        content.className = 'screen'; content.innerHTML = '<div class="error">' + esc(e.message || 'Could not load missions') + '</div>';
+      });
+    })();
+  </script>
+</body>
+</html>
