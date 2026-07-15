@@ -7,9 +7,14 @@ import { securityHeaders } from '../middleware/security';
 import { errorHandler } from './error-handler';
 import { healthRouter } from '../modules/health/health.routes';
 import { createApiRouter } from '../modules';
+import { mountFrontend } from './static';
 import type { Database } from '../db/types';
 
-export function createApp(db: Database): Express {
+export interface AppOptions {
+  serveFrontend?: boolean;
+}
+
+export function createApp(db: Database, opts: AppOptions = {}): Express {
   const app = express();
 
   app.use(securityHeaders);
@@ -17,6 +22,11 @@ export function createApp(db: Database): Express {
 
   app.use('/health', healthRouter);
   app.use('/api', createApiRouter(db));
+
+  // Serve the web/ frontend (skippable so tests stay API-only).
+  if (opts.serveFrontend !== false) {
+    mountFrontend(app);
+  }
 
   // Error handler must be registered last.
   app.use(errorHandler);
