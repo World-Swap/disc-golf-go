@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Training · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title" id="crumb">Training</span>
+      <a class="pill" href="/training" id="hubLink" hidden>All lessons</a>
+    </header>
+    <div id="content" class="loading">Loading…</div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('training');
+      var esc = DGG.esc, API = DGG.API;
+      var content = document.getElementById('content');
+      var crumb = document.getElementById('crumb');
+      var hubLink = document.getElementById('hubLink');
+
+      function meter(pct) { return '<div class="meter"><div class="meter__fill" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>'; }
+      function q(name) { return new URLSearchParams(location.search).get(name); }
+      function go(params) { location.href = '/training' + (params ? '?' + params : ''); }
+      function fail(e) { content.className = 'screen'; content.innerHTML = '<div class="error">' + esc(e.message || 'Error') + '</div>'; }
+
+      // ── Hub: categories + recommended lesson ──
+      async function renderHub() {
+        crumb.textContent = 'Training'; hubLink.hidden = true;
+        var data = await API.get('/training/categories');
+        var recWrap = '';
+        try {
+          var rec = await API.get('/training/recommendations');
+          var top = (rec.recommendations || []).find(function (r) { return r.type === 'lesson'; });
+          if (top && top.lesson) {
+            recWrap = '<a class="card card--tap" href="/training?cat=' + esc(top.lesson.category_slug) + '&lesson=' + top.lesson.id + '" style="display:block">' +
+              '<p class="card__eyebrow">' + esc(top.reason || 'Recommended') + '</p>' +
+              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px">' +
+                '<span class="h-title">' + esc(top.lesson.title) + '</span><span class="row__meta">+' + (top.lesson.xp_reward || 0) + ' XP</span></div>' +
+              '<p class="row__sub" style="margin-top:8px">' + esc(top.lesson.category_name || '') + ' →</p></a>';
+          }
+        } catch (e) {}
+
+        var cats = (data.categories || []).map(function (c) {
+          var pct = c.lesson_count ? Math.round((c.completed_count / c.lesson_count) * 100) : 0;
+          return '<a class="card card--tap" href="/training?cat=' + esc(c.slug) + '" style="display:block">' +
+            '<div style="display:flex;align-items:center;gap:14px">' +
+              '<span class="row__glyph">' + esc(c.icon || '▤') + '</span>' +
+              '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
+              '<div class="row__sub">' + (c.completed_count || 0) + ' / ' + (c.lesson_count || 0) + ' lessons</div></div>' +
+              '<span class="row__meta">' + pct + '%</span></div>' +
+            '<div style="height:12px"></div>' + meter(pct) + '</a>';
+        }).join('');
+
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div><p class="section-label">Skill up</p><h1 class="h-display">TRAIN<span class="mark" style="width:44%"></span></h1></div>' +
+          recWrap + '<div><p class="section-label">Categories</p><div class="stack">' + cats + '</div></div>';
+      }
+
+      // ── Category: lessons list ──
+      async function renderCategory(slug) {
+        var data = await API.get('/training/categories/' + encodeURIComponent(slug) + '/lessons');
+        crumb.textContent = data.category.name; hubLink.hidden = false;
+        var rows = (data.lessons || []).map(function (l) {
+          return '<a class="row" href="/training?cat=' + esc(slug) + '&lesson=' + l.id + '">' +
+            '<span class="row__glyph">' + (l.completed ? '✓' : '▷') + '</span>' +
+            '<div class="row__body"><div class="row__title">' + esc(l.title) + '</div>' +
+            '<div class="row__sub">' + esc(l.difficulty || '') + ' · +' + (l.xp_reward || 0) + ' XP</div></div>' +
+            (l.completed ? '<span class="pill pill--done">Done</span>' : '<span class="row__meta">›</span>') + '</a>';
+        }).join('');
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div><p class="section-label">' + esc(data.category.skill_level || 'Category') + '</p>' +
+          '<h1 class="h-title">' + esc(data.category.name) + '</h1></div>' +
+          '<div class="rows">' + rows + '</div>';
+      }
+
+      // ── Lesson: content + complete ──
+      async function renderLesson(slug, id) {
+        var l = await API.get('/training/lessons/' + encodeURIComponent(id));
+        crumb.textContent = l.category_name || 'Lesson'; hubLink.hidden = false;
+        var bodyHtml = renderContent(l);
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div><p class="section-label">' + esc(l.category_name || '') + ' · +' + (l.xp_reward || 0) + ' XP</p>' +
+          '<h1 class="h-title">' + esc(l.title) + '</h1></div>' +
+          (l.description ? '<p style="font-family:var(--font-mono);font-size:12px;line-height:1.5;color:var(--color-frost)">' + esc(l.description) + '</p>' : '') +
+          bodyHtml +
+          '<div id="cta"></div>';
+        var cta = document.getElementById('cta');
+        if (l.is_completed) {
+          cta.innerHTML = '<div class="pill pill--done" style="width:100%;justify-content:center;padding:12px">Completed ✓</div>' +
+            (l.next_lesson ? '<a class="btn btn--ghost btn--block" style="margin-top:12px" href="/training?cat=' + esc(slug) + '&lesson=' + l.next_lesson.id + '">Next lesson →</a>' : '');
+        } else {
+          cta.innerHTML = '<button class="btn btn--block" id="done">Mark Complete · +' + (l.xp_reward || 0) + ' XP</button>';
+          document.getElementById('done').addEventListener('click', async function () {
+            var b = this; b.disabled = true; b.textContent = 'Saving…';
+            try {
+              var r = await API.post('/training/completions', { lesson_id: Number(id) });
+              var bonus = r.bonus_xp ? ' (+' + r.bonus_xp + ' bonus)' : '';
+              b.className = 'pill pill--done'; b.style.width = '100%'; b.style.justifyContent = 'center'; b.style.padding = '12px';
+              b.textContent = '+' + (r.xp_awarded || 0) + ' XP' + bonus + ' · Done ✓';
+              if (l.next_lesson) cta.insertAdjacentHTML('beforeend', '<a class="btn btn--ghost btn--block" style="margin-top:12px" href="/training?cat=' + esc(slug) + '&lesson=' + l.next_lesson.id + '">Next lesson →</a>');
+            } catch (ex) { b.disabled = false; b.textContent = 'Retry'; }
+          });
+        }
+      }
+
+      // Basic content_body renderer (tip_card / guide / list / text).
+      function renderContent(l) {
+        var cb = l.content_body;
+        if (!cb) return '';
+        try { if (typeof cb === 'string') cb = JSON.parse(cb); } catch (e) { return '<div class="card"><p style="font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--color-frost)">' + esc(cb) + '</p></div>'; }
+        var out = '';
+        if (Array.isArray(cb.sections)) {
+          out = cb.sections.map(function (s) {
+            return '<div class="card">' + (s.heading ? '<div class="row__title" style="margin-bottom:8px">' + esc(s.heading) + '</div>' : '') +
+              '<p style="font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--color-frost)">' + esc(s.body || s.text || '') + '</p></div>';
+          }).join('<div style="height:14px"></div>');
+        } else if (cb.body || cb.text) {
+          out = '<div class="card"><p style="font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--color-frost)">' + esc(cb.body || cb.text) + '</p></div>';
+        } else if (Array.isArray(cb.tips || cb.points)) {
+          out = '<div class="rows">' + (cb.tips || cb.points).map(function (t) { return '<div class="row"><span class="row__glyph">·</span><div class="row__body"><div class="row__sub" style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--color-frost)">' + esc(t) + '</div></div></div>'; }).join('') + '</div>';
+        }
+        return out;
+      }
+
+      var lesson = q('lesson'), cat = q('cat');
+      var view = lesson ? renderLesson(cat, lesson) : cat ? renderCategory(cat) : renderHub();
+      Promise.resolve(view).catch(fail);
+    })();
+  </script>
+</body>
+</html>

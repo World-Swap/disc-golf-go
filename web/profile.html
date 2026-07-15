@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Profile · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title">Profile</span>
+      <button class="pill" id="logout">Log out</button>
+    </header>
+    <div id="content" class="loading">Loading…</div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('profile');
+      var esc = DGG.esc, API = DGG.API;
+      var content = document.getElementById('content');
+      document.getElementById('logout').addEventListener('click', function () { DGG.logout(); });
+
+      function meter(pct) { return '<div class="meter"><div class="meter__fill" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>'; }
+
+      API.get('/players/me').then(function (p) {
+        var tier = (p.skill_tier && p.skill_tier.title) || 'Rookie';
+        var tierPct = (p.skill_tier_progress && p.skill_tier_progress.pct) || 0;
+        var ts = p.training_stats || {};
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div>' +
+            '<p class="section-label">' + esc(tier) + ' · ' + esc(p.level_title || '') + '</p>' +
+            '<h1 class="h-display">' + esc((p.display_name || 'Player').toUpperCase()) + '<span class="mark" style="width:40%"></span></h1>' +
+            (p.username ? '<p class="row__sub" style="margin-top:8px">@' + esc(p.username) + '</p>' : '') +
+          '</div>' +
+
+          '<div>' +
+            '<div class="meter-row"><span class="caption">' + esc(tier) + ' tier</span><span class="caption">' + tierPct + '%</span></div>' +
+            meter(tierPct) +
+          '</div>' +
+
+          '<div class="stats">' +
+            '<div class="stat"><div class="stat__num">' + (p.level || 1) + '</div><div class="stat__label">Level</div></div>' +
+            '<div class="stat"><div class="stat__num">' + (p.gold || 0) + '</div><div class="stat__label">Gold</div></div>' +
+            '<div class="stat"><div class="stat__num">' + (p.badge_count || 0) + '</div><div class="stat__label">Badges</div></div>' +
+          '</div>' +
+
+          '<div>' +
+            '<p class="section-label">Training</p>' +
+            '<div class="card">' +
+              '<div class="meter-row"><span class="caption">' + (ts.lessons_completed || 0) + ' of ' + (ts.total_lessons || 0) + ' lessons</span>' +
+              '<span class="caption">' + (ts.categories_mastered || 0) + ' mastered</span></div>' +
+              meter(ts.total_lessons ? Math.round((ts.lessons_completed / ts.total_lessons) * 100) : 0) +
+            '</div>' +
+          '</div>' +
+
+          '<div class="stats">' +
+            '<div class="stat"><div class="stat__num">' + (ts.training_streak_days || 0) + '</div><div class="stat__label">Streak</div></div>' +
+            '<div class="stat"><div class="stat__num">' + (p.best_streak || 0) + '</div><div class="stat__label">Best</div></div>' +
+            '<div class="stat"><div class="stat__num">' + ((p.stats && p.stats.total_checkins) || 0) + '</div><div class="stat__label">Check-ins</div></div>' +
+          '</div>' +
+
+          '<div>' +
+            '<p class="section-label">Account</p>' +
+            '<div class="rows">' +
+              '<a class="row" href="/settings"><span class="row__glyph">⚙</span><div class="row__body"><div class="row__title">Notification settings</div></div><span class="row__meta">›</span></a>' +
+              '<a class="row" href="/vault"><span class="row__glyph">◈</span><div class="row__body"><div class="row__title">Vault &amp; inventory</div></div><span class="row__meta">›</span></a>' +
+              '<a class="row" href="/delete-account"><span class="row__glyph">⊘</span><div class="row__body"><div class="row__title">Delete account</div></div><span class="row__meta">›</span></a>' +
+            '</div>' +
+          '</div>';
+      }).catch(function (e) {
+        content.className = 'screen'; content.innerHTML = '<div class="error">' + esc(e.message || 'Could not load profile') + '</div>';
+      });
+    })();
+  </script>
+</body>
+</html>
