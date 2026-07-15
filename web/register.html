@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Create Account · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <div class="auth">
+      <h1 class="h-display">NEW<br />PLAYER<span class="mark" style="width:46%"></span></h1>
+      <p class="caption" style="margin:16px 0 32px">Season 02 · 3,550 courses</p>
+
+      <div class="error" id="err"></div>
+
+      <form id="form" autocomplete="on">
+        <label class="field">
+          <span class="field__label">Display name</span>
+          <input class="input" name="display_name" required maxlength="30" placeholder="Sky Hyzer" />
+        </label>
+        <label class="field">
+          <span class="field__label">Username</span>
+          <input class="input" name="username" required pattern="[a-zA-Z0-9_]{3,20}" placeholder="skyhyzer" autocapitalize="none" />
+        </label>
+        <label class="field">
+          <span class="field__label">Email</span>
+          <input class="input" type="email" name="email" inputmode="email" autocomplete="email" required placeholder="you@email.com" />
+        </label>
+        <label class="field">
+          <span class="field__label">Password · 8+ characters</span>
+          <input class="input" type="password" name="password" autocomplete="new-password" required minlength="8" placeholder="••••••••" />
+        </label>
+        <button class="btn btn--block" type="submit" id="submit">Create Account</button>
+      </form>
+
+      <p class="formnote">Already have an account? <a href="/login">Log in</a></p>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      var form = document.getElementById('form');
+      var err = document.getElementById('err');
+      var submit = document.getElementById('submit');
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        err.textContent = '';
+        submit.disabled = true;
+        submit.textContent = 'Creating…';
+        try {
+          var fd = new FormData(form);
+          var body = {
+            display_name: fd.get('display_name'),
+            username: fd.get('username'),
+            email: fd.get('email'),
+            password: fd.get('password'),
+          };
+          var ref = new URLSearchParams(location.search).get('ref');
+          if (ref) body.referral_code = ref;
+          var res = await DGG.API.post('/auth/signup', body);
+          DGG.API.setToken(res.token);
+          if (ref) { try { await DGG.API.post('/referrals/claim', { code: ref }); } catch (e2) {} }
+          location.replace('/onboard');
+        } catch (ex) {
+          err.textContent = ex.message || 'Could not create account';
+          submit.disabled = false;
+          submit.textContent = 'Create Account';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

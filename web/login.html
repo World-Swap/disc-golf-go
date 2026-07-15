@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Log In · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <div class="auth">
+      <h1 class="h-display">LOG<br />IN<span class="mark" style="width:30%"></span></h1>
+      <p class="caption" style="margin:16px 0 32px">Train · Play · Level up</p>
+
+      <div class="error" id="err"></div>
+
+      <form id="form" autocomplete="on">
+        <label class="field">
+          <span class="field__label">Email</span>
+          <input class="input" type="email" name="email" inputmode="email" autocomplete="email" required placeholder="you@email.com" />
+        </label>
+        <label class="field">
+          <span class="field__label">Password</span>
+          <input class="input" type="password" name="password" autocomplete="current-password" required placeholder="••••••••" />
+        </label>
+        <button class="btn btn--block" type="submit" id="submit">Log In</button>
+      </form>
+
+      <button class="btn btn--ghost btn--block" id="guest" style="margin-top:12px">Play as Guest</button>
+
+      <p class="formnote">
+        <a href="/forgot-password">Forgot password?</a>
+        &nbsp;·&nbsp;
+        New here? <a href="/register">Create account</a>
+      </p>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      var form = document.getElementById('form');
+      var err = document.getElementById('err');
+      var submit = document.getElementById('submit');
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        err.textContent = '';
+        submit.disabled = true;
+        submit.textContent = 'Signing in…';
+        try {
+          var fd = new FormData(form);
+          var res = await DGG.API.post('/auth/login', { email: fd.get('email'), password: fd.get('password') });
+          DGG.API.setToken(res.token);
+          location.replace('/home');
+        } catch (ex) {
+          err.textContent = ex.message || 'Login failed';
+          submit.disabled = false;
+          submit.textContent = 'Log In';
+        }
+      });
+
+      document.getElementById('guest').addEventListener('click', async function () {
+        err.textContent = '';
+        try {
+          var res = await DGG.API.post('/auth/guest', {});
+          DGG.API.setToken(res.token);
+          if (res.player && res.player.player_uuid) DGG.API.setGuest(res.player.player_uuid);
+          location.replace('/home');
+        } catch (ex) {
+          err.textContent = ex.message || 'Could not start guest session';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

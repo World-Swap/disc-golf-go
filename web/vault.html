@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vault · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+  <style>
+    .segbar { display:flex; gap:1px; background:var(--hair); border:1px solid var(--hair); border-radius:var(--radius-sm); overflow:hidden; }
+    .seg { flex:1; background:var(--color-void); color:var(--color-ash); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; text-transform:uppercase; padding:10px 4px; text-align:center; border:none; }
+    .seg[aria-selected="true"] { background:var(--color-charcoal); color:var(--color-bone); }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title">Vault</span>
+      <a class="pill" href="/shop" id="gold">— G</a>
+    </header>
+    <div class="screen stack">
+      <div><h1 class="h-display">VAULT<span class="mark" style="width:38%"></span></h1></div>
+      <div class="segbar" id="tabs">
+        <button class="seg" data-tab="library" aria-selected="true">My Library</button>
+        <button class="seg" data-tab="bonus">Bonus</button>
+      </div>
+      <div id="view" class="loading">Loading…</div>
+    </div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('vault');
+      var esc = DGG.esc, API = DGG.API;
+      var view = document.getElementById('view');
+
+      document.getElementById('tabs').addEventListener('click', function (e) {
+        var b = e.target.closest('.seg'); if (!b) return;
+        [].forEach.call(this.children, function (c) { c.setAttribute('aria-selected', c === b ? 'true' : 'false'); });
+        b.getAttribute('data-tab') === 'bonus' ? loadBonus() : loadLibrary();
+      });
+
+      function loading() { view.className = 'loading'; view.textContent = 'Loading…'; }
+      function fail(e) { view.className = 'screen'; view.innerHTML = '<div class="error">' + esc(e.message || 'Error') + '</div>'; }
+
+      async function loadLibrary() {
+        loading();
+        try {
+          var d = await API.get('/vault/library');
+          var cats = (d.categories || []);
+          if (!cats.length) { view.className = ''; view.innerHTML = '<div class="loading">Complete lessons to unlock videos &amp; resources in your library.</div>'; return; }
+          view.className = 'stack';
+          view.innerHTML = cats.map(function (c) {
+            var lessons = (c.lessons || []).map(function (l) {
+              return '<a class="row" href="' + esc(l.youtube_url || '#') + '" target="_blank" rel="noopener">' +
+                '<span class="row__glyph">▷</span><div class="row__body"><div class="row__title">' + esc(l.youtube_title || l.title) + '</div>' +
+                (l.youtube_channel ? '<div class="row__sub">' + esc(l.youtube_channel) + '</div>' : '') + '</div><span class="row__meta">Watch</span></a>';
+            }).join('');
+            return '<div><p class="section-label">' + esc(c.icon || '') + ' ' + esc(c.name) + '</p><div class="rows">' + lessons + '</div></div>';
+          }).join('');
+        } catch (e) { fail(e); }
+      }
+
+      async function loadBonus() {
+        loading();
+        try {
+          var d = await API.get('/vault/bonus');
+          if (d.gold_balance != null) document.getElementById('gold').textContent = d.gold_balance + ' G';
+          view.className = 'stack';
+          view.innerHTML = (d.items || []).map(function (it) {
+            return '<div class="card">' +
+              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">' +
+                '<span class="row__title">' + esc(it.icon || '') + ' ' + esc(it.name) + '</span>' +
+                (it.purchased ? '<span class="pill pill--done">Owned</span>' : '<span class="row__meta">' + (it.gold_cost || 0) + ' G</span>') + '</div>' +
+              '<p class="card__eyebrow" style="margin-top:8px">' + esc(it.type_label || '') + (it.instructor_name ? ' · ' + esc(it.instructor_name) : '') + '</p>' +
+              (it.description ? '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + esc(it.description) + '</p>' : '') +
+              (it.purchased && it.youtube_url ? '<a class="btn btn--ghost btn--block" style="margin-top:14px" href="' + esc(it.youtube_url) + '" target="_blank" rel="noopener">Watch →</a>' : '') +
+              '</div>';
+          }).join('<div style="height:14px"></div>') || '<div class="loading">No bonus content yet</div>';
+        } catch (e) { fail(e); }
+      }
+
+      loadLibrary();
+    })();
+  </script>
+</body>
+</html>

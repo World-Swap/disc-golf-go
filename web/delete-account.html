@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Delete Account · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar"><a class="topbar__title" href="/profile">‹ Profile</a></header>
+    <div class="screen stack">
+      <div><h1 class="h-title">Delete account</h1></div>
+      <div class="card"><p style="font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--color-frost)">
+        This permanently deletes your account and all associated data — XP, gold, badges, training progress, check-ins. <strong style="color:var(--color-bone)">This cannot be undone.</strong>
+      </p></div>
+      <div class="error" id="err"></div>
+      <label class="field"><span class="field__label">Type your username to confirm</span>
+        <input class="input" id="confirm" placeholder="username" autocapitalize="none" /></label>
+      <button class="btn btn--block" id="del">Permanently Delete Account</button>
+      <p class="formnote"><a href="/profile">Never mind, go back</a></p>
+    </div>
+    <nav id="tabbar"></nav>
+  </main>
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('profile');
+      var API = DGG.API, err = document.getElementById('err');
+      document.getElementById('del').addEventListener('click', async function () {
+        err.textContent = '';
+        var confirm = document.getElementById('confirm').value.trim();
+        if (!window.confirm('Delete your account permanently? This cannot be undone.')) return;
+        this.disabled = true; this.textContent = 'Deleting…';
+        try {
+          await API.del('/delete-account' + (confirm ? '?confirm_username=' + encodeURIComponent(confirm) : ''));
+          DGG.logout();
+        } catch (ex) { err.textContent = ex.message || 'Could not delete account'; this.disabled = false; this.textContent = 'Permanently Delete Account'; }
+      });
+    })();
+  </script>
+</body>
+</html>

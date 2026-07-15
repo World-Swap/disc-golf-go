@@ -25,3 +25,9 @@ shell-snapshots/
 statsig/
 todos/
 *.jsonl
+
+# TypeScript build output
+dist/
+
+# local static preview server
+web/.serve.cjs
