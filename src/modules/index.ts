@@ -45,6 +45,8 @@ import { createDeleteAccountRouter } from './delete-account/delete-account.route
 import { createReferralsService } from './referrals/referrals.service';
 import { createReferralsRouter } from './referrals/referrals.routes';
 import { createNotificationsRouter } from './notifications/notifications.routes';
+import { createAdminService } from './admin/admin.service';
+import { createAdminRouter } from './admin/admin.routes';
 
 export function createApiRouter(db: Database): Router {
   const api = Router();
@@ -91,8 +93,7 @@ export function createApiRouter(db: Database): Router {
   api.use(createDeleteAccountRouter(createDeleteAccountService({ db }), auth));
   api.use(createReferralsRouter(createReferralsService(db), auth));
   api.use(createNotificationsRouter(db, auth));
-
-  // Last module: admin ...
+  api.use(createAdminRouter(createAdminService({ db })));
 
   return api;
 }
