@@ -29,10 +29,10 @@ const CADENCE_GOLD: Record<string, GoldEvent> = {
 
 function zeroBadgeStats(challengesCompleted: number): BadgeStats {
   return {
-    uniqueCourses: 0, totalCheckins: 0, totalRounds: 0, challengesCompleted,
+    uniqueCourses: 0, totalRounds: 0, challengesCompleted,
     battleWins: 0, bestStreak: 0, uniqueOpponents: 0, uniqueStates: 0,
     maxSameCourseVisits: 0, weekendRounds: 0, nightCheckins: 0, morningCheckins: 0,
-    weatherCheckins: 0, trailblazerCourses: 0, seasonsPlayed: 0, completedCities: 0,
+    weatherCheckins: 0, trailblazerCourses: 0, seasonsPlayed: 0, completedCities: 0, completedStates: 0,
   };
 }
 

@@ -40,10 +40,10 @@ export async function grantXp(
   metadata: Record<string, unknown> = {},
   activeBoosts: BoostRow[] | null = null
 ): Promise<XpGrant> {
-  const baseAmount = XP_EVENTS[eventType];
+  const baseAmount: number = XP_EVENTS[eventType];
   if (baseAmount == null) throw new Error(`Unknown XP event: ${eventType}`);
 
-  let finalAmount = baseAmount;
+  let finalAmount: number = baseAmount;
   let boostPercent = 0;
   let boostLabel: string | null = null;
 

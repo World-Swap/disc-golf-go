@@ -179,7 +179,6 @@ export function createCheckinsRepo(db: Database) {
 
       return {
         uniqueCourses: parseInt(bsr.unique_courses!, 10),
-        totalCheckins: parseInt(bsr.total_checkins!, 10),
         totalRounds: parseInt(pf.total_rounds, 10),
         challengesCompleted,
         battleWins: parseInt(pf.battle_wins, 10),

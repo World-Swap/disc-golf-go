@@ -21,7 +21,7 @@ export async function uploadImage({ buffer, filename, contentType }: UploadInput
   if (!apiKey) throw new Error('File storage not configured');
 
   const form = new FormData();
-  form.append('file', new Blob([buffer], { type: contentType }), filename);
+  form.append('file', new Blob([new Uint8Array(buffer)], { type: contentType }), filename);
 
   const res = await fetch(R2_ENDPOINT, {
     method: 'POST',
