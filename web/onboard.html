@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Welcome · Disc Golf Go</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+  <link rel="stylesheet" href="/styles/app-ui.css" />
+</head>
+<body>
+  <main class="app">
+    <div class="auth">
+      <p class="caption" style="margin-bottom:16px">Welcome to Disc Golf Go</p>
+      <h1 class="h-display">HAVE<br />YOU<br />PLAYED?<span class="mark" style="width:52%"></span></h1>
+      <p class="row__sub" style="margin:16px 0 32px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--color-frost)">We'll tailor your training path.</p>
+
+      <div class="error" id="err"></div>
+      <button class="btn btn--block" data-exp="new">I'm new to disc golf</button>
+      <button class="btn btn--ghost btn--block" style="margin-top:12px" data-exp="experienced">I've played before</button>
+      <p class="formnote"><a href="#" id="skip">Skip for now</a></p>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      var API = DGG.API, err = document.getElementById('err');
+      try { API.post('/onboarding/event', { event_type: 'onboard_loaded', guest_uuid: API.guestUuid() }); } catch (e) {}
+
+      async function finish(exp) {
+        err.textContent = '';
+        try {
+          if (exp) await API.put('/onboarding/experience', { experience_level: exp });
+          await API.post('/onboarding/complete', {});
+          location.replace('/home');
+        } catch (ex) { err.textContent = ex.message || 'Something went wrong'; }
+      }
+
+      document.querySelectorAll('[data-exp]').forEach(function (b) {
+        b.addEventListener('click', function () { b.disabled = true; finish(this.getAttribute('data-exp')); });
+      });
+      document.getElementById('skip').addEventListener('click', function (e) { e.preventDefault(); finish(null); });
+    })();
+  </script>
+</body>
+</html>
