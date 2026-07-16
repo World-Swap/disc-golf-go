@@ -21,6 +21,19 @@ export function createApp(db: Database, opts: AppOptions = {}): Express {
   app.use(express.json({ limit: '1mb' }));
 
   app.use('/health', healthRouter);
+
+  // Temporary DB diagnostic — surfaces the exact connection error in the browser
+  // so we can pinpoint a Neon/DATABASE_URL problem without Render log access.
+  app.get('/health/db', async (_req, res) => {
+    try {
+      const r = await db.query<{ ok: number; now: Date }>('SELECT 1 AS ok, NOW() AS now');
+      res.json({ db: 'ok', now: r.rows[0]?.now });
+    } catch (err) {
+      const e = err as Error & { code?: string };
+      res.status(500).json({ db: 'error', code: e.code ?? null, message: e.message });
+    }
+  });
+
   app.use('/api', createApiRouter(db));
 
   // Serve the web/ frontend (skippable so tests stay API-only).
