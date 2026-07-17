@@ -5,6 +5,14 @@
 // some read/delete paths still reference them.
 
 export const SCHEMA_SQL = `
+-- ── seed bookkeeping ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS seed_meta (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  content_version INTEGER NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT seed_meta_singleton CHECK (id = 1)
+);
+
 -- ── identity ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS players (
   id SERIAL PRIMARY KEY,
