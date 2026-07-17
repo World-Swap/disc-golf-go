@@ -6,7 +6,8 @@
 :root {
   --hair: rgba(229, 229, 229, 0.12);
   --hair-strong: rgba(229, 229, 229, 0.22);
-  --frost-fill: rgba(255, 255, 255, 0.035);
+  --frost-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022));
+  --frost-edge: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --tabbar-h: 60px;
 }
 
@@ -17,6 +18,20 @@
   min-height: 100svh;
   padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 30px);
   position: relative;
+  isolation: isolate;
+}
+/* Dusk spotlight — a violet→cobalt glow behind each screen's hero, fading into
+   the void. The only chroma in the app shell; UI controls stay achromatic. */
+.app::before {
+  content: '';
+  position: fixed;
+  top: -60px; left: 50%; transform: translateX(-50%);
+  width: min(560px, 130%); height: 440px;
+  pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(58% 100% at 72% 0%, rgba(107, 98, 242, 0.26), transparent 68%),
+    radial-gradient(64% 100% at 22% 6%, rgba(46, 82, 200, 0.20), transparent 70%);
+  filter: blur(4px);
 }
 
 /* Top bar */
@@ -42,10 +57,10 @@
 .h-title { font-family: var(--font-display); font-weight: var(--weight-medium); font-size: 22px; line-height: 1.15; letter-spacing: -0.02em; color: var(--color-bone); }
 .mark { height: 1px; width: 40%; background: var(--hair-strong); margin-top: 8px; }
 
-/* Cards — frosted glass over the void */
-.card { background: var(--frost-fill); border: 1px solid var(--hair); border-radius: var(--radius-lg); padding: var(--card-padding); }
-.card--tap { transition: border-color 140ms ease, background 140ms ease; }
-.card--tap:active { border-color: var(--hair-strong); background: rgba(255, 255, 255, 0.06); }
+/* Cards — frosted glass over the void, edge-lit for depth */
+.card { background: var(--frost-fill); border: 1px solid var(--hair); border-radius: var(--radius-lg); padding: var(--card-padding); box-shadow: var(--frost-edge); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.card--tap { transition: border-color 140ms ease, box-shadow 140ms ease; }
+.card--tap:active { border-color: var(--hair-strong); box-shadow: var(--frost-edge), 0 0 0 1px rgba(255, 255, 255, 0.05); }
 .card__eyebrow { font-family: var(--font-display); font-size: 11px; font-weight: var(--weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ash); }
 
 /* Stat tiles */
@@ -61,7 +76,7 @@
 .meter-row .caption { color: var(--color-ash); }
 
 /* List rows — frosted panel with hairline separators */
-.rows { background: var(--frost-fill); border: 1px solid var(--hair); border-radius: var(--radius-lg); overflow: hidden; }
+.rows { background: var(--frost-fill); border: 1px solid var(--hair); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--frost-edge); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .row { display: flex; align-items: center; gap: 14px; padding: 15px var(--card-padding); border-top: 1px solid var(--hair); min-height: 56px; }
 .row:first-child { border-top: none; }
 .row__body { flex: 1; min-width: 0; }

@@ -117,21 +117,35 @@ button { font: inherit; color: inherit; cursor: pointer; }
   overflow: hidden;
   background: var(--color-void);
 }
-/* Quiet dusk atmosphere — a single soft graphite wash, no chroma. */
+/* Signature "dusk horizon" hero — warm amber/coral (left) bleeding into cobalt
+   blue (right), with a single violet radial spotlight. The one place chromatic
+   color appears; everything below stays achromatic. */
 .section__art {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(120% 90% at 78% 12%, rgba(255, 255, 255, 0.05), transparent 55%),
-    radial-gradient(140% 120% at 18% 100%, rgba(255, 255, 255, 0.03), transparent 60%),
+    radial-gradient(64% 74% at 82% 24%, rgba(107, 98, 242, 0.34), transparent 60%),
+    linear-gradient(118deg,
+      rgba(247, 148, 74, 0.34) 0%,
+      rgba(219, 112, 92, 0.24) 26%,
+      rgba(120, 86, 196, 0.20) 55%,
+      rgba(42, 74, 198, 0.36) 82%,
+      rgba(12, 20, 66, 0.30) 100%),
     var(--color-void);
+}
+/* Soft fade into the void so the gradient reads as a horizon, not a block. */
+.section__art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(10, 10, 10, 0.55) 72%, var(--color-void) 100%);
 }
 .section__art::after {
   content: '';
   position: absolute;
-  left: 0; right: 0; bottom: 34%;
+  left: 0; right: 0; bottom: 30%;
   height: 1px;
-  background: linear-gradient(90deg, rgba(229, 229, 229, 0.22), transparent 60%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent 60%);
 }
 
 .section__overlay {
