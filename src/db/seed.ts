@@ -8,9 +8,9 @@ import { CATEGORIES, LESSONS } from './data/lessons';
 import { COURSES } from './data/courses';
 
 // Bump when the seeded content below changes so a deploy re-seeds. v1 was the
-// initial placeholder (6 categories / 24 lessons / 5 courses); v2 is the full
-// legacy library (7 categories / 71 lessons / 671 courses).
-export const CONTENT_VERSION = 2;
+// initial placeholder; v2 the full legacy library (71 lessons / 671 courses);
+// v3 expands courses to 1,900+ (curated set + all named US courses from OSM).
+export const CONTENT_VERSION = 3;
 
 // Clears the content tables before a re-seed (leaves players/progress intact).
 // No FK constraints reference these, so order is not significant.
@@ -89,12 +89,21 @@ export async function seedDatabase(client: PoolClient): Promise<void> {
     }
   }
 
-  // ── courses ──
-  for (const c of COURSES) {
+  // ── courses (batched multi-row insert; ~1,900 rows) ──
+  const BATCH = 150;
+  for (let i = 0; i < COURSES.length; i += BATCH) {
+    const slice = COURSES.slice(i, i + BATCH);
+    const params: unknown[] = [];
+    const rows = slice.map((c, j) => {
+      const b = j * 8;
+      params.push(c.name, c.city, c.state, c.lat, c.lng, c.holes, c.par, c.difficulty);
+      // country / hole_count / is_active are constant or mirror `holes`.
+      return `($${b + 1}, $${b + 2}, $${b + 3}, 'US', $${b + 4}, $${b + 5}, $${b + 6}, $${b + 6}, $${b + 7}, $${b + 8}, TRUE)`;
+    });
     await client.query(
       `INSERT INTO courses (name, city, state, country, lat, lng, holes, hole_count, par, difficulty, is_active)
-       VALUES ($1, $2, $3, 'US', $4, $5, $6, $6, $7, $8, TRUE)`,
-      [c.name, c.city, c.state, c.lat, c.lng, c.holes, c.par, c.difficulty]
+       VALUES ${rows.join(', ')}`,
+      params
     );
   }
 
