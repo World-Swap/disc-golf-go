@@ -3,84 +3,130 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Disc Golf Go</title>
-  <meta name="theme-color" content="#000000" />
+  <title>Disc Golf Go — Train like a pro, lower your score</title>
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="description" content="The disc golf training app: 71 pro-coached video lessons, 671 courses, XP, missions and ranks. Turn range reps into lower scores." />
   <link rel="stylesheet" href="/styles/tokens.css" />
   <link rel="stylesheet" href="/styles/app.css" />
 </head>
 <body>
-  <!-- Transparent sticky nav overlaid on the scene -->
+  <!-- Floating frosted nav -->
   <nav class="nav">
     <a class="logo" href="/">
       <span class="logo__glyph" aria-hidden="true"></span>
       DISCGOLFGO
     </a>
     <div class="nav__links">
-      <a class="nav__link" href="/register">Training</a>
-      <a class="nav__link" href="/register">Ranks</a>
-      <a class="nav__link" href="/register">Vault</a>
+      <a class="nav__link" href="#learn">Training</a>
+      <a class="nav__link" href="#play">Courses</a>
+      <a class="nav__link" href="#levelup">Level Up</a>
     </div>
     <a class="btn" href="/login">Log In</a>
   </nav>
 
-  <!-- Scene 01 — hero -->
-  <section class="section">
-    <div class="section__art" aria-hidden="true"></div>
-    <div class="section__overlay">
-      <p class="eyebrow">Season 02 · 3,550 courses live</p>
-      <h1 class="stacked">
-        <span class="stacked__line" style="--mark:40%">DISC</span>
-        <span class="stacked__line" style="--mark:54%">GOLF</span>
-        <span class="stacked__line" style="--mark:26%">GO</span>
-      </h1>
-      <p class="subtitle">Train. Play. Level up.</p>
-      <div class="overlay__cta">
-        <a class="btn" href="/register">Get Started</a>
-        <a class="btn btn--ghost" href="/register">Create Account</a>
+  <!-- Status banner -->
+  <div class="banner-wrap">
+    <span class="banner">
+      <span aria-hidden="true">✦</span>
+      <b>71 pro lessons</b> <span class="dot">·</span> <b>671 courses</b> <span class="dot">·</span> free to play
+    </span>
+  </div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="hero__inner">
+      <div class="hero__lead">
+        <p class="eyebrow">Train like a pro · Play anywhere</p>
+        <h1 class="stacked">
+          <span class="stacked__line" style="--mark:40%">DISC</span>
+          <span class="stacked__line" style="--mark:54%">GOLF</span>
+          <span class="stacked__line" style="--mark:26%">GO</span>
+        </h1>
+        <p class="hero__sub">The training app that turns range reps into lower scores — coached by the pros, built to level up with you.</p>
+
+        <ul class="bullets">
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▷</span><div><b>Learn from the pros</b> — <span>71 video lessons from Gannon Buhr, PDGA, Latitude 64 &amp; more</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◆</span><div><b>7 skill paths</b> — <span>form, putting, disc selection, mental game, fitness &amp; more</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 671 courses and apply your training on the ground</span></div></li>
+        </ul>
+
+        <div class="hero__cta">
+          <a class="btn btn--lg" href="/register">Start Training — Free</a>
+          <a class="btn btn--ghost btn--lg" href="/login">Log In</a>
+        </div>
       </div>
     </div>
-    <div class="scene-meta">
-      <p class="caption">Scene 01 / GPS-gated rounds</p>
+  </header>
+
+  <main class="land">
+    <!-- Skill paths -->
+    <section class="sect" id="learn">
+      <div class="sect__head">
+        <p class="sect__eyebrow">The curriculum</p>
+        <h2 class="sect__title">Seven skill paths, 71 coached lessons.</h2>
+        <p class="sect__lede">Every lesson pairs a pro instructional video with the key takeaways and a companion guide — from your first grip to tournament nerves.</p>
+      </div>
+      <div class="numlist">
+        <div class="numrow"><div><div class="numrow__name">Form &amp; Technique</div><div class="numrow__meta">Grip, stance, reach-back, release</div></div><span class="numrow__num">12 · 01</span></div>
+        <div class="numrow"><div><div class="numrow__name">Course Strategy</div><div class="numrow__meta">Management, risk/reward, reading wind</div></div><span class="numrow__num">16 · 02</span></div>
+        <div class="numrow"><div><div class="numrow__name">Mental Game</div><div class="numrow__meta">Routine, focus, composure under pressure</div></div><span class="numrow__num">12 · 03</span></div>
+        <div class="numrow"><div><div class="numrow__name">Disc Selection</div><div class="numrow__meta">Flight numbers, stability, building a bag</div></div><span class="numrow__num">9 · 04</span></div>
+        <div class="numrow"><div><div class="numrow__name">Rules &amp; Etiquette</div><div class="numrow__meta">OB relief, lie marking, pace of play</div></div><span class="numrow__num">8 · 05</span></div>
+        <div class="numrow"><div><div class="numrow__name">Fitness &amp; Warmup</div><div class="numrow__meta">Mobility, power, injury prevention</div></div><span class="numrow__num">7 · 06</span></div>
+        <div class="numrow"><div><div class="numrow__name">Tournament &amp; Competition</div><div class="numrow__meta">Prep, nerves, competitive bag setup</div></div><span class="numrow__num">7 · 07</span></div>
+      </div>
+    </section>
+
+    <!-- Feature cards -->
+    <section class="sect" id="levelup">
+      <div class="sect__head">
+        <p class="sect__eyebrow">How it works</p>
+        <h2 class="sect__title">A game that rewards getting better.</h2>
+      </div>
+      <div class="fgrid">
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">▷</div>
+          <h3 class="fcard__title">Watch &amp; learn</h3>
+          <p class="fcard__body">Real coaching from disc golf's best. Every lesson links the pro video, the core tips, and a guide to go deeper.</p>
+        </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">▲</div>
+          <h3 class="fcard__title">Earn XP &amp; missions</h3>
+          <p class="fcard__body">Complete lessons and daily challenges to earn XP and gold, rise through skill tiers, and unlock the vault.</p>
+        </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">◎</div>
+          <h3 class="fcard__title">Apply it on course</h3>
+          <p class="fcard__body">Check in at 671 real courses across the country and put your training to work where it counts.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="sect" id="play">
+      <div class="statsband">
+        <div class="statbig"><div class="statbig__n">71</div><div class="statbig__l">Pro-coached lessons</div></div>
+        <div class="statbig"><div class="statbig__n">671</div><div class="statbig__l">Courses to check in at</div></div>
+        <div class="statbig"><div class="statbig__n">7</div><div class="statbig__l">Skill paths to master</div></div>
+        <div class="statbig"><div class="statbig__n">Free</div><div class="statbig__l">To start playing</div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Final CTA -->
+  <section class="cta-final">
+    <h2 class="sect__title">Ready to level up your game?</h2>
+    <div class="hero__cta" style="justify-content:center">
+      <a class="btn btn--lg" href="/register">Start Training — Free</a>
+      <a class="btn btn--ghost btn--lg" href="/login">Log In</a>
     </div>
   </section>
 
-  <!-- Scene 02 — check-in -->
-  <section class="section">
-    <div class="section__art" aria-hidden="true"></div>
-    <div class="section__overlay">
-      <p class="eyebrow">Physically at the course</p>
-      <h1 class="stacked">
-        <span class="stacked__line" style="--mark:48%">CHECK</span>
-        <span class="stacked__line" style="--mark:32%">IN</span>
-      </h1>
-      <p class="subtitle">Earn XP, gold &amp; badges on the ground.</p>
-      <div class="overlay__cta">
-        <a class="btn" href="/register">Start Training</a>
-      </div>
-    </div>
-    <div class="scene-meta">
-      <p class="caption">Scene 02 / 800m radius</p>
-    </div>
-  </section>
-
-  <!-- Scene 03 — ranks -->
-  <section class="section">
-    <div class="section__art" aria-hidden="true"></div>
-    <div class="section__overlay">
-      <p class="eyebrow">Rookie → Pro</p>
-      <h1 class="stacked">
-        <span class="stacked__line" style="--mark:44%">CLIMB</span>
-        <span class="stacked__line" style="--mark:56%">THE</span>
-        <span class="stacked__line" style="--mark:30%">RANKS</span>
-      </h1>
-      <p class="subtitle">Skill tiers &amp; weekly leaderboards.</p>
-      <div class="overlay__cta">
-        <a class="btn" href="/register">See Rankings</a>
-      </div>
-    </div>
-    <div class="scene-meta">
-      <p class="caption">Scene 03 / Season 02</p>
-    </div>
-  </section>
+  <footer class="foot">
+    <span>Disc Golf Go</span>
+    <span>Train. Play. Level up.</span>
+  </footer>
 </body>
 </html>
