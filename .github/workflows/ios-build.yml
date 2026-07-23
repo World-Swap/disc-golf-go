@@ -215,7 +215,36 @@ jobs:
           </plist>
           EOF
 
-      # ── 7. Build Xcode archive ────────────────────────────────────────────
+      # ── 7a. Scope manual signing to the App target only ──────────────────
+      # Passing signing settings on the xcodebuild CLI applies them to every
+      # target, including the CocoaPods framework targets, which reject a
+      # provisioning profile. Bake signing into the App target's build config
+      # instead (Pods keep the no-signing settings from the Podfile hook).
+      - name: Configure App target signing
+        run: |
+          python3 - <<'PY'
+          import os, re
+          p = "ios/App/App.xcodeproj/project.pbxproj"
+          s = open(p).read()
+          team = os.environ["TEAM_ID"]; uuid = os.environ["PROFILE_UUID"]; ident = os.environ["SIGN_IDENTITY"]
+          keys = ["CODE_SIGN_STYLE", "DEVELOPMENT_TEAM", "PROVISIONING_PROFILE_SPECIFIER", "PROVISIONING_PROFILE", "CODE_SIGN_IDENTITY"]
+          def patch(m):
+              b = m.group(0)
+              for k in keys:
+                  b = re.sub(r'\n\t+"?' + k + r'"?(\[[^\]]*\])?\s*=[^;]*;', '', b)
+              inj = ('\n\t\t\t\tCODE_SIGN_STYLE = Manual;'
+                     f'\n\t\t\t\tDEVELOPMENT_TEAM = {team};'
+                     f'\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{uuid}";'
+                     f'\n\t\t\t\t"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "{ident}";')
+              return b.replace('PRODUCT_BUNDLE_IDENTIFIER = the.discgolfgo.app;',
+                               'PRODUCT_BUNDLE_IDENTIFIER = the.discgolfgo.app;' + inj, 1)
+          s2 = re.sub(r'buildSettings = \{[^}]*?PRODUCT_BUNDLE_IDENTIFIER = the\.discgolfgo\.app;[^}]*?\};', patch, s)
+          assert s2 != s, "no App target buildSettings block matched"
+          open(p, "w").write(s2)
+          print("Patched App target signing (team=%s profile=%s identity=%s)" % (team, uuid, ident))
+          PY
+
+      # ── 7b. Build Xcode archive ───────────────────────────────────────────
       - name: Build Xcode Archive
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace -list
@@ -227,10 +256,6 @@ jobs:
             -archivePath build/App.xcarchive \
             -resultBundlePath build/archive.xcresult \
             -allowProvisioningUpdates \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             archive 2>&1 | tee build/archive.log || {
               echo "═══ ARCHIVE FAILED — extracting issues from xcresult ═══"
               xcrun xcresulttool get --legacy --format json --path build/archive.xcresult 2>/dev/null \
