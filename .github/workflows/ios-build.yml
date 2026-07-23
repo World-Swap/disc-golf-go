@@ -217,6 +217,14 @@ jobs:
           </plist>
           EOF
 
+      # ── 7-pre. Unique, monotonic build number (App Store rejects dupes) ──
+      - name: Set iOS build number
+        run: |
+          perl -pi -e 's/CURRENT_PROJECT_VERSION = [0-9]+;/CURRENT_PROJECT_VERSION = ${{ github.run_number }};/g' \
+            ios/App/App.xcodeproj/project.pbxproj
+          echo "CFBundleVersion set to ${{ github.run_number }}"
+          grep -n "CURRENT_PROJECT_VERSION" ios/App/App.xcodeproj/project.pbxproj
+
       # ── 7a. Scope manual signing to the App target only ──────────────────
       # Passing signing settings on the xcodebuild CLI applies them to every
       # target, including the CocoaPods framework targets, which reject a
@@ -297,17 +305,16 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
+          IPA="$(find build/ -name '*.ipa' | head -1)"
+          echo "Uploading $IPA (build ${{ github.run_number }})"
+          set -o pipefail
           xcrun altool --upload-app \
             --type ios \
-            --file "$(find build/ -name '*.ipa' | head -1)" \
+            --file "$IPA" \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            --verbose 2>&1 | tail -30 || \
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$(find build/ -name '*.ipa' | head -1)" \
-            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1
+            --verbose 2>&1 | tee build/upload.log | tail -40
+          echo "✅ Uploaded to TestFlight — build ${{ github.run_number }}"
 
       # ── 10. Upload IPA as artifact (always) ──────────────────────────────
       - name: Upload IPA artifact
