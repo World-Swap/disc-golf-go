@@ -145,6 +145,13 @@ jobs:
           # Prevent keychain lock during build
           security set-keychain-settings -t 3600 -u build.keychain
 
+          # Detect the exact codesigning identity name from the imported cert
+          # (may be "Apple Distribution" or the older "iPhone Distribution").
+          SIGN_IDENTITY=$(security find-identity -v -p codesigning build.keychain \
+            | grep -oE '"[^"]*Distribution[^"]*"' | head -1 | tr -d '"')
+          echo "SIGN_IDENTITY=$SIGN_IDENTITY" >> $GITHUB_ENV
+          echo "Signing identity: $SIGN_IDENTITY"
+
       - name: Install Provisioning Profile
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
@@ -222,6 +229,7 @@ jobs:
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             archive 2>&1 | tee build/archive.log || {
               echo "═══ ARCHIVE FAILED — extracting issues from xcresult ═══"
