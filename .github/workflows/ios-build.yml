@@ -44,7 +44,9 @@ jobs:
           cache: 'npm'
 
       - name: Install Node dependencies
-        run: npm install --include=dev
+        # npm ci gives a clean, symlink-correct node_modules (npm install left
+        # stale committed .bin stubs in place and broke `npx cap`)
+        run: npm ci --include=dev
 
       # ── 3. Capacitor iOS platform ─────────────────────────────────────────
       - name: Initialize or sync iOS platform

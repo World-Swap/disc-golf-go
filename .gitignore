@@ -31,3 +31,4 @@ dist/
 
 # local static preview server
 web/.serve.cjs
+node_modules/
