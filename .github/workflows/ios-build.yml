@@ -247,6 +247,7 @@ jobs:
       # ── 7b. Build Xcode archive ───────────────────────────────────────────
       - name: Build Xcode Archive
         run: |
+          mkdir -p build   # tee target dir must exist before the pipe opens it
           xcodebuild -workspace ios/App/App.xcworkspace -list
           xcodebuild \
             -workspace ios/App/App.xcworkspace \
