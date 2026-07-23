@@ -201,24 +201,31 @@ jobs:
       # ── 7. Build Xcode archive ────────────────────────────────────────────
       - name: Build Xcode Archive
         run: |
+          xcodebuild -workspace ios/App/App.xcworkspace -list
           xcodebuild \
             -workspace ios/App/App.xcworkspace \
             -scheme App \
             -configuration Release \
+            -destination "generic/platform=iOS" \
             -archivePath build/App.xcarchive \
+            -resultBundlePath build/archive.xcresult \
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
-            archive | xcpretty --color || \
-          xcodebuild \
-            -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -configuration Release \
-            -archivePath build/App.xcarchive \
-            -allowProvisioningUpdates \
-            CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
-            archive
+            archive 2>&1 | tee build/archive.log || {
+              echo "═══ ARCHIVE FAILED — extracting issues from xcresult ═══"
+              xcrun xcresulttool get --legacy --format json --path build/archive.xcresult 2>/dev/null \
+                | python3 -c "import sys,json;d=json.load(sys.stdin);
+          def walk(o):
+            if isinstance(o,dict):
+              if o.get('_type',{}).get('_name','').endswith('IssueSummary'):
+                print('ISSUE:', o.get('issueType',{}).get('_value',''), '-', o.get('message',{}).get('_value',''))
+              [walk(v) for v in o.values()]
+            elif isinstance(o,list): [walk(v) for v in o]
+          walk(d)" || true
+              tail -n 80 build/archive.log
+              exit 1
+            }
 
       # ── 8. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
