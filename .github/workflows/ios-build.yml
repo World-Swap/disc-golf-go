@@ -157,6 +157,14 @@ jobs:
             ~/Library/MobileDevice/Provisioning\ Profiles/"$PROFILE_UUID".mobileprovision
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "Installed profile UUID: $PROFILE_UUID"
+          # Extract the development team from the same profile — the Xcode
+          # project has no DEVELOPMENT_TEAM baked in, so the build must be told.
+          TEAM_ID=$(security cms -D -i /tmp/profile.mobileprovision 2>/dev/null | \
+            plutil -extract TeamIdentifier.0 raw - 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' \
+            /dev/stdin <<< "$(security cms -D -i /tmp/profile.mobileprovision)")
+          echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
+          echo "Development team: $TEAM_ID"
 
       # ── 5. Write App Store Connect API key ───────────────────────────────
       - name: Write App Store Connect API key
@@ -183,6 +191,8 @@ jobs:
             <string>upload</string>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>teamID</key>
+            <string>${{ env.TEAM_ID }}</string>
             <key>stripSwiftSymbols</key>
             <true/>
             <key>uploadBitcode</key>
@@ -211,6 +221,7 @@ jobs:
             -resultBundlePath build/archive.xcresult \
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             archive 2>&1 | tee build/archive.log || {
               echo "═══ ARCHIVE FAILED — extracting issues from xcresult ═══"
