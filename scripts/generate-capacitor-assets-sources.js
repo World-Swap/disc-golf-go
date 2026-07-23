@@ -8,8 +8,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Branded charcoal background
-const BG_COLOR = { r: 30, g: 30, b: 30 };
-const BG_HEX = '#1E1E1E';
+const BG_COLOR = { r: 33, g: 33, b: 33 };
+const BG_HEX = '#212121';
 
 // Use the existing 1024x1024 app icon as the source
 const SOURCE_PATH = path.join(__dirname, '..', 'resources', 'AppIcon.appiconset', 'AppIcon-1024x1024.png');
@@ -70,7 +70,7 @@ async function main() {
   })
     .png()
     .toFile(path.join(RESOURCES_DIR, 'icon-background.png'));
-  console.log('  ✓ resources/icon-background.png (1024x1024, solid #1E1E1E)');
+  console.log('  ✓ resources/icon-background.png (1024x1024, solid #212121)');
 
   // ── 3. icon.png (1024x1024, logo on dark teal — used for non-adaptive icons) ──
   // Fallback icon for platforms that don't support adaptive icons
@@ -97,9 +97,9 @@ async function main() {
     return Buffer.from(
       `<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}">` +
       `<defs><radialGradient id="g" cx="50%" cy="50%" r="50%">` +
-      `<stop offset="0%" stop-color="#FF6B1A" stop-opacity="0.55"/>` +
-      `<stop offset="45%" stop-color="#FF6B1A" stop-opacity="0.20"/>` +
-      `<stop offset="100%" stop-color="#FF6B1A" stop-opacity="0"/>` +
+      `<stop offset="0%" stop-color="#FA5E0F" stop-opacity="0.55"/>` +
+      `<stop offset="45%" stop-color="#FA5E0F" stop-opacity="0.20"/>` +
+      `<stop offset="100%" stop-color="#FA5E0F" stop-opacity="0"/>` +
       `</radialGradient></defs>` +
       `<circle cx="${r}" cy="${r}" r="${r}" fill="url(#g)"/></svg>`,
       'utf8'
@@ -145,7 +145,7 @@ async function main() {
   console.log('  ✓ resources/splash-dark.png (2732x2732, dark mode splash with glow)');
 
   console.log('\nAll @capacitor/assets source images generated in resources/.');
-  console.log('Next step: npx @capacitor/assets generate --iconBackgroundColor "#1E1E1E" --splashBackgroundColor "#1E1E1E"');
+  console.log('Next step: npx @capacitor/assets generate --iconBackgroundColor "#212121" --splashBackgroundColor "#212121"');
 }
 
 main().catch((err) => {

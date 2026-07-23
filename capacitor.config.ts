@@ -13,7 +13,7 @@ const config: CapacitorConfig = {
   },
   android: {
     // Must match SplashScreen.backgroundColor to prevent color flash on launch
-    backgroundColor: '#0d2b33',
+    backgroundColor: '#212121',
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: false,
@@ -23,7 +23,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     // Must match SplashScreen.backgroundColor to prevent color flash on launch
-    backgroundColor: '#0d2b33',
+    backgroundColor: '#212121',
     // Allow Safari-level content (required for GPS WebView access)
     contentInset: 'always',
     // Scroll behavior
@@ -45,7 +45,7 @@ const config: CapacitorConfig = {
       launchFadeOutDuration: 300,
       launchAutoHide: true,
       // Branded dark teal — matches splash.png and icon background
-      backgroundColor: '#0d2b33',
+      backgroundColor: '#212121',
       // No spinner — clean logo-only splash
       showSpinner: false,
       // Fill screen edge-to-edge without letterboxing

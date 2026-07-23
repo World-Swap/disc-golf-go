@@ -3,7 +3,7 @@
 // Run during iOS CI after `cap add/sync ios` so the ios/ directory exists.
 // Does NOT own app icons — that's generate-web-icons.js + CI icon injection.
 //
-// Produces a single 2732x2732 universal splash PNG: charcoal (#1E1E1E) background
+// Produces a single 2732x2732 universal splash PNG: charcoal (#212121) background
 // with the circular logo emblem centered at ~30% of canvas width.
 // The source logo already has the charcoal background baked in;
 // a circular mask shapes the emblem for the splash.
@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Branded dark teal — matches capacitor.config.ts SplashScreen.backgroundColor
-const BG_COLOR = { r: 13, g: 43, b: 51 };
+const BG_COLOR = { r: 33, g: 33, b: 33 };
 
 // Primary source URL (R2 — may go stale; fallback is local AppIcon-1024x1024.png)
 const SOURCE_URL =
