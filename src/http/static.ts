@@ -25,6 +25,8 @@ const PAGES: Record<string, string> = {
   '/checkin': 'checkin.html',
   '/courses': 'courses.html',
   '/delete-account': 'delete-account.html',
+  '/privacy': 'privacy.html',
+  '/privacy-policy': 'privacy.html',
 };
 
 export function mountFrontend(app: Express): void {
