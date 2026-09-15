@@ -63,7 +63,16 @@ jobs:
         # Official Capacitor asset pipeline — generates all icons, adaptive icons, and
         # splash screens from source images in resources/. Survives cap sync because
         # assets are placed in the correct Capacitor resource locations.
-        run: npx capacitor-assets generate --android --iconBackgroundColor '#0d2b33' --splashBackgroundColor '#0d2b33'
+        run: npx capacitor-assets generate --android --iconBackgroundColor '#212121' --iconBackgroundColorDark '#212121' --splashBackgroundColor '#212121' --splashBackgroundColorDark '#212121'
+
+      - name: Set unique versionCode (Play rejects duplicates)
+        # Play Store requires a strictly increasing versionCode. Derive a unique,
+        # monotonic value from the run number (offset above the last manual code).
+        run: |
+          NEW_CODE=$((1000 + ${{ github.run_number }}))
+          perl -pi -e "s/versionCode\s+\d+/versionCode ${NEW_CODE}/" android/app/build.gradle
+          echo "versionCode set to ${NEW_CODE}"
+          grep -nE "versionCode|versionName" android/app/build.gradle
 
       - name: Write Android splash theme (styles.xml)
         # cap sync overwrites styles.xml with defaults — this restores the branded
@@ -86,6 +95,14 @@ jobs:
           echo "Checking styles.xml has splash theme..."
           grep -q "Theme.SplashScreen" android/app/src/main/res/values/styles.xml
           echo "All assets and theme verified ✓"
+
+      - name: Install Android SDK 36 (Android 16 target)
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-36" "build-tools;36.0.0" 2>/dev/null || \
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-36" "build-tools;36.0.0"
+          echo "Installed API 36 platform + build-tools"
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x android/gradlew
