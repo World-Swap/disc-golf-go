@@ -16,9 +16,6 @@
     .toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--color-ash); transition:transform 140ms,background 140ms; }
     .toggle[aria-pressed="true"] { background:var(--color-bone); border-color:var(--color-bone); }
     .toggle[aria-pressed="true"]::after { transform:translateX(20px); background:var(--color-void); }
-    .segbar { display:flex; gap:1px; background:var(--hair); border:1px solid var(--hair); border-radius:var(--radius-sm); overflow:hidden; }
-    .seg { flex:1; background:var(--color-void); color:var(--color-ash); font-family:var(--font-mono); font-size:10px; letter-spacing:0.02em; text-transform:uppercase; padding:9px 4px; text-align:center; border:none; }
-    .seg[aria-selected="true"] { background:var(--color-charcoal); color:var(--color-bone); }
   </style>
 </head>
 <body>

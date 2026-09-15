@@ -52,9 +52,13 @@
 
         content.className = 'screen stack';
         content.innerHTML =
-          '<div>' +
-            '<p class="section-label">' + esc(tier) + ' · Level ' + (p.level || 1) + '</p>' +
-            '<h1 class="h-display">TRAIN<br />TODAY<span class="mark" style="width:38%"></span></h1>' +
+          '<div class="hbanner">' +
+            '<img src="/img/hero.jpg" alt="" />' +
+            '<div class="hbanner__scrim"></div>' +
+            '<div class="hbanner__body">' +
+              '<div class="hbanner__eyebrow">' + esc(tier) + ' · Level ' + (p.level || 1) + '</div>' +
+              '<div class="hbanner__title">Train today</div>' +
+            '</div>' +
           '</div>' +
 
           '<div>' +
