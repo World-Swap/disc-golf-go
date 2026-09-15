@@ -4,25 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Disc Golf Go — Train like a pro, lower your score</title>
-  <meta name="theme-color" content="#f0ede7" />
+  <meta name="theme-color" content="#f7f3ec" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <meta name="description" content="The disc golf training app: 71 pro-coached video lessons, 1,900+ courses, XP, missions and ranks. Turn range reps into lower scores." />
-  <link rel="stylesheet" href="/styles/tokens.css?v=g1" />
-  <link rel="stylesheet" href="/styles/app.css?v=g1" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w1" />
+  <link rel="stylesheet" href="/styles/app.css?v=w1" />
 </head>
 <body>
   <!-- Announcement bar -->
   <div class="banner-wrap">
-    <div class="banner"><b>71 pro lessons</b> <span class="dot">/</span> <b>1,900+ courses</b> <span class="dot">/</span> free to play</div>
+    <div class="banner"><b>71 pro lessons</b> <span class="dot">•</span> <b>1,900+ courses</b> <span class="dot">•</span> free to play</div>
   </div>
 
   <!-- Nav -->
   <nav class="nav">
     <a class="logo" href="/">
       <span class="logo__glyph" aria-hidden="true"></span>
-      DISCGOLFGO
+      Disc Golf Go
     </a>
     <div class="nav__links">
       <a class="nav__link" href="#learn">Training</a>
@@ -34,21 +34,20 @@
 
   <!-- Hero -->
   <header class="hero">
-    <div class="hero__inner">
+    <div class="hero__grid">
       <div class="hero__lead">
-        <p class="eyebrow">Train like a pro · Play anywhere</p>
+        <span class="eyebrow">Train like a pro · Play anywhere</span>
         <h1 class="stacked">
-          <span class="stacked__line">Lower your</span>
-          <span class="stacked__line">score, one</span>
-          <span class="stacked__line stacked__line--italic">rep at a time.</span>
+          <span class="stacked__line">Lower your score,</span>
+          <span class="stacked__line">one <span class="stacked__line--italic">rep</span> at a time.</span>
         </h1>
         <p class="hero__sub">The disc golf training app — coached by the pros, built to level up with you.</p>
 
         <ul class="bullets">
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▷</span><div><b>Learn from the pros</b> — <span>71 video lessons from Gannon Buhr, PDGA, Latitude 64 &amp; more</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◆</span><div><b>Seven skill paths</b> — <span>form, putting, disc selection, mental game, fitness &amp; more</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>Learn from the pros</b> — <span>71 video lessons from Gannon Buhr, PDGA, Latitude 64 &amp; more</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◆</span><div><b>Seven skill paths</b> — <span>form, putting, disc selection, mental game &amp; more</span></div></li>
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,900+ courses and apply your training on the ground</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,900+ courses and apply your training</span></div></li>
         </ul>
 
         <div class="hero__cta">
@@ -56,11 +55,16 @@
           <a class="btn btn--ghost btn--lg" href="/login">Log In</a>
         </div>
       </div>
+
+      <div class="hero__media">
+        <img src="/img/hero.jpg" alt="An orange disc gliding toward a chain basket at golden hour" />
+        <div class="hero__badge"><b>+50 XP</b> · Lesson complete</div>
+      </div>
     </div>
   </header>
 
-  <!-- Skill paths (cream) -->
-  <section class="sect sect--cream" id="learn">
+  <!-- Skill paths -->
+  <section class="sect sect--peach" id="learn">
     <div class="sect__inner">
       <div class="sect__head">
         <p class="sect__eyebrow">The curriculum</p>
@@ -68,18 +72,18 @@
         <p class="sect__lede">Every lesson pairs a pro instructional video with the key takeaways and a companion guide — from your first grip to tournament nerves.</p>
       </div>
       <div class="numlist">
-        <div class="numrow"><div><div class="numrow__name">Form &amp; Technique</div><div class="numrow__meta">Grip, stance, reach-back, release</div></div><span class="numrow__num">12 / 01</span></div>
-        <div class="numrow"><div><div class="numrow__name">Course Strategy</div><div class="numrow__meta">Management, risk/reward, reading wind</div></div><span class="numrow__num">16 / 02</span></div>
-        <div class="numrow"><div><div class="numrow__name">Mental Game</div><div class="numrow__meta">Routine, focus, composure under pressure</div></div><span class="numrow__num">12 / 03</span></div>
-        <div class="numrow"><div><div class="numrow__name">Disc Selection</div><div class="numrow__meta">Flight numbers, stability, building a bag</div></div><span class="numrow__num">9 / 04</span></div>
-        <div class="numrow"><div><div class="numrow__name">Rules &amp; Etiquette</div><div class="numrow__meta">OB relief, lie marking, pace of play</div></div><span class="numrow__num">8 / 05</span></div>
-        <div class="numrow"><div><div class="numrow__name">Fitness &amp; Warmup</div><div class="numrow__meta">Mobility, power, injury prevention</div></div><span class="numrow__num">7 / 06</span></div>
-        <div class="numrow"><div><div class="numrow__name">Tournament &amp; Competition</div><div class="numrow__meta">Prep, nerves, competitive bag setup</div></div><span class="numrow__num">7 / 07</span></div>
+        <div class="numrow"><div><div class="numrow__name">Form &amp; Technique</div><div class="numrow__meta">Grip, stance, reach-back, release</div></div><span class="numrow__num">12 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Course Strategy</div><div class="numrow__meta">Management, risk/reward, reading wind</div></div><span class="numrow__num">16 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Mental Game</div><div class="numrow__meta">Routine, focus, composure under pressure</div></div><span class="numrow__num">12 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Disc Selection</div><div class="numrow__meta">Flight numbers, stability, building a bag</div></div><span class="numrow__num">9 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Rules &amp; Etiquette</div><div class="numrow__meta">OB relief, lie marking, pace of play</div></div><span class="numrow__num">8 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Fitness &amp; Warmup</div><div class="numrow__meta">Mobility, power, injury prevention</div></div><span class="numrow__num">7 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Tournament &amp; Competition</div><div class="numrow__meta">Prep, nerves, competitive bag setup</div></div><span class="numrow__num">7 lessons</span></div>
       </div>
     </div>
   </section>
 
-  <!-- Stats (ink block — hard transition) -->
+  <!-- Stats -->
   <section class="sect sect--ink" id="play">
     <div class="sect__inner">
       <div class="statsband">
@@ -91,7 +95,7 @@
     </div>
   </section>
 
-  <!-- How it works (cream) -->
+  <!-- How it works -->
   <section class="sect sect--cream" id="levelup">
     <div class="sect__inner">
       <div class="sect__head">
@@ -100,9 +104,9 @@
       </div>
       <div class="fgrid">
         <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">▷</div>
+          <div class="fcard__ic" aria-hidden="true">▶</div>
           <h3 class="fcard__title">Watch &amp; learn</h3>
-          <p class="fcard__body">Real coaching from disc golf's best. Every lesson links the pro video, the core tips, and a guide to go deeper.</p>
+          <p class="fcard__body">Real coaching from disc golf's best. Every lesson plays the pro video right in the app, with the core tips and a guide to go deeper.</p>
         </article>
         <article class="fcard">
           <div class="fcard__ic" aria-hidden="true">▲</div>
@@ -118,7 +122,7 @@
     </div>
   </section>
 
-  <!-- Final CTA (ink) -->
+  <!-- Final CTA -->
   <section class="cta-final">
     <h2 class="sect__title">Ready to level up your game?</h2>
     <div class="hero__cta" style="justify-content:center">
@@ -127,11 +131,11 @@
     </div>
   </section>
 
-  <!-- Footer (red band) -->
+  <!-- Footer -->
   <footer class="foot">
     <div class="foot__inner">
       <span>Disc Golf Go</span>
-      <span>Train. Play. Level up.</span>
+      <span>Train <span class="dot">•</span> Play <span class="dot">•</span> Level up</span>
     </div>
   </footer>
 </body>

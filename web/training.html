@@ -97,12 +97,13 @@
         content.innerHTML =
           '<div><p class="section-label">' + esc(l.category_name || '') + ' · +' + (l.xp_reward || 0) + ' XP</p>' +
           '<h1 class="h-title">' + esc(l.title) + '</h1></div>' +
-          (l.description ? '<p style="font-family:var(--font-mono);font-size:12px;line-height:1.5;color:var(--color-frost)">' + esc(l.description) + '</p>' : '') +
-          videoCard(l) +
+          (l.description ? '<p style="font-size:14px;line-height:1.55;color:var(--color-ash)">' + esc(l.description) + '</p>' : '') +
+          videoPane(l) +
           renderContent(l) +
           '<div id="resources"></div>' +
           '<div id="cta"></div>';
         loadResources(id);
+        wireVideo();
         var cta = document.getElementById('cta');
         if (l.is_completed) {
           cta.innerHTML = '<div class="pill pill--done" style="width:100%;justify-content:center;padding:12px">Completed ✓</div>' +
@@ -141,13 +142,52 @@
         return out;
       }
 
-      // Pro/company video link for a lesson.
-      function videoCard(l) {
+      // Extract a YouTube video id from watch / youtu.be / embed URLs.
+      function ytId(url) {
+        if (!url) return '';
+        var m = String(url).match(/(?:v=|youtu\.be\/|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
+        return m ? m[1] : '';
+      }
+
+      // Inline video PREVIEW PANE — thumbnail + play button; taps to the player.
+      function videoPane(l) {
         if (!l.youtube_url) return '';
-        return '<a class="card card--tap" href="' + esc(l.youtube_url) + '" target="_blank" rel="noopener" style="display:block">' +
-          '<p class="card__eyebrow">▷ Watch — pro instruction</p>' +
-          '<div class="h-title" style="margin-top:8px">' + esc(l.youtube_title || l.title) + '</div>' +
-          '<p class="row__sub" style="margin-top:8px">' + esc(l.youtube_channel || 'YouTube') + ' →</p></a>';
+        var id = ytId(l.youtube_url);
+        var title = esc(l.youtube_title || l.title);
+        var chan = esc(l.youtube_channel || 'YouTube');
+        if (!id) {
+          // No embeddable id (e.g. a channel link) — fall back to an open card.
+          return '<a class="card card--tap" href="' + esc(l.youtube_url) + '" target="_blank" rel="noopener" style="display:block">' +
+            '<p class="card__eyebrow">▶ Watch — pro instruction</p>' +
+            '<div class="h-title" style="margin-top:8px">' + title + '</div>' +
+            '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + chan + ' ↗</p></a>';
+        }
+        var thumb = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+        return '<div class="vpane" id="vpane" data-id="' + id + '" role="button" tabindex="0" aria-label="Play video: ' + title + '">' +
+            '<div class="vpane__thumb" style="background-image:url(' + thumb + ')">' +
+              '<span class="vpane__play" aria-hidden="true">▶</span>' +
+            '</div>' +
+            '<div class="vpane__meta">' +
+              '<div class="vpane__eyebrow">Pro instruction</div>' +
+              '<div class="vpane__title">' + title + '</div>' +
+              '<div class="vpane__chan">' + chan + '</div>' +
+            '</div>' +
+          '</div>';
+      }
+
+      // Swap the preview pane for the embedded player on tap.
+      function wireVideo() {
+        var p = document.getElementById('vpane');
+        if (!p) return;
+        function play() {
+          var id = p.getAttribute('data-id');
+          p.innerHTML = '<div class="vpane__frame"><iframe src="https://www.youtube.com/embed/' + id +
+            '?autoplay=1&rel=0&playsinline=1" title="Lesson video" frameborder="0" ' +
+            'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+          p.classList.add('vpane--playing');
+        }
+        p.addEventListener('click', play);
+        p.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); } });
       }
 
       function resIcon(t) { return t === 'video' ? '▷' : (t === 'report' || t === 'study' || t === 'article' ? '▤' : '◆'); }

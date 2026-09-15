@@ -1,45 +1,49 @@
-/* tokens.css — Disc Golf Go design system ("Gigantic": punk-rock candy wrapper
-   on cream paper). Warm cream canvas, ink-black type + actions, ONE loud red
-   accent used sparingly (brand mark, footer, decorative punctuation). Oversized
-   all-caps wide-tracked Space Grotesk (Neue Haas Grotesk Display substitute).
-   Flat — 0px radius, NO shadows, NO gradients. Legacy token names are preserved
-   as aliases (remapped) so existing markup keeps working. */
+/* tokens.css — Disc Golf Go design system (warm, friendly, soft-on-the-eyes).
+   Warm cream paper, soft warm-charcoal ink, the brand ORANGE (#fa5e0f) as the
+   primary accent, a friendly disc-golf green as secondary. Rounded corners,
+   gentle soft shadows, warm tinted section backgrounds. Space Grotesk display.
+   Legacy token names preserved as aliases (remapped) so existing markup works. */
 
 :root {
-  /* ── Brand palette ── */
-  --color-cream: #f0ede7;   /* primary canvas — warm paper */
-  --color-ink: #231f20;     /* text, actions, borders, dark sections */
-  --color-white: #ffffff;   /* cards / product surfaces / inverted text */
-  --color-red: #ff634b;     /* accent ONLY: brand mark, footer, punctuation */
+  /* ── Brand palette (warm) ── */
+  --color-cream: #f7f3ec;    /* primary canvas — warm paper */
+  --color-ink: #2b2622;      /* warm charcoal text */
+  --color-white: #ffffff;    /* cards / surfaces */
+  --color-orange: #fa5e0f;   /* brand primary — CTAs, highlights, active */
+  --color-orange-dk: #e0500a;
+  --color-green: #2f8f6b;    /* friendly secondary — success, accents */
+  --color-peach: #fdeee4;    /* warm tinted section bg */
+  --color-mint: #ebf5ef;     /* cool tinted section bg */
   --color-true-black: #000000;
 
-  /* ── Legacy aliases → Gigantic values (keep existing markup working) ── */
-  --color-void: #f0ede7;        /* was canvas bg → now cream */
-  --color-graphite: #ffffff;    /* elevated surface → white */
-  --color-bone: #231f20;        /* primary text → ink */
-  --color-frost: #231f20;       /* headings / marks → ink */
-  --color-ash: #6b6560;         /* muted warm gray */
-  --color-slate: #8a827c;       /* tertiary */
-  --color-charcoal: #231f20;    /* dark fill (buttons/sections) → ink */
+  /* ── Legacy aliases → warm values ── */
+  --color-void: #f7f3ec;         /* canvas */
+  --color-graphite: #ffffff;     /* elevated surface */
+  --color-bone: #2b2622;         /* primary text */
+  --color-frost: #2b2622;        /* headings */
+  --color-ash: #7a726a;          /* muted warm gray */
+  --color-slate: #a89f95;        /* tertiary */
+  --color-charcoal: #2b2622;     /* dark fill */
   --color-snow: #ffffff;
-  --color-hairline: rgba(35, 31, 32, 0.22);
+  --color-red: #fa5e0f;          /* accent → brand orange (was the red accent) */
+  --color-hairline: rgba(43, 38, 34, 0.12);
 
-  /* ── Fonts (Space Grotesk = Neue Haas Grotesk Display substitute) ── */
+  /* ── Fonts ── */
   --font-display: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-geist: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  /* ── Type scale (tracking widens with size — the signature) ── */
+  /* ── Type scale ── */
   --text-caption: 12px;
   --leading-caption: 1.4;
-  --tracking-caption: 0.05em;
+  --tracking-caption: 0.04em;
   --text-micro: 14px;
-  --text-heading-sm: 24px;
+  --text-heading-sm: 22px;
   --leading-heading-sm: 1.25;
-  --text-heading: 32px;
-  --leading-heading: 1.1;
-  --text-display: 92px;
-  --leading-display: 0.94;
+  --text-heading: 30px;
+  --leading-heading: 1.12;
+  --text-display: 62px;
+  --leading-display: 1.0;
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -56,19 +60,24 @@
   --spacing-116: 116px;
 
   /* ── Layout ── */
-  --card-padding: 20px;
-  --element-gap: 16px;
-  --edge-pad: 20px;
+  --card-padding: 18px;
+  --element-gap: 14px;
+  --edge-pad: 18px;
 
-  /* ── Radii — flat, sharp. 0px is the signature ── */
-  --radius-sm: 0px;
-  --radius-lg: 0px;
-  --radius-2xl: 0px;
-  --radius-pill: 0px;
-  --radius-card: 0px;
+  /* ── Radii — soft, friendly ── */
+  --radius-sm: 12px;     /* inputs, small controls */
+  --radius-lg: 18px;     /* cards */
+  --radius-2xl: 26px;    /* large panels */
+  --radius-pill: 9999px; /* buttons, tags */
+  --radius-card: 18px;
+
+  /* ── Soft shadows (gentle, low-contrast) ── */
+  --shadow-soft: 0 2px 10px rgba(43, 38, 34, 0.06);
+  --shadow-card: 0 6px 22px rgba(43, 38, 34, 0.08);
+  --shadow-pop: 0 10px 30px rgba(250, 94, 15, 0.18);
 
   /* ── Surfaces ── */
-  --surface-void: #f0ede7;
+  --surface-void: #f7f3ec;
   --surface-graphite: #ffffff;
   --surface-snow: #ffffff;
 }
