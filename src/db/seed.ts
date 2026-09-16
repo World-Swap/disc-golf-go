@@ -10,7 +10,7 @@ import { COURSES } from './data/courses';
 // Bump when the seeded content below changes so a deploy re-seeds. v1 was the
 // initial placeholder; v2 the full legacy library (71 lessons / 671 courses);
 // v3 expands courses to 1,900+ (curated set + all named US courses from OSM).
-export const CONTENT_VERSION = 6;
+export const CONTENT_VERSION = 7;
 
 // Clears the content tables before a re-seed (leaves players/progress intact).
 // No FK constraints reference these, so order is not significant.
@@ -30,7 +30,14 @@ const MISC_SEED_SQL = `
 INSERT INTO daily_challenge_pool (key, title, description, challenge_type, target_value, xp_reward, gold_reward) VALUES
   ('daily_lesson', 'Learn Something New', 'Complete one training lesson today.', 'watch_and_learn', 1, 30, 10),
   ('daily_two', 'Double Down', 'Complete two training lessons today.', 'skill_check', 2, 60, 20),
-  ('daily_category', 'Focus Session', 'Complete a lesson in your weakest category.', 'course_apply', 1, 40, 15);
+  ('daily_category', 'Focus Session', 'Complete a lesson in your weakest category.', 'course_apply', 1, 40, 15),
+  ('daily_three', 'Triple Threat', 'Complete three training lessons today.', 'skill_check', 3, 90, 30),
+  ('daily_putting', 'Putt for Dough', 'Complete a Putting lesson today.', 'course_apply', 1, 40, 15),
+  ('daily_driving', 'Bomb It', 'Complete a Driving & Distance lesson today.', 'course_apply', 1, 40, 15),
+  ('daily_approach', 'Scoring Zone', 'Complete an Approach & Upshots lesson today.', 'course_apply', 1, 40, 15),
+  ('daily_mental', 'Head in the Game', 'Complete a Mental Game lesson today.', 'course_apply', 1, 40, 15),
+  ('daily_watch', 'Film Study', 'Watch a pro instructional video today.', 'watch_and_learn', 1, 30, 10),
+  ('daily_newcat', 'Branch Out', 'Complete a lesson in a category you have not started.', 'course_apply', 1, 50, 20);
 
 INSERT INTO items (name, description, icon, type, effect_value, duration_minutes, rarity, gold_cost) VALUES
   ('XP Boost', '+50% XP for 1 hour.', '🔥', 'boost_xp', 50, 60, 'uncommon', 150),
@@ -45,8 +52,18 @@ INSERT INTO story_quests (quest_key, title, description, objective, chapter_numb
   ('m_first_lesson', 'First Flight', 'Complete your very first training lesson.', 'Complete 1 lesson', 1, 'main', 'watch_and_learn', 'form-technique', 'TRAINING_COMPLETE', '{}', 1, 50, 25, 1),
   ('m_form_focus', 'Dial the Form', 'Complete 3 Form & Technique lessons.', 'Complete 3 form lessons', 1, 'side', 'skill_check', 'form-technique', 'TRAINING_COMPLETE', '{"category_slug":"form-technique"}', 3, 100, 50, 2),
   ('m_disc_iq', 'Disc IQ', 'Complete 3 Disc Selection lessons.', 'Complete 3 disc lessons', 1, 'side', 'skill_check', 'disc-selection', 'TRAINING_COMPLETE', '{"category_slug":"disc-selection"}', 3, 100, 50, 3),
-  ('m_five_lessons', 'Student of the Game', 'Complete 5 lessons total.', 'Complete 5 lessons', 1, 'main', 'watch_and_learn', NULL, 'TRAINING_COMPLETE', '{}', 5, 150, 75, 4),
-  ('m_ten_lessons', 'Grinder', 'Complete 10 lessons total.', 'Complete 10 lessons', 2, 'main', 'watch_and_learn', NULL, 'TRAINING_COMPLETE', '{}', 10, 300, 150, 5);
+  ('m_putting_pro', 'Circle 1 Lock', 'Complete 3 Putting lessons.', 'Complete 3 putting lessons', 1, 'side', 'skill_check', 'putting', 'TRAINING_COMPLETE', '{"category_slug":"putting"}', 3, 100, 50, 4),
+  ('m_five_lessons', 'Student of the Game', 'Complete 5 lessons total.', 'Complete 5 lessons', 1, 'main', 'watch_and_learn', NULL, 'TRAINING_COMPLETE', '{}', 5, 150, 75, 5),
+  ('m_driving_dial', 'Big Arm', 'Complete 3 Driving & Distance lessons.', 'Complete 3 driving lessons', 2, 'side', 'skill_check', 'driving', 'TRAINING_COMPLETE', '{"category_slug":"driving"}', 3, 120, 60, 6),
+  ('m_approach_ace', 'Get Up & Down', 'Complete 3 Approach & Upshots lessons.', 'Complete 3 approach lessons', 2, 'side', 'skill_check', 'approach', 'TRAINING_COMPLETE', '{"category_slug":"approach"}', 3, 120, 60, 7),
+  ('m_forehand_flick', 'Flick Master', 'Complete 3 Forehand / Sidearm lessons.', 'Complete 3 forehand lessons', 2, 'side', 'skill_check', 'forehand', 'TRAINING_COMPLETE', '{"category_slug":"forehand"}', 3, 120, 60, 8),
+  ('m_ten_lessons', 'Grinder', 'Complete 10 lessons total.', 'Complete 10 lessons', 2, 'main', 'watch_and_learn', NULL, 'TRAINING_COMPLETE', '{}', 10, 300, 150, 9),
+  ('m_mental_master', 'Ice in the Veins', 'Complete 3 Mental Game lessons.', 'Complete 3 mental lessons', 3, 'side', 'skill_check', 'mental-game', 'TRAINING_COMPLETE', '{"category_slug":"mental-game"}', 3, 120, 60, 10),
+  ('m_course_iq', 'Course IQ', 'Complete 3 Course Strategy lessons.', 'Complete 3 strategy lessons', 3, 'side', 'skill_check', 'course-strategy', 'TRAINING_COMPLETE', '{"category_slug":"course-strategy"}', 3, 120, 60, 11),
+  ('m_rules_ready', 'By the Book', 'Complete 3 Rules & Etiquette lessons.', 'Complete 3 rules lessons', 3, 'side', 'skill_check', 'rules-etiquette', 'TRAINING_COMPLETE', '{"category_slug":"rules-etiquette"}', 3, 100, 50, 12),
+  ('m_twenty_lessons', 'Dedicated', 'Complete 20 lessons total.', 'Complete 20 lessons', 3, 'main', 'watch_and_learn', NULL, 'TRAINING_COMPLETE', '{}', 20, 500, 250, 13),
+  ('m_forty_lessons', 'Scholar', 'Complete 40 lessons total.', 'Complete 40 lessons', 4, 'main', 'watch_and_learn', NULL, 'TRAINING_COMPLETE', '{}', 40, 800, 400, 14),
+  ('m_all_lessons', 'Disc Golf Immortal', 'Complete all 134 lessons.', 'Complete every lesson', 4, 'main', 'watch_and_learn', NULL, 'TRAINING_COMPLETE', '{}', 134, 2000, 1000, 15);
 `;
 
 export async function seedDatabase(client: PoolClient): Promise<void> {
