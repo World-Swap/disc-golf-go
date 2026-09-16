@@ -22,7 +22,9 @@
   <main class="app">
     <header class="topbar"><a class="topbar__title" href="/profile">‹ Profile</a><span class="pill" id="saved" hidden>Saved</span></header>
     <div class="screen stack">
-      <div><h1 class="h-title">Notifications</h1></div>
+      <div><h1 class="h-title">Account</h1></div>
+      <div id="account" class="loading">Loading…</div>
+      <div><h1 class="h-title" style="margin-top:8px">Notifications</h1></div>
       <div id="content" class="loading">Loading…</div>
     </div>
     <nav id="tabbar"></nav>
@@ -47,6 +49,43 @@
 
       function flash() { saved.hidden = false; clearTimeout(flash.t); flash.t = setTimeout(function () { saved.hidden = true; }, 1200); }
       async function save(patch) { try { await API.put('/training/notifications/settings', patch); flash(); } catch (e) {} }
+
+      // ── Account: edit display name + username ──
+      var account = document.getElementById('account');
+      API.get('/players/me').then(function (p) {
+        account.className = 'card';
+        account.innerHTML =
+          '<label class="field"><span class="field__label">Display name</span>' +
+            '<input class="input" id="dn" maxlength="30" value="' + esc(p.display_name || '') + '" placeholder="Sky Hyzer" /></label>' +
+          '<label class="field"><span class="field__label">Username</span>' +
+            '<input class="input" id="un" maxlength="20" autocapitalize="none" autocomplete="off" value="' + esc(p.username || '') + '" placeholder="skyhyzer" /></label>' +
+          '<p class="field__label" style="font-weight:400;color:var(--color-ash);margin:-8px 0 12px">3–20 characters · letters, numbers, underscores</p>' +
+          '<div id="acctMsg" class="error" hidden style="margin-bottom:12px"></div>' +
+          '<button class="btn btn--block" id="acctSave">Save changes</button>';
+
+        var dn = document.getElementById('dn'), un = document.getElementById('un');
+        var msg = document.getElementById('acctMsg'), btn = document.getElementById('acctSave');
+        function showErr(t) { msg.textContent = t; msg.hidden = false; }
+        btn.addEventListener('click', async function () {
+          msg.hidden = true;
+          var name = dn.value.trim(), user = un.value.trim();
+          if (name.length < 2 || name.length > 30) return showErr('Display name must be 2–30 characters.');
+          if (!/^[a-zA-Z0-9_]{3,20}$/.test(user)) return showErr('Username must be 3–20 characters: letters, numbers, underscores only.');
+          var patch = {};
+          if (name !== (p.display_name || '')) patch.display_name = name;
+          if (user.toLowerCase() !== (p.username || '')) patch.username = user;
+          if (!Object.keys(patch).length) { flash(); return; }
+          btn.disabled = true; btn.textContent = 'Saving…';
+          try {
+            var updated = await API.put('/players/me', patch);
+            p.display_name = updated.display_name; p.username = updated.username;
+            un.value = updated.username || user;
+            flash();
+          } catch (e) {
+            showErr(e.status === 409 ? 'That username is already taken.' : (e.message || 'Could not save.'));
+          } finally { btn.disabled = false; btn.textContent = 'Save changes'; }
+        });
+      }).catch(function (e) { account.className = 'screen'; account.innerHTML = '<div class="error">' + esc(e.message || 'Error') + '</div>'; });
 
       API.get('/training/notifications/settings').then(function (s) {
         content.className = 'stack';
