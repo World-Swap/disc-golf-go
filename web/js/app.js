@@ -56,12 +56,12 @@
   }
 
   var TABS = [
-    { key: 'home', href: '/home', label: 'Home', glyph: '◆' },
-    { key: 'training', href: '/training', label: 'Train', glyph: '▤' },
-    { key: 'play', href: '/checkin', label: 'Play', glyph: '◎' },
-    { key: 'ranks', href: '/ranks', label: 'Ranks', glyph: '▲' },
-    { key: 'vault', href: '/vault', label: 'Vault', glyph: '◈' },
-    { key: 'profile', href: '/profile', label: 'You', glyph: '●' },
+    { key: 'home', href: '/home', label: 'Home', glyph: '🏠' },
+    { key: 'training', href: '/training', label: 'Train', glyph: '🎯' },
+    { key: 'play', href: '/checkin', label: 'Play', glyph: '🥏' },
+    { key: 'ranks', href: '/ranks', label: 'Ranks', glyph: '🏆' },
+    { key: 'vault', href: '/vault', label: 'Vault', glyph: '💎' },
+    { key: 'profile', href: '/profile', label: 'You', glyph: '👤' },
   ];
 
   // Render the bottom tab bar into <nav id="tabbar">, marking `active`.

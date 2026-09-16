@@ -8,9 +8,9 @@
   <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w2" />
-  <link rel="stylesheet" href="/styles/app.css?v=w2" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w2" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w3" />
+  <link rel="stylesheet" href="/styles/app.css?v=w3" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w3" />
 </head>
 <body>
   <main class="app">
@@ -22,7 +22,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w2"></script>
+  <script src="/js/app.js?v=w3"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
@@ -137,7 +137,7 @@
         } else if (cb.body || cb.text) {
           out = '<div class="card"><p style="font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--color-frost)">' + esc(cb.body || cb.text) + '</p></div>';
         } else if (Array.isArray(cb.tips || cb.points)) {
-          out = '<div class="rows">' + (cb.tips || cb.points).map(function (t) { return '<div class="row"><span class="row__glyph">·</span><div class="row__body"><div class="row__sub" style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--color-frost)">' + esc(t) + '</div></div></div>'; }).join('') + '</div>';
+          out = '<div class="rows">' + (cb.tips || cb.points).map(function (t) { return '<div class="row"><span class="row__glyph">·</span><div class="row__body"><div class="row__sub" style="text-transform:none;letter-spacing:0;font-size:16px;line-height:1.5;color:var(--color-ink)">' + esc(t) + '</div></div></div>'; }).join('') + '</div>';
         }
         return out;
       }
