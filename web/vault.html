@@ -8,9 +8,9 @@
   <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w3" />
-  <link rel="stylesheet" href="/styles/app.css?v=w3" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w3" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w4" />
+  <link rel="stylesheet" href="/styles/app.css?v=w4" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w4" />
   <style>
   </style>
 </head>
@@ -18,7 +18,7 @@
   <main class="app">
     <header class="topbar">
       <span class="topbar__title">Vault</span>
-      <a class="pill" href="/shop" id="gold">— G</a>
+      <span class="pill" id="xp">— XP</span>
     </header>
     <div class="screen stack">
       <div><h1 class="h-display">VAULT<span class="mark" style="width:38%"></span></h1></div>
@@ -31,13 +31,18 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w3"></script>
+  <script src="/js/app.js?v=w4"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
       DGG.tabbar('vault');
       var esc = DGG.esc, API = DGG.API;
       var view = document.getElementById('view');
+
+      // Header shows the player's XP total.
+      API.get('/players/me').then(function (p) {
+        document.getElementById('xp').textContent = (p.xp != null ? p.xp : 0).toLocaleString() + ' XP';
+      }).catch(function () {});
 
       document.getElementById('tabs').addEventListener('click', function (e) {
         var b = e.target.closest('.seg'); if (!b) return;
@@ -70,7 +75,6 @@
         loading();
         try {
           var d = await API.get('/vault/bonus');
-          if (d.gold_balance != null) document.getElementById('gold').textContent = d.gold_balance + ' G';
           view.className = 'stack';
           view.innerHTML = (d.items || []).map(function (it) {
             return '<div class="card">' +
