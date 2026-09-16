@@ -12,12 +12,13 @@ import { COURSES } from './data/courses';
 // v3 expands courses to 1,900+ (curated set + all named US courses from OSM).
 export const CONTENT_VERSION = 7;
 
-// Clears the content tables before a re-seed (leaves players/progress intact).
-// No FK constraints reference these, so order is not significant.
+// Clears the fully-replaceable content tables before a re-seed (leaves
+// players/progress intact). Training categories/lessons/resources are NOT dropped
+// here — they are upserted by slug in seedDatabase() so their ids stay stable
+// across reseeds. Deleting + re-inserting them churned the SERIAL ids, which
+// orphaned every training_completions.lesson_id and made lesson progress and
+// leaderboard XP appear to reset on each content deploy.
 const RESET_CONTENT_SQL = `
-DELETE FROM lesson_resources;
-DELETE FROM training_lessons;
-DELETE FROM training_categories;
 DELETE FROM courses;
 DELETE FROM daily_challenge_pool;
 DELETE FROM items;
@@ -70,18 +71,21 @@ export async function seedDatabase(client: PoolClient): Promise<void> {
   // Start clean so re-seeds (content version bumps) don't duplicate rows.
   await client.query(RESET_CONTENT_SQL);
 
-  // ── categories ──
+  // ── categories (upsert by slug so ids stay stable across reseeds) ──
   for (const c of CATEGORIES) {
     await client.query(
       `INSERT INTO training_categories (name, slug, description, icon, sort_order, skill_level)
-       VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (slug) DO NOTHING`,
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (slug) DO UPDATE SET
+         name = EXCLUDED.name, description = EXCLUDED.description, icon = EXCLUDED.icon,
+         sort_order = EXCLUDED.sort_order, skill_level = EXCLUDED.skill_level`,
       [c.name, c.slug, c.description, c.icon, c.sort_order, c.skill_level]
     );
   }
   const catRows = await client.query<{ id: number; slug: string }>('SELECT id, slug FROM training_categories');
   const catId = new Map(catRows.rows.map((r) => [r.slug, r.id]));
 
-  // ── lessons + resources ──
+  // ── lessons + resources (upsert by slug; ids stay stable so completions keep matching) ──
   for (const l of LESSONS) {
     const cid = catId.get(l.category_slug);
     if (cid === undefined) continue;
@@ -90,12 +94,19 @@ export async function seedDatabase(client: PoolClient): Promise<void> {
          (category_id, title, slug, description, difficulty, content_type, content_body,
           xp_reward, sort_order, skill_level, youtube_url, youtube_title, youtube_channel)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       ON CONFLICT (slug) DO UPDATE SET
+         category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description,
+         difficulty = EXCLUDED.difficulty, content_type = EXCLUDED.content_type, content_body = EXCLUDED.content_body,
+         xp_reward = EXCLUDED.xp_reward, sort_order = EXCLUDED.sort_order, skill_level = EXCLUDED.skill_level,
+         youtube_url = EXCLUDED.youtube_url, youtube_title = EXCLUDED.youtube_title, youtube_channel = EXCLUDED.youtube_channel
        RETURNING id`,
       [cid, l.title, l.slug, l.description, l.difficulty, l.content_type,
         JSON.stringify(l.content_body), l.xp_reward, l.sort_order, l.skill_level,
         l.youtube_url, l.youtube_title, l.youtube_channel]
     );
     const lessonId = res.rows[0]!.id;
+    // Resources have no player references — replace this lesson's set outright.
+    await client.query('DELETE FROM lesson_resources WHERE lesson_id = $1', [lessonId]);
     let order = 1;
     for (const r of l.resources) {
       await client.query(

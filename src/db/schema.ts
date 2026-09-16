@@ -136,6 +136,12 @@ CREATE TABLE IF NOT EXISTS training_lessons (
   youtube_channel TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_lessons_category ON training_lessons(category_id);
+-- Stable identity for reseeds: content is upserted by slug so lesson ids never
+-- churn, which keeps training_completions (player progress + leaderboard XP) valid.
+-- Drop any accidental slug collisions first (no-op on clean data; NULL slugs are
+-- never "equal" in SQL so they're untouched) so the unique index can't fail boot.
+DELETE FROM training_lessons a USING training_lessons b WHERE a.slug = b.slug AND a.id > b.id;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_lessons_slug ON training_lessons(slug);
 
 CREATE TABLE IF NOT EXISTS lesson_resources (
   id SERIAL PRIMARY KEY,

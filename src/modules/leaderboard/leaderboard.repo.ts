@@ -34,6 +34,37 @@ const PERIOD_STAT: Record<SortCol, string> = {
   challenges_won: 'dc.challenges_won',
 };
 
+// All-time board is computed live from durable tables, NOT the leaderboard_entries
+// snapshot (which nothing populates, so it always read as zero). total_xp comes
+// from the persistent players.xp counter; counts come straight from the completion
+// / challenge rows, so nothing here depends on a content reseed.
+const ALLTIME_FROM = `
+  FROM players p
+  LEFT JOIN (
+    SELECT player_id, COUNT(*)::int AS lessons_completed, MAX(completed_at) AS last_lesson_at
+    FROM training_completions GROUP BY player_id
+  ) lc ON lc.player_id = p.id
+  LEFT JOIN (
+    SELECT player_id, COUNT(*)::int AS challenges_won, MAX(completed_at) AS last_challenge_at
+    FROM player_daily_challenges WHERE completed = TRUE GROUP BY player_id
+  ) cc ON cc.player_id = p.id`;
+
+const ALLTIME_STAT: Record<SortCol, string> = {
+  total_xp: 'p.xp',
+  lessons_completed: 'COALESCE(lc.lessons_completed, 0)',
+  current_streak: 'COALESCE(p.login_streak, 0)',
+  challenges_won: 'COALESCE(cc.challenges_won, 0)',
+};
+
+const ALLTIME_SELECT = `
+  SELECT p.id, COALESCE(p.display_name, p.username, 'Player') AS display_name,
+         p.profile_photo_url,
+         p.xp AS total_xp,
+         COALESCE(lc.lessons_completed, 0) AS lessons_completed,
+         COALESCE(p.login_streak, 0) AS current_streak,
+         COALESCE(cc.challenges_won, 0) AS challenges_won,
+         GREATEST(lc.last_lesson_at, cc.last_challenge_at) AS last_active_at`;
+
 export function createLeaderboardRepo(db: Queryable) {
   return {
     async top5(): Promise<Top5Row[]> {
@@ -55,10 +86,10 @@ export function createLeaderboardRepo(db: Queryable) {
 
     async alltimeEntries(sortCol: SortCol): Promise<EntryRow[]> {
       const r = await db.query<EntryRow>(
-        `SELECT user_id AS id, display_name, avatar_url AS profile_photo_url,
-                total_xp, lessons_completed, current_streak, challenges_won, last_active_at,
-                ${sortCol} AS stat_value
-         FROM leaderboard_entries ORDER BY ${sortCol} DESC, user_id ASC LIMIT 50`
+        `${ALLTIME_SELECT}, ${ALLTIME_STAT[sortCol]} AS stat_value
+         ${ALLTIME_FROM}
+         WHERE p.xp > 0 OR lc.lessons_completed > 0 OR cc.challenges_won > 0
+         ORDER BY stat_value DESC, p.id ASC LIMIT 50`
       );
       return r.rows;
     },
@@ -87,9 +118,9 @@ export function createLeaderboardRepo(db: Queryable) {
 
     async alltimePlayerEntry(id: number, sortCol: SortCol): Promise<EntryRow | null> {
       const r = await db.query<EntryRow>(
-        `SELECT user_id AS id, display_name, avatar_url AS profile_photo_url,
-                total_xp, lessons_completed, current_streak, challenges_won, last_active_at, ${sortCol} AS stat_value
-         FROM leaderboard_entries WHERE user_id = $1`,
+        `${ALLTIME_SELECT}, ${ALLTIME_STAT[sortCol]} AS stat_value
+         ${ALLTIME_FROM}
+         WHERE p.id = $1`,
         [id]
       );
       return r.rows[0] ?? null;
@@ -116,7 +147,12 @@ export function createLeaderboardRepo(db: Queryable) {
     },
 
     async alltimeRank(sortCol: SortCol, statValue: number): Promise<number> {
-      const r = await db.query<{ cnt: string }>(`SELECT COUNT(*) AS cnt FROM leaderboard_entries WHERE ${sortCol} > $1`, [statValue]);
+      const r = await db.query<{ cnt: string }>(
+        `SELECT COUNT(*) AS cnt FROM (
+           SELECT ${ALLTIME_STAT[sortCol]} AS s ${ALLTIME_FROM}
+         ) t WHERE t.s > $1`,
+        [statValue]
+      );
       return Number(r.rows[0]!.cnt) + 1;
     },
 

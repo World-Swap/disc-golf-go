@@ -38,7 +38,7 @@ test('leaderboard endpoints', async (t) => {
 
   await t.test('/leaderboard overall alltime -> ranked, gold tier', async () => {
     handler = (sql) => {
-      if (/FROM leaderboard_entries/.test(sql)) return { rows: [{ id: 5, display_name: 'X', total_xp: 1000, lessons_completed: 2, current_streak: 1, challenges_won: 0, stat_value: 1000 }] };
+      if (/training_completions/.test(sql)) return { rows: [{ id: 5, display_name: 'X', total_xp: 1000, lessons_completed: 2, current_streak: 1, challenges_won: 0, stat_value: 1000 }] };
       return { rows: [] };
     };
     const r = await get('/api/leaderboard?tab=overall&period=alltime');
