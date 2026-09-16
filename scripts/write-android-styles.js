@@ -27,6 +27,12 @@ const stylesXml = `<?xml version="1.0" encoding="utf-8"?>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Keep app content below the status bar. Android 15+ (targetSdk 35+)
+             enforces edge-to-edge, which draws the WebView under the status bar;
+             opt out and paint a cream bar with dark icons to match the app. -->
+        <item name="android:statusBarColor">#f7f3ec</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
     <!-- Launch theme: Android 12+ system splash with branded background + icon -->
