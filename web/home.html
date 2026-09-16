@@ -16,7 +16,7 @@
   <main class="app">
     <header class="topbar">
       <span class="logo topbar__spark"><span class="logo__glyph" aria-hidden="true"></span> DISCGOLFGO</span>
-      <span class="pill" id="gold">— G</span>
+      <span class="pill" id="xp">— XP</span>
     </header>
 
     <div id="content" class="loading">Loading…</div>
@@ -43,7 +43,7 @@
         var levelXpPct = p.xp && s.next_level_xp ? Math.round((p.xp / s.next_level_xp) * 100) : 0;
         var next = tr.next_lesson;
 
-        document.getElementById('gold').textContent = (p.gold_balance != null ? p.gold_balance : 0) + ' G';
+        document.getElementById('xp').textContent = (p.xp != null ? p.xp : 0).toLocaleString() + ' XP';
 
         var cats = (tr.categories || []).map(function (c) {
           return '<div class="meter-row"><span class="caption">' + esc(c.name) + '</span>' +
