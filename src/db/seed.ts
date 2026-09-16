@@ -10,7 +10,7 @@ import { COURSES } from './data/courses';
 // Bump when the seeded content below changes so a deploy re-seeds. v1 was the
 // initial placeholder; v2 the full legacy library (71 lessons / 671 courses);
 // v3 expands courses to 1,900+ (curated set + all named US courses from OSM).
-export const CONTENT_VERSION = 4;
+export const CONTENT_VERSION = 5;
 
 // Clears the content tables before a re-seed (leaves players/progress intact).
 // No FK constraints reference these, so order is not significant.
