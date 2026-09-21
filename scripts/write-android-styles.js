@@ -1,12 +1,17 @@
 // write-android-styles.js
-// Writes the Android styles.xml with proper splash theme configuration.
+// Writes the Android styles.xml with proper splash theme configuration and
+// installs the Android 12+ system-splash icon (drawable/icon_only.png).
 // Must run AFTER `cap sync` because sync overwrites styles.xml with defaults.
-// Does NOT own icons or splash PNGs — @capacitor/assets handles those.
+// @capacitor/assets owns the launcher icons and full-screen splash PNGs; it does
+// NOT own icon_only.png (the Android 12+ system-splash icon), so we own it here.
 //
 // Why this exists: cap sync generates a default styles.xml that uses
 // AppTheme.NoActionBar as the launch theme. We need AppTheme.NoActionBarLaunch
 // to extend Theme.SplashScreen (from androidx.core:core-splashscreen) so the
 // Android 12+ system splash shows the branded dark teal bg + foreground icon.
+// That theme points windowSplashScreenAnimatedIcon at @drawable/ic_launcher_splash,
+// which insets @drawable/icon_only — a file nothing else regenerates. We copy it
+// from resources/icon-only.png every build so it can never drift to a stale image.
 
 const fs = require('fs');
 const path = require('path');
@@ -49,3 +54,18 @@ const valuesDir = path.join(RES_BASE, 'values');
 fs.mkdirSync(valuesDir, { recursive: true });
 fs.writeFileSync(path.join(valuesDir, 'styles.xml'), stylesXml);
 console.log('✓ values/styles.xml written (splash theme with Android 12+ support)');
+
+// Install the Android 12+ system-splash icon from the branded source.
+// @capacitor/assets does not emit this file, so without this copy the committed
+// drawable/icon_only.png can silently rot (it was once overwritten with a
+// screenshot, which then shipped as the system splash). Regenerating it from the
+// source every build keeps the splash icon correct and self-healing.
+const iconSource = path.join(__dirname, '..', 'resources', 'icon-only.png');
+const iconDest = path.join(RES_BASE, 'drawable', 'icon_only.png');
+if (fs.existsSync(iconSource)) {
+  fs.mkdirSync(path.dirname(iconDest), { recursive: true });
+  fs.copyFileSync(iconSource, iconDest);
+  console.log('✓ drawable/icon_only.png installed from resources/icon-only.png');
+} else {
+  console.warn('⚠ resources/icon-only.png missing — Android 12+ splash icon not refreshed');
+}
