@@ -72,20 +72,23 @@ npm install
 npx cap add android   # first time only
 npx cap sync android
 
-# 3. Bump versionCode + build (one command)
+# 3. Restore the splash theme + Android-12 icon (cap sync resets styles.xml)
+node scripts/write-android-styles.js
+
+# 4. Bump versionCode + build (one command)
 npm run android:release
-# → increments versionCode in android-version.json
-# → patches android/app/build.gradle
+# → increments versionCode directly in android/app/build.gradle
+# → ensures Android permissions
 # → runs ./gradlew clean bundleRelease
 # Output: android/app/build/outputs/bundle/release/app-release.aab
 
-# 4. Sign with jarsigner, then upload to Play Console
+# 5. Sign with jarsigner, then upload to Play Console
 
-# 5. After successful upload — commit the version bump
-git add android-version.json && git commit -m "chore: bump Android versionCode to XX"
+# 6. After successful upload — commit the version bump
+git add android/app/build.gradle && git commit -m "build(android): bump versionCode to XX"
 ```
 
-**versionCode is tracked in `android-version.json` at the repo root.** This file persists the counter across `cap sync` runs (which regenerate `build.gradle`). Never edit it manually — the script owns it.
+**versionCode lives in `android/app/build.gradle`** (`versionCode NN`). `scripts/bump-android-version.js` increments it in place — `cap sync` does not regenerate `build.gradle`, so the counter persists. Let the script own the bump rather than editing the number by hand.
 
 ### Debug build
 
