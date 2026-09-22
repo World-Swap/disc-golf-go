@@ -1,25 +1,33 @@
 # Disc Golf Go — CLAUDE.md
 
 ## What this app does
-Disc Golf Go is a mobile-first web app and Android native app where disc golfers track rounds, check in at real courses (GPS-gated), battle other players with disc golf trivia/challenges, earn XP and badges, and collect gold/vault items. Players must physically be at a course to start a round.
+Disc Golf Go is a mobile-first **training app** (web + Capacitor Android/iOS) that helps disc golfers improve their game. Players work through a structured training library (lessons grouped by category and skill tier), complete training missions and a rotating daily challenge, earn XP / badges / gold, check in at real courses (GPS-gated), browse and review courses, spend gold in the shop/vault, and climb the leaderboard.
+
+> The app began life as an RPG-style app (rounds scoring, PvP battles, crews, crew wars). Those features were dropped in the pivot to a training focus and are **not** part of the current app.
 
 ## Stack
-Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via Capacitor · Custom domain: discgolfgo.app
+TypeScript + Express · PostgreSQL (Neon) · Node.js · Resend (email) · Deployed on Render (auto-deploy on push to `main`) · Android/iOS via Capacitor · Custom domain: discgolfgo.app
 
 ## Directory map
-- `server.js` — app entry point; middleware + route mounts (wiring only)
-- `routes/` — one file per feature area (auth, courses, rounds, battles, challenges, players, leaderboard, checkins, admin, vault, gold, upload, xp-engine, distance-analytics, delete-account, crews, crew-wars, story, feedback, reviews, referrals, onboarding, campaign, training, training-notifications)
-- `migrations/` — node-pg-migrate SQL migration files; all DDL lives here
-- `services/` — multi-step business logic extracted from routes so route files stay thin (e.g. `checkin-rewards.js` runs the check-in XP/gold/badge pipeline, `login-streak.js` applies the daily login-streak update — both inside the caller's transaction)
-- `middleware/` — `auth.js` (JWT validation + `createToken`; sets `req.player`), `security.js` (security headers, in-memory rate limiter, input sanitization, numeric param validation, admin JWT auth), `pageview-tracker.js` (non-blocking server-side pageview logging)
-- `public/` — static frontend assets (HTML, CSS, JS, images); `app.css` is the unified design system (tokens, shared components) linked by all app pages
-- `lib/` — shared utilities: `email.js` (single outbound-email transport — the one place to change email providers), `app-url.js` (`appBaseUrl()` — canonical public base URL for outbound links), `normalize-state.js`, `utm.js`
-- `scripts/` — one-off scripts (linting, audits, iOS patch, Android branding: generate-capacitor-assets-sources.js, write-android-styles.js, generate-ios-splash.js, bump-android-version.js, ensure-android-permissions.js)
-- `android/` — Capacitor-generated Android native project; committed with branded icons/splash assets
-- `resources/` — @capacitor/assets source images (icon-only.png, icon-background.png, splash.png, splash-dark.png); `AppIcon.appiconset/` holds iOS 1024x1024 icon
-- `debug/` — debug/test utilities (not in production path)
+The live app is the TypeScript app in `src/`. `server.js` is only a loader.
+
+- `server.js` — thin loader: boots the compiled build (`dist/server.js`), falling back to `src/server.ts` via ts-node when `dist/` isn't present
+- `src/` — the application (TypeScript; one folder per feature)
+  - `server.ts` — process entry: builds the app, runs migrations, listens, starts the in-process scheduler
+  - `http/` — app wiring (`app.ts`), static frontend serving (`static.ts` — serves `web/`), `async-handler`, error types
+  - `modules/<feature>/` — each has `.routes.ts` / `.service.ts` / `.repo.ts` / `.test.ts`. Features: admin, auth, challenges, checkins, courses, delete-account, feedback, health, leaderboard, notifications, onboarding, players, progression, referrals, reviews, shop, story, training, training-notifications, vault
+  - `db/` — `pool.ts` + migration runner · `lib/` — `email.ts` (Resend, the one place to change email providers), `app-url.ts`, `geo.ts`, `utm.ts`, `scheduler.ts` · `middleware/` — `auth.ts`, `admin-auth.ts`, `security.ts` · `config.ts` · `types/`
+- `web/` — static frontend served by the app (HTML pages + `web/js`, `web/styles`, `web/img`); e.g. home, training, missions, courses, checkin, ranks, shop, vault, profile, settings, login, register, onboard
+- `scripts/` — standalone jobs + tooling. Scheduled jobs (run in-process by `src/lib/scheduler.ts`): `daily-challenge-assign.js`, `training-daily-tip.js`, `training-reminder.js`, `training-reengagement.js`. Also Capacitor/branding (generate-capacitor-assets-sources.js, write-android-styles.js, generate-ios-splash.js, bump-android-version.js, ensure-android-permissions.js) and data tooling (refresh-courses.js, add-*-courses.js)
+- `migrate.js` — bootstrap migration runner invoked by the Render build (`npm run migrate`)
+- `android/` / `ios/` — Capacitor native projects (committed with branded icons/splash); the native apps load the live site via `server.url`, not bundled assets
+- `resources/` — @capacitor/assets source images (icon-only.png, icon-background.png, splash.png, splash-dark.png); `AppIcon.appiconset/` holds the iOS 1024×1024 icon
+
+Schema note: there is no `migrations/` folder in VCS — the live schema exists in Neon; `src/db` and `migrate.js` handle idempotent bootstrap. `npm run schema:dump` snapshots it.
 
 ## Database
+> The schema is shared/unchanged from the RPG era, so Postgres still contains tables the training app no longer uses: `battles`/`battle_*`, `crews`/`crew_*`/`crew_wars`/`crew_war_*`, and the round-scoring tables (`rounds`, `round_holes`, `round_tracking`, `round_analytics`, `round_players`, `round_player_holes`). Treat those as **legacy** — no current module reads or writes them. `usd_transactions` is also an unused placeholder (no IAP).
+
 - `beta_signups` — Android closed beta waitlist; name, email (unique), created_at
 - `password_reset_tokens` — single-use 1-hour tokens for password reset flow; invalidated after use
 - `players` — user accounts, XP, stats, total_distance_m (lifetime GPS); is_guest, onboarding_completed, onboarding_skipped, experience_level (new/experienced), guest_uuid (for guest players); total_birdies, total_aces, total_checkins, total_courses_visited, challenges_completed (admin-editable; admin stats endpoint computes live from source tables)
@@ -84,7 +92,17 @@ Express.js + PostgreSQL (Neon) · Node.js · Deployed on Render · Android via C
 - **Resend** — outbound email (RESEND_API_KEY; optional EMAIL_FROM sender); powers password-reset and admin email blasts
 - **Capacitor / GitHub Actions** — Android AAB + iOS IPA CI/CD; iOS uploads to TestFlight via App Store Connect API; see `IOS_BUILD.md`
 
+## Scheduled jobs
+Run in-process by `src/lib/scheduler.ts` (started after the server listens) — no external cron service. Each job runs in an isolated child process (`fork`) at a fixed UTC time, reusing the standalone `scripts/`:
+- `daily-challenge-assign.js` — 00:00 UTC (also ~10s after boot; idempotent) — assigns each player's rotating daily challenge
+- `training-daily-tip.js` — 08:00 UTC — daily training tip notification
+- `training-reminder.js` — 10:00 UTC — streak reminder for lapsed players
+- `training-reengagement.js` — 12:00 UTC — re-engagement nudge for inactive players
+
+Set `RUN_SCHEDULER=false` to disable (e.g. if the web service ever runs more than one instance, so jobs don't double-fire).
+
 ## Recent changes
+- 2026-09-22: Clean rebuild + training pivot. The live app is now the TypeScript app in `src/` (booted by the `server.js` loader) with the `web/` frontend; the legacy Express app (`routes/`, `public/`, root `lib/`/`middleware/`/`services/`) was deleted. All Polsia usage removed — email is Resend (`RESEND_API_KEY`/`EMAIL_FROM`), the unused avatar upload (Polsia R2) was dropped. Recurring jobs now run via the in-process scheduler instead of `polsia.toml` crons. RPG features (rounds scoring, battles, crews, crew wars) are out of scope.
 - 2026-06-27: Training content expansion — added 32 lessons (+2 new categories: Tournament & Competition, Rules & Etiquette), expanded Course Strategy (+6), Mental Game (+4), Form & Technique (+4), Disc Selection (+2). Total: 72 lessons across 7 categories. No API changes — existing endpoints auto-serve new content.
 - 2026-06-23: Bug fix — restored missing DB tables/columns from failed pivot migrations. Migration `fix_missing_pivot_tables` creates: `training_milestones`, `daily_challenge_pool`, `player_daily_challenges`, `onboarding_events`, and adds `story_quests.mission_type/training_link/is_daily` columns. Seeds 7 starter daily challenges. Fixes `/api/home/state`, `/api/story/missions`, `/api/story/daily`, `/api/training/milestones`, and onboarding event tracking.
 - 2026-06-23: Training Content Expansion — 3 New Categories + Advanced Tier. Migration adds `skill_level` column (enum: beginner/intermediate/advanced/all_levels) to `training_categories` and `training_lessons`. Three new categories seeded: Course Strategy (10 lessons), Mental Game (7 lessons), Fitness & Warmup (7 lessons) — 24 new lessons total. Two advanced lessons added to Form & Technique and two to Disc Selection. `GET /api/training/categories` and `/categories/:slug/lessons` support `?level=` filter. `training.html` updated with "Advanced" and "All Levels" filter tabs; category cards show level badge; lesson list shows skill level badge.
