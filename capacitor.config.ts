@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'the.discgolfgo.app',
   appName: 'Disc Golf Go',
-  webDir: 'public',
+  webDir: 'web',
   // Load the live web app so all features stay in sync with the server
   server: {
     url: 'https://discgolfgo.app',
