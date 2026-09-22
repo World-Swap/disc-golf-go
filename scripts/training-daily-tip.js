@@ -3,7 +3,7 @@
 // Runs: daily at 8am. Records each tip in training_notifications table.
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+try { require('dotenv').config({ path: require('path').join(__dirname, '../.env') }); } catch { /* dotenv optional — Render injects env directly */ }
 const { Pool } = require('pg');
 
 const pool = new Pool({
