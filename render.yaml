@@ -8,47 +8,5 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-
-  # ── Scheduled jobs (UTC) ──────────────────────────────────────────────
-  # Each needs DATABASE_URL (set per-cron in the Render dashboard, or share
-  # an env group with the web service). They connect straight to Postgres.
-
-  - type: cron
-    name: daily-challenge-assign
-    runtime: node
-    schedule: "0 0 * * *"   # midnight UTC — assign today's challenge to players
-    buildCommand: npm install
-    startCommand: node scripts/daily-challenge-assign.js
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-
-  - type: cron
-    name: training-daily-tip
-    runtime: node
-    schedule: "0 8 * * *"   # 08:00 UTC — daily training tip notification
-    buildCommand: npm install
-    startCommand: node scripts/training-daily-tip.js
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-
-  - type: cron
-    name: training-reminder
-    runtime: node
-    schedule: "0 10 * * *"  # 10:00 UTC — streak reminder for lapsed players
-    buildCommand: npm install
-    startCommand: node scripts/training-reminder.js
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-
-  - type: cron
-    name: training-reengagement
-    runtime: node
-    schedule: "0 12 * * *"  # 12:00 UTC — re-engagement nudge for inactive players
-    buildCommand: npm install
-    startCommand: node scripts/training-reengagement.js
-    envVars:
-      - key: DATABASE_URL
-        sync: false
+    # Scheduled jobs (daily challenge + training notifications) run in-process
+    # via the app's scheduler (src/lib/scheduler.ts), not as separate services.

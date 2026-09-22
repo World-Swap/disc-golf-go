@@ -4,6 +4,7 @@ import { createApp } from './http/app';
 import { pool } from './db/pool';
 import { config } from './config';
 import { runMigrations } from './db/migrate';
+import { startScheduler } from './lib/scheduler';
 
 const app = createApp(pool);
 
@@ -17,6 +18,7 @@ async function start(): Promise<void> {
   }
   app.listen(config.port, () => {
     console.log(`[startup] listening on port ${config.port} (${config.nodeEnv})`);
+    startScheduler();
   });
 }
 
