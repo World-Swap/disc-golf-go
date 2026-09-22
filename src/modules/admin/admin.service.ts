@@ -135,7 +135,7 @@ export function createAdminService({ db, repo = createAdminRepo(db), send = defa
       if (!subject) throw badRequest('subject is required');
       if (!text) throw badRequest('body is required');
       if (recipientType !== 'all' && recipientType !== 'individual') throw badRequest('recipient_type must be "all" or "individual"');
-      if (!process.env.POLSIA_API_KEY) throw new AppError(500, 'Email proxy not configured (missing POLSIA_API_KEY)');
+      if (!process.env.RESEND_API_KEY) throw new AppError(500, 'Email is not configured (missing RESEND_API_KEY)');
 
       let recipients: Array<{ id: number; display_name: string; email: string }>;
       if (recipientType === 'all') {
