@@ -11,7 +11,7 @@
 const https = require('https');
 const http = require('http');
 
-const BASE_URL = process.env.API_URL || 'https://disc-golf-go.polsia.app';
+const BASE_URL = process.env.API_URL || 'https://discgolfgo.app';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'discgolfadmin2025';
 
 // All courses verified against PDGA and/or DGCourseReview

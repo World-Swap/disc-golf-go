@@ -2,7 +2,7 @@
  * daily-challenge-assign.js
  * Assigns today's daily challenge to all active players (runs at midnight UTC).
  * Players who already have today's challenge assigned are skipped.
- * Run via polsia.toml [[crons]] — does NOT need in-process scheduler guard.
+ * Run as a scheduled cron job — does NOT need in-process scheduler guard.
  */
 
 const { Pool } = require('pg');

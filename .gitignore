@@ -13,7 +13,7 @@ scratch-*
 repair-*
 fix-*
 agent-*
-# Polsia safety (auto-injected)
+# Secrets and local-only files
 .env
 .env.*
 .claude/

@@ -42,10 +42,7 @@ async function migrate() {
       )
     `);
 
-    // 2. Core tables (idempotent - safe to run every time)
-    await runCoreMigrations(client);
-
-    // 3. Run migrations from migrations/ folder
+    // 2. Run migrations from migrations/ folder
     await runFolderMigrations(client);
 
     console.log('Migrations complete.');
@@ -53,41 +50,6 @@ async function migrate() {
     client.release();
     await pool.end();
   }
-}
-
-/**
- * Core tables that every app needs.
- * These use CREATE IF NOT EXISTS so they're safe to run repeatedly.
- */
-async function runCoreMigrations(client) {
-  // Users table with subscription support
-  // Used by Polsia for syncing end-user subscription status
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) NOT NULL,
-      name VARCHAR(255),
-      password_hash VARCHAR(255),
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW(),
-      -- Subscription fields (synced by Polsia when customer subscribes)
-      stripe_subscription_id VARCHAR(255),
-      subscription_status VARCHAR(50),
-      subscription_plan VARCHAR(255),
-      subscription_expires_at TIMESTAMPTZ,
-      subscription_updated_at TIMESTAMPTZ
-    )
-  `);
-
-  // Unique constraint on email (required for UPSERT)
-  await client.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (LOWER(email))
-  `);
-
-  // Index for subscription lookups
-  await client.query(`
-    CREATE INDEX IF NOT EXISTS users_stripe_subscription_id_idx ON users (stripe_subscription_id)
-  `);
 }
 
 /**

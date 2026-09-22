@@ -34,7 +34,8 @@ npm run ts:start     # node dist/server.js
 | `JWT_SECRET` | **required in production** (app fails fast if missing) |
 | `APP_BASE_URL` | `https://discgolfgo.app` |
 | `NODE_ENV` | `production` |
-| `POLSIA_API_KEY` | email (password reset, admin blasts) + R2 image upload |
+| `RESEND_API_KEY` | email (password reset, admin blasts) via Resend |
+| `EMAIL_FROM` | verified sender, e.g. `Disc Golf Go <no-reply@discgolfgo.app>` |
 | `ADMIN_PASSWORD` | admin dashboard login |
 | `ADMIN_JWT_SECRET` | optional; falls back to `JWT_SECRET` |
 
