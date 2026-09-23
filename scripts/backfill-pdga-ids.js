@@ -121,7 +121,7 @@ async function fetchPdgaStatePage(stateCode, page = 0) {
   try {
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'DiscGolfGo/1.0 course-data-backfill (+https://discgolfgo.com)',
+        'User-Agent': 'DiscGolfGo/1.0 course-data-backfill (+https://discgolfgo.app)',
         'Accept': 'text/html',
       },
       timeout: 15000,
