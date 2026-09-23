@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Disc Golf Go — Coached by the pros. Play anywhere.</title>
+  <meta name="theme-color" content="#f7f3ec" />
+  <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
+  <meta name="description" content="Disc Golf Go: learn from 13 of the world's top touring pros across 134 video lessons. Earn XP, climb the ranks, and check in at 1,900+ real courses. Free to start." />
+  <meta property="og:title" content="Disc Golf Go — Coached by the pros" />
+  <meta property="og:description" content="13 touring pros. 134 lessons. 200+ videos. Train like a pro and lower your score — free." />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w4" />
+  <link rel="stylesheet" href="/styles/app.css?v=w4" />
+  <style>
+    /* promo-only touches layered on the shared design system */
+    .pros-names{display:flex;flex-wrap:wrap;gap:10px 14px;justify-content:center;max-width:820px;margin:26px auto 0;}
+    .pro-chip{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:var(--radius-pill,9999px);
+      padding:9px 16px;font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--color-ink,#2b2622);
+      box-shadow:0 6px 16px rgba(43,38,34,.05);}
+    .pro-chip b{color:var(--color-orange,#fa5e0f);}
+    .stores{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:22px;}
+    .store{display:inline-flex;align-items:center;gap:10px;background:var(--color-ink,#2b2622);color:#fff;
+      border-radius:14px;padding:12px 20px;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:15px;}
+    .store span{opacity:.7;font-weight:600;font-size:12px;display:block;line-height:1;margin-bottom:2px;}
+    .store.soon{background:#fff;color:var(--color-ash,#7a726a);border:1px solid var(--hair,#eadfce);}
+  </style>
+</head>
+<body>
+  <!-- Announcement bar -->
+  <div class="banner-wrap">
+    <div class="banner"><b>13 touring pros</b> <span class="dot">•</span> <b>134 lessons</b> <span class="dot">•</span> free to play</div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a class="logo" href="/">
+      <span class="logo__glyph" aria-hidden="true"></span>
+      Disc Golf Go
+    </a>
+    <div class="nav__links">
+      <a class="nav__link" href="#pros">The Pros</a>
+      <a class="nav__link" href="#learn">Training</a>
+      <a class="nav__link" href="#levelup">How it works</a>
+    </div>
+    <a class="btn" href="https://discgolfgo.app/login">Open App</a>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero__grid">
+      <div class="hero__lead">
+        <span class="eyebrow">Coached by the pros · Play anywhere</span>
+        <h1 class="stacked">
+          <span class="stacked__line">The world's best,</span>
+          <span class="stacked__line">in your <span class="stacked__line--italic">pocket</span>.</span>
+        </h1>
+        <p class="hero__sub">Disc Golf Go turns pro coaching into lower scores — learn from 13 touring pros, earn XP, and take it to the course.</p>
+
+        <ul class="bullets">
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">★</span><div><b>Learn from 13 touring pros</b> — <span>Gannon Buhr, Ricky Wysocki, Paul McBeth, Kristin Tattar & more</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>134 coached lessons</b> — <span>200+ videos across 13 skill paths, each with the key takeaways</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,900+ courses and apply your training</span></div></li>
+        </ul>
+
+        <div class="hero__cta">
+          <a class="btn btn--lg" href="https://discgolfgo.app/register">Start Training — Free</a>
+          <a class="btn btn--ghost btn--lg" href="https://discgolfgo.app/login">Open the App</a>
+        </div>
+      </div>
+
+      <div class="hero__media">
+        <img src="/img/hero.jpg" alt="An orange disc gliding toward a chain basket at golden hour" />
+        <div class="hero__badge"><b>+50 XP</b> · Lesson complete</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Pros -->
+  <section class="sect sect--ink" id="pros">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">Learn from the best</p>
+        <h2 class="sect__title">The world's top pros are now your coaches.</h2>
+        <p class="sect__lede">We've woven instruction from 13 of the game's best players into the lessons — so you're learning the right thing from the people who do it best.</p>
+      </div>
+      <div class="statsband">
+        <div class="statbig"><div class="statbig__n">13</div><div class="statbig__l">Touring pros</div></div>
+        <div class="statbig"><div class="statbig__n">77</div><div class="statbig__l">Pro-coached videos</div></div>
+        <div class="statbig"><div class="statbig__n">134</div><div class="statbig__l">Lessons</div></div>
+        <div class="statbig"><div class="statbig__n">200+</div><div class="statbig__l">Videos in all</div></div>
+      </div>
+      <div class="pros-names">
+        <span class="pro-chip"><b>Gannon Buhr</b></span>
+        <span class="pro-chip">Ricky Wysocki</span>
+        <span class="pro-chip">Paul McBeth</span>
+        <span class="pro-chip">Simon Lizotte</span>
+        <span class="pro-chip">Eagle McMahon</span>
+        <span class="pro-chip">Kristin Tattar</span>
+        <span class="pro-chip">Paige Pierce</span>
+        <span class="pro-chip">Scott Stokely</span>
+        <span class="pro-chip">Nate Sexton</span>
+        <span class="pro-chip">Calvin Heimburg</span>
+        <span class="pro-chip">Paul Ulibarri</span>
+        <span class="pro-chip">Isaac Robinson</span>
+        <span class="pro-chip">Chris Dickerson</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skill paths -->
+  <section class="sect sect--peach" id="learn">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">The curriculum</p>
+        <h2 class="sect__title">13 skill paths. 134 coached lessons.</h2>
+        <p class="sect__lede">Every lesson pairs a pro instructional video with the key takeaways and a companion guide — from your first grip to tournament nerves.</p>
+      </div>
+      <div class="numlist">
+        <div class="numrow"><div><div class="numrow__name">Getting Started</div><div class="numrow__meta">New player? Everything for your first round</div></div><span class="numrow__num">7 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Form &amp; Technique</div><div class="numrow__meta">Grip, stance, reach-back, release</div></div><span class="numrow__num">12 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Putting</div><div class="numrow__meta">Circle 1 &amp; 2, routine, drills, nerves</div></div><span class="numrow__num">10 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Driving &amp; Distance</div><div class="numrow__meta">Run-up, timing, power, control</div></div><span class="numrow__num">10 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Approach &amp; Upshots</div><div class="numrow__meta">The 50–150 ft scoring zone</div></div><span class="numrow__num">8 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Forehand / Sidearm</div><div class="numrow__meta">Grip, mechanics, distance, utility</div></div><span class="numrow__num">7 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Disc Selection</div><div class="numrow__meta">Flight numbers, stability, plastics, weight</div></div><span class="numrow__num">13 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Course Strategy</div><div class="numrow__meta">Management, risk/reward, reading wind</div></div><span class="numrow__num">16 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Mental Game</div><div class="numrow__meta">Routine, focus, composure under pressure</div></div><span class="numrow__num">12 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Fitness &amp; Warmup</div><div class="numrow__meta">Mobility, core, power, injury prevention</div></div><span class="numrow__num">10 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Rules &amp; Etiquette</div><div class="numrow__meta">OB, relief, mando, pace of play</div></div><span class="numrow__num">12 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Tournament &amp; Competition</div><div class="numrow__meta">Prep, formats, nerves, bag setup</div></div><span class="numrow__num">10 lessons</span></div>
+        <div class="numrow"><div><div class="numrow__name">Practice &amp; Drills</div><div class="numrow__meta">Field work, drills, filming, pressure</div></div><span class="numrow__num">7 lessons</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="sect sect--cream" id="levelup">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">How it works</p>
+        <h2 class="sect__title">A game that rewards getting better.</h2>
+      </div>
+      <div class="fgrid">
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">▶</div>
+          <h3 class="fcard__title">Watch &amp; learn</h3>
+          <p class="fcard__body">Real coaching from disc golf's best. Every lesson plays the pro video right in the app, with the core tips and a guide to go deeper.</p>
+        </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">▲</div>
+          <h3 class="fcard__title">Earn XP &amp; missions</h3>
+          <p class="fcard__body">Complete lessons and daily challenges to earn XP, rise through skill tiers, and unlock your creator vault.</p>
+        </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">◎</div>
+          <h3 class="fcard__title">Apply it on course</h3>
+          <p class="fcard__body">Check in at 1,900+ real courses across the country and put your training to work where it counts.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="cta-final">
+    <h2 class="sect__title">Ready to train like a pro?</h2>
+    <div class="hero__cta" style="justify-content:center">
+      <a class="btn btn--lg" href="https://discgolfgo.app/register">Start Training — Free</a>
+      <a class="btn btn--ghost btn--lg" href="https://discgolfgo.app/login">Open the App</a>
+    </div>
+    <div class="stores">
+      <a class="store" href="https://discgolfgo.app/register"><div><span>Play now on</span>The Web App</div></a>
+      <span class="store soon">Coming soon to the App Store &amp; Google Play</span>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="foot">
+    <div class="foot__inner">
+      <span>Disc Golf Go</span>
+      <span><a href="https://discgolfgo.app/privacy" style="color:inherit">Privacy</a> <span class="dot">•</span> <a href="mailto:contact@discgolfgo.app" style="color:inherit">Contact</a> <span class="dot">•</span> Train • Play • Level up</span>
+    </div>
+  </footer>
+</body>
+</html>

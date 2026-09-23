@@ -7,7 +7,7 @@ import { securityHeaders } from '../middleware/security';
 import { errorHandler } from './error-handler';
 import { healthRouter } from '../modules/health/health.routes';
 import { createApiRouter } from '../modules';
-import { mountFrontend } from './static';
+import { mountFrontend, comHostSplit } from './static';
 import type { Database } from '../db/types';
 
 export interface AppOptions {
@@ -17,7 +17,17 @@ export interface AppOptions {
 export function createApp(db: Database, opts: AppOptions = {}): Express {
   const app = express();
 
+  // Behind Render's proxy: trust X-Forwarded-* so req.hostname/req.ip are correct.
+  app.set('trust proxy', true);
+
   app.use(securityHeaders);
+
+  // discgolfgo.com = promo site; app routes there redirect to discgolfgo.app.
+  // Runs before /api and the frontend so it can intercept. No-op on .app.
+  if (opts.serveFrontend !== false) {
+    app.use(comHostSplit());
+  }
+
   app.use(express.json({ limit: '1mb' }));
 
   app.use('/health', healthRouter);

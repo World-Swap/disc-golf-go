@@ -2,9 +2,30 @@
 // routes (one path per HTML file, mirroring the old public/ page routing).
 
 import path from 'node:path';
-import express, { type Express } from 'express';
+import express, { type Express, type RequestHandler } from 'express';
 
 const WEB_DIR = path.join(__dirname, '..', '..', 'web');
+
+// The marketing domain. discgolfgo.app is the app; discgolfgo.com is the promo
+// site. Both currently resolve to this same service, so we split by host.
+const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
+
+// On the .com marketing domain: serve the promo page at '/', let static assets
+// (files with an extension) fall through so the promo's CSS/images load, and
+// send every app route + /api to the app on discgolfgo.app. .app is untouched.
+// Mount this BEFORE /api and the frontend so it can intercept.
+export function comHostSplit(): RequestHandler {
+  const promoFile = path.join(WEB_DIR, 'promo.html');
+  return (req, res, next) => {
+    if (!PROMO_HOSTS.has((req.hostname || '').toLowerCase())) return next();
+    const p = req.path;
+    if (p === '/') return res.sendFile(promoFile);
+    if (p === '/health' || p.startsWith('/health/')) return next(); // platform health checks
+    if (/\.[a-z0-9]{2,5}$/i.test(p)) return next(); // static asset — serve for the promo page
+    // App page or API on .com → same path on the app domain (308 keeps method for /api).
+    return res.redirect(p.startsWith('/api/') ? 308 : 301, 'https://discgolfgo.app' + req.originalUrl);
+  };
+}
 
 // Clean route -> HTML file. Extensionless URLs so links stay tidy.
 const PAGES: Record<string, string> = {
