@@ -14,6 +14,13 @@ const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
 // (files with an extension) fall through so the promo's CSS/images load, and
 // send every app route + /api to the app on discgolfgo.app. .app is untouched.
 // Mount this BEFORE /api and the frontend so it can intercept.
+// Clean marketing URLs that live on the .com promo site (extensionless → served
+// here instead of being redirected to the app).
+const PROMO_PAGES: Record<string, string> = {
+  '/guides/how-to-putt-disc-golf': 'guide-putting.html',
+  '/guides/best-beginner-disc-golf-discs': 'guide-beginner-discs.html',
+};
+
 export function comHostSplit(): RequestHandler {
   const promoFile = path.join(WEB_DIR, 'promo.html');
   return (req, res, next) => {
@@ -21,6 +28,8 @@ export function comHostSplit(): RequestHandler {
     const p = req.path;
     if (p === '/') return res.sendFile(promoFile);
     if (p === '/health' || p.startsWith('/health/')) return next(); // platform health checks
+    const promoPage = PROMO_PAGES[p.replace(/\/$/, '')];
+    if (promoPage) return res.sendFile(path.join(WEB_DIR, promoPage)); // marketing content page
     if (/\.[a-z0-9]{2,5}$/i.test(p)) return next(); // static asset — serve for the promo page
     // App page or API on .com → same path on the app domain (308 keeps method for /api).
     return res.redirect(p.startsWith('/api/') ? 308 : 301, 'https://discgolfgo.app' + req.originalUrl);

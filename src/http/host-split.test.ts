@@ -47,6 +47,12 @@ test('discgolfgo.com host split', async (t) => {
     assert.match(r.body, /the world's best|touring pros/i);
   });
 
+  await t.test('.com marketing guide page serves (not a redirect)', async () => {
+    const r = await req(port, '/guides/how-to-putt-disc-golf', 'discgolfgo.com');
+    assert.equal(r.status, 200);
+    assert.match(r.body, /how to putt in disc golf/i);
+  });
+
   await t.test('.com static asset is not redirected', async () => {
     const r = await req(port, '/styles/app.css', 'discgolfgo.com');
     assert.notEqual(r.status, 301);
