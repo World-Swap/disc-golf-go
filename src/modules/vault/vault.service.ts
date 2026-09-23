@@ -58,10 +58,12 @@ export function createVaultService(db: Database, repo: VaultRepo = createVaultRe
     async bonus(playerId: number | null) {
       const rows = await repo.allVideoLessonsWithCompletion(playerId);
 
-      const map = new Map<string, { channel: string; unlocked: number; videos: unknown[] }>();
+      const map = new Map<string, { channel: string; unlocked: number; videos: unknown[]; seen: Set<string> }>();
       for (const l of rows) {
         const ch = canonChannel(l.youtube_channel);
-        const group = map.get(ch) ?? { channel: ch, unlocked: 0, videos: [] };
+        const group = map.get(ch) ?? { channel: ch, unlocked: 0, videos: [], seen: new Set<string>() };
+        if (group.seen.has(l.youtube_url)) continue; // same video listed twice (primary + resource)
+        group.seen.add(l.youtube_url);
         if (l.completed) group.unlocked++;
         group.videos.push({
           lesson_id: l.id,

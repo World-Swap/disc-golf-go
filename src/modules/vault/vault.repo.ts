@@ -68,18 +68,28 @@ export function createVaultRepo(db: Database) {
       return r.rows;
     },
 
-    // Every lesson video + whether THIS player has completed the lesson (which
-    // unlocks the video). playerId null (guest/anon) => nothing completed.
+    // Every lesson video — the lesson's PRIMARY video (grouped by its channel)
+    // PLUS every 'video' resource attached to a lesson (grouped by the resource's
+    // author, e.g. a featured pro) — and whether THIS player has completed the
+    // parent lesson (which unlocks the video). playerId null => nothing completed.
     async allVideoLessonsWithCompletion(playerId: number | null): Promise<ChannelVideoRow[]> {
       const r = await db.query<ChannelVideoRow>(
         `SELECT l.id, l.title, l.youtube_url, l.youtube_title, l.youtube_channel,
-                c.name AS category_name,
-                (tc.lesson_id IS NOT NULL) AS completed
+                c.name AS category_name, (tc.lesson_id IS NOT NULL) AS completed
          FROM training_lessons l
          JOIN training_categories c ON c.id = l.category_id
          LEFT JOIN training_completions tc ON tc.lesson_id = l.id AND tc.player_id = $1
          WHERE l.is_active = true AND l.youtube_url IS NOT NULL AND l.youtube_url <> ''
-         ORDER BY c.sort_order, l.sort_order`,
+         UNION ALL
+         SELECT l.id, l.title, lr.url AS youtube_url, lr.title AS youtube_title,
+                lr.author AS youtube_channel, c.name AS category_name,
+                (tc.lesson_id IS NOT NULL) AS completed
+         FROM lesson_resources lr
+         JOIN training_lessons l ON l.id = lr.lesson_id
+         JOIN training_categories c ON c.id = l.category_id
+         LEFT JOIN training_completions tc ON tc.lesson_id = l.id AND tc.player_id = $1
+         WHERE lr.resource_type = 'video' AND lr.url IS NOT NULL AND lr.url <> ''
+           AND l.is_active = true AND lr.author IS NOT NULL AND lr.author <> ''`,
         [playerId]
       );
       return r.rows;
