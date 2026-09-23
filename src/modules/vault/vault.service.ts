@@ -6,12 +6,16 @@ import { withTransaction } from '../../db/pool';
 import type { Database } from '../../db/types';
 import { createVaultRepo, type VaultRepo, type LessonVideoRow } from './vault.repo';
 
-const TYPE_LABELS: Record<string, string> = {
-  premium_tip: 'Premium Tip',
-  disc_guide: 'Disc Guide',
-  technique_breakdown: 'Technique Breakdown',
-  instructor_video: 'Instructor Video',
+// Merge duplicate channel spellings from the lesson data into one canonical name.
+const CHANNEL_ALIASES: Record<string, string> = {
+  dynamicdiscs: 'Dynamic Discs',
+  'robbie c discgolf': 'Robbie C Disc Golf',
 };
+function canonChannel(raw: string | null): string {
+  const name = (raw ?? '').trim();
+  if (!name || name.toLowerCase() === 'youtube') return 'Other creators';
+  return CHANNEL_ALIASES[name.toLowerCase()] ?? name;
+}
 
 export function createVaultService(db: Database, repo: VaultRepo = createVaultRepo(db)) {
   return {
@@ -48,35 +52,37 @@ export function createVaultService(db: Database, repo: VaultRepo = createVaultRe
       return { authenticated: true, categories: [...categories.values()] };
     },
 
+    // Bonus = a by-creator catalog of every lesson video. A video is only
+    // watchable once the player has completed its lesson (no paywall); locked
+    // videos show which lesson unlocks them. Each video notes its source lesson.
     async bonus(playerId: number | null) {
-      const items = await repo.bonusItems();
+      const rows = await repo.allVideoLessonsWithCompletion(playerId);
 
-      let purchasedIds = new Set<number>();
-      let goldBalance: number | null = null;
-      if (playerId != null) {
-        const [gold, purchased] = await Promise.all([repo.gold(playerId), repo.purchasedItemIds(playerId)]);
-        goldBalance = gold;
-        purchasedIds = purchased;
+      const map = new Map<string, { channel: string; unlocked: number; videos: unknown[] }>();
+      for (const l of rows) {
+        const ch = canonChannel(l.youtube_channel);
+        const group = map.get(ch) ?? { channel: ch, unlocked: 0, videos: [] };
+        if (l.completed) group.unlocked++;
+        group.videos.push({
+          lesson_id: l.id,
+          lesson_title: l.title,
+          category: l.category_name,
+          youtube_title: l.youtube_title || l.title,
+          completed: l.completed,
+          youtube_url: l.completed ? l.youtube_url : null, // access-gated by completion
+        });
+        map.set(ch, group);
       }
 
+      const channels = [...map.values()]
+        .map((c) => ({ channel: c.channel, unlocked: c.unlocked, video_count: c.videos.length, videos: c.videos }))
+        // Creators you've unlocked most rise to the top; then by size, then A–Z.
+        .sort((a, b) => b.unlocked - a.unlocked || b.video_count - a.video_count || a.channel.localeCompare(b.channel));
+
       return {
-        items: items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          preview: item.preview,
-          icon: item.icon,
-          gold_cost: item.gold_cost,
-          item_type: item.item_type,
-          type_label: TYPE_LABELS[item.item_type] ?? item.item_type,
-          purchased: purchasedIds.has(item.id),
-          instructor_name: item.instructor_name ?? null,
-          youtube_url: item.youtube_url ?? null,
-          thumbnail_url: item.thumbnail_url ?? null,
-          content: item.content ?? null,
-        })),
-        gold_balance: goldBalance,
-        authenticated: goldBalance !== null,
+        authenticated: playerId != null,
+        totals: { channels: channels.length, videos: rows.length, unlocked: rows.filter((r) => r.completed).length },
+        channels,
       };
     },
 

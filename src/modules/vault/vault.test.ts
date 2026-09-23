@@ -20,31 +20,39 @@ test('vault endpoints', async (t) => {
   const token = createToken({ id: 7, player_uuid: 'u7' });
   const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-  await t.test('GET /vault/bonus anon: authenticated:false, no purchased', async () => {
+  await t.test('GET /vault/bonus anon: grouped by creator, all locked/gated', async () => {
     handler = (sql) => {
-      if (/FROM vault_training_items/.test(sql)) return { rows: [{ id: 1, name: 'V', item_type: 'premium_tip', gold_cost: 100 }] };
-      throw new Error('should not query players when anon');
+      if (/FROM training_lessons/.test(sql)) return { rows: [
+        { id: 1, title: 'Grip Basics', youtube_url: 'https://y/1', youtube_title: 'Grip', youtube_channel: 'Gannon Buhr', category_name: 'Form & Technique', completed: false },
+        { id: 2, title: 'Putt Stance', youtube_url: 'https://y/2', youtube_title: 'Putt', youtube_channel: 'Gannon Buhr', category_name: 'Putting', completed: false },
+      ] };
+      return { rows: [] };
     };
     const r = await fetch(base + '/api/vault/bonus');
-    const j = (await r.json()) as { authenticated: boolean; gold_balance: number | null; items: Array<{ purchased: boolean; type_label: string }> };
+    const j = (await r.json()) as { authenticated: boolean; totals: { channels: number; videos: number; unlocked: number }; channels: Array<{ channel: string; unlocked: number; video_count: number; videos: Array<{ completed: boolean; youtube_url: string | null }> }> };
     assert.equal(j.authenticated, false);
-    assert.equal(j.gold_balance, null);
-    assert.equal(j.items[0]!.purchased, false);
-    assert.equal(j.items[0]!.type_label, 'Premium Tip');
+    assert.equal(j.totals.unlocked, 0);
+    assert.equal(j.channels.length, 1);
+    assert.equal(j.channels[0]!.channel, 'Gannon Buhr');
+    assert.equal(j.channels[0]!.video_count, 2);
+    assert.equal(j.channels[0]!.videos[0]!.youtube_url, null); // locked -> access-gated
   });
 
-  await t.test('GET /vault/bonus authed: gold + purchased flag', async () => {
+  await t.test('GET /vault/bonus authed: completed video unlocked with url, others gated', async () => {
     handler = (sql) => {
-      if (/FROM vault_training_items/.test(sql)) return { rows: [{ id: 1, name: 'V', item_type: 'disc_guide', gold_cost: 50 }, { id: 2, name: 'W', item_type: 'disc_guide', gold_cost: 50 }] };
-      if (/SELECT gold FROM players/.test(sql)) return { rows: [{ gold: 250 }] };
-      if (/player_vault_training_unlocks/.test(sql)) return { rows: [{ item_id: 2 }] };
+      if (/FROM training_lessons/.test(sql)) return { rows: [
+        { id: 1, title: 'Grip Basics', youtube_url: 'https://y/1', youtube_title: 'Grip', youtube_channel: 'Foundation Disc Golf', category_name: 'Form', completed: true },
+        { id: 2, title: 'Anhyzer', youtube_url: 'https://y/2', youtube_title: 'Anhyzer', youtube_channel: 'Foundation Disc Golf', category_name: 'Form', completed: false },
+      ] };
       return { rows: [] };
     };
     const r = await fetch(base + '/api/vault/bonus', { headers: auth });
-    const j = (await r.json()) as { authenticated: boolean; gold_balance: number; items: Array<{ id: number; purchased: boolean }> };
-    assert.equal(j.gold_balance, 250);
-    assert.equal(j.items.find((i) => i.id === 2)!.purchased, true);
-    assert.equal(j.items.find((i) => i.id === 1)!.purchased, false);
+    const j = (await r.json()) as { authenticated: boolean; totals: { unlocked: number }; channels: Array<{ unlocked: number; videos: Array<{ completed: boolean; youtube_url: string | null }> }> };
+    assert.equal(j.authenticated, true);
+    assert.equal(j.totals.unlocked, 1);
+    assert.equal(j.channels[0]!.unlocked, 1);
+    assert.equal(j.channels[0]!.videos.find((v) => v.completed)!.youtube_url, 'https://y/1');
+    assert.equal(j.channels[0]!.videos.find((v) => !v.completed)!.youtube_url, null);
   });
 
   await t.test('GET /vault/library: empty when nothing completed', async () => {

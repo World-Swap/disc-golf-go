@@ -16,6 +16,16 @@ export interface LessonVideoRow {
   category_slug: string;
 }
 
+export interface ChannelVideoRow {
+  id: number;
+  title: string;
+  youtube_url: string;
+  youtube_title: string | null;
+  youtube_channel: string | null;
+  category_name: string;
+  completed: boolean;
+}
+
 export interface BonusItemRow {
   id: number;
   name: string;
@@ -54,6 +64,23 @@ export function createVaultRepo(db: Database) {
         `SELECT lr.lesson_id, lr.title, lr.url, lr.resource_type FROM lesson_resources lr
          WHERE lr.lesson_id = ANY($1::int[]) ORDER BY lr.display_order ASC, lr.id ASC`,
         [lessonIds]
+      );
+      return r.rows;
+    },
+
+    // Every lesson video + whether THIS player has completed the lesson (which
+    // unlocks the video). playerId null (guest/anon) => nothing completed.
+    async allVideoLessonsWithCompletion(playerId: number | null): Promise<ChannelVideoRow[]> {
+      const r = await db.query<ChannelVideoRow>(
+        `SELECT l.id, l.title, l.youtube_url, l.youtube_title, l.youtube_channel,
+                c.name AS category_name,
+                (tc.lesson_id IS NOT NULL) AS completed
+         FROM training_lessons l
+         JOIN training_categories c ON c.id = l.category_id
+         LEFT JOIN training_completions tc ON tc.lesson_id = l.id AND tc.player_id = $1
+         WHERE l.is_active = true AND l.youtube_url IS NOT NULL AND l.youtube_url <> ''
+         ORDER BY c.sort_order, l.sort_order`,
+        [playerId]
       );
       return r.rows;
     },

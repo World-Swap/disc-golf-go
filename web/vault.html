@@ -24,7 +24,7 @@
       <div><h1 class="h-display">VAULT<span class="mark" style="width:38%"></span></h1></div>
       <div class="segbar" id="tabs">
         <button class="seg" data-tab="library" aria-selected="true">My Library</button>
-        <button class="seg" data-tab="bonus">Bonus</button>
+        <button class="seg" data-tab="bonus">Creators</button>
       </div>
       <div id="view" class="loading">Loading…</div>
     </div>
@@ -75,17 +75,30 @@
         loading();
         try {
           var d = await API.get('/vault/bonus');
+          var chans = (d.channels || []);
+          if (!chans.length) { view.className = ''; view.innerHTML = '<div class="loading">No creator videos yet.</div>'; return; }
+          var t = d.totals || {};
           view.className = 'stack';
-          view.innerHTML = (d.items || []).map(function (it) {
-            return '<div class="card">' +
-              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">' +
-                '<span class="row__title">' + esc(it.icon || '') + ' ' + esc(it.name) + '</span>' +
-                (it.purchased ? '<span class="pill pill--done">Owned</span>' : '<span class="row__meta">' + (it.gold_cost || 0) + ' G</span>') + '</div>' +
-              '<p class="card__eyebrow" style="margin-top:8px">' + esc(it.type_label || '') + (it.instructor_name ? ' · ' + esc(it.instructor_name) : '') + '</p>' +
-              (it.description ? '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + esc(it.description) + '</p>' : '') +
-              (it.purchased && it.youtube_url ? '<a class="btn btn--ghost btn--block" style="margin-top:14px" href="' + esc(it.youtube_url) + '" target="_blank" rel="noopener">Watch →</a>' : '') +
-              '</div>';
-          }).join('<div style="height:14px"></div>') || '<div class="loading">No bonus content yet</div>';
+          view.innerHTML =
+            '<p class="row__sub" style="text-transform:none;letter-spacing:0;margin-bottom:2px">' +
+              (t.unlocked || 0) + ' of ' + (t.videos || 0) + ' videos unlocked · ' + (t.channels || 0) + ' creators. ' +
+              'Complete a lesson to unlock its video here.</p>' +
+            chans.map(function (c) {
+              var vids = (c.videos || []).map(function (v) {
+                var note = 'From: ' + esc(v.lesson_title) + ' · ' + esc(v.category);
+                if (v.completed && v.youtube_url) {
+                  return '<a class="row" href="' + esc(v.youtube_url) + '" target="_blank" rel="noopener">' +
+                    '<span class="row__glyph">▷</span><div class="row__body"><div class="row__title">' + esc(v.youtube_title) + '</div>' +
+                    '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + note + '</div></div>' +
+                    '<span class="row__meta">Watch</span></a>';
+                }
+                return '<a class="row" href="/training?lesson=' + v.lesson_id + '" style="opacity:.6">' +
+                  '<span class="row__glyph">🔒</span><div class="row__body"><div class="row__title">' + esc(v.youtube_title) + '</div>' +
+                  '<div class="row__sub" style="text-transform:none;letter-spacing:0">Complete “' + esc(v.lesson_title) + '” to unlock</div></div>' +
+                  '<span class="row__meta">›</span></a>';
+              }).join('');
+              return '<div><p class="section-label">' + esc(c.channel) + ' · ' + (c.unlocked || 0) + '/' + (c.video_count || 0) + '</p><div class="rows">' + vids + '</div></div>';
+            }).join('');
         } catch (e) { fail(e); }
       }
 
