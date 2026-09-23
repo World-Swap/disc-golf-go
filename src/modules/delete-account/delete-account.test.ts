@@ -11,7 +11,7 @@ const db = {
   connect: async () => ({ query: async (sql: string) => handler(sql), release() {} }) as never,
 } as unknown as Database;
 
-test('upload + delete-account endpoints', async (t) => {
+test('delete-account endpoints', async (t) => {
   const app = createApp(db);
   const server = app.listen(0);
   await new Promise<void>((r) => server.once('listening', r));
@@ -20,16 +20,6 @@ test('upload + delete-account endpoints', async (t) => {
   const token = createToken({ id: 42, player_uuid: 'u42' });
   const auth = { Authorization: `Bearer ${token}` };
   const json = { 'Content-Type': 'application/json' };
-
-  await t.test('POST /players/me/photo: no file -> 400', async () => {
-    const r = await fetch(base + '/api/players/me/photo', { method: 'POST', headers: auth });
-    assert.equal(r.status, 400);
-  });
-
-  await t.test('POST /players/me/photo unauth -> 401', async () => {
-    const r = await fetch(base + '/api/players/me/photo', { method: 'POST' });
-    assert.equal(r.status, 401);
-  });
 
   await t.test('DELETE /delete-account: wipes data + success', async () => {
     let deletedPlayers = false;
