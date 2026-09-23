@@ -1,21 +1,34 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Add project specific ProGuard/R8 rules here.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ── Keep line numbers + annotations for readable crashes and reflection ──
+-keepattributes *Annotation*, SourceFile, LineNumberTable, Signature, Exceptions
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── Capacitor core (bridge + plugins are wired via annotations/reflection) ──
+-keep public class com.getcapacitor.** { *; }
+-keep class * extends com.getcapacitor.Plugin { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin public class * { *; }
+-keepclassmembers class * {
+  @com.getcapacitor.PluginMethod public <methods>;
+  @com.getcapacitor.annotation.PermissionCallback <methods>;
+  @com.getcapacitor.annotation.ActivityCallback <methods>;
+  @com.getcapacitor.annotation.Permission <methods>;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── Official Capacitor plugins bundled in this app (geolocation, splash-screen) ──
+-keep class com.capacitorjs.plugins.** { *; }
+-keep class com.getcapacitor.plugin.** { *; }
+
+# ── Cordova compat layer (capacitor-cordova-android-plugins) ──
+-keep class org.apache.cordova.** { *; }
+
+# ── WebView <-> JS bridge: never strip @JavascriptInterface methods ──
+-keepclassmembers class * {
+  @android.webkit.JavascriptInterface <methods>;
+}
+
+# ── The app's BridgeActivity ──
+-keep class the.discgolfgo.app.** { *; }
+
+# ── Silence notes about optional/annotation deps R8 sees but the app doesn't use ──
+-dontwarn com.getcapacitor.**
+-dontwarn org.apache.cordova.**
