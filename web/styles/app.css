@@ -55,7 +55,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn--lg { padding: 16px 30px; font-size: 16px; }
 
 /* ── Announcement bar ── */
-.banner-wrap { background: var(--color-ink); }
+.banner-wrap { background: var(--color-ink); padding-top: env(safe-area-inset-top, 0px); }
 .banner {
   display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
   max-width: 1120px; margin: 0 auto; padding: 10px var(--edge-pad);
@@ -70,6 +70,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   display: flex; align-items: center; justify-content: space-between; gap: 20px;
   max-width: 1120px; margin: 0 auto; padding: 18px var(--edge-pad);
 }
+/* When the nav is the page's first element there is no banner above it to
+   absorb the notch, so it clears the status bar itself. */
+.nav:first-child { padding-top: calc(18px + env(safe-area-inset-top, 0px)); }
 .logo {
   display: inline-flex; align-items: center; gap: 10px;
   font-family: var(--font-display); font-size: 18px; font-weight: var(--weight-bold);

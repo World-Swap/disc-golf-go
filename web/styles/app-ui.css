@@ -33,7 +33,7 @@
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   /* Clear the phone status bar / notch (needs viewport-fit=cover, which all pages set). */
   padding: calc(15px + env(safe-area-inset-top, 0px)) var(--edge-pad) 13px;
-  background: rgba(247, 243, 236, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--hair);
@@ -146,5 +146,5 @@
 .vpane--playing { cursor: default; }
 
 /* Centered auth layout */
-.auth { display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: 40px var(--edge-pad); }
+.auth { display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: calc(40px + env(safe-area-inset-top, 0px)) var(--edge-pad) 40px; }
 .loading { font-family: var(--font-display); font-size: 13px; font-weight: var(--weight-medium); letter-spacing: 0.02em; color: var(--color-ash); padding: 24px var(--edge-pad); }
