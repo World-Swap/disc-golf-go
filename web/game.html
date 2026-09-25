@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>Throw Lab · Disc Golf Go</title>
+  <meta name="theme-color" content="#f7f4ef" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w6" />
+  <link rel="stylesheet" href="/styles/app.css?v=w6" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w6" />
+  <style>
+    /* The game owns the whole screen: no page scroll, canvas sized to the
+       viewport. Everything here is scoped to this page. */
+    html, body { overscroll-behavior: none; touch-action: manipulation; }
+    body { background: #f7f4ef; }
+    .g-wrap { position: relative; width: 100%; max-width: 520px; margin: 0 auto;
+              background: #f7f4ef; user-select: none;
+              padding: 4px 0 78px; }   /* bottom pad clears the fixed tab bar */
+    #g-canvas { display: block; width: 100%; touch-action: none; }
+
+    /* HUD strip above the field */
+    .g-hud { display: flex; align-items: center; justify-content: space-between;
+             gap: 8px; padding: 10px 14px 8px; }
+    .g-hud__block { text-align: center; flex: 1; }
+    .g-hud__num { font-family: var(--font-display, system-ui); font-weight: 800;
+                  font-size: 20px; line-height: 1; color: #202020; }
+    .g-hud__lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+                  color: #8a8279; margin-top: 3px; }
+
+    /* Disc picker */
+    .g-bag { display: flex; gap: 8px; padding: 0 14px 10px; }
+    .g-disc { flex: 1; border: 1px solid #ddd5c9; background: #fff; border-radius: 10px;
+              padding: 8px 4px; text-align: center; cursor: pointer; }
+    .g-disc[aria-pressed="true"] { border-color: #fc6414; background: #fff3ec; }
+    .g-disc__n { font-weight: 800; font-size: 13px; color: #202020; }
+    .g-disc__f { font-size: 10px; color: #8a8279; margin-top: 2px; }
+
+    /* Prompt / result banner under the field */
+    .g-msg { min-height: 58px; padding: 10px 16px 14px; text-align: center; }
+    .g-msg__big { font-family: var(--font-display, system-ui); font-weight: 800;
+                  font-size: 17px; color: #202020; }
+    .g-msg__sub { font-size: 13px; color: #6d655c; margin-top: 3px; }
+    .g-msg__sub b { color: #fc6414; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="g-wrap">
+      <div class="g-hud">
+        <div class="g-hud__block"><div class="g-hud__num" id="h-hole">1</div><div class="g-hud__lbl">Hole</div></div>
+        <div class="g-hud__block"><div class="g-hud__num" id="h-par">3</div><div class="g-hud__lbl">Par</div></div>
+        <div class="g-hud__block"><div class="g-hud__num" id="h-throws">0</div><div class="g-hud__lbl">Throws</div></div>
+        <div class="g-hud__block"><div class="g-hud__num" id="h-dist">—</div><div class="g-hud__lbl">To basket</div></div>
+        <div class="g-hud__block"><div class="g-hud__num" id="h-total">E</div><div class="g-hud__lbl">Total</div></div>
+      </div>
+
+      <div class="g-bag" id="bag"></div>
+
+      <canvas id="g-canvas" width="520" height="700" aria-label="Disc golf hole"></canvas>
+
+      <div class="g-msg">
+        <div class="g-msg__big" id="msg-big">Tap to start your power</div>
+        <div class="g-msg__sub" id="msg-sub">Stop the bar high for distance — but don't overpower the disc</div>
+      </div>
+    </div>
+
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js?v=w5"></script>
+  <script>
+  (function () {
+    'use strict';
+    if (!DGG.requireAuth()) return;
+    DGG.tabbar('play');
+
+    // ---------------------------------------------------------------- setup
+    var cv = document.getElementById('g-canvas');
+    var ctx = cv.getContext('2d');
+    var ORANGE = '#fc6414', INK = '#202020', BONE = '#f7f4ef', GREEN = '#2e7d57';
+
+    // Fit the canvas to the viewport minus the HUD/message chrome, on a device
+    // pixel ratio so the art stays crisp on phones.
+    function resize() {
+      var wrap = cv.parentElement;
+      var w = wrap.clientWidth;
+      var h = Math.max(300, window.innerHeight - 322);
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = w * dpr; cv.height = h * dpr;
+      cv.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      W = w; H = h;
+    }
+    var W = 520, H = 700;
+
+    // ----------------------------------------------------------- the discs
+    // Flight numbers, simplified: speed caps distance, turn drifts right at
+    // high power (RHBH), fade always pulls left at the end. Overpowering a
+    // fast disc is the classic beginner mistake, so the model punishes it.
+    var DISCS = [
+      { key: 'putter', name: 'Putter', max: 32, speed: 2, turn: 0.0, fade: 0.8, spread: 0.5, flight: '2 · 3 · 0 · 1' },
+      { key: 'mid',    name: 'Mid',    max: 62, speed: 5, turn: 0.6, fade: 1.6, spread: 1.0, flight: '5 · 5 · −1 · 1' },
+      { key: 'driver', name: 'Driver', max: 98, speed: 9, turn: 1.8, fade: 3.4, spread: 1.7, flight: '9 · 5 · −2 · 3' },
+    ];
+    var disc = DISCS[2];
+
+    // -------------------------------------------------------------- state
+    var S = { hole: 1, par: 3, throws: 0, total: 0, holeLen: 0, ballX: 0, ballY: 0,
+              phase: 'ready', power: 0, angle: 0, t: 0, dir: 1, flight: null, done: false };
+    var HOLES = 3;
+
+    function newHole() {
+      S.holeLen = Math.round(70 + Math.random() * 60);   // 70–130 m, par 3
+      S.par = 3; S.throws = 0; S.ballX = 0; S.ballY = S.holeLen;
+      S.phase = 'ready'; S.flight = null;
+      autoDisc(); paintBag(); hud();
+      say('Tap to start your power', 'Hole ' + S.hole + ' — ' + S.holeLen + ' m, par 3');
+    }
+
+    // Pick the sensible disc for the distance left, the way a player would.
+    function autoDisc() {
+      var d = Math.sqrt(S.ballX * S.ballX + S.ballY * S.ballY);
+      disc = d <= 30 ? DISCS[0] : d <= 60 ? DISCS[1] : DISCS[2];
+    }
+
+    // ------------------------------------------------------------ throwing
+    // Power and angle are each chosen by stopping a sweeping bar: tap to
+    // start, tap to lock. Two taps, one thumb, no dragging.
+    function tap() {
+      if (S.phase === 'ready')       { S.phase = 'power';  S.power = 0; S.dir = 1; say('Tap to lock power', ''); }
+      else if (S.phase === 'power')  { S.phase = 'angle';  S.angle = -1; S.dir = 1;
+                                       say('Tap to set your angle', 'Middle is flat — the edges are hyzer and anhyzer'); }
+      else if (S.phase === 'angle')  { release(); }
+      else if (S.phase === 'result') { nextThrow(); }
+      else if (S.phase === 'holeEnd'){ S.hole++; if (S.hole > HOLES) endGame(); else newHole(); }
+      else if (S.phase === 'gameEnd'){ S.hole = 1; S.total = 0; newHole(); }
+    }
+
+    function release() {
+      S.throws++;
+      var power = S.power;                       // 0..1
+      var angle = S.angle;                       // -1 hyzer .. +1 anhyzer
+
+      // The meter maps to a range that suits the shot. A putter throttled to
+      // its full 32 m would put an 8 m putt at 25% power — the fast, twitchy
+      // bottom of the bar, where no amount of skill lands it. Putting scales
+      // the bar to the putt in front of you, so a good putt sits mid-meter.
+      var reach = disc.key === 'putter' ? Math.max(6, S.ballY * 1.7) : disc.max;
+      var ratio = power * reach / (disc.speed * 11);      // >1 means overpowered
+
+      // Distance: power drives it, but pushing past the disc's speed rating
+      // costs you — the disc turns over instead of carrying.
+      var carry = reach * power * (ratio > 1 ? (1 - (ratio - 1) * 0.55) : 1);
+      carry *= 0.92 + Math.random() * 0.16;      // human variance
+
+      // Lateral: angle sets the starting tilt, turn pushes right at high
+      // power, fade always hauls it back left at the end.
+      var turnPush = disc.turn * Math.max(0, ratio - 0.55) * 9;
+      var fadePull = disc.fade * 5.5;
+      var lateral  = angle * 14 + turnPush - fadePull * (0.55 + power * 0.5);
+      lateral += (Math.random() - 0.5) * disc.spread * 6;
+      // A disc only has time to drift if it's actually flying: soft touch
+      // shots and putts hold their line far better than full-power throws.
+      lateral *= Math.min(1, carry / (disc.max * 0.6));
+
+      S.flight = { from: { x: S.ballX, y: S.ballY }, carry: carry, lateral: lateral,
+                   ratio: ratio, power: power, angle: angle };
+      S.t = 0; S.phase = 'flight';
+    }
+
+    // Flight resolved: work out where it stopped and what to say about it.
+    function land() {
+      var f = S.flight;
+      var restY = f.from.y - f.carry;    // negative means past the basket
+      var restX = f.from.x + f.lateral;
+
+      var miss = Math.sqrt(restX * restX + restY * restY);
+      if (miss < 3.0) return holed();                    // in the chains
+
+      // The next throw is played from wherever it stopped, aimed at the
+      // basket again — so the state is simply "how far away am I now".
+      // Without this, a disc that sailed past the basket kept being thrown
+      // in the same direction and the hole could never be finished.
+      S.ballY = miss; S.ballX = 0;
+
+      autoDisc(); paintBag(); S.phase = 'result';
+      var note = coach(f, restX, restY);
+      say(Math.round(miss) + ' m to the basket', note);
+      hud();
+
+      // Mercy rule: nobody should be stuck on one hole forever.
+      if (S.throws >= 8) { S.total += S.throws - S.par; S.phase = 'holeEnd';
+        say('Picked up  ·  ' + S.throws + ' throws', 'Tap for the next hole'); hud(); }
+    }
+
+    // One line on what that throw did — the seed of the coaching idea, kept
+    // crude for now: the loudest fault wins.
+    function coach(f, restX, restY) {
+      if (f.ratio > 1.12) return 'You <b>overpowered</b> it — past its speed the disc turns over instead of carrying.';
+      if (restX < -12)    return 'Big <b>fade</b> left. Aim further right, or throw a straighter disc.';
+      if (restX > 12)     return 'It <b>turned over</b> right. Ease off, or add hyzer.';
+      if (restY < -4) return 'Flew <b>past</b> the basket — that disc had more in it than the hole needed.';
+      if (f.power < 0.45 && restY > 25) return 'Left it <b>short</b> — nothing wrong with the line.';
+      return 'Good line. Tap to throw again.';
+    }
+
+    function holed() {
+      var v = S.throws - S.par;
+      S.total += v;
+      var name = S.throws === 1 ? 'ACE!' : v <= -2 ? 'Eagle!' : v === -1 ? 'Birdie!' :
+                 v === 0 ? 'Par' : v === 1 ? 'Bogey' : '+' + v;
+      S.phase = 'holeEnd'; S.ballY = 0; S.ballX = 0;
+      hud();
+      say(name + '  ·  ' + S.throws + ' throws', S.hole < HOLES ? 'Tap for the next hole' : 'Tap for your card');
+    }
+
+    function endGame() {
+      S.phase = 'gameEnd';
+      var t = S.total;
+      say('Round complete: ' + (t === 0 ? 'even par' : (t > 0 ? '+' + t : t)),
+          'Tap to play again');
+    }
+
+    function nextThrow() { S.phase = 'ready'; say('Tap to start your power', ''); }
+
+    // ----------------------------------------------------------- rendering
+    // Everything is drawn with flat shapes in the brand palette — the same
+    // charcoal-and-orange look as the logo. No images, no sprite sheets.
+    // Metres represented by the visible field — grows if a throw leaves the
+    // player further from the basket than the tee was.
+    function fieldLen() { return Math.max(S.holeLen, S.ballY, 1); }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = BONE; ctx.fillRect(0, 0, W, H);
+
+      var cx = W / 2, top = 90, bottom = H - 60;
+
+      // Fairway: a green corridor narrowing toward the basket, rough either side.
+      ctx.fillStyle = 'rgba(46,125,87,0.13)';
+      ctx.beginPath();
+      ctx.moveTo(cx - 118, bottom + 20); ctx.lineTo(cx + 118, bottom + 20);
+      ctx.lineTo(cx + 62, top - 10); ctx.lineTo(cx - 62, top - 10);
+      ctx.closePath(); ctx.fill();
+
+      // Distance bands every 25 m, so the throw has a sense of scale.
+      ctx.strokeStyle = 'rgba(32,32,32,0.10)'; ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(32,32,32,0.30)'; ctx.font = '10px system-ui';
+      for (var m = 25; m < fieldLen(); m += 25) {
+        var y = bottom - (bottom - top) * (m / fieldLen());
+        ctx.beginPath(); ctx.moveTo(cx - 110, y); ctx.lineTo(cx + 110, y); ctx.stroke();
+        ctx.fillText(m + ' m', cx + 114, y + 3);
+      }
+
+      basket(cx, top);
+      if (S.phase !== 'flight') lie(cx, bottom);
+      if (S.phase === 'flight') flight(cx, top, bottom);
+      if (S.phase === 'power') powerBar();
+      if (S.phase === 'angle') angleBar();
+    }
+
+    // The logo, drawn in primitives: charcoal band, chains, tray, pole.
+    function basket(x, y) {
+      ctx.fillStyle = INK;
+      ctx.beginPath(); ctx.roundRect(x - 26, y - 34, 52, 11, 4); ctx.fill();     // top band
+      ctx.strokeStyle = INK; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+      for (var i = -2; i <= 2; i++) {                                            // chains
+        ctx.beginPath(); ctx.moveTo(x + i * 10, y - 21); ctx.lineTo(x + i * 10, y + 6); ctx.stroke();
+      }
+      ctx.beginPath();                                                           // tray
+      ctx.moveTo(x - 30, y + 8); ctx.lineTo(x + 30, y + 8);
+      ctx.lineTo(x + 20, y + 26); ctx.lineTo(x - 20, y + 26);
+      ctx.closePath(); ctx.fillStyle = INK; ctx.fill();
+      ctx.fillRect(x - 3.5, y + 26, 7, 22);                                      // pole
+    }
+
+    // The disc at rest, with the off-line offset shown honestly.
+    function lie(cx, bottom) {
+      var y = S.ballY <= 0 ? 90 : bottom - (bottom - 90) * (1 - S.ballY / fieldLen());
+      var x = cx + S.ballX * 2.2;
+      discSprite(x, y, 1);
+    }
+
+    function flight(cx, top, bottom) {
+      var f = S.flight, t = S.t;
+      var fromY = bottom - (bottom - top) * (1 - f.from.y / fieldLen());
+      var travelled = f.carry * t;
+      var remaining = Math.max(0, f.from.y - travelled);
+      var y = bottom - (bottom - top) * (1 - remaining / fieldLen());
+      // Lateral arrives progressively: turn early, fade late.
+      var shape = f.lateral * (0.35 * t + 0.65 * Math.pow(t, 2.2));
+      var x = cx + (f.from.x + shape) * 2.2;
+      var lift = 1 + 0.55 * Math.sin(Math.PI * t);         // height illusion
+      ctx.strokeStyle = 'rgba(252,100,20,0.28)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx + f.from.x * 2.2, fromY); ctx.lineTo(x, y); ctx.stroke();
+      discSprite(x, y, lift);
+    }
+
+    // The mark itself: orange ellipse with a light ring, as in the logo.
+    function discSprite(x, y, scale) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+      ctx.fillStyle = ORANGE;
+      ctx.beginPath(); ctx.ellipse(0, 0, 13, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = BONE; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.ellipse(0, 0, 7.5, 3, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+
+    function powerBar() {
+      var w = 26, h = H * 0.45, x = 18, y = (H - h) / 2;
+      ctx.fillStyle = 'rgba(32,32,32,0.08)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 13); ctx.fill();
+      var fh = h * S.power;
+      ctx.fillStyle = S.power > 0.86 ? '#d9500a' : ORANGE;
+      ctx.beginPath(); ctx.roundRect(x, y + h - fh, w, fh, 13); ctx.fill();
+      ctx.fillStyle = INK; ctx.font = '700 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(Math.round(S.power * 100) + '%', x + w / 2, y + h + 18);
+      ctx.textAlign = 'left';
+    }
+
+    function angleBar() {
+      var w = W * 0.6, h = 22, x = (W - w) / 2, y = H - 44;
+      ctx.fillStyle = 'rgba(32,32,32,0.08)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 11); ctx.fill();
+      ctx.fillStyle = INK; ctx.font = '700 10px system-ui';
+      ctx.fillText('HYZER', x - 2, y - 6); ctx.fillText('ANHYZER', x + w - 46, y - 6);
+      var mx = x + w * ((S.angle + 1) / 2);
+      ctx.fillStyle = ORANGE; ctx.beginPath(); ctx.roundRect(mx - 4, y - 4, 8, h + 8, 4); ctx.fill();
+    }
+
+    // -------------------------------------------------------------- loop
+    var last = performance.now();
+    function frame(now) {
+      var dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (S.phase === 'power') {
+        S.power += S.dir * dt * 1.25;
+        if (S.power >= 1) { S.power = 1; S.dir = -1; }
+        if (S.power <= 0) { S.power = 0; S.dir = 1; }
+      } else if (S.phase === 'angle') {
+        S.angle += S.dir * dt * 1.9;
+        if (S.angle >= 1) { S.angle = 1; S.dir = -1; }
+        if (S.angle <= -1) { S.angle = -1; S.dir = 1; }
+      } else if (S.phase === 'flight') {
+        S.t += dt * 0.75;
+        if (S.t >= 1) { S.t = 1; land(); }
+      }
+      draw(); requestAnimationFrame(frame);
+    }
+
+    // --------------------------------------------------------------- chrome
+    function hud() {
+      document.getElementById('h-hole').textContent = S.hole;
+      document.getElementById('h-par').textContent = S.par;
+      document.getElementById('h-throws').textContent = S.throws;
+      document.getElementById('h-dist').textContent =
+        S.phase === 'holeEnd' ? 'IN'
+          : Math.round(Math.sqrt(S.ballX * S.ballX + S.ballY * S.ballY));
+      document.getElementById('h-total').textContent =
+        S.total === 0 ? 'E' : (S.total > 0 ? '+' + S.total : S.total);
+    }
+
+    function say(big, sub) {
+      document.getElementById('msg-big').textContent = big;
+      document.getElementById('msg-sub').innerHTML = sub || '';
+    }
+
+    function paintBag() {
+      document.getElementById('bag').innerHTML = DISCS.map(function (d) {
+        return '<button class="g-disc" data-k="' + d.key + '" aria-pressed="' + (d.key === disc.key) + '">' +
+               '<div class="g-disc__n">' + d.name + '</div><div class="g-disc__f">' + d.flight + '</div></button>';
+      }).join('');
+    }
+
+    document.getElementById('bag').addEventListener('click', function (e) {
+      var b = e.target.closest('.g-disc'); if (!b) return;
+      if (S.phase !== 'ready' && S.phase !== 'result') return;   // no swapping mid-throw
+      DISCS.forEach(function (d) { if (d.key === b.dataset.k) disc = d; });
+      if (S.phase === 'result') S.phase = 'ready';
+      paintBag();
+    });
+
+    // One tap target: the canvas. Pointer events cover touch and mouse both.
+    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); tap(); });
+    window.addEventListener('resize', resize);
+
+    resize(); newHole(); requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+</html>
