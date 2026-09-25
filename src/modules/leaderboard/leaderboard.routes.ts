@@ -24,13 +24,5 @@ export function createLeaderboardRouter(service: LeaderboardService, optionalAut
     })
   );
 
-  router.get(
-    '/leaderboard/crews/training',
-    optionalAuth,
-    asyncHandler(async (req, res) => {
-      res.json(await service.crewsTraining(req.player?.id ?? null));
-    })
-  );
-
   return router;
 }

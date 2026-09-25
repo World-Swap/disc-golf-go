@@ -93,29 +93,6 @@ export function createLeaderboardService(db: Queryable, repo: LeaderboardRepo = 
       return { tab, period, players: ranked };
     },
 
-    async crewsTraining(currentPlayerId: number | null) {
-      const rows = await repo.crewsTraining();
-      const ranked = rows.map((c, i) => ({
-        rank: i + 1,
-        id: c.id,
-        name: c.name,
-        logo_url: c.logo_url,
-        member_count: c.member_count,
-        training_xp: c.training_xp,
-        lessons_completed: c.lessons_completed,
-        is_me: false,
-      }));
-
-      if (currentPlayerId) {
-        const myCrewId = await repo.myCrewId(currentPlayerId);
-        if (myCrewId != null) {
-          const idx = ranked.findIndex((c) => c.id === myCrewId);
-          if (idx !== -1) ranked[idx]!.is_me = true;
-        }
-      }
-
-      return { category: 'crew_training', crews: ranked };
-    },
   };
 }
 

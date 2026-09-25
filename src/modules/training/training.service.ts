@@ -418,12 +418,11 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
       const player = await repo.homePlayer(playerId);
       if (!player) throw notFound('Player not found');
 
-      const [catRows, totals, nextLesson, streakDays, recentRounds] = await Promise.all([
+      const [catRows, totals, nextLesson, streakDays] = await Promise.all([
         repo.progressByCategory(playerId),
         repo.progressTotals(playerId),
         repo.nextIncompleteLesson(playerId),
         repo.homeStreakDays(playerId),
-        repo.recentRounds(playerId),
       ]);
 
       const xp = player.xp;
@@ -466,7 +465,6 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
           })),
           next_lesson: nextLesson,
         },
-        recent_rounds: recentRounds,
         next_level_xp: totalXpForLevel(level + 1),
       };
     },

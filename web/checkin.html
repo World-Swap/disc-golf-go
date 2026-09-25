@@ -26,6 +26,14 @@
 
       <div id="result"></div>
       <div id="rounds"></div>
+
+      <label class="field" style="margin:0">
+        <span class="field__label">Find a course</span>
+        <input class="input" id="search" type="search" inputmode="search"
+               placeholder="Course, city or state" autocomplete="off" />
+      </label>
+      <div id="found"></div>
+
       <div id="list" class="loading">Finding courses near you…</div>
     </div>
     <nav id="tabbar"></nav>
@@ -45,16 +53,47 @@
 
       loadRounds();   // your rounds don't depend on GPS, so load them first
 
-      if (!navigator.geolocation) { document.getElementById('loc').textContent = 'No GPS'; list.className = 'screen'; list.innerHTML = '<div class="error">Location not available on this device.</div>'; return; }
+      // Location is only needed to check in. Keeping a scorecard or playing a
+      // course in Throw Lab needs no GPS at all, so a device with location off
+      // still gets the search below and every course in the database.
+      function noGps(label) {
+        document.getElementById('loc').textContent = label;
+        list.className = 'screen';
+        list.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">' +
+          'Location is off, so check-in is unavailable. Search above to keep a scorecard ' +
+          'or play any course in Throw Lab.</p>';
+      }
 
-      navigator.geolocation.getCurrentPosition(function (p) {
-        pos = { lat: p.coords.latitude, lng: p.coords.longitude };
-        document.getElementById('loc').textContent = 'GPS on';
-        loadCourses();
-      }, function () {
-        document.getElementById('loc').textContent = 'GPS off';
-        list.className = 'screen'; list.innerHTML = '<div class="error">Enable location to check in at a course.</div>';
-      }, { enableHighAccuracy: true, timeout: 10000 });
+      if (!navigator.geolocation) { noGps('No GPS'); }
+      else {
+        navigator.geolocation.getCurrentPosition(function (p) {
+          pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+          document.getElementById('loc').textContent = 'GPS on';
+          loadCourses();
+        }, function () { noGps('GPS off'); }, { enableHighAccuracy: true, timeout: 10000 });
+      }
+
+      // Course search — the way to reach any of the 3,550 courses without
+      // standing at one.
+      var searchTimer = null;
+      document.getElementById('search').addEventListener('input', function () {
+        var q = this.value.trim();
+        clearTimeout(searchTimer);
+        if (q.length < 2) { document.getElementById('found').innerHTML = ''; return; }
+        searchTimer = setTimeout(function () { runSearch(q); }, 250);
+      });
+
+      async function runSearch(q) {
+        var box = document.getElementById('found');
+        try {
+          var courses = await API.get('/courses?search=' + encodeURIComponent(q) + '&limit=15');
+          if (!courses.length) { box.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">No course matches that.</p>'; return; }
+          box.innerHTML = '<p class="section-label">Search results</p><div class="rows">' +
+            courses.map(function (c) { return courseRow(c, false); }).join('') + '</div>';
+        } catch (e) {
+          box.innerHTML = '<div class="error">' + esc(e.message || 'Search failed') + '</div>';
+        }
+      }
 
       // Your recent rounds at real courses. One request, rendered above the
       // course list so Play shows your scoring as well as offering it.
@@ -76,30 +115,43 @@
             }).join('') + '</div>';
         } catch (e) { /* signed-out or offline — the course list still works */ }
       }
+      // One row shape for both lists. `near` is true only for the nearby list,
+      // where a distance is known and checking in may be possible; a searched
+      // course still offers a scorecard and Throw Lab, which need no location.
+      function courseRow(c, near) {
+        var bits = [esc([c.city, c.state].filter(Boolean).join(', '))];
+        if (near) bits.push(fmtDist(c.distance_meters));
+        if (c.holes) bits.push(c.holes + ' holes');
+        if (c.par) bits.push('par ' + c.par);
+        var action = near
+          ? (c.distance_meters <= RADIUS
+              ? '<button class="btn" style="padding:8px 14px;font-size:10px" data-course="' + c.id + '">Check In</button>'
+              : '<span class="row__meta">too far</span>')
+          : '';
+        return '<div class="row" style="flex-wrap:wrap">' +
+          '<span class="row__glyph">◎</span>' +
+          '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
+          '<div class="row__sub">' + bits.filter(Boolean).join(' · ') + '</div></div>' + action +
+          '<div style="display:flex;gap:8px;width:100%;margin:10px 0 2px 34px">' +
+            '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/scorecard?course=' + c.id + '">Scorecard</a>' +
+            '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/game?course=' + c.id + '">Play in Throw Lab</a>' +
+          '</div></div>';
+      }
+
+      function wireCheckIn(root) {
+        root.querySelectorAll('[data-course]').forEach(function (btn) {
+          btn.addEventListener('click', function () { checkIn(Number(this.getAttribute('data-course')), this); });
+        });
+      }
+
       async function loadCourses() {
         try {
           var courses = await API.get('/courses/nearby?lat=' + pos.lat + '&lng=' + pos.lng + '&radius=50000');
           list.className = '';
-          if (!courses.length) { list.innerHTML = '<div class="loading">No courses within 50 km.</div>'; return; }
-          list.innerHTML = '<p class="section-label">Nearby courses</p><div class="rows">' + courses.map(function (c) {
-            var inRange = c.distance_meters <= RADIUS;
-            var holes = c.holes ? c.holes + ' holes' : '';
-            var par = c.par ? 'par ' + c.par : '';
-            var meta = [esc([c.city, c.state].filter(Boolean).join(', ')), fmtDist(c.distance_meters), holes, par]
-              .filter(Boolean).join(' · ');
-            return '<div class="row" style="flex-wrap:wrap">' +
-              '<span class="row__glyph">◎</span>' +
-              '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
-              '<div class="row__sub">' + meta + '</div></div>' +
-              (inRange ? '<button class="btn" style="padding:8px 14px;font-size:10px" data-course="' + c.id + '">Check In</button>' : '<span class="row__meta">too far</span>') +
-              '<div style="display:flex;gap:8px;width:100%;margin:10px 0 2px 34px">' +
-                '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/scorecard?course=' + c.id + '">Scorecard</a>' +
-                '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/game?course=' + c.id + '">Play in Throw Lab</a>' +
-              '</div></div>';
-          }).join('') + '</div>';
-          list.querySelectorAll('[data-course]').forEach(function (btn) {
-            btn.addEventListener('click', function () { checkIn(Number(this.getAttribute('data-course')), this); });
-          });
+          if (!courses.length) { list.innerHTML = '<div class="loading">No courses within 50 km. Search above for any course.</div>'; return; }
+          list.innerHTML = '<p class="section-label">Nearby courses</p><div class="rows">' +
+            courses.map(function (c) { return courseRow(c, true); }).join('') + '</div>';
+          wireCheckIn(list);
         } catch (e) { list.className = 'screen'; list.innerHTML = '<div class="error">' + esc(e.message || 'Could not load courses') + '</div>'; }
       }
 

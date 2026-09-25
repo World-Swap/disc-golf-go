@@ -48,16 +48,5 @@ test('leaderboard endpoints', async (t) => {
     assert.equal(j.players[0]!.rank_tier, 'gold');
   });
 
-  await t.test('/leaderboard/crews/training', async () => {
-    handler = (sql) => {
-      if (/FROM crews/.test(sql)) return { rows: [{ id: 1, name: 'Crew', logo_url: null, member_count: 3, training_xp: 500, lessons_completed: 10 }] };
-      return { rows: [] };
-    };
-    const r = await get('/api/leaderboard/crews/training');
-    const j = (await r.json()) as { crews: Array<{ rank: number; training_xp: number }> };
-    assert.equal(j.crews[0]!.rank, 1);
-    assert.equal(j.crews[0]!.training_xp, 500);
-  });
-
   await new Promise<void>((r) => server.close(() => r()));
 });

@@ -349,21 +349,6 @@ export function createTrainingRepo(db: Database) {
       return parseInt(r.rows[0]?.streak_days ?? '0', 10);
     },
 
-    async recentRounds(playerId: number) {
-      const r = await db.query(
-        `SELECT r.id, r.total_score, r.total_par, r.course_id, r.layout_id,
-                COALESCE(r.total_score - r.total_par, r.total_score) AS score_vs_par,
-                to_char(r.completed_at, 'Mon D') AS day_label,
-                to_char(r.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS completed_at,
-                p.name AS course_name, p.city, p.state
-         FROM rounds r JOIN courses p ON p.id = r.course_id
-         WHERE r.player_id = $1 AND r.status = 'completed' AND r.completed_at IS NOT NULL
-         ORDER BY r.completed_at DESC LIMIT 3`,
-        [playerId]
-      );
-      return r.rows;
-    },
-
     // ── share ──
     async lessonTitle(lessonId: number): Promise<string | null> {
       const r = await db.query<{ title: string }>('SELECT title FROM training_lessons WHERE id = $1 AND is_active = true', [lessonId]);
