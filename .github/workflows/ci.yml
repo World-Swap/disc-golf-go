@@ -1,0 +1,36 @@
+# Checks every pull request into main, and main itself after a merge.
+#
+# Render auto-deploys on push to main with no staging step, and the native
+# apps load the live site — so a bad merge is live for every player within a
+# minute. This is the gate before that. It only blocks a merge if main is
+# given branch protection requiring the "test" check; otherwise it's a signal.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: typecheck + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      # src/config.ts exits on a missing DATABASE_URL even though the suite
+      # runs against an in-memory fake, so give it a value that goes unused.
+      - run: npm test
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+          JWT_SECRET: ci-test-secret
