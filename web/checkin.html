@@ -18,14 +18,24 @@
     <div class="screen stack">
       <div><p class="section-label">Apply your training</p><h1 class="h-display">PLAY<span class="mark" style="width:30%"></span></h1></div>
 
-      <a class="card card--tap" href="/game" style="display:block">
-        <p class="card__eyebrow">Throw Lab</p>
-        <div class="h-title" style="margin-top:10px">Play a quick round →</div>
-        <p class="row__sub" style="margin-top:8px">3, 6 or 9 holes · pick a disc, shape the line, read the fade</p>
+      <a class="artcard" href="/game" style="--art:url('/img/cards/throw-lab.webp')">
+        <span class="artcard__art"></span><span class="artcard__scrim"></span>
+        <span class="artcard__body">
+          <span class="artcard__eyebrow">Throw Lab</span>
+          <span class="artcard__title">Play a quick round →</span>
+          <span class="artcard__sub">3, 6 or 9 holes · shape the line, read the fade</span>
+        </span>
       </a>
 
-      <div class="card">
-        <p class="card__eyebrow">Pick a course</p>
+      <div class="artcard" style="--art:url('/img/cards/course.webp'); min-height:0">
+        <span class="artcard__art"></span><span class="artcard__scrim"></span>
+        <span class="artcard__body" style="max-width:100%">
+          <span class="artcard__eyebrow">Pick a course</span>
+          <span class="artcard__title" style="font-size:18px">Play any course →</span>
+        </span>
+      </div>
+
+      <div class="card" style="margin-top:8px">
         <label class="field" style="margin-top:10px">
           <span class="field__label">State</span>
           <select class="input" id="state"><option value="">Loading states…</option></select>
@@ -57,7 +67,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w5"></script>
+  <script src="/js/app.js?v=w6"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;

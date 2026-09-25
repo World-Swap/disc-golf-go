@@ -66,7 +66,42 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
     return typeof raw === 'string' && VALID_LEVELS.includes(raw as SkillLevel) ? (raw as SkillLevel) : null;
   }
 
+  /** The video id out of any of YouTube's URL shapes; null if it isn't one. */
+  function youtubeId(url: string | null): string | null {
+    if (!url) return null;
+    const m = String(url).match(
+      /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+    );
+    return m ? m[1]! : null;
+  }
+
   return {
+    /**
+     * Featured pro videos for the home slideshow. The set rotates by day so
+     * the home screen isn't the same five clips every morning, but stays
+     * stable within a day rather than reshuffling on every load.
+     */
+    async featuredVideos(limit: number) {
+      const rows = (await repo.featuredVideos(limit)) as Array<Record<string, string | number | null>>;
+      const slides = rows
+        .map((r) => ({
+          lesson_id: r.id as number,
+          lesson_title: r.title as string,
+          category_name: r.category_name as string,
+          category_slug: r.category_slug as string,
+          creator: r.youtube_channel as string,
+          video_title: (r.youtube_title as string) || (r.title as string),
+          video_id: youtubeId(r.youtube_url as string),
+        }))
+        .filter((s2) => s2.video_id);
+
+      // Rotate the starting point by the day of the year.
+      const day = Math.floor(Date.now() / 86400000);
+      const start = slides.length ? day % slides.length : 0;
+      const rotated = slides.slice(start).concat(slides.slice(0, start));
+      return { videos: rotated.slice(0, Math.min(Math.max(limit, 1), 20)) };
+    },
+
     async listCategories(playerId: number | null, levelRaw: unknown) {
       const level = levelParam(levelRaw);
       const rows = await repo.categories(level);

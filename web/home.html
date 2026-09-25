@@ -11,6 +11,30 @@
   <link rel="stylesheet" href="/styles/tokens.css?v=w6" />
   <link rel="stylesheet" href="/styles/app.css?v=w6" />
   <link rel="stylesheet" href="/styles/app-ui.css?v=w6" />
+  <style>
+    /* Pro video slideshow. 16:9 so a YouTube thumbnail fills it exactly. */
+    .slides { position: relative; border-radius: var(--radius-lg, 14px); overflow: hidden;
+              background: #202020; box-shadow: var(--shadow-card); aspect-ratio: 16 / 9; }
+    .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 450ms ease;
+             display: block; color: #fff; text-decoration: none; }
+    .slide[data-on="1"] { opacity: 1; }
+    .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* Dark wash under the caption so white text stays readable on any frame. */
+    .slide__scrim { position: absolute; inset: 0;
+      background: linear-gradient(0deg, rgba(16,12,9,0.88) 0%, rgba(16,12,9,0.35) 42%, rgba(16,12,9,0.05) 70%); }
+    .slide__body { position: absolute; left: 14px; right: 14px; bottom: 12px; display: block; }
+    .slide__creator { display: block; font-size: 11px; font-weight: 800; letter-spacing: .07em;
+                      text-transform: uppercase; color: #ffb27a; }
+    .slide__title { display: block; font-family: var(--font-display, system-ui); font-weight: 800;
+                    font-size: 16px; line-height: 1.2; margin-top: 3px;
+                    text-shadow: 0 1px 12px rgba(0,0,0,.55); }
+    .slide__play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+                   width: 46px; height: 46px; border-radius: 50%; background: rgba(252,100,20,.92);
+                   display: flex; align-items: center; justify-content: center; color: #fff; font-size: 17px; }
+    .dots { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #d9d1c6; border: 0; padding: 0; }
+    .dot[data-on="1"] { background: #fc6414; width: 18px; border-radius: 3px; }
+  </style>
 </head>
 <body>
   <main class="app">
@@ -24,7 +48,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w5"></script>
+  <script src="/js/app.js?v=w6"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
@@ -67,28 +91,38 @@
           '</div>' +
 
           (next ?
-            '<a class="card card--tap" href="/training" style="display:block">' +
-              '<p class="card__eyebrow">Continue training</p>' +
-              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px">' +
-                '<span class="h-title">' + esc(next.title) + '</span>' +
-                '<span class="row__meta">+' + (next.xp_reward || 0) + ' XP</span>' +
-              '</div>' +
-              '<p class="row__sub" style="margin-top:8px">' + esc(next.category_name || '') + ' →</p>' +
+            '<a class="artcard" href="/training" style="--art:url(\'/img/cards/training.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">Continue training</span>' +
+                '<span class="artcard__title">' + esc(next.title) + '</span>' +
+                '<span class="artcard__sub">' + esc(next.category_name || '') + ' →</span>' +
+              '</span>' +
+              '<span class="artcard__meta">+' + (next.xp_reward || 0) + ' XP</span>' +
             '</a>'
           :
-            '<a class="card card--tap" href="/training" style="display:block">' +
-              '<p class="card__eyebrow">Training</p>' +
-              '<div class="h-title" style="margin-top:10px">Browse lessons →</div>' +
+            '<a class="artcard" href="/training" style="--art:url(\'/img/cards/training.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">Training</span>' +
+                '<span class="artcard__title">Browse lessons →</span>' +
+                '<span class="artcard__sub">134 lessons from touring pros</span>' +
+              '</span>' +
             '</a>'
           ) +
 
           '<div id="daily"></div>' +
 
+          '<div id="pros"></div>' +
+
           // Throw Lab — practise the shot shapes the lessons teach.
-          '<a class="card card--tap" href="/game" style="display:block">' +
-            '<p class="card__eyebrow">Throw Lab</p>' +
-            '<div class="h-title" style="margin-top:10px">Play a quick round →</div>' +
-            '<p class="row__sub" style="margin-top:8px">3, 6 or 9 holes · pick a disc, shape the line, read the fade</p>' +
+          '<a class="artcard" href="/game" style="--art:url(\'/img/cards/throw-lab.webp\')">' +
+            '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+            '<span class="artcard__body">' +
+              '<span class="artcard__eyebrow">Throw Lab</span>' +
+              '<span class="artcard__title">Play a quick round →</span>' +
+              '<span class="artcard__sub">3, 6 or 9 holes · shape the line, read the fade</span>' +
+            '</span>' +
           '</a>' +
 
           '<div>' +
@@ -108,6 +142,83 @@
           '</div>';
 
         loadDaily();
+        loadPros();
+      }
+
+      // Pro video slideshow: real frames from the coaches whose lessons are in
+      // the app. Auto-advances, and stops the moment the player touches it so
+      // it never yanks a slide away mid-tap.
+      async function loadPros() {
+        var box = document.getElementById('pros');
+        if (!box) return;
+        try {
+          var r = await DGG.API.get('/training/featured-videos?limit=8');
+          var vids = (r.videos || []).filter(function (v) { return v.video_id; });
+          if (!vids.length) return;
+
+          box.innerHTML =
+            '<p class="section-label">Pro coaching</p>' +
+            '<div class="slides" id="slides">' + vids.map(function (v, i) {
+              return '<a class="slide" data-on="' + (i === 0 ? 1 : 0) + '" ' +
+                'href="/training?cat=' + esc(v.category_slug) + '&lesson=' + v.lesson_id + '">' +
+                '<img src="https://i.ytimg.com/vi/' + esc(v.video_id) + '/hqdefault.jpg" alt="" loading="lazy" />' +
+                '<span class="slide__scrim"></span>' +
+                '<span class="slide__play" aria-hidden="true">▶</span>' +
+                '<span class="slide__body">' +
+                  '<span class="slide__creator">' + esc(v.creator) + '</span>' +
+                  '<span class="slide__title">' + esc(v.video_title) + '</span>' +
+                '</span></a>';
+            }).join('') + '</div>' +
+            '<div class="dots" id="dots">' + vids.map(function (_v, i) {
+              return '<button class="dot" data-on="' + (i === 0 ? 1 : 0) + '" data-i="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>';
+            }).join('') + '</div>';
+
+          var slides = box.querySelectorAll('.slide');
+          var dots = box.querySelectorAll('.dot');
+          var at = 0, timer = null;
+
+          // A thumbnail that won't load would otherwise sit there as a black
+          // rectangle. Drop that slide instead, and hide the whole section if
+          // none of them load at all.
+          var alive = slides.length;
+          box.querySelectorAll('.slide img').forEach(function (img, i) {
+            img.addEventListener('error', function () {
+              slides[i].remove(); dots[i].remove();
+              if (--alive <= 0) { stop(); box.innerHTML = ''; return; }
+              slides = box.querySelectorAll('.slide');
+              dots = box.querySelectorAll('.dot');
+              show(0);
+            });
+          });
+
+          function show(i) {
+            at = (i + slides.length) % slides.length;
+            for (var k = 0; k < slides.length; k++) {
+              slides[k].setAttribute('data-on', k === at ? '1' : '0');
+              dots[k].setAttribute('data-on', k === at ? '1' : '0');
+            }
+          }
+          function play() { stop(); timer = setInterval(function () { show(at + 1); }, 5000); }
+          function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+          box.querySelector('#dots').addEventListener('click', function (e) {
+            var d = e.target.closest('.dot'); if (!d) return;
+            stop(); show(Number(d.dataset.i));
+          });
+          // A swipe moves a slide; touching at all stops the carousel.
+          var x0 = null;
+          var strip = box.querySelector('#slides');
+          strip.addEventListener('touchstart', function (e) { stop(); x0 = e.touches[0].clientX; }, { passive: true });
+          strip.addEventListener('touchend', function (e) {
+            if (x0 === null) return;
+            var dx = e.changedTouches[0].clientX - x0;
+            if (Math.abs(dx) > 40) show(at + (dx < 0 ? 1 : -1));
+            x0 = null;
+          });
+          // Don't animate in a background tab.
+          document.addEventListener('visibilitychange', function () { document.hidden ? stop() : play(); });
+          play();
+        } catch (e) { /* offline or no videos — the rest of home is unaffected */ }
       }
 
       async function loadDaily() {
@@ -115,16 +226,25 @@
           var d = await DGG.API.get('/story/daily');
           var pct = d.target_value ? Math.round((d.progress / d.target_value) * 100) : 0;
           document.getElementById('daily').innerHTML =
-            '<p class="section-label">Daily challenge</p>' +
-            '<div class="card">' +
-              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">' +
-                '<span class="h-title">' + esc(d.title) + '</span>' +
-                (d.completed ? '<span class="pill pill--done">Done</span>' : '<span class="row__meta">+' + (d.xp_reward || 0) + ' XP</span>') +
-              '</div>' +
-              '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + esc(d.description || '') + '</p>' +
-              '<div style="height:14px"></div>' +
-              '<div class="meter-row"><span class="caption">Progress</span><span class="caption">' + (d.progress || 0) + '/' + (d.target_value || 0) + '</span></div>' +
-              meter(pct) +
+            '<div class="artcard" style="--art:url(\'/img/cards/daily.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">Daily challenge</span>' +
+                '<span class="artcard__title">' + esc(d.title) + '</span>' +
+                '<span class="artcard__sub">' + esc(d.description || '') + '</span>' +
+              '</span>' +
+              '<span class="artcard__meta">' +
+                (d.completed ? 'Done ✓' : '+' + (d.xp_reward || 0) + ' XP') +
+              '</span>' +
+              '<span class="artcard__body" style="max-width:100%;padding-top:0">' +
+                '<span class="meter-row" style="display:flex;justify-content:space-between">' +
+                  '<span class="caption" style="color:rgba(255,255,255,.75)">Progress</span>' +
+                  '<span class="caption" style="color:rgba(255,255,255,.75)">' + (d.progress || 0) + '/' + (d.target_value || 0) + '</span>' +
+                '</span>' +
+                '<span class="meter" style="display:block;background:rgba(255,255,255,.22)">' +
+                  '<span class="meter__fill" style="display:block;width:' + Math.max(0, Math.min(100, pct)) + '%"></span>' +
+                '</span>' +
+              '</span>' +
             '</div>';
         } catch (e) { /* no daily challenge available */ }
       }
