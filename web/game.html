@@ -84,10 +84,20 @@
 
     // Fit the canvas to the viewport minus the HUD/message chrome, on a device
     // pixel ratio so the art stays crisp on phones.
+    // The canvas takes whatever is left after the real chrome, measured rather
+    // than guessed: the disc picker is a line taller than the hole picker, so a
+    // fixed height pushed the prompt under the tab bar the moment you chose a
+    // round length.
     function resize() {
       var wrap = cv.parentElement;
       var w = wrap.clientWidth;
-      var h = Math.max(300, window.innerHeight - 322);
+      var hud = document.querySelector('.g-hud');
+      var bag = document.getElementById('bag');
+      var msg = document.querySelector('.g-msg');
+      var bar = document.getElementById('tabbar');
+      var chrome = (hud ? hud.offsetHeight : 60) + (bag ? bag.offsetHeight : 60) +
+                   (msg ? msg.offsetHeight : 58) + (bar ? bar.offsetHeight : 64) + 16;
+      var h = Math.max(240, window.innerHeight - chrome);
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = w * dpr; cv.height = h * dpr;
       cv.style.height = h + 'px';
@@ -109,6 +119,34 @@
     ];
     var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
     var IN_THE_CHAINS = 10;    // feet: close enough to have holed out
+
+    // Nine aerial hole templates. Each is a fairway running bottom to top with
+    // the top centre left clear, so the basket and the flight draw over it.
+    var HOLE_ART = ['open', 'dogleg-left', 'dogleg-right', 'tunnel', 'water',
+                    'downhill', 'island', 'gap', 'meadow'];
+    var artCache = {};
+    var art = null;            // the image for the hole being played, once loaded
+
+    // Loads on demand and only paints once ready, so a slow or failed image
+    // never blocks the hole — the drawn field below is the fallback.
+    function loadArt(name) {
+      art = null;
+      if (artCache[name] === 'failed') return;
+      if (artCache[name]) { art = artCache[name]; return; }
+      var img = new Image();
+      img.onload = function () { artCache[name] = img; art = img; };
+      img.onerror = function () { artCache[name] = 'failed'; };
+      img.src = '/img/holes/' + name + '.webp';
+    }
+
+    // Which template a hole gets. A real course is deterministic — hole 4 at a
+    // given course always looks the same — while a quick round varies.
+    function pickArt() {
+      var i = COURSE && COURSE.id
+        ? (COURSE.id * 7 + S.hole * 3) % HOLE_ART.length
+        : Math.floor(Math.random() * HOLE_ART.length);
+      loadArt(HOLE_ART[i]);
+    }
     var disc = DISCS[2];
 
     // -------------------------------------------------------------- state
@@ -165,6 +203,7 @@
       S.par = h ? h.par : 3;
       S.throws = 0; S.ballX = 0; S.ballY = S.holeLen;
       S.phase = 'ready'; S.flight = null;
+      pickArt();
       autoDisc(); paintBag(); hud();
       say('Tap to start your power',
           (COURSE ? COURSE.name + ' · ' : '') + 'Hole ' + S.hole + ' — ' + S.holeLen + ' ft, par ' + S.par);
@@ -314,16 +353,26 @@
 
       var cx = W / 2, top = 90, bottom = H - 60;
 
-      // Fairway: a green corridor narrowing toward the basket, rough either side.
-      ctx.fillStyle = 'rgba(46,125,87,0.13)';
-      ctx.beginPath();
-      ctx.moveTo(cx - 118, bottom + 20); ctx.lineTo(cx + 118, bottom + 20);
-      ctx.lineTo(cx + 62, top - 10); ctx.lineTo(cx - 62, top - 10);
-      ctx.closePath(); ctx.fill();
+      if (art) {
+        // Cover the canvas without distorting the hole.
+        var scale = Math.max(W / art.width, H / art.height);
+        var dw = art.width * scale, dh = art.height * scale;
+        ctx.drawImage(art, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      } else {
+        // No artwork (still loading, or it failed): the plain drawn fairway.
+        ctx.fillStyle = 'rgba(46,125,87,0.13)';
+        ctx.beginPath();
+        ctx.moveTo(cx - 118, bottom + 20); ctx.lineTo(cx + 118, bottom + 20);
+        ctx.lineTo(cx + 62, top - 10); ctx.lineTo(cx - 62, top - 10);
+        ctx.closePath(); ctx.fill();
+      }
 
-      // Distance bands every 25 m, so the throw has a sense of scale.
-      ctx.strokeStyle = 'rgba(32,32,32,0.10)'; ctx.lineWidth = 1;
-      ctx.fillStyle = 'rgba(32,32,32,0.30)'; ctx.font = '10px system-ui';
+      // Distance bands, so the throw has a sense of scale. Over the dark
+      // aerial art they have to be light to read at all.
+      ctx.strokeStyle = art ? 'rgba(255,255,255,0.22)' : 'rgba(32,32,32,0.10)';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = art ? 'rgba(255,255,255,0.65)' : 'rgba(32,32,32,0.30)';
+      ctx.font = '10px system-ui';
       for (var m = 100; m < fieldLen(); m += 100) {
         var y = bottom - (bottom - top) * (m / fieldLen());
         ctx.beginPath(); ctx.moveTo(cx - 110, y); ctx.lineTo(cx + 110, y); ctx.stroke();
@@ -438,9 +487,14 @@
     function say(big, sub) {
       document.getElementById('msg-big').textContent = big;
       document.getElementById('msg-sub').innerHTML = sub || '';
+      // A coaching line that wraps to two lines is taller than one that
+      // doesn't, so the field has to give that space back.
+      setTimeout(resize, 0);
     }
 
     function paintBag() {
+      // The picker and the disc row are different heights, so re-measure.
+      setTimeout(resize, 0);
       document.getElementById('bag').innerHTML = DISCS.map(function (d) {
         return '<button class="g-disc" data-k="' + d.key + '" aria-pressed="' + (d.key === disc.key) + '">' +
                '<div class="g-disc__n">' + d.name + '</div>' +
@@ -469,6 +523,7 @@
                '<div class="g-disc__f">holes</div></button>';
       }).join('');
       say('How many holes?', sub);
+      setTimeout(resize, 0);
       bag.querySelectorAll('[data-len]').forEach(function (b) {
         b.addEventListener('click', function () { onPick(Number(this.dataset.len)); });
       });
