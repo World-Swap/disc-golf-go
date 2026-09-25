@@ -27,6 +27,26 @@
 .hbanner__eyebrow { font-size: 11px; font-weight: var(--weight-bold); letter-spacing: 0.08em; text-transform: uppercase; color: #ffd0b0; }
 .hbanner__title { font-family: var(--font-display); font-size: 26px; font-weight: var(--weight-bold); letter-spacing: -0.02em; line-height: 1.05; margin-top: 4px; }
 
+/* Feature cards — a brand illustration behind the text. The scrim is what
+   makes the overlay readable: it is applied regardless of how light or dark
+   the artwork is, so a card can never end up with white text on white sky. */
+.artcard { position: relative; display: block; overflow: hidden; text-decoration: none;
+  border-radius: var(--radius-lg); min-height: 126px; box-shadow: var(--shadow-card); isolation: isolate; }
+.artcard__art { position: absolute; inset: 0; background-image: var(--art);
+  background-size: cover; background-position: right center; background-color: #1a1512; }
+.artcard__scrim { position: absolute; inset: 0; background: linear-gradient(90deg,
+  rgba(14,11,9,0.93) 0%, rgba(14,11,9,0.78) 44%, rgba(14,11,9,0.38) 76%, rgba(14,11,9,0.12) 100%); }
+.artcard__body { position: relative; display: block; padding: 16px 18px 18px; color: #fff; max-width: 70%; }
+.artcard__eyebrow { display: block; font-size: 11px; font-weight: var(--weight-bold);
+  letter-spacing: 0.07em; text-transform: uppercase; color: #ffb27a; }
+.artcard__title { display: block; font-family: var(--font-display); font-weight: var(--weight-bold);
+  font-size: 21px; line-height: 1.12; letter-spacing: -0.01em; margin-top: 6px;
+  text-shadow: 0 1px 14px rgba(0,0,0,0.4); }
+.artcard__sub { display: block; font-size: 12.5px; line-height: 1.35; margin-top: 7px; color: rgba(255,255,255,0.84); }
+.artcard__meta { position: absolute; right: 14px; top: 14px; font-size: 12px; font-weight: var(--weight-bold);
+  color: #fff; background: rgba(252,100,20,0.92); border-radius: var(--radius-pill); padding: 5px 11px; }
+.artcard:active { transform: scale(0.995); }
+
 /* Top bar — warm, soft */
 .topbar {
   position: sticky; top: 0; z-index: 50;

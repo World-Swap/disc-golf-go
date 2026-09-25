@@ -22,10 +22,10 @@
     /* Dark wash under the caption so white text stays readable on any frame. */
     .slide__scrim { position: absolute; inset: 0;
       background: linear-gradient(0deg, rgba(16,12,9,0.88) 0%, rgba(16,12,9,0.35) 42%, rgba(16,12,9,0.05) 70%); }
-    .slide__body { position: absolute; left: 14px; right: 14px; bottom: 12px; }
-    .slide__creator { font-size: 11px; font-weight: 800; letter-spacing: .07em;
+    .slide__body { position: absolute; left: 14px; right: 14px; bottom: 12px; display: block; }
+    .slide__creator { display: block; font-size: 11px; font-weight: 800; letter-spacing: .07em;
                       text-transform: uppercase; color: #ffb27a; }
-    .slide__title { font-family: var(--font-display, system-ui); font-weight: 800;
+    .slide__title { display: block; font-family: var(--font-display, system-ui); font-weight: 800;
                     font-size: 16px; line-height: 1.2; margin-top: 3px;
                     text-shadow: 0 1px 12px rgba(0,0,0,.55); }
     .slide__play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
@@ -91,18 +91,23 @@
           '</div>' +
 
           (next ?
-            '<a class="card card--tap" href="/training" style="display:block">' +
-              '<p class="card__eyebrow">Continue training</p>' +
-              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px">' +
-                '<span class="h-title">' + esc(next.title) + '</span>' +
-                '<span class="row__meta">+' + (next.xp_reward || 0) + ' XP</span>' +
-              '</div>' +
-              '<p class="row__sub" style="margin-top:8px">' + esc(next.category_name || '') + ' →</p>' +
+            '<a class="artcard" href="/training" style="--art:url(\'/img/cards/training.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">Continue training</span>' +
+                '<span class="artcard__title">' + esc(next.title) + '</span>' +
+                '<span class="artcard__sub">' + esc(next.category_name || '') + ' →</span>' +
+              '</span>' +
+              '<span class="artcard__meta">+' + (next.xp_reward || 0) + ' XP</span>' +
             '</a>'
           :
-            '<a class="card card--tap" href="/training" style="display:block">' +
-              '<p class="card__eyebrow">Training</p>' +
-              '<div class="h-title" style="margin-top:10px">Browse lessons →</div>' +
+            '<a class="artcard" href="/training" style="--art:url(\'/img/cards/training.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">Training</span>' +
+                '<span class="artcard__title">Browse lessons →</span>' +
+                '<span class="artcard__sub">134 lessons from touring pros</span>' +
+              '</span>' +
             '</a>'
           ) +
 
@@ -111,10 +116,13 @@
           '<div id="pros"></div>' +
 
           // Throw Lab — practise the shot shapes the lessons teach.
-          '<a class="card card--tap" href="/game" style="display:block">' +
-            '<p class="card__eyebrow">Throw Lab</p>' +
-            '<div class="h-title" style="margin-top:10px">Play a quick round →</div>' +
-            '<p class="row__sub" style="margin-top:8px">3, 6 or 9 holes · pick a disc, shape the line, read the fade</p>' +
+          '<a class="artcard" href="/game" style="--art:url(\'/img/cards/throw-lab.webp\')">' +
+            '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+            '<span class="artcard__body">' +
+              '<span class="artcard__eyebrow">Throw Lab</span>' +
+              '<span class="artcard__title">Play a quick round →</span>' +
+              '<span class="artcard__sub">3, 6 or 9 holes · shape the line, read the fade</span>' +
+            '</span>' +
           '</a>' +
 
           '<div>' +
@@ -169,6 +177,20 @@
           var dots = box.querySelectorAll('.dot');
           var at = 0, timer = null;
 
+          // A thumbnail that won't load would otherwise sit there as a black
+          // rectangle. Drop that slide instead, and hide the whole section if
+          // none of them load at all.
+          var alive = slides.length;
+          box.querySelectorAll('.slide img').forEach(function (img, i) {
+            img.addEventListener('error', function () {
+              slides[i].remove(); dots[i].remove();
+              if (--alive <= 0) { stop(); box.innerHTML = ''; return; }
+              slides = box.querySelectorAll('.slide');
+              dots = box.querySelectorAll('.dot');
+              show(0);
+            });
+          });
+
           function show(i) {
             at = (i + slides.length) % slides.length;
             for (var k = 0; k < slides.length; k++) {
@@ -204,16 +226,25 @@
           var d = await DGG.API.get('/story/daily');
           var pct = d.target_value ? Math.round((d.progress / d.target_value) * 100) : 0;
           document.getElementById('daily').innerHTML =
-            '<p class="section-label">Daily challenge</p>' +
-            '<div class="card">' +
-              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">' +
-                '<span class="h-title">' + esc(d.title) + '</span>' +
-                (d.completed ? '<span class="pill pill--done">Done</span>' : '<span class="row__meta">+' + (d.xp_reward || 0) + ' XP</span>') +
-              '</div>' +
-              '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + esc(d.description || '') + '</p>' +
-              '<div style="height:14px"></div>' +
-              '<div class="meter-row"><span class="caption">Progress</span><span class="caption">' + (d.progress || 0) + '/' + (d.target_value || 0) + '</span></div>' +
-              meter(pct) +
+            '<div class="artcard" style="--art:url(\'/img/cards/daily.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">Daily challenge</span>' +
+                '<span class="artcard__title">' + esc(d.title) + '</span>' +
+                '<span class="artcard__sub">' + esc(d.description || '') + '</span>' +
+              '</span>' +
+              '<span class="artcard__meta">' +
+                (d.completed ? 'Done ✓' : '+' + (d.xp_reward || 0) + ' XP') +
+              '</span>' +
+              '<span class="artcard__body" style="max-width:100%;padding-top:0">' +
+                '<span class="meter-row" style="display:flex;justify-content:space-between">' +
+                  '<span class="caption" style="color:rgba(255,255,255,.75)">Progress</span>' +
+                  '<span class="caption" style="color:rgba(255,255,255,.75)">' + (d.progress || 0) + '/' + (d.target_value || 0) + '</span>' +
+                '</span>' +
+                '<span class="meter" style="display:block;background:rgba(255,255,255,.22)">' +
+                  '<span class="meter__fill" style="display:block;width:' + Math.max(0, Math.min(100, pct)) + '%"></span>' +
+                '</span>' +
+              '</span>' +
             '</div>';
         } catch (e) { /* no daily challenge available */ }
       }
