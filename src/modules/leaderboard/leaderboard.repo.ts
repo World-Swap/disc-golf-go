@@ -156,26 +156,6 @@ export function createLeaderboardRepo(db: Queryable) {
       return Number(r.rows[0]!.cnt) + 1;
     },
 
-    async crewsTraining() {
-      const r = await db.query(
-        `SELECT cr.id, cr.name, cr.logo_url, cr.boss_id,
-                COUNT(DISTINCT cm.player_id)::int AS member_count,
-                COALESCE(SUM(l.xp_reward)::int, 0) AS training_xp,
-                COUNT(DISTINCT tc.id)::int AS lessons_completed
-         FROM crews cr
-         LEFT JOIN crew_members cm ON cm.crew_id = cr.id
-         LEFT JOIN training_completions tc ON tc.player_id = cm.player_id
-         LEFT JOIN training_lessons l ON l.id = tc.lesson_id
-         WHERE cr.disbanded_at IS NULL
-         GROUP BY cr.id ORDER BY training_xp DESC, member_count DESC, cr.name ASC LIMIT 20`
-      );
-      return r.rows as Array<{ id: number; name: string; logo_url: string | null; member_count: number; training_xp: number; lessons_completed: number }>;
-    },
-
-    async myCrewId(playerId: number): Promise<number | null> {
-      const r = await db.query<{ crew_id: number }>('SELECT crew_id FROM crew_members WHERE player_id = $1 LIMIT 1', [playerId]);
-      return r.rows[0]?.crew_id ?? null;
-    },
   };
 }
 

@@ -28,8 +28,6 @@ import { createStoryService } from './story/story.service';
 import { createStoryRouter } from './story/story.routes';
 import { checkMissionsFromTraining } from './story/quest-engine';
 import { advanceDailyChallenge } from './story/daily-challenge';
-import { createChallengesService } from './challenges/challenges.service';
-import { createChallengesRouter } from './challenges/challenges.routes';
 import { createTrainingNotificationsService } from './training-notifications/training-notifications.service';
 import { createTrainingNotificationsRouter } from './training-notifications/training-notifications.routes';
 import { createShopService } from './shop/shop.service';
@@ -89,7 +87,6 @@ export function createApiRouter(db: Database): Router {
   api.use(createTrainingNotificationsRouter(createTrainingNotificationsService(db), trainingResolve));
 
   api.use(createStoryRouter(createStoryService(db), auth));
-  api.use(createChallengesRouter(createChallengesService(db), auth));
   api.use(createShopRouter(createShopService(db), auth));
   api.use(createOnboardingRouter(createOnboardingService(db), trainingResolve));
   api.use(createReviewsRouter(createReviewsService(db), auth));
