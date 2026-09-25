@@ -11,6 +11,11 @@
   <meta name="description" content="The disc golf training app: 134 pro-coached video lessons, 1,900+ courses, XP, missions and ranks. Turn range reps into lower scores." />
   <link rel="stylesheet" href="/styles/tokens.css?v=w6" />
   <link rel="stylesheet" href="/styles/app.css?v=w6" />
+  <!-- The native apps load this page on every cold start. Check for a session
+       before anything paints, so a returning player lands in the app instead of
+       on the marketing page with a "Log In" button. -->
+  <script src="/js/app.js?v=w5"></script>
+  <script>if (window.DGG && DGG.signedIn()) { location.replace('/home'); }</script>
 </head>
 <body>
   <!-- Announcement bar -->
