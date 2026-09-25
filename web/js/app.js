@@ -41,6 +41,17 @@
     cookieDel(key);
   }
 
+  // Pages that must never be redirected away from: they are where a signed-out
+  // player belongs, so bouncing them to /login would loop.
+  var PUBLIC_PAGES = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+  function onPublicPage() {
+    return PUBLIC_PAGES.indexOf(location.pathname.replace(/\/$/, '') || '/') !== -1;
+  }
+  // A dead token leaves the player staring at an error they cannot act on.
+  // Send them to the sign-in screen instead — once the token is cleared this
+  // cannot bounce back, because the guard below no longer sees a session.
+  function toLogin() { if (!onPublicPage()) location.replace('/login'); }
+
   var API = {
     base: '/api',
     token: function () { return read(TOKEN_KEY); },
@@ -68,7 +79,7 @@
         // Only a dead token ends the session. A plain 401 from one endpoint
         // (a guest hitting a members-only route, say) used to sign the player
         // out of the whole app.
-        if (res.status === 401 && data && data.code === 'token_invalid') { API.clear(); }
+        if (res.status === 401 && data && data.code === 'token_invalid') { API.clear(); toLogin(); }
         throw err;
       }
       return data;
@@ -90,6 +101,12 @@
       .then(function (r) { if (r && r.token) { API.setToken(r.token); store(REFRESHED_KEY, String(Date.now())); } })
       .catch(function () { /* offline or route unavailable — try again next open */ });
   }
+
+  // A player is signed in exactly when a token survives — guests are issued one
+  // too. The landing and auth pages use this to send a returning player (one
+  // who force-closed the app and reopened it) straight into the app, instead of
+  // showing a "Log in" screen they don't need.
+  function signedIn() { return !!API.token(); }
 
   // Redirect to /login unless a session (token or guest) exists.
   function requireAuth() {
@@ -129,5 +146,5 @@
     }).join('');
   }
 
-  window.DGG = { API: API, requireAuth: requireAuth, logout: logout, esc: esc, tabbar: tabbar };
+  window.DGG = { API: API, requireAuth: requireAuth, signedIn: signedIn, logout: logout, esc: esc, tabbar: tabbar };
 })();

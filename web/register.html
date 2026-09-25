@@ -44,9 +44,18 @@
     </div>
   </main>
 
-  <script src="/js/app.js?v=w4"></script>
+  <script src="/js/app.js?v=w5"></script>
   <script>
     (function () {
+      // Already signed in — a returning player, or one who reached this page by
+      // a stale link. Confirm the token still works before sending them in; if
+      // it doesn't, the API client clears it and this form is what they need.
+      if (DGG.signedIn()) {
+        DGG.API.get('/players/me')
+          .then(function () { location.replace('/home'); })
+          .catch(function () { /* stale or offline — show the form */ });
+      }
+
       var form = document.getElementById('form');
       var err = document.getElementById('err');
       var submit = document.getElementById('submit');
