@@ -55,13 +55,14 @@
     });
   }
 
+  // Bottom nav, left to right. Ranks lives in Profile → Training instead of
+  // taking a tab slot, which keeps this to five and widens each target.
   var TABS = [
     { key: 'home', href: '/home', label: 'Home', glyph: '🏠' },
+    { key: 'profile', href: '/profile', label: 'Profile', glyph: '👤' },
     { key: 'training', href: '/training', label: 'Train', glyph: '🎯' },
     { key: 'play', href: '/checkin', label: 'Play', glyph: '🥏' },
-    { key: 'ranks', href: '/ranks', label: 'Ranks', glyph: '🏆' },
     { key: 'vault', href: '/vault', label: 'Vault', glyph: '💎' },
-    { key: 'profile', href: '/profile', label: 'You', glyph: '👤' },
   ];
 
   // Render the bottom tab bar into <nav id="tabbar">, marking `active`.

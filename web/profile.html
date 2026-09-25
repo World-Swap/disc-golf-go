@@ -63,6 +63,12 @@
               '<span class="caption">' + (ts.categories_mastered || 0) + ' mastered</span></div>' +
               meter(ts.total_lessons ? Math.round((ts.lessons_completed / ts.total_lessons) * 100) : 0) +
             '</div>' +
+            '<div class="rows" style="margin-top:12px">' +
+              '<a class="row" href="/ranks"><span class="row__glyph">🏆</span><div class="row__body"><div class="row__title">Rankings</div>' +
+              '<div class="row__sub">See where you stand</div></div><span class="row__meta">›</span></a>' +
+              '<a class="row" href="/training"><span class="row__glyph">🎯</span><div class="row__body"><div class="row__title">Continue training</div>' +
+              '<div class="row__sub">' + (ts.total_lessons ? ((ts.total_lessons - (ts.lessons_completed || 0)) + ' lessons left') : 'Browse all lessons') + '</div></div><span class="row__meta">›</span></a>' +
+            '</div>' +
           '</div>' +
 
           '<div class="stats">' +
