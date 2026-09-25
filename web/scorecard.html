@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Scorecard · Disc Golf Go</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w6" />
+  <link rel="stylesheet" href="/styles/app.css?v=w6" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w6" />
+  <style>
+    /* Hole rows: par on the left, a big stroke stepper on the right. Targets
+       are deliberately large — this is tapped outdoors, one-handed, mid-round. */
+    .sc-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+              border-top: 1px solid var(--hair, #eee); }
+    .sc-row:first-child { border-top: 0; }
+    .sc-hole { width: 34px; font-family: var(--font-display, system-ui); font-weight: 800; font-size: 17px; }
+    .sc-par { flex: 1; font-size: 12px; color: #8a8279; }
+    .sc-step { display: flex; align-items: center; gap: 6px; }
+    .sc-btn { width: 44px; height: 44px; border-radius: 12px; border: 1px solid #ddd5c9;
+              background: #fff; font-size: 20px; font-weight: 700; color: #202020; }
+    .sc-btn:active { background: #f2ece4; }
+    .sc-val { width: 42px; text-align: center; font-family: var(--font-display, system-ui);
+              font-weight: 800; font-size: 19px; }
+    .sc-val[data-state="under"] { color: #2e7d57; }
+    .sc-val[data-state="over"]  { color: #d9500a; }
+    .sc-val[data-state="empty"] { color: #c5bcb1; }
+    .sc-tot { display: flex; gap: 10px; justify-content: space-between; align-items: baseline; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title">Scorecard</span>
+      <span class="pill" id="vs">—</span>
+    </header>
+
+    <div id="content" class="loading">Loading…</div>
+
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js?v=w5"></script>
+  <script>
+  (function () {
+    'use strict';
+    if (!DGG.requireAuth()) return;
+    DGG.tabbar('play');
+    var esc = DGG.esc, API = DGG.API;
+    var content = document.getElementById('content');
+    var qs = new URLSearchParams(location.search);
+    var courseId = qs.get('course');
+    var cardId = qs.get('card');
+    var card = null;          // the open scorecard
+    var courseName = '';
+
+    function vsPar(strokes, par) { return strokes - par; }
+    function fmtVs(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : String(n)); }
+
+    // ------------------------------------------------------------ setup view
+    // Pick a hole count before starting. Defaults to what the course record
+    // says, which is right for the overwhelming majority of rounds.
+    async function chooseRound() {
+      var course = null;
+      try { course = await API.get('/courses/' + encodeURIComponent(courseId)); }
+      catch (e) { content.className = 'screen'; content.innerHTML = '<div class="error">Could not load that course.</div>'; return; }
+      courseName = course.name || 'Course';
+      var suggested = parseInt(course.holes, 10) || 18;
+
+      content.className = 'screen stack';
+      content.innerHTML =
+        '<div><p class="section-label">New round</p><h1 class="h-display">' + esc(courseName) + '</h1></div>' +
+        '<div class="card">' +
+          '<p class="card__eyebrow">How many holes?</p>' +
+          '<div style="display:flex;gap:8px;margin-top:12px">' +
+            [9, 18, suggested].filter(function (v, i, a) { return a.indexOf(v) === i; }).map(function (n) {
+              return '<button class="btn btn--ghost" data-holes="' + n + '" style="flex:1">' + n + '</button>';
+            }).join('') +
+          '</div>' +
+          '<p class="row__sub" style="margin-top:12px">Every hole starts at par 3 — change a hole\'s score as you play.</p>' +
+        '</div>';
+
+      content.querySelectorAll('[data-holes]').forEach(function (b) {
+        b.addEventListener('click', function () { start(Number(this.dataset.holes), b); });
+      });
+    }
+
+    async function start(holes, btn) {
+      btn.disabled = true; btn.textContent = '…';
+      try {
+        card = await API.post('/scorecards', { course_id: Number(courseId), holes: holes });
+        history.replaceState(null, '', '/scorecard?card=' + card.id);
+        renderCard();
+      } catch (e) {
+        content.insertAdjacentHTML('afterbegin', '<div class="error">' + esc(e.message || 'Could not start the round') + '</div>');
+        btn.disabled = false; btn.textContent = String(holes);
+      }
+    }
+
+    // ------------------------------------------------------------- card view
+    function renderCard() {
+      var holes = card.hole_scores || [];
+      var name = card.course_name || courseName;
+      content.className = 'screen stack';
+      content.innerHTML =
+        '<div><p class="section-label">Round in progress</p><h1 class="h-title">' + esc(name) + '</h1></div>' +
+        '<div class="card"><div class="sc-tot">' +
+          '<span class="caption">Total</span>' +
+          '<span><b id="tot" style="font-size:22px">' + (card.strokes || 0) + '</b> ' +
+          '<span class="row__meta" id="totvs"></span></span>' +
+        '</div></div>' +
+        '<div class="rows" id="holes">' + holes.map(holeRow).join('') + '</div>' +
+        '<button class="btn btn--block" id="finish">Finish round</button>' +
+        '<a class="btn btn--ghost btn--block" href="/checkin" style="margin-top:8px">Back to Play</a>';
+
+      content.querySelectorAll('[data-step]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          step(Number(this.dataset.hole), Number(this.dataset.step));
+        });
+      });
+      document.getElementById('finish').addEventListener('click', finish);
+      paintTotals();
+    }
+
+    function holeRow(h) {
+      return '<div class="sc-row">' +
+        '<span class="sc-hole">' + h.hole_number + '</span>' +
+        '<span class="sc-par">Par ' + h.par + '</span>' +
+        '<span class="sc-step">' +
+          '<button class="sc-btn" data-hole="' + h.hole_number + '" data-step="-1" aria-label="One fewer stroke">−</button>' +
+          '<span class="sc-val" id="h' + h.hole_number + '">—</span>' +
+          '<button class="sc-btn" data-hole="' + h.hole_number + '" data-step="1" aria-label="One more stroke">+</button>' +
+        '</span></div>';
+    }
+
+    // Stepping a hole with no score yet starts at its par, which is the
+    // score you want most often and saves two taps on nearly every hole.
+    async function step(holeNumber, delta) {
+      var h = (card.hole_scores || []).filter(function (x) { return x.hole_number === holeNumber; })[0];
+      if (!h) return;
+      var next = h.strokes == null ? (delta > 0 ? h.par : h.par - 1) : h.strokes + delta;
+      if (next < 1) next = null;               // stepping below 1 clears the hole
+      if (next !== null && next > 20) return;
+      var prev = h.strokes;
+      h.strokes = next;                        // optimistic: the round shouldn't wait on a network
+      paintHole(h); paintTotals();
+      try {
+        var r = await API.post('/scorecards/' + card.id + '/holes', { hole_number: holeNumber, strokes: next });
+        card.strokes = r.total_strokes;
+        paintTotals();
+      } catch (e) {
+        h.strokes = prev; paintHole(h); paintTotals();   // put it back if the save failed
+      }
+    }
+
+    function paintHole(h) {
+      var el = document.getElementById('h' + h.hole_number);
+      if (!el) return;
+      el.textContent = h.strokes == null ? '—' : h.strokes;
+      el.dataset.state = h.strokes == null ? 'empty'
+        : h.strokes < h.par ? 'under' : h.strokes > h.par ? 'over' : 'level';
+    }
+
+    // Totals count only the holes actually played, so a round abandoned at
+    // hole 7 doesn't read as 11 under par.
+    function paintTotals() {
+      var played = (card.hole_scores || []).filter(function (h) { return h.strokes != null; });
+      var strokes = played.reduce(function (a, h) { return a + h.strokes; }, 0);
+      var par = played.reduce(function (a, h) { return a + h.par; }, 0);
+      var tot = document.getElementById('tot');
+      if (tot) tot.textContent = strokes;
+      var vs = fmtVs(vsPar(strokes, par));
+      var totvs = document.getElementById('totvs');
+      if (totvs) totvs.textContent = played.length ? vs + ' · ' + played.length + ' holes' : 'not started';
+      document.getElementById('vs').textContent = played.length ? vs : '—';
+    }
+
+    async function finish() {
+      var btn = document.getElementById('finish');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        var r = await API.post('/scorecards/' + card.id + '/finish');
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div class="card">' +
+            '<p class="card__eyebrow">Round complete</p>' +
+            '<div class="h-display" style="margin:10px 0">' + fmtVs(r.vs_par) + '</div>' +
+            '<p class="row__sub">' + r.strokes + ' strokes over ' + r.holes_played + ' holes · par ' + r.par_played + '</p>' +
+          '</div>' +
+          '<a class="btn btn--block" href="/checkin">Back to Play</a>' +
+          '<a class="btn btn--ghost btn--block" href="/game' + (card.course_id ? '?course=' + card.course_id : '') + '" style="margin-top:8px">Play this course in Throw Lab</a>';
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Finish round';
+        content.insertAdjacentHTML('afterbegin', '<div class="error">' + esc(e.message || 'Could not save') + '</div>');
+      }
+    }
+
+    // ---------------------------------------------------------------- boot
+    (async function () {
+      if (cardId) {
+        try {
+          card = await API.get('/scorecards/' + encodeURIComponent(cardId));
+          renderCard();
+          (card.hole_scores || []).forEach(paintHole);
+          paintTotals();
+          return;
+        } catch (e) { /* fall through to starting a new one */ }
+      }
+      if (courseId) return chooseRound();
+      content.className = 'screen';
+      content.innerHTML = '<div class="loading">Pick a course from Play to start a scorecard.</div>' +
+        '<a class="btn btn--block" href="/checkin" style="margin-top:16px">Find a course</a>';
+    })();
+  })();
+  </script>
+</body>
+</html>

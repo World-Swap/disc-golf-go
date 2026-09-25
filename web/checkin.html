@@ -16,8 +16,16 @@
   <main class="app">
     <header class="topbar"><span class="topbar__title">Play</span><span class="pill" id="loc">Locating…</span></header>
     <div class="screen stack">
-      <div><p class="section-label">Apply your training</p><h1 class="h-display">CHECK<br />IN<span class="mark" style="width:30%"></span></h1></div>
+      <div><p class="section-label">Apply your training</p><h1 class="h-display">PLAY<span class="mark" style="width:30%"></span></h1></div>
+
+      <a class="card card--tap" href="/game" style="display:block">
+        <p class="card__eyebrow">Throw Lab</p>
+        <div class="h-title" style="margin-top:10px">Play a quick 3-hole round →</div>
+        <p class="row__sub" style="margin-top:8px">Pick a disc, shape the line, read the fade</p>
+      </a>
+
       <div id="result"></div>
+      <div id="rounds"></div>
       <div id="list" class="loading">Finding courses near you…</div>
     </div>
     <nav id="tabbar"></nav>
@@ -35,6 +43,8 @@
 
       function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m'; }
 
+      loadRounds();   // your rounds don't depend on GPS, so load them first
+
       if (!navigator.geolocation) { document.getElementById('loc').textContent = 'No GPS'; list.className = 'screen'; list.innerHTML = '<div class="error">Location not available on this device.</div>'; return; }
 
       navigator.geolocation.getCurrentPosition(function (p) {
@@ -46,6 +56,26 @@
         list.className = 'screen'; list.innerHTML = '<div class="error">Enable location to check in at a course.</div>';
       }, { enableHighAccuracy: true, timeout: 10000 });
 
+      // Your recent rounds at real courses. One request, rendered above the
+      // course list so Play shows your scoring as well as offering it.
+      async function loadRounds() {
+        try {
+          var rounds = await API.get('/scorecards?limit=5');
+          if (!rounds.length) return;
+          document.getElementById('rounds').innerHTML =
+            '<p class="section-label">Your rounds</p><div class="rows">' + rounds.map(function (r) {
+              // Against the par of the holes played, not the whole card.
+              var vs = r.completed ? (r.strokes - (r.par_played || r.par)) : null;
+              var badge = !r.completed ? 'in progress'
+                : (vs === 0 ? 'E' : vs > 0 ? '+' + vs : String(vs));
+              return '<a class="row" href="/scorecard?card=' + r.id + '">' +
+                '<span class="row__glyph">▤</span>' +
+                '<div class="row__body"><div class="row__title">' + esc(r.course_name || 'Course') + '</div>' +
+                '<div class="row__sub">' + r.holes + ' holes · ' + (r.strokes || 0) + ' strokes</div></div>' +
+                '<span class="row__meta">' + badge + '</span></a>';
+            }).join('') + '</div>';
+        } catch (e) { /* signed-out or offline — the course list still works */ }
+      }
       async function loadCourses() {
         try {
           var courses = await API.get('/courses/nearby?lat=' + pos.lat + '&lng=' + pos.lng + '&radius=50000');
@@ -53,10 +83,19 @@
           if (!courses.length) { list.innerHTML = '<div class="loading">No courses within 50 km.</div>'; return; }
           list.innerHTML = '<p class="section-label">Nearby courses</p><div class="rows">' + courses.map(function (c) {
             var inRange = c.distance_meters <= RADIUS;
-            return '<div class="row"><span class="row__glyph">◎</span>' +
+            var holes = c.holes ? c.holes + ' holes' : '';
+            var par = c.par ? 'par ' + c.par : '';
+            var meta = [esc([c.city, c.state].filter(Boolean).join(', ')), fmtDist(c.distance_meters), holes, par]
+              .filter(Boolean).join(' · ');
+            return '<div class="row" style="flex-wrap:wrap">' +
+              '<span class="row__glyph">◎</span>' +
               '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
-              '<div class="row__sub">' + esc([c.city, c.state].filter(Boolean).join(', ')) + ' · ' + fmtDist(c.distance_meters) + '</div></div>' +
-              (inRange ? '<button class="btn" style="padding:8px 14px;font-size:10px" data-course="' + c.id + '">Check In</button>' : '<span class="row__meta">too far</span>') + '</div>';
+              '<div class="row__sub">' + meta + '</div></div>' +
+              (inRange ? '<button class="btn" style="padding:8px 14px;font-size:10px" data-course="' + c.id + '">Check In</button>' : '<span class="row__meta">too far</span>') +
+              '<div style="display:flex;gap:8px;width:100%;margin:10px 0 2px 34px">' +
+                '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/scorecard?course=' + c.id + '">Scorecard</a>' +
+                '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/game?course=' + c.id + '">Play in Throw Lab</a>' +
+              '</div></div>';
           }).join('') + '</div>';
           list.querySelectorAll('[data-course]').forEach(function (btn) {
             btn.addEventListener('click', function () { checkIn(Number(this.getAttribute('data-course')), this); });

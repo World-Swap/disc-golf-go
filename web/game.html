@@ -110,13 +110,52 @@
     var S = { hole: 1, par: 3, throws: 0, total: 0, holeLen: 0, ballX: 0, ballY: 0,
               phase: 'ready', power: 0, angle: 0, t: 0, dir: 1, flight: null, done: false };
     var HOLES = 3;
+    var COURSE = null;   // { name, holes: [{ par, metres }] } when playing a real course
+
+    // Typical throwing distance for a hole of each par, used when a course
+    // knows its par but not its hole lengths.
+    function lengthForPar(par) {
+      if (par >= 5) return Math.round(195 + Math.random() * 55);
+      if (par === 4) return Math.round(125 + Math.random() * 60);
+      return Math.round(60 + Math.random() * 55);
+    }
+
+    // Build a playable round from whatever the course record actually has.
+    // hole_details is free-form JSONB across 3,550 courses, so read it
+    // defensively and fall back to par-shaped holes rather than trusting it.
+    function buildCourse(c) {
+      var count = Math.min(parseInt(c.holes, 10) || 18, 18);
+      var totalPar = parseInt(c.par, 10) || count * 3;
+      var details = Array.isArray(c.hole_details) ? c.hole_details : null;
+      var holes = [];
+      for (var i = 0; i < count; i++) {
+        var d = details && details[i] && typeof details[i] === 'object' ? details[i] : null;
+        var par = d ? parseInt(d.par, 10) : NaN;
+        if (!(par >= 2 && par <= 6)) par = Math.max(3, Math.round(totalPar / count));
+        // Distances may be recorded in feet or metres depending on the source.
+        // A *_ft field is feet by name; an unlabelled number over 120 is feet
+        // too, since a 120 m hole is already a long par 3.
+        var metres = NaN;
+        if (d && parseFloat(d.distance_ft) > 0) metres = Math.round(parseFloat(d.distance_ft) * 0.3048);
+        else {
+          var raw = d ? parseFloat(d.distance || d.length) : NaN;
+          if (raw > 0) metres = raw > 120 ? Math.round(raw * 0.3048) : Math.round(raw);
+        }
+        if (!(metres >= 25 && metres <= 320)) metres = lengthForPar(par);
+        holes.push({ par: par, metres: metres });
+      }
+      return { name: c.name || 'Course', holes: holes };
+    }
 
     function newHole() {
-      S.holeLen = Math.round(70 + Math.random() * 60);   // 70–130 m, par 3
-      S.par = 3; S.throws = 0; S.ballX = 0; S.ballY = S.holeLen;
+      var h = COURSE ? COURSE.holes[S.hole - 1] : null;
+      S.holeLen = h ? h.metres : Math.round(70 + Math.random() * 60);
+      S.par = h ? h.par : 3;
+      S.throws = 0; S.ballX = 0; S.ballY = S.holeLen;
       S.phase = 'ready'; S.flight = null;
       autoDisc(); paintBag(); hud();
-      say('Tap to start your power', 'Hole ' + S.hole + ' — ' + S.holeLen + ' m, par 3');
+      say('Tap to start your power',
+          (COURSE ? COURSE.name + ' · ' : '') + 'Hole ' + S.hole + ' — ' + S.holeLen + ' m, par ' + S.par);
     }
 
     // Pick the sensible disc for the distance left, the way a player would.
@@ -383,7 +422,24 @@
     cv.addEventListener('pointerdown', function (e) { e.preventDefault(); tap(); });
     window.addEventListener('resize', resize);
 
-    resize(); newHole(); requestAnimationFrame(frame);
+    // ?course=<id> plays a real course's holes; without it, a quick 3-hole round.
+    function boot() {
+      var courseId = new URLSearchParams(location.search).get('course');
+      if (!courseId) { newHole(); return; }
+      say('Loading the course…', '');
+      DGG.API.get('/courses/' + encodeURIComponent(courseId)).then(function (c) {
+        COURSE = buildCourse(c);
+        HOLES = COURSE.holes.length;
+        document.title = COURSE.name + ' · Disc Golf Go';
+        newHole();
+      }).catch(function () {
+        // Offline or a bad id — still give the player a round to throw.
+        say('Could not load that course', 'Playing a practice round instead');
+        newHole();
+      });
+    }
+
+    resize(); boot(); requestAnimationFrame(frame);
   })();
   </script>
 </body>
