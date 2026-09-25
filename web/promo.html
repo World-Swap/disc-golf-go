@@ -17,7 +17,7 @@
   <meta property="og:description" content="13 touring pros. 134 video lessons. 200+ videos. Train like a pro and lower your score — free on iOS &amp; Android." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://discgolfgo.com/" />
-  <meta property="og:image" content="https://discgolfgo.com/img/og-cover.png?v=1" />
+  <meta property="og:image" content="https://discgolfgo.com/img/og-cover.png?v=2" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Disc Golf Go — 13 touring pros, 134 video lessons, 200+ videos." />
@@ -26,7 +26,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Disc Golf Go — Coached by the pros" />
   <meta name="twitter:description" content="13 touring pros. 134 video lessons. Train like a pro and lower your score — free on iOS &amp; Android." />
-  <meta name="twitter:image" content="https://discgolfgo.com/img/og-cover.png?v=1" />
+  <meta name="twitter:image" content="https://discgolfgo.com/img/og-cover.png?v=2" />
 
   <!-- Structured data -->
   <script type="application/ld+json">
@@ -80,6 +80,13 @@
     .store{display:inline-flex;align-items:center;gap:10px;background:var(--color-ink,#2b2622);color:#fff;
       border-radius:14px;padding:12px 18px;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:14px;}
     .store span{opacity:.7;font-weight:600;font-size:12px;display:block;line-height:1;margin-bottom:2px;}
+    /* App screenshots */
+    .shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;max-width:940px;margin:0 auto;}
+    .shot{margin:0;display:flex;flex-direction:column;align-items:center;gap:14px;}
+    .shot img{width:100%;height:auto;display:block;border:1px solid var(--color-hairline);border-radius:4px;background:#fff;}
+    .shot__cap{font-size:14px;line-height:1.45;color:var(--color-ash);text-align:center;}
+    .shot__cap b{color:var(--color-ink);font-weight:700;}
+    @media(max-width:780px){.shots{grid-template-columns:1fr;gap:34px;max-width:340px;}}
     /* FAQ accordion + guide cards */
     .faqlist{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
     .faq{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:16px;padding:0 22px;box-shadow:0 6px 16px rgba(43,38,34,.05);}
@@ -148,6 +155,31 @@
       </div>
     </div>
   </header>
+
+  <!-- App screenshots -->
+  <section class="sect sect--peach" id="inside">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">Inside the app</p>
+        <h2 class="sect__title">Your training, screen by screen.</h2>
+        <p class="sect__lede">Free on iPhone, Android and the web — your progress syncs across all three.</p>
+      </div>
+      <div class="shots">
+        <figure class="shot">
+          <img src="/img/shot-home.png" width="520" height="904" loading="lazy" alt="The Disc Golf Go home screen showing XP progress, the next lesson to continue and today's challenge" />
+          <figcaption class="shot__cap"><b>Home</b> — pick up where you left off</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/img/shot-lesson.png" width="520" height="904" loading="lazy" alt="A lesson screen playing a pro coaching video with the key takeaways listed below it" />
+          <figcaption class="shot__cap"><b>Lessons</b> — a pro video plus the key takeaways</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/img/shot-creators.png" width="520" height="904" loading="lazy" alt="The Creators vault listing pro coaches and the videos unlocked so far" />
+          <figcaption class="shot__cap"><b>Creators</b> — unlock a pro with every lesson</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
 
   <!-- Pros -->
   <section class="sect sect--ink" id="pros">
