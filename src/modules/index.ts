@@ -16,6 +16,7 @@ import { createPlayersService } from './players/players.service';
 import { createPlayersRouter } from './players/players.routes';
 import { createCoursesService } from './courses/courses.service';
 import { createCoursesRouter } from './courses/courses.routes';
+import { createCheckinsRepo } from './checkins/checkins.repo';
 import { createCheckinsService } from './checkins/checkins.service';
 import { createCheckinsRouter } from './checkins/checkins.routes';
 import { createLeaderboardService } from './leaderboard/leaderboard.service';
@@ -34,6 +35,9 @@ import { createShopService } from './shop/shop.service';
 import { createShopRouter } from './shop/shop.routes';
 import { createOnboardingService } from './onboarding/onboarding.service';
 import { createOnboardingRouter } from './onboarding/onboarding.routes';
+import { createGameRepo } from './game/game.repo';
+import { createGameService } from './game/game.service';
+import { createGameRouter } from './game/game.routes';
 import { createScorecardsRepo } from './scorecards/scorecards.repo';
 import { createScorecardsService } from './scorecards/scorecards.service';
 import { createScorecardsRouter } from './scorecards/scorecards.routes';
@@ -55,6 +59,38 @@ export function createApiRouter(db: Database): Router {
 
   const authService = createAuthService({ repo: createAuthRepo(db), sendEmail, appBaseUrl: config.appBaseUrl });
   api.use(createAuthRouter(authService, auth));
+
+  // Throw Lab. Badge evaluation reuses the check-in repo's helpers rather
+  // than a second copy: only the game stats are computed here, so a zero in
+  // the others simply means "no badge from this path", and the check-in path
+  // still awards its own.
+  const checkinsRepoForGame = createCheckinsRepo(db);
+  const gameService = createGameService({
+    db,
+    repo: createGameRepo(db),
+    badgeStats: async (client, playerId) => {
+      const r = await client.query<{ under_par: string; courses: string; challenges: string }>(
+        `SELECT
+           (SELECT COUNT(*) FROM game_rounds WHERE player_id = $1 AND vs_par < 0) AS under_par,
+           (SELECT COUNT(DISTINCT course_id) FROM game_rounds WHERE player_id = $1 AND course_id IS NOT NULL) AS courses,
+           (SELECT COUNT(*) FROM player_game_challenges WHERE player_id = $1) AS challenges`,
+        [playerId]
+      );
+      const g = r.rows[0]!;
+      return {
+        battleWins: 0, bestStreak: 0, challengesCompleted: 0, completedCities: 0, completedStates: 0,
+        maxSameCourseVisits: 0, morningCheckins: 0, nightCheckins: 0, seasonsPlayed: 0, totalRounds: 0,
+        trailblazerCourses: 0, uniqueCourses: 0, uniqueOpponents: 0, uniqueStates: 0, weatherCheckins: 0,
+        weekendRounds: 0,
+        gameUnderParRounds: parseInt(g.under_par, 10),
+        gameCoursesPlayed: parseInt(g.courses, 10),
+        gameChallengesCompleted: parseInt(g.challenges, 10),
+      };
+    },
+    existingBadges: (client, playerId) => checkinsRepoForGame.earnedBadgeKeys(client, playerId),
+    saveBadge: (client, playerId, badge) => checkinsRepoForGame.insertBadge(client, playerId, badge.category, badge.tier),
+  });
+  api.use(createGameRouter(gameService, auth, optAuth));
 
   const scorecardsService = createScorecardsService({ repo: createScorecardsRepo(db) });
   api.use(createScorecardsRouter(scorecardsService, auth));

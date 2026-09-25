@@ -36,7 +36,14 @@ export const XP_EVENTS = {
   "milestone_courses_100": 7500,
   "milestone_rounds_10": 500,
   "milestone_rounds_50": 2500,
-  "milestone_state_champion": 5000
+  "milestone_state_champion": 5000,
+  // Throw Lab. Rounds pay little on purpose — the challenges below are the
+  // engine, because they cap naturally per period and can't be farmed.
+  "game_round_3": 15,
+  "game_round_6": 30,
+  "game_round_9": 50,
+  "game_round_18": 120,
+  "game_under_par": 40
 } as const;
 
 export type XpEvent = keyof typeof XP_EVENTS;
@@ -58,7 +65,8 @@ export const GOLD_EVENTS = {
   "challenge_monthly": 100,
   "badge_unlock": 20,
   "level_up": 50,
-  "state_champion_first": 200
+  "state_champion_first": 200,
+  "challenge_lifetime": 250
 } as const;
 
 export type GoldEvent = keyof typeof GOLD_EVENTS;

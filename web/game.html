@@ -36,6 +36,7 @@
     .g-disc[aria-pressed="true"] { border-color: #fc6414; background: #fff3ec; }
     .g-disc__n { font-weight: 800; font-size: 13px; color: #202020; }
     .g-disc__f { font-size: 10px; color: #8a8279; margin-top: 2px; }
+    .g-disc__d { font-size: 10px; font-weight: 700; color: #fc6414; margin-top: 2px; }
 
     /* Prompt / result banner under the field */
     .g-msg { min-height: 58px; padding: 10px 16px 14px; text-align: center; }
@@ -114,7 +115,14 @@
     var S = { hole: 1, par: 3, throws: 0, total: 0, holeLen: 0, ballX: 0, ballY: 0,
               phase: 'ready', power: 0, angle: 0, t: 0, dir: 1, flight: null, done: false };
     var HOLES = 3;
-    var COURSE = null;   // { name, holes: [{ par, metres }] } when playing a real course
+    var COURSE = null;   // { name, holes: [{ par, feet }] } when playing a real course
+    var CARD = [];       // { par, strokes } per finished hole — what the server scores
+    var SUBMITTED = false;
+
+    // Round lengths: a quick round is a short session, a course round is the
+    // full 18, looping the course's own holes when it has fewer.
+    var QUICK_LENGTHS = [3, 6, 9];
+    var COURSE_LENGTHS = [3, 6, 9, 18];
 
     // Typical throwing distance for a hole of each par, used when a course
     // knows its par but not its hole lengths.
@@ -178,7 +186,7 @@
       else if (S.phase === 'angle')  { release(); }
       else if (S.phase === 'result') { nextThrow(); }
       else if (S.phase === 'holeEnd'){ S.hole++; if (S.hole > HOLES) endGame(); else newHole(); }
-      else if (S.phase === 'gameEnd'){ S.hole = 1; S.total = 0; newHole(); }
+      else if (S.phase === 'gameEnd'){ S.hole = 1; S.total = 0; CARD = []; SUBMITTED = false; newHole(); }
     }
 
     function release() {
@@ -234,8 +242,12 @@
       hud();
 
       // Mercy rule: nobody should be stuck on one hole forever.
-      if (S.throws >= 8) { S.total += S.throws - S.par; S.phase = 'holeEnd';
-        say('Picked up  ·  ' + S.throws + ' throws', 'Tap for the next hole'); hud(); }
+      if (S.throws >= 8) {
+        S.total += S.throws - S.par;
+        CARD.push({ par: S.par, strokes: S.throws });
+        S.phase = 'holeEnd';
+        say('Picked up  ·  ' + S.throws + ' throws', 'Tap for the next hole'); hud();
+      }
     }
 
     // One line on what that throw did — the seed of the coaching idea, kept
@@ -252,6 +264,7 @@
     function holed() {
       var v = S.throws - S.par;
       S.total += v;
+      CARD.push({ par: S.par, strokes: S.throws });
       var name = S.throws === 1 ? 'ACE!' : v <= -2 ? 'Eagle!' : v === -1 ? 'Birdie!' :
                  v === 0 ? 'Par' : v === 1 ? 'Bogey' : '+' + v;
       S.phase = 'holeEnd'; S.ballY = 0; S.ballX = 0;
@@ -262,8 +275,28 @@
     function endGame() {
       S.phase = 'gameEnd';
       var t = S.total;
-      say('Round complete: ' + (t === 0 ? 'even par' : (t > 0 ? '+' + t : t)),
-          'Tap to play again');
+      var headline = 'Round complete: ' + (t === 0 ? 'even par' : (t > 0 ? '+' + t : t));
+      say(headline, 'Saving your round…');
+      submitRound(headline);
+    }
+
+    // Send the card up and report what it earned. The round is only ever sent
+    // once, and a failure is never fatal — the player can keep playing.
+    function submitRound(headline) {
+      if (SUBMITTED || !CARD.length) return;
+      SUBMITTED = true;
+      var body = { mode: COURSE ? 'course' : 'quick', holes: CARD.slice() };
+      if (COURSE && COURSE.id) body.course_id = COURSE.id;
+      DGG.API.post('/game/rounds', body).then(function (r) {
+        var bits = [];
+        if (r.xp_earned) bits.push('+' + r.xp_earned + ' XP');
+        (r.challenges_completed || []).forEach(function (c) { bits.push('✅ ' + c.title); });
+        (r.new_badges || []).forEach(function (b) { bits.push('🏅 ' + (b.name || 'Badge')); });
+        if (r.xp_capped) bits.push('daily XP limit reached');
+        say(headline, bits.length ? bits.join(' · ') : 'Tap to play again');
+      }).catch(function () {
+        say(headline, 'Round saved locally — tap to play again');
+      });
     }
 
     function nextThrow() { S.phase = 'ready'; say('Tap to start your power', ''); }
@@ -410,7 +443,9 @@
     function paintBag() {
       document.getElementById('bag').innerHTML = DISCS.map(function (d) {
         return '<button class="g-disc" data-k="' + d.key + '" aria-pressed="' + (d.key === disc.key) + '">' +
-               '<div class="g-disc__n">' + d.name + '</div><div class="g-disc__f">' + d.flight + '</div></button>';
+               '<div class="g-disc__n">' + d.name + '</div>' +
+               '<div class="g-disc__f">' + d.flight + '</div>' +
+               '<div class="g-disc__d">' + d.max + ' ft</div></button>';
       }).join('');
     }
 
@@ -426,21 +461,56 @@
     cv.addEventListener('pointerdown', function (e) { e.preventDefault(); tap(); });
     window.addEventListener('resize', resize);
 
-    // ?course=<id> plays a real course's holes; without it, a quick 3-hole round.
+    // Length picker, shown before the first throw of a round.
+    function askLength(lengths, sub, onPick) {
+      var bag = document.getElementById('bag');
+      bag.innerHTML = lengths.map(function (n) {
+        return '<button class="g-disc" data-len="' + n + '"><div class="g-disc__n">' + n + '</div>' +
+               '<div class="g-disc__f">holes</div></button>';
+      }).join('');
+      say('How many holes?', sub);
+      bag.querySelectorAll('[data-len]').forEach(function (b) {
+        b.addEventListener('click', function () { onPick(Number(this.dataset.len)); });
+      });
+    }
+
+    // ?course=<id> plays a real course; ?holes=<n> skips the picker.
     function boot() {
-      var courseId = new URLSearchParams(location.search).get('course');
-      if (!courseId) { newHole(); return; }
+      var qs = new URLSearchParams(location.search);
+      var courseId = qs.get('course');
+      var asked = parseInt(qs.get('holes'), 10);
+
+      if (!courseId) {
+        if (QUICK_LENGTHS.indexOf(asked) !== -1) { HOLES = asked; newHole(); return; }
+        askLength(QUICK_LENGTHS, 'Quick round — no course, just throws', function (n) {
+          HOLES = n; newHole();
+        });
+        return;
+      }
+
       say('Loading the course…', '');
       DGG.API.get('/courses/' + encodeURIComponent(courseId)).then(function (c) {
         COURSE = buildCourse(c);
-        HOLES = COURSE.holes.length;
+        COURSE.id = Number(courseId);
         document.title = COURSE.name + ' · Disc Golf Go';
-        newHole();
+        var start = function (n) { HOLES = n; layoutCourse(n); newHole(); };
+        if (COURSE_LENGTHS.indexOf(asked) !== -1) return start(asked);
+        askLength(COURSE_LENGTHS, COURSE.name, start);
       }).catch(function () {
         // Offline or a bad id — still give the player a round to throw.
-        say('Could not load that course', 'Playing a practice round instead');
-        newHole();
+        say('Could not load that course', 'Playing a quick round instead');
+        HOLES = 3; newHole();
       });
+    }
+
+    // Stretch or trim the course's holes to the chosen length. A 9-hole course
+    // played over 18 is two loops, which is exactly how it's played for real.
+    function layoutCourse(n) {
+      var src = COURSE.holes.slice();
+      if (!src.length) return;
+      var out = [];
+      for (var i = 0; i < n; i++) out.push(src[i % src.length]);
+      COURSE.holes = out;
     }
 
     resize(); boot(); requestAnimationFrame(frame);
