@@ -32,8 +32,17 @@
    the artwork is, so a card can never end up with white text on white sky. */
 .artcard { position: relative; display: block; overflow: hidden; text-decoration: none;
   border-radius: var(--radius-lg); min-height: 126px; box-shadow: var(--shadow-card); isolation: isolate; }
-.artcard__art { position: absolute; inset: 0; background-image: var(--art);
-  background-size: cover; background-position: right center; background-color: #1a1512; }
+/* Two layers of the same art. The top one is fitted to the card's height and
+   anchored right, so the subject is never cropped; the one behind is a plain
+   cover fill, which hides the seam the fitted layer would otherwise leave on
+   the left. That left area is empty in every illustration, so nothing of the
+   subject is lost to the stretched layer. */
+.artcard__art { position: absolute; inset: 0;
+  background-image: var(--art), var(--art);
+  background-size: auto 100%, cover;
+  background-position: right center, center center;
+  background-repeat: no-repeat, no-repeat;
+  background-color: #1a1512; }
 .artcard__scrim { position: absolute; inset: 0; background: linear-gradient(90deg,
   rgba(14,11,9,0.93) 0%, rgba(14,11,9,0.78) 44%, rgba(14,11,9,0.38) 76%, rgba(14,11,9,0.12) 100%); }
 .artcard__body { position: relative; display: block; padding: 16px 18px 18px; color: #fff; max-width: 70%; }
