@@ -349,6 +349,28 @@ export function createTrainingRepo(db: Database) {
       return parseInt(r.rows[0]?.streak_days ?? '0', 10);
     },
 
+    /**
+     * One video per creator, so a slideshow of them shows different pros
+     * rather than five clips from the same channel. DISTINCT ON keeps the
+     * lowest-sorted lesson for each channel.
+     */
+    async featuredVideos(limit: number) {
+      const r = await db.query(
+        `SELECT DISTINCT ON (l.youtube_channel)
+                l.id, l.title, l.youtube_url, l.youtube_title, l.youtube_channel,
+                c.name AS category_name, c.slug AS category_slug
+         FROM training_lessons l
+         JOIN training_categories c ON c.id = l.category_id
+         WHERE l.is_active = true
+           AND l.youtube_url IS NOT NULL AND l.youtube_url <> ''
+           AND l.youtube_channel IS NOT NULL AND l.youtube_channel <> ''
+         ORDER BY l.youtube_channel, l.sort_order, l.id
+         LIMIT $1`,
+        [Math.max(limit * 4, 40)]
+      );
+      return r.rows;
+    },
+
     // ── share ──
     async lessonTitle(lessonId: number): Promise<string | null> {
       const r = await db.query<{ title: string }>('SELECT title FROM training_lessons WHERE id = $1 AND is_active = true', [lessonId]);

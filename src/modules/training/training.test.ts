@@ -5,9 +5,14 @@ import { createApp } from '../../http/app';
 import { createToken } from '../../middleware/auth';
 import type { Database } from '../../db/types';
 
+// Per-test override for the featured-video rows, since the shared handler
+// below is a plain function rather than a reassignable fake.
+let featuredRows: unknown[] = [];
+
 function handler(sqlRaw: string): { rows: unknown[] } {
   const s = sqlRaw.replace(/\s+/g, ' ').trim();
   if (/^(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i.test(s)) return { rows: [] };
+  if (/DISTINCT ON \(l.youtube_channel\)/.test(s)) return { rows: featuredRows };
 
   // categories (public browse)
   if (/FROM training_categories c LEFT JOIN training_lessons/.test(s) && /lesson_count/.test(s)) {
@@ -109,4 +114,48 @@ test('training endpoints', async (t) => {
   });
 
   await new Promise<void>((r) => server.close(() => r()));
+});
+
+test('featured pro videos for the home slideshow', async (t) => {
+  const app = createApp(db);
+  const server = app.listen(0);
+  await new Promise<void>((r) => server.once('listening', r));
+  const { port } = server.address() as AddressInfo;
+  const base = `http://127.0.0.1:${port}`;
+
+  const row = (id: number, channel: string, url: string) => ({
+    id, title: 'Lesson ' + id, youtube_url: url, youtube_title: 'Clip ' + id,
+    youtube_channel: channel, category_name: 'Putting', category_slug: 'putting',
+  });
+
+  await t.test('parses every YouTube URL shape and drops what it cannot', async () => {
+    featuredRows = [
+      row(1, 'Gannon Buhr', 'https://www.youtube.com/watch?v=3IOdSrrei_Y'),
+      row(2, 'Paul McBeth', 'https://youtu.be/VIlEAdNhu-c'),
+      row(3, 'Simon Lizotte', 'https://www.youtube.com/embed/TAk4zkqfmEs'),
+      row(4, 'Not A Video', 'https://example.com/whatever'),
+    ];
+    const r = await fetch(base + '/api/training/featured-videos?limit=10');
+    const j = (await r.json()) as { videos: Array<{ video_id: string; creator: string }> };
+    assert.equal(r.status, 200);
+    assert.equal(j.videos.length, 3, 'the non-YouTube link is dropped');
+    const ids = j.videos.map((v) => v.video_id).sort();
+    assert.deepEqual(ids, ['3IOdSrrei_Y', 'TAk4zkqfmEs', 'VIlEAdNhu-c'].sort());
+    for (const v of j.videos) assert.match(v.video_id, /^[A-Za-z0-9_-]{11}$/);
+  });
+
+  await t.test('respects the limit', async () => {
+    featuredRows = Array.from({ length: 12 }, (_, i) => row(i + 1, 'Pro ' + i, 'https://youtu.be/aaaaaaaaaa' + i));
+    const r = await fetch(base + '/api/training/featured-videos?limit=5');
+    const j = (await r.json()) as { videos: unknown[] };
+    assert.equal(j.videos.length, 5);
+  });
+
+  await t.test('is public — the home screen shows it before any lesson is done', async () => {
+    featuredRows = [];
+    const r = await fetch(base + '/api/training/featured-videos');
+    assert.equal(r.status, 200);
+  });
+
+  server.close();
 });

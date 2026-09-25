@@ -130,7 +130,7 @@
     { key: 'profile', href: '/profile', label: 'Profile', glyph: '👤' },
     { key: 'training', href: '/training', label: 'Train', glyph: '🎯' },
     { key: 'play', href: '/checkin', label: 'Play', glyph: '🥏' },
-    { key: 'vault', href: '/vault', label: 'Vault', glyph: '💎' },
+    { key: 'vault', href: '/vault', label: 'Vault', glyph: '🎬' },
   ];
 
   // Render the bottom tab bar into <nav id="tabbar">, marking `active`.

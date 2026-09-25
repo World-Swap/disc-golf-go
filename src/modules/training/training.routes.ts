@@ -90,6 +90,11 @@ export function createTrainingRouter(service: TrainingService, resolve: RequestH
     res.json(await service.checkMilestones(requirePlayerId(req)));
   }));
 
+  router.get('/training/featured-videos', asyncHandler(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(await service.featuredVideos(parseInt(String(req.query.limit ?? '8'), 10) || 8));
+  }));
+
   router.get('/training/recommendations', resolve, asyncHandler(async (req, res) => {
     res.json(await service.getRecommendations(requirePlayerId(req)));
   }));
