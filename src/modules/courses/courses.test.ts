@@ -86,3 +86,39 @@ test('courses endpoints', async (t) => {
 
   await new Promise<void>((r) => server.close(() => r()));
 });
+
+test('course state picker', async (t) => {
+  const app = createApp(db);
+  const server = app.listen(0);
+  await new Promise<void>((r) => server.once('listening', r));
+  const { port } = server.address() as AddressInfo;
+  const base = `http://127.0.0.1:${port}`;
+
+  await t.test('GET /courses/states lists states with counts', async () => {
+    handler = (sql) => {
+      if (/GROUP BY state/.test(sql)) return { rows: [{ state: 'TX', courses: '425' }, { state: 'CA', courses: '160' }] };
+      return { rows: [] };
+    };
+    const r = await fetch(base + '/api/courses/states');
+    const j = (await r.json()) as Array<{ state: string; courses: number }>;
+    assert.equal(r.status, 200);
+    assert.equal(j[0]!.state, 'TX');
+    assert.equal(j[0]!.courses, 425, 'count comes back as a number');
+  });
+
+  await t.test('?state= matches the state exactly, not as a substring', async () => {
+    let usedSql = '';
+    handler = (sql) => {
+      if (/FROM courses/.test(sql)) { usedSql = sql; return { rows: [{ id: 1, name: 'Indy Park', state: 'IN' }] }; }
+      return { rows: [] };
+    };
+    const r = await fetch(base + '/api/courses?state=IN');
+    const j = (await r.json()) as { state: string; courses: unknown[] };
+    assert.equal(j.state, 'IN');
+    assert.equal(j.courses.length, 1);
+    assert.match(usedSql, /UPPER\(state\) = UPPER/, 'exact match, so "IN" cannot match every name containing "in"');
+    assert.doesNotMatch(usedSql, /state ILIKE/, 'the substring search is not used for a state filter');
+  });
+
+  server.close();
+});

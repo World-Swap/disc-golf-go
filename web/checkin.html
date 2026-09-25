@@ -20,16 +20,33 @@
 
       <a class="card card--tap" href="/game" style="display:block">
         <p class="card__eyebrow">Throw Lab</p>
-        <div class="h-title" style="margin-top:10px">Play a quick 3-hole round →</div>
-        <p class="row__sub" style="margin-top:8px">Pick a disc, shape the line, read the fade</p>
+        <div class="h-title" style="margin-top:10px">Play a quick round →</div>
+        <p class="row__sub" style="margin-top:8px">3, 6 or 9 holes · pick a disc, shape the line, read the fade</p>
       </a>
+
+      <div class="card">
+        <p class="card__eyebrow">Pick a course</p>
+        <label class="field" style="margin-top:10px">
+          <span class="field__label">State</span>
+          <select class="input" id="state"><option value="">Loading states…</option></select>
+        </label>
+        <label class="field" id="course-field" style="display:none">
+          <span class="field__label">Course</span>
+          <select class="input" id="course"></select>
+        </label>
+        <div id="picked" style="display:none;gap:8px;margin-top:4px">
+          <a class="btn btn--ghost" id="pick-card" style="flex:1;padding:11px 12px;font-size:11px" href="#">Scorecard</a>
+          <a class="btn" id="pick-play" style="flex:1;padding:11px 12px;font-size:11px" href="#">Play in Throw Lab</a>
+        </div>
+      </div>
 
       <div id="result"></div>
       <div id="challenges"></div>
       <div id="rounds"></div>
 
+
       <label class="field" style="margin:0">
-        <span class="field__label">Find a course</span>
+        <span class="field__label">Or search by name</span>
         <input class="input" id="search" type="search" inputmode="search"
                placeholder="Course, city or state" autocomplete="off" />
       </label>
@@ -106,6 +123,51 @@
         }, function () { noGps('GPS off'); }, { enableHighAccuracy: true, timeout: 10000 });
       }
 
+      // State picker: choose a state, then a course in it. The state is matched
+      // exactly server-side, so picking "IN" gives Indiana rather than every
+      // course with "in" in its name.
+      var stateSel = document.getElementById('state');
+      var courseSel = document.getElementById('course');
+
+      (async function loadStates() {
+        try {
+          var states = await API.get('/courses/states');
+          stateSel.innerHTML = '<option value="">Choose a state…</option>' + states.map(function (s2) {
+            return '<option value="' + esc(s2.state) + '">' + esc(s2.state) + ' · ' + s2.courses + ' courses</option>';
+          }).join('');
+        } catch (e) { stateSel.innerHTML = '<option value="">Could not load states</option>'; }
+      })();
+
+      stateSel.addEventListener('change', async function () {
+        var st = this.value;
+        var field = document.getElementById('course-field');
+        var actions = document.getElementById('picked');
+        if (!st) { field.style.display = 'none'; actions.style.display = 'none'; return; }
+        courseSel.innerHTML = '<option>Loading…</option>';
+        field.style.display = '';
+        try {
+          var res = await API.get('/courses?state=' + encodeURIComponent(st) + '&limit=500');
+          var list = res.courses || [];
+          if (!list.length) { courseSel.innerHTML = '<option value="">No courses listed</option>'; return; }
+          courseSel.innerHTML = list.map(function (c) {
+            var where = c.city ? c.city + ' · ' : '';
+            var holes = c.holes ? c.holes + ' holes' : '';
+            return '<option value="' + c.id + '">' + esc(c.name) + ' — ' + esc(where + holes) + '</option>';
+          }).join('');
+          pickCourse();
+        } catch (e) { courseSel.innerHTML = '<option value="">Could not load courses</option>'; }
+      });
+
+      function pickCourse() {
+        var id = courseSel.value;
+        var actions = document.getElementById('picked');
+        if (!id) { actions.style.display = 'none'; return; }
+        actions.style.display = 'flex';
+        document.getElementById('pick-card').href = '/scorecard?course=' + id;
+        document.getElementById('pick-play').href = '/game?course=' + id;
+      }
+      courseSel.addEventListener('change', pickCourse);
+
       // Course search — the way to reach any of the 3,550 courses without
       // standing at one.
       var searchTimer = null;
@@ -119,7 +181,8 @@
       async function runSearch(q) {
         var box = document.getElementById('found');
         try {
-          var courses = await API.get('/courses?search=' + encodeURIComponent(q) + '&limit=15');
+          var res = await API.get('/courses?search=' + encodeURIComponent(q) + '&limit=15');
+          var courses = res.courses || [];      // the API wraps the list
           if (!courses.length) { box.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">No course matches that.</p>'; return; }
           box.innerHTML = '<p class="section-label">Search results</p><div class="rows">' +
             courses.map(function (c) { return courseRow(c, false); }).join('') + '</div>';

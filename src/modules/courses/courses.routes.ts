@@ -15,6 +15,13 @@ export function createCoursesRouter(service: CoursesService, optionalAuth: Reque
     asyncHandler(async (req, res) => {
       const search = typeof req.query.search === 'string' && req.query.search ? req.query.search : null;
       const limit = parseInt(String(req.query.limit ?? ''), 10);
+      // ?state=TX matches the state exactly, which a substring search can't:
+      // searching "IN" would otherwise match every course with "in" in its name.
+      const state = typeof req.query.state === 'string' && req.query.state ? req.query.state : null;
+      if (state) {
+        res.json(await service.inState(state, Number.isNaN(limit) ? 500 : limit));
+        return;
+      }
       res.json(await service.search(search, Number.isNaN(limit) ? 5000 : limit));
     })
   );
@@ -24,6 +31,14 @@ export function createCoursesRouter(service: CoursesService, optionalAuth: Reque
     asyncHandler(async (_req, res) => {
       res.set('Cache-Control', 'public, max-age=300');
       res.json({ total: await service.count() });
+    })
+  );
+
+  router.get(
+    '/courses/states',
+    asyncHandler(async (_req, res) => {
+      res.set('Cache-Control', 'public, max-age=300');
+      res.json(await service.states());
     })
   );
 

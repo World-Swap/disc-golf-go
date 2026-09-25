@@ -28,6 +28,16 @@ export function createCoursesService(db: Queryable, repo: CoursesRepo = createCo
       return repo.count();
     },
 
+    /** States that have courses, for the course picker. */
+    states() {
+      return repo.states();
+    },
+
+    async inState(state: string, limit: number) {
+      const safeLimit = Math.min(1000, Math.max(1, limit || 500));
+      return { state: state.toUpperCase(), courses: await repo.byState(state, safeLimit) };
+    },
+
     async nearby({ lat, lng, checkinOnly, radius }: NearbyQuery) {
       const radiusMeters = checkinOnly ? CHECKIN_RADIUS_M : radius || DEFAULT_RADIUS_M;
       const latBuffer = radiusMeters / 1000 / KM_PER_DEG;

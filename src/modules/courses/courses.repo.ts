@@ -48,6 +48,28 @@ export function createCoursesRepo(db: Queryable) {
       return r.rows;
     },
 
+    /** Every state that has courses, with how many — powers the state picker. */
+    async states(): Promise<Array<{ state: string; courses: number }>> {
+      const r = await db.query<{ state: string; courses: string }>(
+        `SELECT state, COUNT(*) AS courses FROM courses
+         WHERE is_active IS NOT FALSE AND state IS NOT NULL AND state <> ''
+         GROUP BY state ORDER BY state ASC`
+      );
+      return r.rows.map((x) => ({ state: x.state, courses: parseInt(x.courses, 10) }));
+    },
+
+    /** Courses in one state, matched exactly rather than by substring. */
+    async byState(state: string, limit: number): Promise<CourseListRow[]> {
+      const r = await db.query<CourseListRow>(
+        `SELECT ${LIST_COLS} FROM courses
+         WHERE is_active IS NOT FALSE AND UPPER(state) = UPPER($1)
+         ORDER BY city ASC NULLS LAST, name ASC
+         LIMIT $2`,
+        [state, limit]
+      );
+      return r.rows;
+    },
+
     async count(): Promise<number> {
       const r = await db.query<{ total: string }>('SELECT COUNT(*) AS total FROM courses WHERE is_active IS NOT FALSE');
       return parseInt(r.rows[0]?.total ?? '0', 10);
