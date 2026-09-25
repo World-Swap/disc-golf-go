@@ -17,12 +17,12 @@
     body { background: #f7f4ef; }
     .g-wrap { position: relative; width: 100%; max-width: 520px; margin: 0 auto;
               background: #f7f4ef; user-select: none;
-              padding: 4px 0 78px; }   /* bottom pad clears the fixed tab bar */
+              padding: 0 0 78px; }     /* bottom pad clears the fixed tab bar */
     #g-canvas { display: block; width: 100%; touch-action: none; }
 
     /* HUD strip above the field */
     .g-hud { display: flex; align-items: center; justify-content: space-between;
-             gap: 8px; padding: 10px 14px 8px; }
+             gap: 8px; padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 8px; }
     .g-hud__block { text-align: center; flex: 1; }
     .g-hud__num { font-family: var(--font-display, system-ui); font-weight: 800;
                   font-size: 20px; line-height: 1; color: #202020; }
@@ -96,14 +96,18 @@
     var W = 520, H = 700;
 
     // ----------------------------------------------------------- the discs
+    // Every distance in this game is in FEET — that's how course data is
+    // recorded and how disc golfers talk about a hole.
     // Flight numbers, simplified: speed caps distance, turn drifts right at
     // high power (RHBH), fade always pulls left at the end. Overpowering a
     // fast disc is the classic beginner mistake, so the model punishes it.
     var DISCS = [
-      { key: 'putter', name: 'Putter', max: 32, speed: 2, turn: 0.0, fade: 0.8, spread: 0.5, flight: '2 · 3 · 0 · 1' },
-      { key: 'mid',    name: 'Mid',    max: 62, speed: 5, turn: 0.6, fade: 1.6, spread: 1.0, flight: '5 · 5 · −1 · 1' },
-      { key: 'driver', name: 'Driver', max: 98, speed: 9, turn: 1.8, fade: 3.4, spread: 1.7, flight: '9 · 5 · −2 · 3' },
+      { key: 'putter', name: 'Putter', max: 105, speed: 2, turn: 0.0, fade: 0.8, spread: 0.5, flight: '2 · 3 · 0 · 1' },
+      { key: 'mid',    name: 'Mid',    max: 205, speed: 5, turn: 0.6, fade: 1.6, spread: 1.0, flight: '5 · 5 · −1 · 1' },
+      { key: 'driver', name: 'Driver', max: 320, speed: 9, turn: 1.8, fade: 3.4, spread: 1.7, flight: '9 · 5 · −2 · 3' },
     ];
+    var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
+    var IN_THE_CHAINS = 10;    // feet: close enough to have holed out
     var disc = DISCS[2];
 
     // -------------------------------------------------------------- state
@@ -115,9 +119,9 @@
     // Typical throwing distance for a hole of each par, used when a course
     // knows its par but not its hole lengths.
     function lengthForPar(par) {
-      if (par >= 5) return Math.round(195 + Math.random() * 55);
-      if (par === 4) return Math.round(125 + Math.random() * 60);
-      return Math.round(60 + Math.random() * 55);
+      if (par >= 5) return Math.round(640 + Math.random() * 180);
+      if (par === 4) return Math.round(410 + Math.random() * 200);
+      return Math.round(200 + Math.random() * 180);
     }
 
     // Build a playable round from whatever the course record actually has.
@@ -132,36 +136,36 @@
         var d = details && details[i] && typeof details[i] === 'object' ? details[i] : null;
         var par = d ? parseInt(d.par, 10) : NaN;
         if (!(par >= 2 && par <= 6)) par = Math.max(3, Math.round(totalPar / count));
-        // Distances may be recorded in feet or metres depending on the source.
-        // A *_ft field is feet by name; an unlabelled number over 120 is feet
-        // too, since a 120 m hole is already a long par 3.
-        var metres = NaN;
-        if (d && parseFloat(d.distance_ft) > 0) metres = Math.round(parseFloat(d.distance_ft) * 0.3048);
+        // Feet are the native unit. A *_ft field is already feet; an
+        // unlabelled number of 120 or less must be metres, since no disc golf
+        // hole is 120 ft — that's a long putt, not a hole.
+        var feet = NaN;
+        if (d && parseFloat(d.distance_ft) > 0) feet = Math.round(parseFloat(d.distance_ft));
         else {
           var raw = d ? parseFloat(d.distance || d.length) : NaN;
-          if (raw > 0) metres = raw > 120 ? Math.round(raw * 0.3048) : Math.round(raw);
+          if (raw > 0) feet = raw <= 120 ? Math.round(raw * 3.28084) : Math.round(raw);
         }
-        if (!(metres >= 25 && metres <= 320)) metres = lengthForPar(par);
-        holes.push({ par: par, metres: metres });
+        if (!(feet >= 80 && feet <= 1100)) feet = lengthForPar(par);
+        holes.push({ par: par, feet: feet });
       }
       return { name: c.name || 'Course', holes: holes };
     }
 
     function newHole() {
       var h = COURSE ? COURSE.holes[S.hole - 1] : null;
-      S.holeLen = h ? h.metres : Math.round(70 + Math.random() * 60);
+      S.holeLen = h ? h.feet : Math.round(230 + Math.random() * 200);
       S.par = h ? h.par : 3;
       S.throws = 0; S.ballX = 0; S.ballY = S.holeLen;
       S.phase = 'ready'; S.flight = null;
       autoDisc(); paintBag(); hud();
       say('Tap to start your power',
-          (COURSE ? COURSE.name + ' · ' : '') + 'Hole ' + S.hole + ' — ' + S.holeLen + ' m, par ' + S.par);
+          (COURSE ? COURSE.name + ' · ' : '') + 'Hole ' + S.hole + ' — ' + S.holeLen + ' ft, par ' + S.par);
     }
 
     // Pick the sensible disc for the distance left, the way a player would.
     function autoDisc() {
       var d = Math.sqrt(S.ballX * S.ballX + S.ballY * S.ballY);
-      disc = d <= 30 ? DISCS[0] : d <= 60 ? DISCS[1] : DISCS[2];
+      disc = d <= 100 ? DISCS[0] : d <= 200 ? DISCS[1] : DISCS[2];
     }
 
     // ------------------------------------------------------------ throwing
@@ -186,8 +190,8 @@
       // its full 32 m would put an 8 m putt at 25% power — the fast, twitchy
       // bottom of the bar, where no amount of skill lands it. Putting scales
       // the bar to the putt in front of you, so a good putt sits mid-meter.
-      var reach = disc.key === 'putter' ? Math.max(6, S.ballY * 1.7) : disc.max;
-      var ratio = power * reach / (disc.speed * 11);      // >1 means overpowered
+      var reach = disc.key === 'putter' ? Math.max(20, S.ballY * 1.7) : disc.max;
+      var ratio = power * reach / (disc.speed * 36);      // >1 means overpowered
 
       // Distance: power drives it, but pushing past the disc's speed rating
       // costs you — the disc turns over instead of carrying.
@@ -196,10 +200,10 @@
 
       // Lateral: angle sets the starting tilt, turn pushes right at high
       // power, fade always hauls it back left at the end.
-      var turnPush = disc.turn * Math.max(0, ratio - 0.55) * 9;
-      var fadePull = disc.fade * 5.5;
-      var lateral  = angle * 14 + turnPush - fadePull * (0.55 + power * 0.5);
-      lateral += (Math.random() - 0.5) * disc.spread * 6;
+      var turnPush = disc.turn * Math.max(0, ratio - 0.55) * 30;
+      var fadePull = disc.fade * 18;
+      var lateral  = angle * 46 + turnPush - fadePull * (0.55 + power * 0.5);
+      lateral += (Math.random() - 0.5) * disc.spread * 20;
       // A disc only has time to drift if it's actually flying: soft touch
       // shots and putts hold their line far better than full-power throws.
       lateral *= Math.min(1, carry / (disc.max * 0.6));
@@ -216,7 +220,7 @@
       var restX = f.from.x + f.lateral;
 
       var miss = Math.sqrt(restX * restX + restY * restY);
-      if (miss < 3.0) return holed();                    // in the chains
+      if (miss < IN_THE_CHAINS) return holed();          // in the chains
 
       // The next throw is played from wherever it stopped, aimed at the
       // basket again — so the state is simply "how far away am I now".
@@ -226,7 +230,7 @@
 
       autoDisc(); paintBag(); S.phase = 'result';
       var note = coach(f, restX, restY);
-      say(Math.round(miss) + ' m to the basket', note);
+      say(Math.round(miss) + ' ft to the basket', note);
       hud();
 
       // Mercy rule: nobody should be stuck on one hole forever.
@@ -238,10 +242,10 @@
     // crude for now: the loudest fault wins.
     function coach(f, restX, restY) {
       if (f.ratio > 1.12) return 'You <b>overpowered</b> it — past its speed the disc turns over instead of carrying.';
-      if (restX < -12)    return 'Big <b>fade</b> left. Aim further right, or throw a straighter disc.';
-      if (restX > 12)     return 'It <b>turned over</b> right. Ease off, or add hyzer.';
-      if (restY < -4) return 'Flew <b>past</b> the basket — that disc had more in it than the hole needed.';
-      if (f.power < 0.45 && restY > 25) return 'Left it <b>short</b> — nothing wrong with the line.';
+      if (restX < -40)    return 'Big <b>fade</b> left. Aim further right, or throw a straighter disc.';
+      if (restX > 40)     return 'It <b>turned over</b> right. Ease off, or add hyzer.';
+      if (restY < -13) return 'Flew <b>past</b> the basket — that disc had more in it than the hole needed.';
+      if (f.power < 0.45 && restY > 80) return 'Left it <b>short</b> — nothing wrong with the line.';
       return 'Good line. Tap to throw again.';
     }
 
@@ -287,10 +291,10 @@
       // Distance bands every 25 m, so the throw has a sense of scale.
       ctx.strokeStyle = 'rgba(32,32,32,0.10)'; ctx.lineWidth = 1;
       ctx.fillStyle = 'rgba(32,32,32,0.30)'; ctx.font = '10px system-ui';
-      for (var m = 25; m < fieldLen(); m += 25) {
+      for (var m = 100; m < fieldLen(); m += 100) {
         var y = bottom - (bottom - top) * (m / fieldLen());
         ctx.beginPath(); ctx.moveTo(cx - 110, y); ctx.lineTo(cx + 110, y); ctx.stroke();
-        ctx.fillText(m + ' m', cx + 114, y + 3);
+        ctx.fillText(m + ' ft', cx + 114, y + 3);
       }
 
       basket(cx, top);
@@ -318,7 +322,7 @@
     // The disc at rest, with the off-line offset shown honestly.
     function lie(cx, bottom) {
       var y = S.ballY <= 0 ? 90 : bottom - (bottom - 90) * (1 - S.ballY / fieldLen());
-      var x = cx + S.ballX * 2.2;
+      var x = cx + S.ballX * PX_PER_FT;
       discSprite(x, y, 1);
     }
 
@@ -330,10 +334,10 @@
       var y = bottom - (bottom - top) * (1 - remaining / fieldLen());
       // Lateral arrives progressively: turn early, fade late.
       var shape = f.lateral * (0.35 * t + 0.65 * Math.pow(t, 2.2));
-      var x = cx + (f.from.x + shape) * 2.2;
+      var x = cx + (f.from.x + shape) * PX_PER_FT;
       var lift = 1 + 0.55 * Math.sin(Math.PI * t);         // height illusion
       ctx.strokeStyle = 'rgba(252,100,20,0.28)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx + f.from.x * 2.2, fromY); ctx.lineTo(x, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + f.from.x * PX_PER_FT, fromY); ctx.lineTo(x, y); ctx.stroke();
       discSprite(x, y, lift);
     }
 
