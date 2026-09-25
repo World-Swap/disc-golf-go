@@ -25,6 +25,7 @@
       </a>
 
       <div id="result"></div>
+      <div id="challenges"></div>
       <div id="rounds"></div>
 
       <label class="field" style="margin:0">
@@ -50,6 +51,38 @@
       var RADIUS = 800;
 
       function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m'; }
+
+      // Throw Lab challenges: what's live today, this week, this month and for
+      // good. Progress comes from the rounds you've actually played.
+      async function loadChallenges() {
+        try {
+          var all = await API.get('/game/challenges');
+          var order = [['daily', 'Today'], ['weekly', 'This week'], ['monthly', 'This month'], ['lifetime', 'Lifetime']];
+          var html = '<p class="section-label">Throw Lab challenges</p><div class="rows">';
+          var any = false;
+          order.forEach(function (o) {
+            var list = (all[o[0]] || []);
+            // Show what's still in play, plus anything just completed.
+            var live = list.filter(function (c) { return !c.completed; }).slice(0, 2);
+            var won = list.filter(function (c) { return c.completed; }).length;
+            if (!live.length && !won) return;
+            any = true;
+            html += '<div class="row" style="flex-wrap:wrap"><div class="row__body">' +
+              '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + o[1] +
+              (won ? ' · ' + won + ' done' : '') + '</div>';
+            live.forEach(function (c) {
+              var pct = Math.round((c.progress / c.target) * 100);
+              html += '<div style="margin-top:8px">' +
+                '<div class="meter-row"><span class="caption">' + esc(c.title) + '</span>' +
+                '<span class="caption">' + c.progress + '/' + c.target + ' · +' + c.reward_xp + ' XP</span></div>' +
+                '<div class="meter"><div class="meter__fill" style="width:' + Math.min(100, pct) + '%"></div></div></div>';
+            });
+            html += '</div></div>';
+          });
+          if (any) document.getElementById('challenges').innerHTML = html + '</div>';
+        } catch (e) { /* signed out or offline — the rest of the page still works */ }
+      }
+      loadChallenges();
 
       loadRounds();   // your rounds don't depend on GPS, so load them first
 

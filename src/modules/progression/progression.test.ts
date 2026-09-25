@@ -7,6 +7,7 @@ import { grantXp, grantGold } from './grants';
 
 const zeroStats: BadgeStats = {
   battleWins: 0, bestStreak: 0, challengesCompleted: 0, completedCities: 0, completedStates: 0,
+  gameChallengesCompleted: 0, gameUnderParRounds: 0, gameCoursesPlayed: 0,
   maxSameCourseVisits: 0, morningCheckins: 0, nightCheckins: 0, seasonsPlayed: 0, totalRounds: 0,
   trailblazerCourses: 0, uniqueCourses: 0, uniqueOpponents: 0, uniqueStates: 0, weatherCheckins: 0, weekendRounds: 0,
 };

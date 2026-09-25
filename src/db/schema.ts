@@ -627,6 +627,42 @@ CREATE TABLE IF NOT EXISTS scorecards (
 CREATE INDEX IF NOT EXISTS idx_scorecards_player ON scorecards(player_id, started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_scorecards_course ON scorecards(player_id, course_id);
 
+-- Throw Lab rounds. Per-round aggregates are stored so challenge progress and
+-- the game leaderboard are plain aggregate queries over this one table.
+CREATE TABLE IF NOT EXISTS game_rounds (
+  id SERIAL PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  mode TEXT NOT NULL DEFAULT 'quick',
+  course_id INTEGER REFERENCES courses(id) ON DELETE SET NULL,
+  holes INTEGER NOT NULL,
+  par INTEGER NOT NULL,
+  strokes INTEGER NOT NULL,
+  vs_par INTEGER NOT NULL,
+  birdies INTEGER NOT NULL DEFAULT 0,
+  eagles INTEGER NOT NULL DEFAULT 0,
+  aces INTEGER NOT NULL DEFAULT 0,
+  xp_awarded INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_game_rounds_player ON game_rounds(player_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_game_rounds_period ON game_rounds(created_at DESC);
+
+-- One row per challenge a player has finished in a given period. Progress
+-- itself is computed from game_rounds; this table exists so a reward is paid
+-- exactly once. period_key is the day, ISO week, month, or 'all'.
+CREATE TABLE IF NOT EXISTS player_game_challenges (
+  id SERIAL PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  challenge_key TEXT NOT NULL,
+  period TEXT NOT NULL,
+  period_key TEXT NOT NULL,
+  xp_awarded INTEGER NOT NULL DEFAULT 0,
+  gold_awarded INTEGER NOT NULL DEFAULT 0,
+  completed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (player_id, challenge_key, period_key)
+);
+CREATE INDEX IF NOT EXISTS idx_pgc_player ON player_game_challenges(player_id, completed_at DESC);
+
 CREATE TABLE IF NOT EXISTS scorecard_holes (
   id SERIAL PRIMARY KEY,
   scorecard_id INTEGER NOT NULL REFERENCES scorecards(id) ON DELETE CASCADE,

@@ -177,7 +177,24 @@ export function createCheckinsRepo(db: Database) {
         [playerId]
       );
 
+      // Throw Lab stats, which three badges now read instead of the
+      // battle-era counters they were built on.
+      const game = (
+        await client.query<{ under_par: string; courses: string; challenges: string }>(
+          `SELECT
+             (SELECT COUNT(*) FROM game_rounds WHERE player_id = $1 AND vs_par < 0) AS under_par,
+             (SELECT COUNT(DISTINCT course_id) FROM game_rounds WHERE player_id = $1 AND course_id IS NOT NULL) AS courses,
+             (SELECT COUNT(*) FROM player_game_challenges WHERE player_id = $1) AS challenges`,
+          [playerId]
+        )
+      ).rows[0] ?? { under_par: '0', courses: '0', challenges: '0' };
+
       return {
+        // A check-in must never fail because a stats sub-query came back
+        // empty, so every one of these falls back to zero.
+        gameUnderParRounds: parseInt(game.under_par ?? '0', 10) || 0,
+        gameCoursesPlayed: parseInt(game.courses ?? '0', 10) || 0,
+        gameChallengesCompleted: parseInt(game.challenges ?? '0', 10) || 0,
         uniqueCourses: parseInt(bsr.unique_courses!, 10),
         totalRounds: parseInt(pf.total_rounds, 10),
         challengesCompleted,

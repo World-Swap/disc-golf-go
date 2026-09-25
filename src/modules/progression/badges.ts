@@ -46,6 +46,12 @@ export const TIER_COLORS: Record<BadgeTier, { bg: string; border: string; text: 
 /** Aggregated player stats a badge threshold can be checked against. */
 export interface BadgeStats {
   battleWins: number;
+  // Throw Lab stats. These replace the battle-era sources for three badges
+  // that nothing could earn after the pivot — the tiers are unchanged, only
+  // what feeds them.
+  gameChallengesCompleted: number;
+  gameUnderParRounds: number;
+  gameCoursesPlayed: number;
   bestStreak: number;
   challengesCompleted: number;
   completedCities: number;
@@ -213,8 +219,8 @@ export const BADGE_DEFINITIONS = {
   "challenger": {
     "name": "Challenger",
     "icon": "⚔️",
-    "description": "Challenges completed",
-    "statKey": "challengesCompleted",
+    "description": "Throw Lab challenges completed",
+    "statKey": "gameChallengesCompleted",
     "tiers": {
       "bronze": {
         "threshold": 1,
@@ -244,10 +250,10 @@ export const BADGE_DEFINITIONS = {
     }
   },
   "warrior": {
-    "name": "Warrior",
+    "name": "Under Par",
     "icon": "🏆",
-    "description": "Battle victories",
-    "statKey": "battleWins",
+    "description": "Rounds finished under par",
+    "statKey": "gameUnderParRounds",
     "tiers": {
       "bronze": {
         "threshold": 1,
@@ -310,10 +316,10 @@ export const BADGE_DEFINITIONS = {
     }
   },
   "social": {
-    "name": "Social",
+    "name": "Course Tourer",
     "icon": "🤝",
-    "description": "Unique players battled",
-    "statKey": "uniqueOpponents",
+    "description": "Courses played in Throw Lab",
+    "statKey": "gameCoursesPlayed",
     "tiers": {
       "bronze": {
         "threshold": 1,

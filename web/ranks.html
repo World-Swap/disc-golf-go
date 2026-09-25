@@ -24,17 +24,17 @@
     </header>
     <div class="screen stack">
       <div><h1 class="h-display">RANKS<span class="mark" style="width:36%"></span></h1></div>
+      <div class="segbar" id="boards">
+        <button class="seg" data-board="training" aria-selected="true">Training</button>
+        <button class="seg" data-board="game">Throw Lab</button>
+      </div>
       <div class="segbar" id="tabs">
         <button class="seg" data-tab="overall" aria-selected="true">XP</button>
         <button class="seg" data-tab="lessons">Lessons</button>
         <button class="seg" data-tab="streak">Streak</button>
-        <button class="seg" data-tab="challenges">Wins</button>
+        <button class="seg" data-tab="challenges">Daily</button>
       </div>
-      <div class="segbar" id="periods">
-        <button class="seg" data-period="alltime" aria-selected="true">All-time</button>
-        <button class="seg" data-period="week">Week</button>
-        <button class="seg" data-period="month">Month</button>
-      </div>
+      <div class="segbar" id="periods"></div>
       <div id="board" class="loading">Loading…</div>
     </div>
     <nav id="tabbar"></nav>
@@ -47,9 +47,29 @@
       DGG.tabbar('profile');
       var esc = DGG.esc, API = DGG.API;
       var board = document.getElementById('board');
-      var state = { tab: 'overall', period: 'alltime' };
+      var state = { board: 'training', tab: 'overall', period: 'alltime' };
       var STAT = { overall: 'total_xp', lessons: 'lessons_completed', streak: 'current_streak', challenges: 'challenges_won' };
       var UNIT = { overall: 'XP', lessons: '', streak: 'd', challenges: '' };
+
+      // Two boards, two vocabularies. Training ranks lessons, XP and streaks;
+      // Throw Lab ranks what you earn playing, which is comparable across
+      // 3-hole and 18-hole rounds in a way raw score is not.
+      var PERIODS = {
+        training: [['alltime', 'All-time'], ['week', 'Week'], ['month', 'Month']],
+        game: [['daily', 'Today'], ['weekly', 'Week'], ['monthly', 'Month'], ['lifetime', 'All-time']]
+      };
+
+      function paintPeriods() {
+        var list = PERIODS[state.board];
+        if (list.every(function (x) { return x[0] !== state.period; })) state.period = list[0][0];
+        document.getElementById('periods').innerHTML = list.map(function (x) {
+          return '<button class="seg" data-period="' + x[0] + '" aria-selected="' +
+            (x[0] === state.period) + '">' + x[1] + '</button>';
+        }).join('');
+        var label = list.filter(function (x) { return x[0] === state.period; })[0];
+        if (label) document.getElementById('period-pill').textContent = label[1];
+        document.getElementById('tabs').style.display = state.board === 'training' ? '' : 'none';
+      }
 
       function bind(containerId, key) {
         document.getElementById(containerId).addEventListener('click', function (e) {
@@ -60,27 +80,55 @@
           load();
         });
       }
-      bind('tabs', 'tab'); bind('periods', 'period');
+      bind('boards', 'board'); bind('tabs', 'tab');
+      // The period bar is rebuilt whenever the board changes, so it is bound
+      // by delegation rather than to buttons that may no longer exist.
+      document.getElementById('periods').addEventListener('click', function (e) {
+        var b = e.target.closest('.seg'); if (!b) return;
+        state.period = b.getAttribute('data-period');
+        paintPeriods(); load();
+      });
+      document.getElementById('boards').addEventListener('click', function () { paintPeriods(); });
+
+      function row(rank, title, sub, meta, isMe) {
+        return '<div class="row' + (isMe ? ' row--me' : '') + '">' +
+          '<span class="rank">' + (rank || '') + '</span>' +
+          '<div class="row__body"><div class="row__title">' + esc(title) + (isMe ? ' · you' : '') + '</div>' +
+          (sub ? '<div class="row__sub">' + esc(sub) + '</div>' : '') + '</div>' +
+          '<span class="row__meta">' + esc(meta) + '</span></div>';
+      }
+
+      function fmtVs(n) { return n == null ? '' : n === 0 ? 'E' : (n > 0 ? '+' + n : String(n)); }
 
       async function load() {
         board.className = 'loading'; board.textContent = 'Loading…';
         try {
-          var data = await API.get('/leaderboard?tab=' + state.tab + '&period=' + state.period);
-          var stat = STAT[state.tab], unit = UNIT[state.tab];
-          var rows = (data.players || []).map(function (p) {
-            var val = p[stat] != null ? p[stat] : 0;
-            return '<div class="row' + (p.is_me ? ' row--me' : '') + '">' +
-              '<span class="rank">' + (p.rank || '') + '</span>' +
-              '<div class="row__body"><div class="row__title">' + esc(p.display_name || 'Player') + (p.is_me ? ' · you' : '') + '</div>' +
-              (p.rank_tier ? '<div class="row__sub">' + esc(p.rank_tier) + '</div>' : '') + '</div>' +
-              '<span class="row__meta">' + val + (unit ? ' ' + unit : '') + '</span></div>';
-          }).join('');
+          var rows;
+          if (state.board === 'game') {
+            var g = await API.get('/game/leaderboard?period=' + state.period);
+            rows = (g.players || []).map(function (p) {
+              var best = fmtVs(p.best_vs_par);
+              return row(p.rank, p.display_name || p.username || 'Player',
+                p.rounds + ' rounds' + (best ? ' · best ' + best : '') + (p.birdies ? ' · ' + p.birdies + ' birdies' : ''),
+                p.game_xp + ' XP', p.is_me);
+            }).join('');
+          } else {
+            var data = await API.get('/leaderboard?tab=' + state.tab + '&period=' + state.period);
+            var stat = STAT[state.tab], unit = UNIT[state.tab];
+            rows = (data.players || []).map(function (p) {
+              var val = p[stat] != null ? p[stat] : 0;
+              return row(p.rank, p.display_name || 'Player', p.rank_tier || '', val + (unit ? ' ' + unit : ''), p.is_me);
+            }).join('');
+          }
           board.className = '';
-          board.innerHTML = rows ? '<div class="rows">' + rows + '</div>' : '<div class="loading">No rankings yet</div>';
+          board.innerHTML = rows ? '<div class="rows">' + rows + '</div>'
+            : '<div class="loading">No rankings yet — ' +
+              (state.board === 'game' ? 'play a round to get on the board.' : 'complete a lesson to get on the board.') + '</div>';
         } catch (e) {
           board.className = 'screen'; board.innerHTML = '<div class="error">' + esc(e.message || 'Could not load ranks') + '</div>';
         }
       }
+      paintPeriods();
       load();
     })();
   </script>
