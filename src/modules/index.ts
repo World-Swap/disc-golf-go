@@ -36,6 +36,9 @@ import { createShopService } from './shop/shop.service';
 import { createShopRouter } from './shop/shop.routes';
 import { createOnboardingService } from './onboarding/onboarding.service';
 import { createOnboardingRouter } from './onboarding/onboarding.routes';
+import { createScorecardsRepo } from './scorecards/scorecards.repo';
+import { createScorecardsService } from './scorecards/scorecards.service';
+import { createScorecardsRouter } from './scorecards/scorecards.routes';
 import { createReviewsService } from './reviews/reviews.service';
 import { createReviewsRouter } from './reviews/reviews.routes';
 import { createFeedbackRouter } from './feedback/feedback';
@@ -54,6 +57,9 @@ export function createApiRouter(db: Database): Router {
 
   const authService = createAuthService({ repo: createAuthRepo(db), sendEmail, appBaseUrl: config.appBaseUrl });
   api.use(createAuthRouter(authService, auth));
+
+  const scorecardsService = createScorecardsService({ repo: createScorecardsRepo(db) });
+  api.use(createScorecardsRouter(scorecardsService, auth));
 
   const playersService = createPlayersService({ db });
   api.use(createPlayersRouter(playersService, auth));

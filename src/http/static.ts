@@ -54,6 +54,7 @@ const PAGES: Record<string, string> = {
   '/settings': 'settings.html',
   '/checkin': 'checkin.html',
   '/game': 'game.html',
+  '/scorecard': 'scorecard.html',
   '/courses': 'courses.html',
   '/delete-account': 'delete-account.html',
   '/privacy': 'privacy.html',

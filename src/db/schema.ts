@@ -609,4 +609,30 @@ CREATE TABLE IF NOT EXISTS crews (
 CREATE TABLE IF NOT EXISTS crew_members (
   id SERIAL PRIMARY KEY, crew_id INTEGER, player_id INTEGER, role TEXT DEFAULT 'member', xp INTEGER DEFAULT 0
 );
+
+-- Scorecards: a player's own round at a real course, scored hole by hole.
+-- Purpose-built rather than reviving the legacy rounds/* stubs above, which
+-- nothing reads and whose live columns predate the training pivot.
+CREATE TABLE IF NOT EXISTS scorecards (
+  id SERIAL PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  holes INTEGER NOT NULL,
+  par INTEGER NOT NULL DEFAULT 0,
+  strokes INTEGER NOT NULL DEFAULT 0,
+  completed BOOLEAN NOT NULL DEFAULT FALSE,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_scorecards_player ON scorecards(player_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_scorecards_course ON scorecards(player_id, course_id);
+
+CREATE TABLE IF NOT EXISTS scorecard_holes (
+  id SERIAL PRIMARY KEY,
+  scorecard_id INTEGER NOT NULL REFERENCES scorecards(id) ON DELETE CASCADE,
+  hole_number INTEGER NOT NULL,
+  par INTEGER NOT NULL DEFAULT 3,
+  strokes INTEGER,
+  UNIQUE (scorecard_id, hole_number)
+);
 `;
