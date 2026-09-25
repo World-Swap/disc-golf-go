@@ -2,13 +2,28 @@
 // call the service, send the result. All errors propagate to the central
 // handler via asyncHandler.
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import { asyncHandler } from '../../http/async-handler';
+import { createToken } from '../../middleware/auth';
+import { unauthorized } from '../../http/errors';
 import type { AuthService } from './auth.service';
 import { parseSignup, parseLogin, parseEmail, parseReset } from './auth.validation';
 
-export function createAuthRouter(service: AuthService): Router {
+export function createAuthRouter(service: AuthService, requireAuth: RequestHandler): Router {
   const router = Router();
+
+  // Sliding session: swap a still-valid token for a fresh one so anyone who
+  // opens the app at least once inside the token's lifetime never gets logged
+  // out. Requires a valid token, so it cannot be used to resurrect a dead one.
+  router.post(
+    '/auth/refresh',
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const player = req.player;
+      if (!player) throw unauthorized();
+      res.json({ token: createToken({ id: player.id, player_uuid: player.player_uuid }) });
+    })
+  );
 
   router.post(
     '/auth/signup',

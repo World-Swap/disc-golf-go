@@ -43,7 +43,9 @@ export function requireAuth(db: Queryable): RequestHandler {
         req.player = verifyToken(token);
         return next();
       } catch {
-        return next(unauthorized('Invalid or expired token'));
+        // `code` lets the client tell "your session is dead, sign in again"
+        // apart from an ordinary 401, so it only drops the token for the former.
+        return next(unauthorized('Invalid or expired token', { code: 'token_invalid' }));
       }
     }
     try {

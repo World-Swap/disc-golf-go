@@ -53,7 +53,7 @@ export function createApiRouter(db: Database): Router {
   const optAuth = optionalAuth(db);
 
   const authService = createAuthService({ repo: createAuthRepo(db), sendEmail, appBaseUrl: config.appBaseUrl });
-  api.use(createAuthRouter(authService));
+  api.use(createAuthRouter(authService, auth));
 
   const playersService = createPlayersService({ db });
   api.use(createPlayersRouter(playersService, auth));
