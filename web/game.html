@@ -139,8 +139,27 @@
 
     // Nine aerial hole templates. Each is a fairway running bottom to top with
     // the top centre left clear, so the basket and the flight draw over it.
-    var HOLE_ART = ['open', 'dogleg-left', 'dogleg-right', 'tunnel', 'water',
-                    'downhill', 'island', 'gap', 'meadow'];
+    var HOLE_ART = [
+      'open', 'dogleg-left', 'dogleg-right', 'tunnel', 'water',
+      'downhill', 'island', 'gap', 'meadow', 'uphill',
+      'creek', 'desert', 'autumn', 'lakeside', 'bunkers',
+      'split', 'canyon', 's-curve', 'glade', 'crest', 'winter'
+    ];
+    // A shuffled bag rather than a plain random pick: 20 holes drawn at random
+    // still repeat within a round surprisingly often, and playing the same
+    // hole twice in a row reads as a bug. The bag empties before refilling,
+    // so a round never shows a repeat until all 20 have been seen.
+    var artBag = [];
+    function drawFromBag() {
+      if (!artBag.length) {
+        artBag = HOLE_ART.slice();
+        for (var i = artBag.length - 1; i > 0; i--) {     // Fisher-Yates
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = artBag[i]; artBag[i] = artBag[j]; artBag[j] = t;
+        }
+      }
+      return artBag.pop();
+    }
     var artCache = {};
     var art = null;            // the image for the hole being played, once loaded
 
@@ -159,10 +178,14 @@
     // Which template a hole gets. A real course is deterministic — hole 4 at a
     // given course always looks the same — while a quick round varies.
     function pickArt() {
-      var i = COURSE && COURSE.id
-        ? (COURSE.id * 7 + S.hole * 3) % HOLE_ART.length
-        : Math.floor(Math.random() * HOLE_ART.length);
-      loadArt(HOLE_ART[i]);
+      // A real course stays deterministic — hole 4 at a given course should
+      // look the same every visit — and draws from the same 20. A quick round
+      // pulls from the shuffled bag.
+      if (COURSE && COURSE.id) {
+        loadArt(HOLE_ART[(COURSE.id * 7 + S.hole * 3) % HOLE_ART.length]);
+        return;
+      }
+      loadArt(drawFromBag());
     }
     var disc = DISCS[2];
 
@@ -245,7 +268,7 @@
       else if (S.phase === 'angle')  { release(); }
       else if (S.phase === 'result') { nextThrow(); }
       else if (S.phase === 'holeEnd'){ S.hole++; if (S.hole > HOLES) endGame(); else newHole(); }
-      else if (S.phase === 'gameEnd'){ S.hole = 1; S.total = 0; CARD = []; SUBMITTED = false; newHole(); }
+      else if (S.phase === 'gameEnd'){ S.hole = 1; S.total = 0; CARD = []; SUBMITTED = false; artBag = []; newHole(); }
     }
 
     function release() {
