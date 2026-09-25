@@ -34,15 +34,15 @@ const stylesXml = `<?xml version="1.0" encoding="utf-8"?>
         <item name="android:background">@null</item>
         <!-- Keep app content below the status bar. Android 15+ (targetSdk 35+)
              enforces edge-to-edge, which draws the WebView under the status bar;
-             opt out and paint a cream bar with dark icons to match the app. -->
-        <item name="android:statusBarColor">#f7f3ec</item>
+             opt out and paint a white bar with dark icons to match the app. -->
+        <item name="android:statusBarColor">#ffffff</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
     <!-- Launch theme: Android 12+ system splash with branded background + icon -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#212121</item>
+        <item name="windowSplashScreenBackground">#202020</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_splash</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>

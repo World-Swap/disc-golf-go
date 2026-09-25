@@ -1,19 +1,19 @@
-/* app-ui.css — application shell (mobile-first), warm & soft. Cream canvas,
-   white rounded cards with gentle shadows, brand-orange accents, friendly
-   green highlights, soft type. Loaded by every in-app screen. */
+/* app-ui.css — application shell (mobile-first), flat & utilitarian. White canvas,
+   off-white bands, sharp 4px cards with hairline borders, brand-orange accents,
+   fairway-green highlights. Loaded by every in-app screen. */
 
 :root {
-  --hair: rgba(43, 38, 34, 0.10);
-  --hair-strong: rgba(43, 38, 34, 0.18);
+  --hair: #e4dfd6;
+  --hair-strong: #d6cfc3;
   --tabbar-h: 64px;
 }
 
-/* App container — phone-width, warm gradient canvas so white cards pop */
+/* App container — phone-width, flat white canvas; cards read via hairline borders */
 .app {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100svh;
-  background: linear-gradient(180deg, #ffe6d3 0%, #fbeaDB 120px, #f6efe4 420px, #f4ede1 100%);
+  background: var(--color-cream);
   background-attachment: local;
   padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 20px);
   position: relative;
@@ -52,7 +52,7 @@
 .mark { height: 4px; width: 40px; background: var(--color-orange); border-radius: var(--radius-pill); margin-top: 12px; }
 
 /* Cards — crisp white, rounded, clear shadow so they pop off the warm bg */
-.card { background: var(--color-white); border: 1px solid rgba(43, 38, 34, 0.06); border-radius: var(--radius-lg); padding: var(--card-padding); box-shadow: var(--shadow-card); }
+.card { background: var(--color-white); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); padding: var(--card-padding); box-shadow: var(--shadow-card); }
 .card--tap { transition: transform 140ms ease, box-shadow 140ms ease; }
 .card--tap:active { transform: scale(0.99); box-shadow: var(--shadow-card); }
 .card__eyebrow { font-family: var(--font-display); font-size: 11px; font-weight: var(--weight-bold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-orange); }
@@ -65,19 +65,19 @@
 
 /* Progress meter — orange fill on a soft track */
 .meter { height: 8px; background: #ece5da; border-radius: var(--radius-pill); overflow: hidden; }
-.meter__fill { height: 100%; background: linear-gradient(90deg, var(--color-orange), #ff8a4d); border-radius: var(--radius-pill); }
+.meter__fill { height: 100%; background: var(--color-orange); border-radius: var(--radius-pill); }
 .meter-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .meter-row .caption { color: var(--color-ash); }
 
 /* List rows — soft white card with hairline separators */
-.rows { background: var(--color-white); border: 1px solid rgba(43, 38, 34, 0.06); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card); }
+.rows { background: var(--color-white); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card); }
 .row { display: flex; align-items: center; gap: 14px; padding: 14px var(--card-padding); border-top: 1px solid var(--hair); min-height: 58px; }
 .row:first-child { border-top: none; }
 .row__body { flex: 1; min-width: 0; }
 .row__title { font-family: var(--font-display); font-weight: var(--weight-medium); font-size: 15px; letter-spacing: -0.01em; color: var(--color-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row__sub { font-family: var(--font-display); font-size: 12px; letter-spacing: 0; color: var(--color-ash); margin-top: 3px; }
 .row__meta { font-family: var(--font-display); font-size: 14px; font-weight: var(--weight-medium); letter-spacing: 0; color: var(--color-orange); white-space: nowrap; }
-.row__glyph { width: 40px; height: 40px; display: grid; place-items: center; background: var(--color-peach); border-radius: 12px; font-size: 18px; flex: none; }
+.row__glyph { width: 40px; height: 40px; display: grid; place-items: center; background: var(--color-peach); border-radius: 4px; font-size: 18px; flex: none; }
 
 /* Pills / tags — soft, rounded */
 .pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 11px; font-weight: var(--weight-bold); letter-spacing: 0.02em; color: var(--color-ink); background: var(--color-cream); border: 1px solid var(--hair-strong); border-radius: var(--radius-pill); padding: 5px 12px; }
@@ -97,14 +97,14 @@
   padding: 14px 16px; border: 1px solid var(--hair-strong); border-radius: var(--radius-sm);
   outline: none; transition: border-color 140ms ease, box-shadow 140ms ease;
 }
-.input:focus { border-color: var(--color-orange); box-shadow: 0 0 0 3px rgba(250, 94, 15, 0.14); }
+.input:focus { border-color: var(--color-orange); box-shadow: 0 0 0 3px rgba(252, 100, 20, 0.16); }
 .input::placeholder { color: var(--color-slate); }
 
 .btn--block { width: 100%; padding: 15px 24px; }
 .btn:disabled { opacity: 0.4; pointer-events: none; }
 .formnote { font-family: var(--font-display); font-size: 13px; color: var(--color-ash); text-align: center; margin-top: 16px; }
 .formnote a { color: var(--color-orange); font-weight: var(--weight-medium); }
-.error { font-family: var(--font-display); font-size: 13px; color: #9a2b12; background: #fdeee4; border: 1px solid rgba(250, 94, 15, 0.3); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; }
+.error { font-family: var(--font-display); font-size: 13px; color: #8f2f0c; background: #fdefe6; border: 1px solid rgba(252, 100, 20, 0.35); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; }
 .error:empty { display: none; }
 
 /* Bottom tab bar — floating, soft, rounded, active = orange */
@@ -117,10 +117,10 @@
   padding: 0 6px;
   background: var(--color-white);
   border: 1px solid var(--hair);
-  border-radius: 22px;
+  border-radius: 4px;
   box-shadow: var(--shadow-card);
 }
-.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 7px 3px; color: var(--color-ash); text-decoration: none; border-radius: 14px; transition: background 0.15s ease, color 0.15s ease; }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 7px 3px; color: var(--color-ash); text-decoration: none; border-radius: 4px; transition: background 0.15s ease, color 0.15s ease; }
 .tab__glyph { font-size: 21px; line-height: 1; }
 .tab__label { font-family: var(--font-display); font-size: 10px; font-weight: var(--weight-bold); letter-spacing: 0.01em; }
 .tab[aria-current='page'] { color: var(--color-orange); background: var(--color-peach); }
