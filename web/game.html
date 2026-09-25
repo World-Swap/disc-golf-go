@@ -15,14 +15,23 @@
        viewport. Everything here is scoped to this page. */
     html, body { overscroll-behavior: none; touch-action: manipulation; }
     body { background: #f7f4ef; }
+    /* The game owns the screen, so the app's tab-bar gutter is given back. */
+    .app { padding-bottom: 0 !important; }
     .g-wrap { position: relative; width: 100%; max-width: 520px; margin: 0 auto;
-              background: #f7f4ef; user-select: none;
-              padding: 0 0 78px; }     /* bottom pad clears the fixed tab bar */
+              background: #f7f4ef; user-select: none; padding: 0 0 6px; }
+
+    .g-top { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+             padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 2px; }
+    .g-back { border: 1px solid #ddd5c9; background: #fff; border-radius: 10px;
+              padding: 7px 12px; font-size: 12px; font-weight: 700; color: #202020; }
+    .g-back:active { background: #f2ece4; }
+    .g-where { font-size: 11px; color: #8a8279; text-align: right;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #g-canvas { display: block; width: 100%; touch-action: none; }
 
     /* HUD strip above the field */
     .g-hud { display: flex; align-items: center; justify-content: space-between;
-             gap: 8px; padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 8px; }
+             gap: 8px; padding: 6px 14px 8px; }
     .g-hud__block { text-align: center; flex: 1; }
     .g-hud__num { font-family: var(--font-display, system-ui); font-weight: 800;
                   font-size: 20px; line-height: 1; color: #202020; }
@@ -49,6 +58,11 @@
 <body>
   <main class="app">
     <div class="g-wrap">
+      <div class="g-top">
+        <button class="g-back" id="back" type="button">← Menu</button>
+        <span class="g-where" id="where"></span>
+      </div>
+
       <div class="g-hud">
         <div class="g-hud__block"><div class="g-hud__num" id="h-hole">1</div><div class="g-hud__lbl">Hole</div></div>
         <div class="g-hud__block"><div class="g-hud__num" id="h-par">3</div><div class="g-hud__lbl">Par</div></div>
@@ -67,7 +81,6 @@
       </div>
     </div>
 
-    <nav id="tabbar"></nav>
   </main>
 
   <script src="/js/app.js?v=w6"></script>
@@ -75,7 +88,11 @@
   (function () {
     'use strict';
     if (!DGG.requireAuth()) return;
-    DGG.tabbar('play');
+    // No tab bar while playing: the field takes the screen and there is one
+    // way out, back to where the player came from.
+    document.getElementById('back').addEventListener('click', function () {
+      if (history.length > 1) history.back(); else location.href = '/checkin';
+    });
 
     // ---------------------------------------------------------------- setup
     var cv = document.getElementById('g-canvas');
@@ -94,9 +111,9 @@
       var hud = document.querySelector('.g-hud');
       var bag = document.getElementById('bag');
       var msg = document.querySelector('.g-msg');
-      var bar = document.getElementById('tabbar');
+      var bar = document.querySelector('.g-top');
       var chrome = (hud ? hud.offsetHeight : 60) + (bag ? bag.offsetHeight : 60) +
-                   (msg ? msg.offsetHeight : 58) + (bar ? bar.offsetHeight : 64) + 16;
+                   (msg ? msg.offsetHeight : 58) + (bar ? bar.offsetHeight : 44) + 14;
       var h = Math.max(240, window.innerHeight - chrome);
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = w * dpr; cv.height = h * dpr;
@@ -219,6 +236,9 @@
     // Power and angle are each chosen by stopping a sweeping bar: tap to
     // start, tap to lock. Two taps, one thumb, no dragging.
     function tap() {
+      // While choosing a length, the field is not live — the player has to
+      // answer the picker above it.
+      if (S.phase === 'choose') return;
       if (S.phase === 'ready')       { S.phase = 'power';  S.power = 0; S.dir = 1; say('Tap to lock power', ''); }
       else if (S.phase === 'power')  { S.phase = 'angle';  S.angle = -1; S.dir = 1;
                                        say('Tap to set your angle', 'Middle is flat — the edges are hyzer and anhyzer'); }
@@ -380,7 +400,7 @@
       }
 
       basket(cx, top);
-      if (S.phase !== 'flight') lie(cx, bottom);
+      if (S.phase !== 'flight' && S.phase !== 'choose') lie(cx, bottom);
       if (S.phase === 'flight') flight(cx, top, bottom);
       if (S.phase === 'power') powerBar();
       if (S.phase === 'angle') angleBar();
@@ -433,24 +453,81 @@
       ctx.restore();
     }
 
+    // A label in its own dark pill, so text never has to fight the artwork.
+    function chip(text, cx2, cy2, size) {
+      ctx.font = '700 ' + (size || 11) + 'px system-ui';
+      var w = ctx.measureText(text).width + 14;
+      var h = (size || 11) + 10;
+      ctx.fillStyle = 'rgba(14,11,9,0.82)';
+      ctx.beginPath(); ctx.roundRect(cx2 - w / 2, cy2 - h / 2, w, h, h / 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(text, cx2, cy2 + 0.5);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    }
+
     function powerBar() {
-      var w = 26, h = H * 0.45, x = 18, y = (H - h) / 2;
-      ctx.fillStyle = 'rgba(32,32,32,0.08)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 13); ctx.fill();
+      var w = 34, h = H * 0.46, x = 16, y = (H - h) / 2;
+      var pad = 7;
+
+      // Panel behind the meter — the track alone was invisible over the art.
+      ctx.fillStyle = 'rgba(14,11,9,0.72)';
+      ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 20, w + pad * 2, h + pad * 2 + 40, 16); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 20, w + pad * 2, h + pad * 2 + 40, 16); ctx.stroke();
+
+      chip('POWER', x + w / 2, y - 12, 10);
+
+      // Track.
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      ctx.beginPath(); ctx.roundRect(x, y, w, h, 14); ctx.fill();
+
+      // Quarter marks, so a target power is something you can aim at.
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+      for (var q = 1; q <= 3; q++) {
+        var qy = y + h * (q / 4);
+        ctx.beginPath(); ctx.moveTo(x + 5, qy); ctx.lineTo(x + w - 5, qy); ctx.stroke();
+      }
+
       var fh = h * S.power;
       ctx.fillStyle = S.power > 0.86 ? '#d9500a' : ORANGE;
-      ctx.beginPath(); ctx.roundRect(x, y + h - fh, w, fh, 13); ctx.fill();
-      ctx.fillStyle = INK; ctx.font = '700 11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(Math.round(S.power * 100) + '%', x + w / 2, y + h + 18);
-      ctx.textAlign = 'left';
+      ctx.beginPath(); ctx.roundRect(x, y + h - fh, w, fh, 14); ctx.fill();
+
+      // The level itself, drawn as a bright rule across the fill.
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x - 3, y + h - fh); ctx.lineTo(x + w + 3, y + h - fh); ctx.stroke();
+
+      chip(Math.round(S.power * 100) + '%', x + w / 2, y + h + 14, 12);
     }
 
     function angleBar() {
-      var w = W * 0.6, h = 22, x = (W - w) / 2, y = H - 44;
-      ctx.fillStyle = 'rgba(32,32,32,0.08)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 11); ctx.fill();
-      ctx.fillStyle = INK; ctx.font = '700 10px system-ui';
-      ctx.fillText('HYZER', x - 2, y - 6); ctx.fillText('ANHYZER', x + w - 46, y - 6);
+      var w = Math.min(W - 40, 320), h = 26, x = (W - w) / 2, y = H - 104;
+      var pad = 9;
+
+      ctx.fillStyle = 'rgba(14,11,9,0.72)';
+      ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 16, w + pad * 2, h + pad * 2 + 16, 16); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(x - pad, y - pad - 16, w + pad * 2, h + pad * 2 + 16, 16); ctx.stroke();
+
+      // Track.
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      ctx.beginPath(); ctx.roundRect(x, y, w, h, 13); ctx.fill();
+
+      // Centre mark: flat, the line most shots want.
+      ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x + w / 2, y + 3); ctx.lineTo(x + w / 2, y + h - 3); ctx.stroke();
+
+      ctx.font = '700 9px system-ui'; ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText('HYZER', x + 2, y - 8);
+      ctx.textAlign = 'center'; ctx.fillText('FLAT', x + w / 2, y - 8);
+      ctx.textAlign = 'right'; ctx.fillText('ANHYZER', x + w - 2, y - 8);
+      ctx.textAlign = 'left';
+
+      // The marker, outlined so it reads against track, panel and artwork.
       var mx = x + w * ((S.angle + 1) / 2);
-      ctx.fillStyle = ORANGE; ctx.beginPath(); ctx.roundRect(mx - 4, y - 4, 8, h + 8, 4); ctx.fill();
+      ctx.fillStyle = ORANGE;
+      ctx.beginPath(); ctx.roundRect(mx - 5, y - 5, 10, h + 10, 5); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(mx - 5, y - 5, 10, h + 10, 5); ctx.stroke();
     }
 
     // -------------------------------------------------------------- loop
@@ -474,6 +551,8 @@
 
     // --------------------------------------------------------------- chrome
     function hud() {
+      var where = document.getElementById('where');
+      if (where) where.textContent = COURSE ? COURSE.name : 'Quick round';
       document.getElementById('h-hole').textContent = S.hole;
       document.getElementById('h-par').textContent = S.par;
       document.getElementById('h-throws').textContent = S.throws;
@@ -518,6 +597,12 @@
     // Length picker, shown before the first throw of a round.
     function askLength(lengths, sub, onPick) {
       var bag = document.getElementById('bag');
+      // 'choose' is a phase of its own. Without it a tap on the field ran
+      // straight into a throw, on a hole that had never been set up — which
+      // is why the round started on an empty field at the default length.
+      S.phase = 'choose';
+      pickArt();          // show the hole you are about to play, not a blank field
+      hud();
       bag.innerHTML = lengths.map(function (n) {
         return '<button class="g-disc" data-len="' + n + '"><div class="g-disc__n">' + n + '</div>' +
                '<div class="g-disc__f">holes</div></button>';
