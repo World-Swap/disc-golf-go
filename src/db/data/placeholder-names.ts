@@ -49,6 +49,25 @@ const PLACEHOLDER_PATTERNS: RegExp[] = [
   // Courses that don't exist yet, e.g. "(PLANNED) Westerman Trails Disc Golf
   // Course (No infrastructure yet exists)" — nothing to play or check in at.
   /^\(?\s*(planned|proposed|future|upcoming|under\s*construction)\b/i,
+  // Shops, not courses: "Chainbangers Pro Shop", "501 Disc Golf Pro Shop",
+  // "Woodland Valley Clubhouse & Pro Shop", "Disc Golf Store", "Laredo Disc
+  // Dolf Store". "Store" only at the end, so a "Old Store Park DGC" is safe.
+  /\bpro\s?shop\b/i,
+  /\b(store|clubhouse)\s*$/i,
+  // The category plus a bare number, e.g. "Disc Golf 978" (an area code).
+  /^(disc|dics|disk)\s*g[ou]l?f\s*#?\s*\d+\s*$/i,
+  // Route markers left by the import: a lone "Start", and the start/end nodes
+  // that sit beside a real course — "Disc Golf Start", "Disc Golf Course
+  // Start-End", "Frisbee/Disc Golf Course (start)", "Slate Canyon Disc Golf
+  // Course Start/End Point". Deliberately narrow: "The Point", "Seneca Creek
+  // Disc Golf Area" and "SNOW BOWL SKI AREA" are real and must survive.
+  /^(start|finish|end|entrance|exit)\s*$/i,
+  /\b(start|end)\s*[-\/]\s*(end|start)(\s*point)?\s*$/i,
+  /\b(disc|dics|disk)\s*g[ou]l?f\s*(course)?\s*\(?\s*(start|end|finish)\s*\)?\s*$/i,
+  // "Walker Park Disc Golf Practice Area" — practice equipment, not a course.
+  // A named putting course (e.g. "Laclede's Landing Disc Golf Putting Course")
+  // is a real destination and is kept.
+  /\b(practice|putting)\s+(area|basket|green|range)s?\s*$/i,
   /^(unnamed|unknown|untitled|tbd|n\/?a|none|null|test|temp)\b/i,
 ];
 

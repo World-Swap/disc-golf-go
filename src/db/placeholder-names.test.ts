@@ -15,6 +15,15 @@ const PLACEHOLDERS = [
   'Course 1', 'Practice', 'Practice Basket', 'Practice hole',
   '7', '11', '7A', '7B', '1st', '9th', '12 - 14',
   '(PLANNED) Westerman Trails Disc Golf Course (No infrastructure yet exists)',
+  'Tee Box #1', 'Teepad12', 'North Tee', 'South Tee', 'Disc Golf Course starting tee',
+  'Walnut Creek Disc Golf Course 1st Tee', 'Disk Golf Practice Basket',
+  'BC Disc Golf Course Map', 'Disc Golf Map #2', 'Disc Golf Course Map #1', 'Disc Golf Net #1',
+  'Chainbangers Pro Shop', '501 Disc Golf Pro Shop', 'Final 9 Sports Pro Shop',
+  'USDF Pro Shop @ Carson Park', 'Woodland Valley Clubhouse & Pro Shop',
+  'Disc Golf Store', 'Laredo Disc Dolf Store', 'Disc Golf 978', 'Start',
+  'Disc Golf Start', 'Disc golf start', 'Disc Golf Course Start-End',
+  'Frisbee/Disc Golf Course (start)', 'Slate Canyon Disc Golf Course Start/End Point',
+  'Walker Park Disc Golf Practice Area',
   '', '   ',
 ];
 
@@ -27,6 +36,14 @@ const REAL = [
   "Chain's Edge - Blue", 'Jack Brooks Park - Cedar Hills', 'Comanche Trail Park - Mountain DGC',
   'Practical Park DGC', 'Teetertown Preserve DGC', 'Disc Golf Ranch at Cedar Creek',
   '"The Grove" Disc Golf Course', 'Brock Park DGC',
+  // Brush up against the shop / marker / map patterns without being one.
+  'Old Store Park DGC', 'Mile Marker 63 Disc Golf', 'Kiosk DGC', 'Starting Gate DGC',
+  'Mapleton Park DGC', 'Netherwood Park DGC', 'Startup Hill DGC', 'Arcadia Park #2 DGC',
+  'Driftless 18', 'Grindstone Park - Back 9', 'Cascade River State Park 9',
+  // Brush up against the marker patterns: real courses, all kept.
+  'The Point', 'Seneca Creek Disc Golf Area', 'East Bay Park - Disc Golf Area',
+  'SNOW BOWL SKI AREA', "Laclede's Landing Disc Golf Putting Course", 'Lake Storey Disc Golf Course',
+  'Basket Case Disc Golf', "Land's End Park DGC", 'West End Park DGC',
 ];
 
 test('flags tee/basket/hole rows and unbuilt courses', () => {
@@ -47,7 +64,7 @@ test('keeps real course names', () => {
 // filter in seedDatabase() still has to leave a course list worth shipping.
 test('seed still carries the real course set once filtered', () => {
   const kept = COURSES.filter((c) => !isPlaceholderCourseName(c.name));
-  assert.ok(kept.length > 1500, `expected >1500 real courses, got ${kept.length}`);
+  assert.ok(kept.length > 1400, `expected >1400 real courses, got ${kept.length}`);
   assert.ok(COURSES.length - kept.length > 0, 'expected the seed to contain placeholder rows');
   // Nothing kept may be a bare hole number, the shape the picker screenshots showed.
   assert.equal(kept.filter((c) => /^(tee|hole|basket)\s*#?\s*\d+/i.test(c.name.trim())).length, 0);
