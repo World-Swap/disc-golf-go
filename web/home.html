@@ -8,9 +8,9 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w6" />
-  <link rel="stylesheet" href="/styles/app.css?v=w6" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w6" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w7" />
+  <link rel="stylesheet" href="/styles/app.css?v=w7" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w7" />
   <style>
     /* Pro video slideshow. 16:9 so a YouTube thumbnail fills it exactly. */
     .slides { position: relative; border-radius: var(--radius-lg, 14px); overflow: hidden;
@@ -48,7 +48,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w6"></script>
+  <script src="/js/app.js?v=w7"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
@@ -76,7 +76,7 @@
 
         content.className = 'screen stack';
         content.innerHTML =
-          '<div class="hbanner">' +
+          '<div class="hbanner hbanner--quiet">' +
             '<img src="/img/hero.jpg" alt="" />' +
             '<div class="hbanner__scrim"></div>' +
             '<div class="hbanner__body">' +
@@ -111,19 +111,23 @@
             '</a>'
           ) +
 
-          '<div id="daily"></div>' +
+          // Play sits where the daily challenge used to, directly under the
+          // lesson card: it is a link, and the two links belong together. It
+          // opens the Play tab rather than dropping straight into a round,
+          // because Play is now the way in to all of it — the weekly
+          // tournament, the game and real courses.
+          '<a class="artcard" href="/checkin" style="--art:url(\'/img/cards/throw-lab.webp\')">' +
+            '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+            '<span class="artcard__body">' +
+              '<span class="artcard__eyebrow">Play</span>' +
+              '<span class="artcard__title">Play a round →</span>' +
+              '<span class="artcard__sub">The weekly tournament, the Throw Lab game, or a scorecard at any real course.</span>' +
+            '</span>' +
+          '</a>' +
 
           '<div id="pros"></div>' +
 
-          // Throw Lab — practise the shot shapes the lessons teach.
-          '<a class="artcard" href="/game" style="--art:url(\'/img/cards/throw-lab.webp\')">' +
-            '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
-            '<span class="artcard__body">' +
-              '<span class="artcard__eyebrow">Throw Lab · game</span>' +
-              '<span class="artcard__title">Play a quick round →</span>' +
-              '<span class="artcard__sub">Tap for power, tap for your angle. 3, 6 or 9 holes — earns XP.</span>' +
-            '</span>' +
-          '</a>' +
+          '<div id="daily"></div>' +
 
           '<div>' +
             '<p class="section-label">Overall progress</p>' +
@@ -237,7 +241,7 @@
           var d = await DGG.API.get('/story/daily');
           var pct = d.target_value ? Math.round((d.progress / d.target_value) * 100) : 0;
           document.getElementById('daily').innerHTML =
-            '<div class="artcard" style="--art:url(\'/img/cards/daily.webp\')">' +
+            '<div class="artcard artcard--quiet" style="--art:url(\'/img/cards/daily.webp\')">' +
               '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
               '<span class="artcard__body">' +
                 '<span class="artcard__eyebrow">Daily challenge</span>' +
