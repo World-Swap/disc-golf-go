@@ -15,12 +15,6 @@
     /* The line that tells you what this page offers before you tap anything. */
     .play-intro { margin: -4px 0 2px; font-size: 13px; line-height: 1.5; color: #6d655c; }
     .play-intro b { color: #202020; }
-    /* Two-line buttons: what it is, and what it does. Stacked so the label
-       reads at a glance instead of "Scorecard" vs "Play in Throw Lab". */
-    .pick-btn { flex: 1; display: flex; flex-direction: column; gap: 2px;
-                align-items: center; padding: 9px 10px; line-height: 1.25; }
-    .pick-btn b { font-size: 12px; }
-    .pick-btn small { font-size: 10px; opacity: .72; font-weight: 500; }
     /* Weekly tournament. Dark like the artcards so it reads as an event
        rather than another row, with the entries spent shown as pips. */
     .trn { background: #16130f; color: #f7f4ef; border-radius: 18px; padding: 18px; }
@@ -51,7 +45,7 @@
 </head>
 <body>
   <main class="app">
-    <header class="topbar"><span class="topbar__title">Play</span><span class="pill" id="loc">Locating…</span></header>
+    <header class="topbar"><span class="topbar__title">Play</span></header>
     <div class="screen stack">
       <div><p class="section-label">Apply your training</p><h1 class="h-display">PLAY<span class="mark" style="width:30%"></span></h1></div>
 
@@ -73,47 +67,21 @@
         </span>
       </a>
 
-      <div class="artcard" style="--art:url('/img/cards/course.webp'); min-height:0">
+      <a class="artcard" href="/courses" style="--art:url('/img/cards/course.webp')">
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
-        <span class="artcard__body" style="max-width:100%">
+        <span class="artcard__body">
           <span class="artcard__eyebrow">Pick a course</span>
-          <span class="artcard__title" style="font-size:18px">Play a real course →</span>
-          <span class="artcard__sub">Its real holes and lengths — in the game, or on a scorecard.</span>
+          <span class="artcard__title">Play a real course →</span>
+          <span class="artcard__sub">Find one near you, by state, or by name — then a scorecard
+            or Throw Lab. Check in here too.</span>
         </span>
-      </div>
+      </a>
 
-      <div class="card" style="margin-top:8px">
-        <label class="field" style="margin-top:10px">
-          <span class="field__label">State</span>
-          <select class="input" id="state"><option value="">Loading states…</option></select>
-        </label>
-        <label class="field" id="course-field" style="display:none">
-          <span class="field__label">Course</span>
-          <select class="input" id="course"></select>
-        </label>
-        <div id="picked" style="display:none;gap:8px;margin-top:4px">
-          <a class="btn btn--ghost pick-btn" id="pick-card" href="#">
-            <b>Scorecard</b><small>Keep score for real</small></a>
-          <a class="btn pick-btn" id="pick-play" href="#">
-            <b>Throw Lab</b><small>Play it as a game</small></a>
-        </div>
-      </div>
-
-      <div id="result"></div>
       <div id="challenges"></div>
       <div id="rounds"></div>
 
 
-      <label class="field" style="margin:0">
-        <span class="field__label">Or search by name</span>
-        <input class="input" id="search" type="search" inputmode="search"
-               placeholder="Course, city or state" autocomplete="off" />
-      </label>
-      <div id="found"></div>
-
-      <div id="list" class="loading">Finding courses near you…</div>
-    </div>
-    <nav id="tabbar"></nav>
+      <nav id="tabbar"></nav>
   </main>
 
   <script src="/js/app.js?v=w6"></script>
@@ -122,11 +90,6 @@
       if (!DGG.requireAuth()) return;
       DGG.tabbar('play');
       var esc = DGG.esc, API = DGG.API;
-      var list = document.getElementById('list'), result = document.getElementById('result');
-      var pos = null;
-      var RADIUS = 800;
-
-      function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m'; }
 
       // ---------------------------------------------------------- tournament
       // One course a week for everyone, 18 holes, two attempts. An attempt is
@@ -249,95 +212,7 @@
       }
       loadChallenges();
 
-      loadRounds();   // your rounds don't depend on GPS, so load them first
-
-      // Location is only needed to check in. Keeping a scorecard or playing a
-      // course in Throw Lab needs no GPS at all, so a device with location off
-      // still gets the search below and every course in the database.
-      function noGps(label) {
-        document.getElementById('loc').textContent = label;
-        list.className = 'screen';
-        list.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">' +
-          'Location is off, so check-in is unavailable. Everything else still works — ' +
-          'pick any course above to keep a scorecard, or play its holes in the Throw Lab game.</p>';
-      }
-
-      if (!navigator.geolocation) { noGps('No GPS'); }
-      else {
-        navigator.geolocation.getCurrentPosition(function (p) {
-          pos = { lat: p.coords.latitude, lng: p.coords.longitude };
-          document.getElementById('loc').textContent = 'GPS on';
-          loadCourses();
-        }, function () { noGps('GPS off'); }, { enableHighAccuracy: true, timeout: 10000 });
-      }
-
-      // State picker: choose a state, then a course in it. The state is matched
-      // exactly server-side, so picking "IN" gives Indiana rather than every
-      // course with "in" in its name.
-      var stateSel = document.getElementById('state');
-      var courseSel = document.getElementById('course');
-
-      (async function loadStates() {
-        try {
-          var states = await API.get('/courses/states');
-          stateSel.innerHTML = '<option value="">Choose a state…</option>' + states.map(function (s2) {
-            return '<option value="' + esc(s2.state) + '">' + esc(s2.state) + ' · ' + s2.courses + ' courses</option>';
-          }).join('');
-        } catch (e) { stateSel.innerHTML = '<option value="">Could not load states</option>'; }
-      })();
-
-      stateSel.addEventListener('change', async function () {
-        var st = this.value;
-        var field = document.getElementById('course-field');
-        var actions = document.getElementById('picked');
-        if (!st) { field.style.display = 'none'; actions.style.display = 'none'; return; }
-        courseSel.innerHTML = '<option>Loading…</option>';
-        field.style.display = '';
-        try {
-          var res = await API.get('/courses?state=' + encodeURIComponent(st) + '&limit=500');
-          var list = res.courses || [];
-          if (!list.length) { courseSel.innerHTML = '<option value="">No courses listed</option>'; return; }
-          courseSel.innerHTML = list.map(function (c) {
-            var where = c.city ? c.city + ' · ' : '';
-            var holes = c.holes ? c.holes + ' holes' : '';
-            return '<option value="' + c.id + '">' + esc(c.name) + ' — ' + esc(where + holes) + '</option>';
-          }).join('');
-          pickCourse();
-        } catch (e) { courseSel.innerHTML = '<option value="">Could not load courses</option>'; }
-      });
-
-      function pickCourse() {
-        var id = courseSel.value;
-        var actions = document.getElementById('picked');
-        if (!id) { actions.style.display = 'none'; return; }
-        actions.style.display = 'flex';
-        document.getElementById('pick-card').href = '/scorecard?course=' + id;
-        document.getElementById('pick-play').href = '/game?course=' + id;
-      }
-      courseSel.addEventListener('change', pickCourse);
-
-      // Course search — the way to reach any of the 3,550 courses without
-      // standing at one.
-      var searchTimer = null;
-      document.getElementById('search').addEventListener('input', function () {
-        var q = this.value.trim();
-        clearTimeout(searchTimer);
-        if (q.length < 2) { document.getElementById('found').innerHTML = ''; return; }
-        searchTimer = setTimeout(function () { runSearch(q); }, 250);
-      });
-
-      async function runSearch(q) {
-        var box = document.getElementById('found');
-        try {
-          var res = await API.get('/courses?search=' + encodeURIComponent(q) + '&limit=15');
-          var courses = res.courses || [];      // the API wraps the list
-          if (!courses.length) { box.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">No course matches that.</p>'; return; }
-          box.innerHTML = '<p class="section-label">Search results</p><div class="rows">' +
-            courses.map(function (c) { return courseRow(c, false); }).join('') + '</div>';
-        } catch (e) {
-          box.innerHTML = '<div class="error">' + esc(e.message || 'Search failed') + '</div>';
-        }
-      }
+      loadRounds();
 
       // Your recent rounds at real courses. One request, rendered above the
       // course list so Play shows your scoring as well as offering it.
@@ -358,67 +233,6 @@
                 '<span class="row__meta">' + badge + '</span></a>';
             }).join('') + '</div>';
         } catch (e) { /* signed-out or offline — the course list still works */ }
-      }
-      // One row shape for both lists. `near` is true only for the nearby list,
-      // where a distance is known and checking in may be possible; a searched
-      // course still offers a scorecard and Throw Lab, which need no location.
-      function courseRow(c, near) {
-        var bits = [esc([c.city, c.state].filter(Boolean).join(', '))];
-        if (near) bits.push(fmtDist(c.distance_meters));
-        if (c.holes) bits.push(c.holes + ' holes');
-        if (c.par) bits.push('par ' + c.par);
-        var action = near
-          ? (c.distance_meters <= RADIUS
-              ? '<button class="btn" style="padding:8px 14px;font-size:10px" data-course="' + c.id + '">Check In</button>'
-              : '<span class="row__meta">too far</span>')
-          : '';
-        return '<div class="row" style="flex-wrap:wrap">' +
-          '<span class="row__glyph">◎</span>' +
-          '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
-          '<div class="row__sub">' + bits.filter(Boolean).join(' · ') + '</div></div>' + action +
-          '<div style="display:flex;gap:8px;width:100%;margin:10px 0 2px 34px">' +
-            '<a class="btn btn--ghost pick-btn" href="/scorecard?course=' + c.id + '">' +
-              '<b>Scorecard</b><small>Keep score for real</small></a>' +
-            '<a class="btn btn--ghost pick-btn" href="/game?course=' + c.id + '">' +
-              '<b>Throw Lab</b><small>Play it as a game</small></a>' +
-          '</div></div>';
-      }
-
-      function wireCheckIn(root) {
-        root.querySelectorAll('[data-course]').forEach(function (btn) {
-          btn.addEventListener('click', function () { checkIn(Number(this.getAttribute('data-course')), this); });
-        });
-      }
-
-      async function loadCourses() {
-        try {
-          var courses = await API.get('/courses/nearby?lat=' + pos.lat + '&lng=' + pos.lng + '&radius=50000');
-          list.className = '';
-          if (!courses.length) { list.innerHTML = '<div class="loading">No courses within 50 km. Search above for any course.</div>'; return; }
-          list.innerHTML = '<p class="section-label">Nearby courses</p><div class="rows">' +
-            courses.map(function (c) { return courseRow(c, true); }).join('') + '</div>';
-          wireCheckIn(list);
-        } catch (e) { list.className = 'screen'; list.innerHTML = '<div class="error">' + esc(e.message || 'Could not load courses') + '</div>'; }
-      }
-
-      async function checkIn(courseId, btn) {
-        btn.disabled = true; btn.textContent = '…';
-        try {
-          var r = await API.post('/checkins', { course_id: courseId, player_lat: pos.lat, player_lng: pos.lng });
-          var badges = (r.new_badges || []).map(function (b) { return b.icon + ' ' + b.name; }).join(' · ');
-          result.innerHTML = '<div class="card"><p class="card__eyebrow">' + (r.is_new_course ? 'New course!' : 'Checked in') + '</p>' +
-            '<div class="h-title" style="margin:8px 0">' + esc(r.course_name) + '</div>' +
-            '<div style="display:flex;gap:20px;margin-top:6px">' +
-              '<span class="row__meta">+' + (r.xp_earned || 0) + ' XP</span>' +
-              '<span class="row__meta">+' + (r.gold_earned || 0) + ' G</span>' +
-              (r.leveled_up ? '<span class="pill pill--done">Level up!</span>' : '') + '</div>' +
-            (badges ? '<p class="row__sub" style="margin-top:10px;text-transform:none;letter-spacing:0">🏅 ' + esc(badges) + '</p>' : '') + '</div>';
-          result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          btn.textContent = 'Done ✓';
-        } catch (ex) {
-          result.innerHTML = '<div class="error">' + esc(ex.message || 'Check-in failed') + (ex.data && ex.data.distance_meters ? ' (' + fmtDist(ex.data.distance_meters) + ' away)' : '') + '</div>';
-          btn.disabled = false; btn.textContent = 'Check In';
-        }
       }
     })();
   </script>
