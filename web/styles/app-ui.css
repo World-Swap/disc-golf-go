@@ -56,6 +56,23 @@
   color: #fff; background: rgba(252,100,20,0.92); border-radius: var(--radius-pill); padding: 5px 11px; }
 .artcard:active { transform: scale(0.995); }
 
+/* Not every card is a link. The loudest art sat on the two that aren't — the
+   hero and the daily challenge — so the page taught the wrong lesson about
+   what is tappable. `--quiet` veils the art and flattens the scrim, leaving
+   the vivid treatment to the cards you can actually press. Text contrast is
+   unaffected: the scrim only gets heavier. Clickable cards also carry a "→"
+   in their title, so the cue is not colour alone. */
+.artcard--quiet .artcard__art { filter: saturate(0.62) brightness(0.86); }
+.artcard--quiet .artcard__scrim { background: linear-gradient(90deg,
+  rgba(14,11,9,0.88) 0%, rgba(14,11,9,0.78) 50%, rgba(14,11,9,0.62) 100%); }
+.artcard--quiet { box-shadow: none; border: 1px solid rgba(20,14,10,0.10); }
+.artcard--quiet:active { transform: none; }
+
+.hbanner--quiet img { filter: saturate(0.62) brightness(0.9); }
+.hbanner--quiet .hbanner__scrim { background: linear-gradient(90deg,
+  rgba(20,14,10,0.62) 0%, rgba(20,14,10,0.40) 55%, rgba(20,14,10,0.30) 100%); }
+.hbanner--quiet { box-shadow: none; }
+
 /* Top bar — warm, soft */
 .topbar {
   position: sticky; top: 0; z-index: 50;
