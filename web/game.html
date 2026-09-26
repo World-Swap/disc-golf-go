@@ -214,6 +214,10 @@
     var COURSE = null;   // { name, holes: [{ par, feet }] } when playing a real course
     var CARD = [];       // { par, strokes } per finished hole — what the server scores
     var SUBMITTED = false;
+    // Set when the round is a tournament attempt (/game?entry=<id>). The entry
+    // is already spent by the time this page loads — the Play tab took it —
+    // so there is no picker and no way back to a different length.
+    var ENTRY = null;
 
     // Round lengths: a quick round is a short session, a course round is the
     // full 18, looping the course's own holes when it has fewer.
@@ -387,21 +391,40 @@
     function submitRound(headline) {
       if (SUBMITTED || !CARD.length) return;
       SUBMITTED = true;
-      var body = { mode: COURSE ? 'course' : 'quick', holes: CARD.slice() };
-      if (COURSE && COURSE.id) body.course_id = COURSE.id;
-      DGG.API.post('/game/rounds', body).then(function (r) {
+      // A tournament card is posted against its entry, which scores it through
+      // the same game endpoint server-side and puts it on the week's board.
+      var path = ENTRY ? '/tournament/entries/' + ENTRY.id + '/finish' : '/game/rounds';
+      var body = { holes: CARD.slice() };
+      if (!ENTRY) {
+        body.mode = COURSE ? 'course' : 'quick';
+        if (COURSE && COURSE.id) body.course_id = COURSE.id;
+      }
+      DGG.API.post(path, body).then(function (r) {
         var bits = [];
         if (r.xp_earned) bits.push('+' + r.xp_earned + ' XP');
         (r.challenges_completed || []).forEach(function (c) { bits.push('✅ ' + c.title); });
         (r.new_badges || []).forEach(function (b) { bits.push('🏅 ' + (b.name || 'Badge')); });
         if (r.xp_capped) bits.push('daily XP limit reached');
-        say(headline, bits.length ? bits.join(' · ') : 'Tap to play again');
-      }).catch(function () {
-        say(headline, 'Round saved locally — tap to play again');
+        if (ENTRY) {
+          if (r.place) bits.unshift('🏆 ' + ordinal(r.place) + ' of ' + r.players);
+          if (r.best && r.entry && r.best.vs_par !== r.entry.vs_par) {
+            bits.push('best still ' + fmtVs(r.best.vs_par));
+          }
+          bits.push(r.entries_remaining ? r.entries_remaining + ' entry left' : 'no entries left this week');
+        }
+        say(headline, bits.length ? bits.join(' · ') : (ENTRY ? 'Score posted' : 'Tap to play again'));
+      }).catch(function (e) {
+        say(headline, ENTRY ? ((e && e.message) || 'Could not post that score') : 'Round saved locally — tap to play again');
       });
     }
 
     function nextThrow() { S.phase = 'ready'; say('Tap to start your power', ''); }
+
+    function fmtVs(n) { return n === 0 ? 'even' : (n > 0 ? '+' + n : String(n)); }
+    function ordinal(n) {
+      var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
 
     // ----------------------------------------------------------- rendering
     // Everything is drawn with flat shapes in the brand palette — the same
@@ -595,7 +618,11 @@
     // --------------------------------------------------------------- chrome
     function hud() {
       var where = document.getElementById('where');
-      if (where) where.textContent = COURSE ? COURSE.name : 'Throw Lab · quick round';
+      if (where) {
+        where.textContent = ENTRY
+          ? 'Tournament · entry ' + ENTRY.attempt + ' of 2'
+          : (COURSE ? COURSE.name : 'Throw Lab · quick round');
+      }
       document.getElementById('h-hole').textContent = S.hole;
       document.getElementById('h-par').textContent = S.par;
       document.getElementById('h-throws').textContent = S.throws;
@@ -659,11 +686,15 @@
       });
     }
 
-    // ?course=<id> plays a real course; ?holes=<n> skips the picker.
+    // ?entry=<id> plays a tournament attempt; ?course=<id> a real course;
+    // ?holes=<n> skips the picker.
     function boot() {
       var qs = new URLSearchParams(location.search);
+      var entryId = qs.get('entry');
       var courseId = qs.get('course');
       var asked = parseInt(qs.get('holes'), 10);
+
+      if (entryId) return bootTournament(entryId);
 
       if (!courseId) {
         if (QUICK_LENGTHS.indexOf(asked) !== -1) { HOLES = asked; newHole(); return; }
@@ -685,6 +716,35 @@
         // Offline or a bad id — still give the player a round to throw.
         say('Could not load that course', 'Playing a quick round instead');
         HOLES = 3; newHole();
+      });
+    }
+
+    // A tournament attempt: the course and the length are both settled before
+    // this page opens, so there is nothing to choose — it goes straight to the
+    // first tee. The entry was spent when the Play tab took it.
+    function bootTournament(entryId) {
+      say('Loading the tournament…', '');
+      DGG.API.get('/tournament').then(function (t) {
+        var mine = (t.me && t.me.entries) || [];
+        var entry = mine.filter(function (e) { return String(e.id) === String(entryId); })[0];
+        if (!entry) throw new Error('That entry is not yours.');
+        if (entry.status !== 'in_progress') {
+          throw new Error(entry.status === 'completed'
+            ? 'That entry already has a score.'
+            : 'That entry was used up.');
+        }
+        ENTRY = { id: entry.id, attempt: entry.attempt, week: t.week_key };
+        if (!t.course || !t.course.id) throw new Error('This week has no course yet.');
+        return DGG.API.get('/courses/' + encodeURIComponent(t.course.id)).then(function (c) {
+          COURSE = buildCourse(c);
+          COURSE.id = Number(t.course.id);
+          document.title = 'Tournament · ' + COURSE.name;
+          HOLES = t.holes || 18;
+          layoutCourse(HOLES);
+          newHole();
+        });
+      }).catch(function (e) {
+        say('Tournament unavailable', (e && e.message) || 'Could not load this week\'s round');
       });
     }
 
