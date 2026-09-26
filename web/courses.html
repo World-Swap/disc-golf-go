@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Courses · Disc Golf Go</title>
+  <title>Pick a course · Disc Golf Go</title>
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
@@ -11,50 +11,254 @@
   <link rel="stylesheet" href="/styles/tokens.css?v=w6" />
   <link rel="stylesheet" href="/styles/app.css?v=w6" />
   <link rel="stylesheet" href="/styles/app-ui.css?v=w6" />
+  <style>
+    /* Two-line buttons: what it is, and what it does. Stacked so the label
+       reads at a glance instead of "Scorecard" vs "Play in Throw Lab". */
+    .pick-btn { flex: 1; display: flex; flex-direction: column; gap: 2px;
+                align-items: center; padding: 9px 10px; line-height: 1.25; }
+    .pick-btn b { font-size: 12px; }
+    .pick-btn small { font-size: 10px; opacity: .72; font-weight: 500; }
+    .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+            color: var(--color-ash, #6d655c); text-decoration: none; margin-bottom: 2px; }
+    /* Matches .play-intro on the Play tab so the two pages read as one flow.
+       The bottom margin keeps it off the search label that follows it. */
+    .pick-intro { margin: -4px 0 10px; font-size: 13px; line-height: 1.5; color: #6d655c; }
+    .pick-intro b { color: #202020; }
+  </style>
 </head>
 <body>
   <main class="app">
-    <header class="topbar"><span class="topbar__title">Courses</span><span class="pill" id="count">—</span></header>
+    <header class="topbar"><span class="topbar__title">Pick a course</span><span class="pill" id="loc">Locating…</span></header>
     <div class="screen stack">
-      <div><h1 class="h-display">COURS<br />ES<span class="mark" style="width:34%"></span></h1></div>
-      <input class="input" id="search" type="search" placeholder="Search course, city, or state…" autocomplete="off" />
-      <div id="list" class="loading">Loading…</div>
+      <div>
+        <a class="back" href="/checkin">← Play</a>
+        <p class="section-label">Every course in the app</p>
+        <h1 class="h-display">COURSES<span class="mark" style="width:26%"></span></h1>
+        <p class="pick-intro">Find one near you, pick a state, or search by name. Then keep a
+          <b>scorecard</b> for a real round, or play its holes in <b>Throw Lab</b>.</p>
+      </div>
+
+      <label class="field" style="margin:0">
+        <span class="field__label">Search by name</span>
+        <input class="input" id="search" type="search" inputmode="search"
+               placeholder="Course, city or state" autocomplete="off" />
+      </label>
+      <div id="found"></div>
+
+      <!-- Pick a state, then a course in it. The state is matched exactly
+           server-side, so "IN" gives Indiana rather than every course with
+           "in" in its name. -->
+      <div class="card">
+        <label class="field" style="margin-top:10px">
+          <span class="field__label">Or browse by state</span>
+          <select class="input" id="state"><option value="">Loading states…</option></select>
+        </label>
+        <label class="field" id="course-field" style="display:none">
+          <span class="field__label">Course</span>
+          <select class="input" id="course"></select>
+        </label>
+        <div id="picked" style="display:none;gap:8px;margin-top:4px">
+          <a class="btn btn--ghost pick-btn" id="pick-card" href="#">
+            <b>Scorecard</b><small>Keep score for real</small></a>
+          <a class="btn pick-btn" id="pick-play" href="#">
+            <b>Throw Lab</b><small>Play it as a game</small></a>
+        </div>
+      </div>
+
+      <div id="result"></div>
+      <div id="list" class="loading">Finding courses near you…</div>
     </div>
+
     <nav id="tabbar"></nav>
   </main>
 
   <script src="/js/app.js?v=w6"></script>
   <script>
     (function () {
+      'use strict';
       if (!DGG.requireAuth()) return;
-      DGG.tabbar('play');
+      DGG.tabbar('play');            // this page is part of the Play flow
       var esc = DGG.esc, API = DGG.API;
-      var list = document.getElementById('list'), count = document.getElementById('count');
-      var timer = null;
+      var list = document.getElementById('list'), result = document.getElementById('result');
+      var pos = null;
+      var RADIUS = 800;
 
-      async function load(search) {
-        try {
-          var d = await API.get('/courses?limit=100' + (search ? '&search=' + encodeURIComponent(search) : ''));
-          var courses = d.courses || [];
-          count.textContent = courses.length + (courses.length === 100 ? '+' : '');
-          list.className = '';
-          if (!courses.length) { list.innerHTML = '<div class="loading">No courses found</div>'; return; }
-          list.innerHTML = '<div class="rows">' + courses.map(function (c) {
-            var rating = c.pdga_rating || c.dgcoursereview_rating;
-            return '<div class="row"><span class="row__glyph">◎</span>' +
-              '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
-              '<div class="row__sub">' + esc([c.city, c.state].filter(Boolean).join(', ')) + (c.holes ? ' · ' + c.holes + ' holes' : '') + '</div></div>' +
-              (rating ? '<span class="row__meta">' + esc(rating) + '★</span>' : '') + '</div>';
-          }).join('') + '</div>';
-        } catch (e) { list.className = 'screen'; list.innerHTML = '<div class="error">' + esc(e.message || 'Could not load courses') + '</div>'; }
+      function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m'; }
+
+      // One row shape for both lists. `near` is true only for the nearby list,
+      // where a distance is known and checking in may be possible; a searched
+      // course still offers a scorecard and Throw Lab, which need no location.
+      function courseRow(c, near) {
+        var bits = [esc([c.city, c.state].filter(Boolean).join(', '))];
+        if (near) bits.push(fmtDist(c.distance_meters));
+        if (c.holes) bits.push(c.holes + ' holes');
+        if (c.par) bits.push('par ' + c.par);
+        var action = near
+          ? (c.distance_meters <= RADIUS
+              ? '<button class="btn" style="padding:8px 14px;font-size:10px" data-course="' + c.id + '">Check In</button>'
+              : '<span class="row__meta">too far</span>')
+          : '';
+        return '<div class="row" style="flex-wrap:wrap">' +
+          '<span class="row__glyph">◎</span>' +
+          '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
+          '<div class="row__sub">' + bits.filter(Boolean).join(' · ') + '</div></div>' + action +
+          '<div style="display:flex;gap:8px;width:100%;margin:10px 0 2px 34px">' +
+            '<a class="btn btn--ghost pick-btn" href="/scorecard?course=' + c.id + '">' +
+              '<b>Scorecard</b><small>Keep score for real</small></a>' +
+            '<a class="btn btn--ghost pick-btn" href="/game?course=' + c.id + '">' +
+              '<b>Throw Lab</b><small>Play it as a game</small></a>' +
+          '</div></div>';
       }
 
-      document.getElementById('search').addEventListener('input', function () {
-        var v = this.value.trim();
-        clearTimeout(timer);
-        timer = setTimeout(function () { load(v); }, 250);
+      function wireCheckIn(root) {
+        root.querySelectorAll('[data-course]').forEach(function (btn) {
+          btn.addEventListener('click', function () { checkIn(Number(this.getAttribute('data-course')), this); });
+        });
+      }
+
+      // ------------------------------------------------------------- nearby
+      // Location is only needed to check in. Keeping a scorecard or playing a
+      // course in Throw Lab needs no GPS at all, so a device with location off
+      // still reaches every course in the database through the two pickers.
+      function noGps(label) {
+        document.getElementById('loc').textContent = label;
+        list.className = 'screen';
+        list.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">' +
+          'Location is off, so check-in is unavailable and there is no nearby list. ' +
+          'Everything else still works — search above or browse by state.</p>';
+      }
+
+      async function loadNearby() {
+        try {
+          var courses = await API.get('/courses/nearby?lat=' + pos.lat + '&lng=' + pos.lng + '&radius=50000');
+          list.className = '';
+          if (!courses.length) {
+            list.innerHTML = '<div class="loading">No courses within 50 km. Search or browse by state above.</div>';
+            return;
+          }
+          list.innerHTML = '<p class="section-label">Near you</p><div class="rows">' +
+            courses.map(function (c) { return courseRow(c, true); }).join('') + '</div>';
+          wireCheckIn(list);
+        } catch (e) {
+          list.className = 'screen';
+          list.innerHTML = '<div class="error">' + esc(e.message || 'Could not load courses') + '</div>';
+        }
+      }
+
+      if (!navigator.geolocation) { noGps('No GPS'); }
+      else {
+        // getCurrentPosition's own `timeout` does not start until permission is
+        // granted, so a prompt the player never answers leaves it pending for
+        // good — and the page would sit on "Finding courses near you…" with no
+        // way forward. This fallback shows the other two pickers instead. A
+        // position that turns up later still wins and fills the list in.
+        var said = false;
+        var hang = setTimeout(function () {
+          if (!said) { said = true; noGps('GPS off'); }
+        }, 12000);
+
+        navigator.geolocation.getCurrentPosition(function (p) {
+          clearTimeout(hang);
+          pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+          document.getElementById('loc').textContent = 'GPS on';
+          list.className = 'loading';
+          list.textContent = 'Finding courses near you…';
+          loadNearby();
+        }, function () {
+          clearTimeout(hang);
+          if (!said) { said = true; noGps('GPS off'); }
+        }, { enableHighAccuracy: true, timeout: 10000 });
+      }
+
+      // -------------------------------------------------------- state picker
+      var stateSel = document.getElementById('state');
+      var courseSel = document.getElementById('course');
+
+      (async function loadStates() {
+        try {
+          var states = await API.get('/courses/states');
+          stateSel.innerHTML = '<option value="">Choose a state…</option>' + states.map(function (s) {
+            return '<option value="' + esc(s.state) + '">' + esc(s.state) + ' · ' + s.courses + ' courses</option>';
+          }).join('');
+        } catch (e) { stateSel.innerHTML = '<option value="">Could not load states</option>'; }
+      })();
+
+      stateSel.addEventListener('change', async function () {
+        var st = this.value;
+        var field = document.getElementById('course-field');
+        var actions = document.getElementById('picked');
+        if (!st) { field.style.display = 'none'; actions.style.display = 'none'; return; }
+        courseSel.innerHTML = '<option>Loading…</option>';
+        field.style.display = '';
+        try {
+          var res = await API.get('/courses?state=' + encodeURIComponent(st) + '&limit=500');
+          var courses = res.courses || [];
+          if (!courses.length) { courseSel.innerHTML = '<option value="">No courses listed</option>'; return; }
+          courseSel.innerHTML = courses.map(function (c) {
+            var where = c.city ? c.city + ' · ' : '';
+            var holes = c.holes ? c.holes + ' holes' : '';
+            return '<option value="' + c.id + '">' + esc(c.name) + ' — ' + esc(where + holes) + '</option>';
+          }).join('');
+          pickCourse();
+        } catch (e) { courseSel.innerHTML = '<option value="">Could not load courses</option>'; }
       });
-      load('');
+
+      function pickCourse() {
+        var id = courseSel.value;
+        var actions = document.getElementById('picked');
+        if (!id) { actions.style.display = 'none'; return; }
+        actions.style.display = 'flex';
+        document.getElementById('pick-card').href = '/scorecard?course=' + id;
+        document.getElementById('pick-play').href = '/game?course=' + id;
+      }
+      courseSel.addEventListener('change', pickCourse);
+
+      // -------------------------------------------------------------- search
+      var searchTimer = null;
+      document.getElementById('search').addEventListener('input', function () {
+        var q = this.value.trim();
+        clearTimeout(searchTimer);
+        if (q.length < 2) { document.getElementById('found').innerHTML = ''; return; }
+        searchTimer = setTimeout(function () { runSearch(q); }, 250);
+      });
+
+      async function runSearch(q) {
+        var box = document.getElementById('found');
+        try {
+          var res = await API.get('/courses?search=' + encodeURIComponent(q) + '&limit=15');
+          var courses = res.courses || [];      // the API wraps the list
+          if (!courses.length) {
+            box.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">No course matches that.</p>';
+            return;
+          }
+          box.innerHTML = '<p class="section-label">Search results</p><div class="rows">' +
+            courses.map(function (c) { return courseRow(c, false); }).join('') + '</div>';
+        } catch (e) {
+          box.innerHTML = '<div class="error">' + esc(e.message || 'Search failed') + '</div>';
+        }
+      }
+
+      // ------------------------------------------------------------ check in
+      async function checkIn(courseId, btn) {
+        btn.disabled = true; btn.textContent = '…';
+        try {
+          var r = await API.post('/checkins', { course_id: courseId, player_lat: pos.lat, player_lng: pos.lng });
+          var badges = (r.new_badges || []).map(function (b) { return b.icon + ' ' + b.name; }).join(' · ');
+          result.innerHTML = '<div class="card"><p class="card__eyebrow">' + (r.is_new_course ? 'New course!' : 'Checked in') + '</p>' +
+            '<div class="h-title" style="margin:8px 0">' + esc(r.course_name) + '</div>' +
+            '<div style="display:flex;gap:20px;margin-top:6px">' +
+              '<span class="row__meta">+' + (r.xp_earned || 0) + ' XP</span>' +
+              '<span class="row__meta">+' + (r.gold_earned || 0) + ' G</span>' +
+              (r.leveled_up ? '<span class="pill pill--done">Level up!</span>' : '') + '</div>' +
+            (badges ? '<p class="row__sub" style="margin-top:10px;text-transform:none;letter-spacing:0">🏅 ' + esc(badges) + '</p>' : '') + '</div>';
+          result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          btn.textContent = 'Done ✓';
+        } catch (ex) {
+          result.innerHTML = '<div class="error">' + esc(ex.message || 'Check-in failed') +
+            (ex.data && ex.data.distance_meters ? ' (' + fmtDist(ex.data.distance_meters) + ' away)' : '') + '</div>';
+          btn.disabled = false; btn.textContent = 'Check In';
+        }
+      }
     })();
   </script>
 </body>
