@@ -6,6 +6,12 @@
   --hair: #e4dfd6;
   --hair-strong: #d6cfc3;
   --tabbar-h: 64px;
+  /* The device's safe areas, named so every rule reads the same value and a
+     test can override them — env() itself cannot be set from script. On
+     Android with three-button navigation --sab is the height of the system
+     bar, around 48px; with gesture navigation it is a few pixels. */
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sat: env(safe-area-inset-top, 0px);
 }
 
 /* App container — phone-width, flat white canvas; cards read via hairline borders */
@@ -15,7 +21,7 @@
   min-height: 100svh;
   background: var(--color-cream);
   background-attachment: local;
-  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 20px);
+  padding-bottom: calc(var(--tabbar-h) + var(--sab) + 20px);
   position: relative;
 }
 
@@ -78,7 +84,7 @@
   position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   /* Clear the phone status bar / notch (needs viewport-fit=cover, which all pages set). */
-  padding: calc(15px + env(safe-area-inset-top, 0px)) var(--edge-pad) 13px;
+  padding: calc(15px + var(--sat)) var(--edge-pad) 13px;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -156,7 +162,7 @@
 /* Bottom tab bar — floating, soft, rounded, active = orange */
 .tabbar {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  bottom: calc(var(--sab) + 12px);
   width: calc(100% - 24px); max-width: 456px; z-index: 60;
   display: grid; grid-template-columns: repeat(5, 1fr);
   height: var(--tabbar-h);
@@ -166,6 +172,21 @@
   border-radius: 4px;
   box-shadow: var(--shadow-card);
 }
+/* Android edge-to-edge puts the system navigation on top of the page, so the
+   strip under the floating tab bar was transparent: text scrolled through the
+   gap and on behind the back and home buttons. This paints it in the page
+   colour, from the bottom of the screen up to the bar's lower edge. Below the
+   bar (60) and above everything else, and never intercepts a tap. */
+.app::after {
+  content: '';
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--sab) + 12px);
+  background: var(--color-cream);
+  z-index: 55;
+  pointer-events: none;
+}
+
 .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 7px 3px; color: var(--color-ash); text-decoration: none; border-radius: 4px; transition: background 0.15s ease, color 0.15s ease; }
 .tab__glyph { font-size: 21px; line-height: 1; }
 .tab__label { font-family: var(--font-display); font-size: 10px; font-weight: var(--weight-bold); letter-spacing: 0.01em; }
@@ -192,5 +213,5 @@
 .vpane--playing { cursor: default; }
 
 /* Centered auth layout */
-.auth { display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: calc(40px + env(safe-area-inset-top, 0px)) var(--edge-pad) 40px; }
+.auth { display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: calc(40px + var(--sat)) var(--edge-pad) 40px; }
 .loading { font-family: var(--font-display); font-size: 13px; font-weight: var(--weight-medium); letter-spacing: 0.02em; color: var(--color-ash); padding: 24px var(--edge-pad); }

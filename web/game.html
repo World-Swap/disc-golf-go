@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#f7f4ef" />
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w7" />
-  <link rel="stylesheet" href="/styles/app.css?v=w7" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w7" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w8" />
+  <link rel="stylesheet" href="/styles/app.css?v=w8" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w8" />
   <style>
     /* The game owns the whole screen: no page scroll, canvas sized to the
        viewport. Everything here is scoped to this page. */
@@ -17,6 +17,10 @@
     body { background: #f7f4ef; }
     /* The game owns the screen, so the app's tab-bar gutter is given back. */
     .app { padding-bottom: 0 !important; }
+    /* No tab bar here, so the bottom band only has to cover the system
+       navigation itself — the 12px it adds elsewhere is the floating bar's
+       gap, which this page does not have. */
+    .app::after { height: var(--sab); }
     .g-wrap { position: relative; width: 100%; max-width: 520px; margin: 0 auto;
               background: #f7f4ef; user-select: none; padding: 0 0 6px; }
 
@@ -99,7 +103,7 @@
 
   </main>
 
-  <script src="/js/app.js?v=w7"></script>
+  <script src="/js/app.js?v=w8"></script>
   <script>
   (function () {
     'use strict';
@@ -132,7 +136,11 @@
       var chrome = (hud ? hud.offsetHeight : 60) + (bag ? bag.offsetHeight : 60) +
                    (msg ? msg.offsetHeight : 58) + (bar ? bar.offsetHeight : 44) +
                    (how && !how.hidden ? how.offsetHeight : 0) + 14;
-      var h = Math.max(240, window.innerHeight - chrome);
+      // The system navigation overlaps the bottom of the viewport on Android,
+      // so that strip is not ours to draw in: without this the message line
+      // sits behind the back and home buttons.
+      var sab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0;
+      var h = Math.max(240, window.innerHeight - chrome - sab);
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = w * dpr; cv.height = h * dpr;
       cv.style.height = h + 'px';
