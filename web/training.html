@@ -137,7 +137,7 @@
         } else if (cb.body || cb.text) {
           out = '<div class="card"><p style="font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--color-frost)">' + esc(cb.body || cb.text) + '</p></div>';
         } else if (Array.isArray(cb.tips || cb.points)) {
-          out = '<div class="rows">' + (cb.tips || cb.points).map(function (t) { return '<div class="row"><span class="row__glyph">·</span><div class="row__body"><div class="row__sub" style="text-transform:none;letter-spacing:0;font-size:16px;line-height:1.5;color:var(--color-ink)">' + esc(t) + '</div></div></div>'; }).join('') + '</div>';
+          out = '<div class="rows">' + (cb.tips || cb.points).map(function (t) { return '<div class="row"><span class="row__glyph">▸</span><div class="row__body"><div class="row__sub" style="text-transform:none;letter-spacing:0;font-size:16px;line-height:1.5;color:var(--color-ink)">' + esc(t) + '</div></div></div>'; }).join('') + '</div>';
         }
         return out;
       }

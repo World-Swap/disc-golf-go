@@ -49,6 +49,14 @@
 
     /* Prompt / result banner under the field */
     .g-msg { min-height: 58px; padding: 10px 16px 14px; text-align: center; }
+    .g-how { list-style: none; margin: 0 16px 14px; padding: 12px 14px; display: grid; gap: 7px;
+             background: #f7f4ef; border: 1px solid #e6dfd5; border-radius: 14px; }
+    /* `display: grid` outranks the UA's `[hidden] { display: none }`, so the
+       strip stayed on screen through the round until this said otherwise. */
+    .g-how[hidden] { display: none; }
+    .g-how li { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: #4a443d; }
+    .g-how b { flex: none; width: 19px; height: 19px; border-radius: 50%; background: #fc6414;
+               color: #fff; font-size: 11px; display: grid; place-items: center; }
     .g-msg__big { font-family: var(--font-display, system-ui); font-weight: 800;
                   font-size: 17px; color: #202020; }
     .g-msg__sub { font-size: 13px; color: #6d655c; margin-top: 3px; }
@@ -79,6 +87,14 @@
         <div class="g-msg__big" id="msg-big">Tap to start your power</div>
         <div class="g-msg__sub" id="msg-sub">Stop the bar high for distance — but don't overpower the disc</div>
       </div>
+
+      <!-- Every throw is the same three taps. Shown on the picker, because
+           nothing else on screen says how the game is actually played. -->
+      <ol class="g-how" id="how" hidden>
+        <li><b>1</b> Tap to start the power bar</li>
+        <li><b>2</b> Tap again to lock your power</li>
+        <li><b>3</b> Tap to set your angle — then watch the fade</li>
+      </ol>
     </div>
 
   </main>
@@ -112,8 +128,10 @@
       var bag = document.getElementById('bag');
       var msg = document.querySelector('.g-msg');
       var bar = document.querySelector('.g-top');
+      var how = document.getElementById('how');
       var chrome = (hud ? hud.offsetHeight : 60) + (bag ? bag.offsetHeight : 60) +
-                   (msg ? msg.offsetHeight : 58) + (bar ? bar.offsetHeight : 44) + 14;
+                   (msg ? msg.offsetHeight : 58) + (bar ? bar.offsetHeight : 44) +
+                   (how && !how.hidden ? how.offsetHeight : 0) + 14;
       var h = Math.max(240, window.innerHeight - chrome);
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = w * dpr; cv.height = h * dpr;
@@ -238,6 +256,8 @@
     }
 
     function newHole() {
+      var how = document.getElementById('how');
+      if (how && !how.hidden) { how.hidden = true; setTimeout(resize, 0); }
       var h = COURSE ? COURSE.holes[S.hole - 1] : null;
       S.holeLen = h ? h.feet : Math.round(230 + Math.random() * 200);
       S.par = h ? h.par : 3;
@@ -575,7 +595,7 @@
     // --------------------------------------------------------------- chrome
     function hud() {
       var where = document.getElementById('where');
-      if (where) where.textContent = COURSE ? COURSE.name : 'Quick round';
+      if (where) where.textContent = COURSE ? COURSE.name : 'Throw Lab · quick round';
       document.getElementById('h-hole').textContent = S.hole;
       document.getElementById('h-par').textContent = S.par;
       document.getElementById('h-throws').textContent = S.throws;
@@ -626,6 +646,8 @@
       S.phase = 'choose';
       pickArt();          // show the hole you are about to play, not a blank field
       hud();
+      var how = document.getElementById('how');
+      if (how) how.hidden = false;
       bag.innerHTML = lengths.map(function (n) {
         return '<button class="g-disc" data-len="' + n + '"><div class="g-disc__n">' + n + '</div>' +
                '<div class="g-disc__f">holes</div></button>';
@@ -645,7 +667,7 @@
 
       if (!courseId) {
         if (QUICK_LENGTHS.indexOf(asked) !== -1) { HOLES = asked; newHole(); return; }
-        askLength(QUICK_LENGTHS, 'Quick round — no course, just throws', function (n) {
+        askLength(QUICK_LENGTHS, 'A throwing game — no real course needed', function (n) {
           HOLES = n; newHole();
         });
         return;
@@ -658,7 +680,7 @@
         document.title = COURSE.name + ' · Disc Golf Go';
         var start = function (n) { HOLES = n; layoutCourse(n); newHole(); };
         if (COURSE_LENGTHS.indexOf(asked) !== -1) return start(asked);
-        askLength(COURSE_LENGTHS, COURSE.name, start);
+        askLength(COURSE_LENGTHS, COURSE.name + ' — its real holes, played in the game', start);
       }).catch(function () {
         // Offline or a bad id — still give the player a round to throw.
         say('Could not load that course', 'Playing a quick round instead');
