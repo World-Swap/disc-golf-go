@@ -27,6 +27,7 @@
       <div class="segbar" id="boards">
         <button class="seg" data-board="training" aria-selected="true">Training</button>
         <button class="seg" data-board="game">Throw Lab</button>
+        <button class="seg" data-board="tournament">Tournament</button>
       </div>
       <div class="segbar" id="tabs">
         <button class="seg" data-tab="overall" aria-selected="true">XP</button>
@@ -56,11 +57,15 @@
       // 3-hole and 18-hole rounds in a way raw score is not.
       var PERIODS = {
         training: [['alltime', 'All-time'], ['week', 'Week'], ['month', 'Month']],
-        game: [['daily', 'Today'], ['weekly', 'Week'], ['monthly', 'Month'], ['lifetime', 'All-time']]
+        game: [['daily', 'Today'], ['weekly', 'Week'], ['monthly', 'Month'], ['lifetime', 'All-time']],
+        // The tournament is always this week's, so there is nothing to pick.
+        tournament: []
       };
 
       function paintPeriods() {
         var list = PERIODS[state.board];
+        document.getElementById('periods').style.display = list.length ? '' : 'none';
+        if (!list.length) { document.getElementById('periods').innerHTML = ''; return; }
         if (list.every(function (x) { return x[0] !== state.period; })) state.period = list[0][0];
         document.getElementById('periods').innerHTML = list.map(function (x) {
           return '<button class="seg" data-period="' + x[0] + '" aria-selected="' +
@@ -104,6 +109,27 @@
         board.className = 'loading'; board.textContent = 'Loading…';
         try {
           var rows;
+          if (state.board === 'tournament') {
+            var t = await API.get('/tournament');
+            var me = t.me || {};
+            rows = (t.leaderboard || []).map(function (p) {
+              return row(p.rank, p.name, 'through ' + t.holes + ' holes',
+                fmtVs(p.vs_par), me.place != null && p.rank === me.place);
+            }).join('');
+            // The course and what's left of the week belong above the field.
+            document.getElementById('period-pill').textContent = t.week_key;
+            board.className = '';
+            board.innerHTML =
+              '<div class="card" style="margin-bottom:12px"><p class="card__eyebrow">This week</p>' +
+                '<div class="row__title" style="font-size:18px;margin:4px 0 2px">' + esc(t.course.name) + '</div>' +
+                '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + t.holes +
+                  ' holes · ' + t.players + ' player' + (t.players === 1 ? '' : 's') +
+                  (me.used != null ? ' · you have used ' + me.used + ' of ' + t.max_entries + ' entries' : '') +
+                '</div></div>' +
+              (rows ? '<div class="rows">' + rows + '</div>'
+                    : '<div class="loading">No scores posted yet — play the tournament from the Play tab.</div>');
+            return;
+          }
           if (state.board === 'game') {
             var g = await API.get('/game/leaderboard?period=' + state.period);
             rows = (g.players || []).map(function (p) {

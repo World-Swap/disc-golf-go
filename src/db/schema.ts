@@ -663,6 +663,45 @@ CREATE TABLE IF NOT EXISTS player_game_challenges (
 );
 CREATE INDEX IF NOT EXISTS idx_pgc_player ON player_game_challenges(player_id, completed_at DESC);
 
+-- One tournament per ISO week. The course is drawn at random the first time a
+-- week is asked for and then fixed, so everyone that week plays the same 18
+-- holes — a tournament where players got different courses would not be one.
+-- course_name is denormalised: the course row can go (the placeholder prune
+-- deletes rows), and a past tournament still has to say where it was played.
+CREATE TABLE IF NOT EXISTS tournaments (
+  id SERIAL PRIMARY KEY,
+  week_key TEXT NOT NULL UNIQUE,
+  course_id INTEGER REFERENCES courses(id) ON DELETE SET NULL,
+  course_name TEXT NOT NULL,
+  holes INTEGER NOT NULL DEFAULT 18,
+  starts_at TIMESTAMPTZ NOT NULL,
+  ends_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- One row per attempt, written when the round STARTS. That is the whole point:
+-- an entry is spent the moment it begins, so walking away from a bad round
+-- costs it. Without that a player could restart until they liked the score.
+-- status: in_progress -> completed (a score) or abandoned (left, no score).
+CREATE TABLE IF NOT EXISTS tournament_entries (
+  id SERIAL PRIMARY KEY,
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  attempt INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'in_progress',
+  par INTEGER,
+  strokes INTEGER,
+  vs_par INTEGER,
+  game_round_id INTEGER REFERENCES game_rounds(id) ON DELETE SET NULL,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
+  UNIQUE (tournament_id, player_id, attempt)
+);
+CREATE INDEX IF NOT EXISTS idx_tourn_entries_board
+  ON tournament_entries(tournament_id, vs_par, completed_at);
+CREATE INDEX IF NOT EXISTS idx_tourn_entries_player
+  ON tournament_entries(player_id, tournament_id);
+
 CREATE TABLE IF NOT EXISTS scorecard_holes (
   id SERIAL PRIMARY KEY,
   scorecard_id INTEGER NOT NULL REFERENCES scorecards(id) ON DELETE CASCADE,

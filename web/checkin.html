@@ -21,6 +21,32 @@
                 align-items: center; padding: 9px 10px; line-height: 1.25; }
     .pick-btn b { font-size: 12px; }
     .pick-btn small { font-size: 10px; opacity: .72; font-weight: 500; }
+    /* Weekly tournament. Dark like the artcards so it reads as an event
+       rather than another row, with the entries spent shown as pips. */
+    .trn { background: #16130f; color: #f7f4ef; border-radius: 18px; padding: 18px; }
+    .trn__top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .trn__eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #fc6414; font-weight: 700; }
+    .trn__ends { font-size: 11px; color: rgba(247,244,239,.6); }
+    .trn__course { font-family: var(--font-display, system-ui); font-weight: 800; font-size: 22px;
+                   line-height: 1.2; margin: 6px 0 2px; }
+    .trn__sub { font-size: 12.5px; color: rgba(247,244,239,.72); line-height: 1.5; }
+    .trn__stats { display: flex; gap: 18px; margin: 14px 0 4px; }
+    .trn__stat b { display: flex; align-items: center; height: 25px;
+                   font-family: var(--font-display, system-ui); font-size: 19px; }
+    .trn__stat span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(247,244,239,.55); }
+    /* The pips sit where a stat's number goes, so they take that line's height
+       and the label below stays on the same baseline as the other stats. */
+    .trn__pips { display: flex; align-items: center; gap: 5px; height: 25px; }
+    .trn__pip { display: block; width: 20px; height: 6px; border-radius: 3px; background: rgba(247,244,239,.22); }
+    .trn__pip[data-used="1"] { background: #fc6414; }
+    .trn__warn { font-size: 11.5px; color: rgba(247,244,239,.6); margin-top: 10px; line-height: 1.5; }
+    .trn__board { margin-top: 14px; border-top: 1px solid rgba(247,244,239,.14); padding-top: 10px; }
+    .trn__row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+    .trn__row[data-me="1"] { color: #fc6414; font-weight: 700; }
+    .trn__rank { width: 20px; color: rgba(247,244,239,.5); font-size: 12px; }
+    .trn__row[data-me="1"] .trn__rank { color: #fc6414; }
+    .trn__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .trn__score { font-family: var(--font-display, system-ui); font-weight: 700; }
   </style>
 </head>
 <body>
@@ -34,6 +60,8 @@
            game on the phone, a scorecard is a real round at a real course. -->
       <p class="play-intro">Two ways to play — a <b>throwing game</b> you play here on
         your phone, or a <b>scorecard</b> for a round you're playing for real.</p>
+
+      <div id="tournament"></div>
 
       <a class="artcard" href="/game" style="--art:url('/img/cards/throw-lab.webp')">
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
@@ -99,6 +127,95 @@
       var RADIUS = 800;
 
       function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m'; }
+
+      // ---------------------------------------------------------- tournament
+      // One course a week for everyone, 18 holes, two attempts. An attempt is
+      // spent the moment it starts, so the button says so plainly and asks
+      // before taking one — a player who finds that out by losing an entry
+      // has a fair complaint.
+      function fmtVs(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : String(n)); }
+
+      function endsIn(iso) {
+        var ms = Date.parse(iso) - Date.now();
+        if (!(ms > 0)) return 'ends soon';
+        var days = Math.floor(ms / 86400000), hrs = Math.floor(ms / 3600000) % 24;
+        if (days >= 1) return days + 'd ' + hrs + 'h left';
+        var mins = Math.floor(ms / 60000) % 60;
+        return hrs + 'h ' + mins + 'm left';
+      }
+
+      function paintTournament(t) {
+        var box = document.getElementById('tournament');
+        if (!box) return;
+        var me = t.me || { used: 0, remaining: t.max_entries, entries: [], best: null, place: null, open_entry_id: null };
+        var pips = '';
+        for (var i = 0; i < t.max_entries; i++) {
+          pips += '<span class="trn__pip" data-used="' + (i < me.used ? 1 : 0) + '"></span>';
+        }
+
+        var action;
+        if (me.open_entry_id) {
+          action = '<a class="btn btn--block" href="/game?entry=' + me.open_entry_id + '">Finish your round →</a>';
+        } else if (me.remaining > 0) {
+          action = '<button class="btn btn--block" id="trn-start">Start entry ' + (me.used + 1) +
+                   ' of ' + t.max_entries + ' →</button>';
+        } else {
+          action = '<button class="btn btn--block" disabled>Both entries used — resets Monday</button>';
+        }
+
+        var board = '';
+        if (t.leaderboard && t.leaderboard.length) {
+          board = '<div class="trn__board">' + t.leaderboard.slice(0, 5).map(function (r) {
+            return '<div class="trn__row" data-me="' + (me.place && r.rank === me.place ? 1 : 0) + '">' +
+              '<span class="trn__rank">' + r.rank + '</span>' +
+              '<span class="trn__name">' + esc(r.name) + '</span>' +
+              '<span class="trn__score">' + fmtVs(r.vs_par) + '</span></div>';
+          }).join('') + '</div>';
+        }
+
+        box.innerHTML =
+          '<div class="trn">' +
+            '<div class="trn__top"><span class="trn__eyebrow">Weekly tournament</span>' +
+              '<span class="trn__ends">' + esc(endsIn(t.ends_at)) + '</span></div>' +
+            '<div class="trn__course">' + esc(t.course.name) + '</div>' +
+            '<div class="trn__sub">' + t.holes + ' holes · everyone plays the same course this week</div>' +
+            '<div class="trn__stats">' +
+              '<div class="trn__stat"><b>' + (me.best ? fmtVs(me.best.vs_par) : '—') + '</b><span>Your best</span></div>' +
+              '<div class="trn__stat"><b>' + (me.place ? '#' + me.place : '—') + '</b><span>Place</span></div>' +
+              '<div class="trn__stat"><b>' + t.players + '</b><span>Players</span></div>' +
+              '<div class="trn__stat"><span class="trn__pips">' + pips + '</span><span>Entries</span></div>' +
+            '</div>' +
+            board +
+            '<div style="margin-top:12px">' + action + '</div>' +
+            '<p class="trn__warn">Two entries a week. An entry is used the moment the round starts — ' +
+              'if you quit part-way it still counts, so play it out.</p>' +
+          '</div>';
+
+        var start = document.getElementById('trn-start');
+        if (start) {
+          start.addEventListener('click', function () {
+            if (!window.confirm('Start entry ' + (me.used + 1) + ' of ' + t.max_entries + ' at ' + t.course.name +
+                '?\n\nThis uses one entry. If you leave before finishing all ' + t.holes +
+                ' holes, the entry is still used.')) return;
+            start.disabled = true; start.textContent = 'Starting…';
+            API.post('/tournament/entries').then(function (r) {
+              location.href = '/game?entry=' + r.entry.id;
+            }).catch(function (e) {
+              start.disabled = false; start.textContent = 'Start entry →';
+              box.insertAdjacentHTML('afterbegin', '<div class="error">' + esc(e.message || 'Could not start') + '</div>');
+              loadTournament();
+            });
+          });
+        }
+      }
+
+      function loadTournament() {
+        API.get('/tournament').then(paintTournament).catch(function () {
+          var box = document.getElementById('tournament');
+          if (box) box.innerHTML = '';     // never block the rest of Play
+        });
+      }
+      loadTournament();
 
       // Throw Lab challenges: what's live today, this week, this month and for
       // good. Progress comes from the rounds you've actually played.

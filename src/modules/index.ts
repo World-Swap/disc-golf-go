@@ -38,6 +38,9 @@ import { createOnboardingRouter } from './onboarding/onboarding.routes';
 import { createGameRepo } from './game/game.repo';
 import { createGameService } from './game/game.service';
 import { createGameRouter } from './game/game.routes';
+import { createTournamentRepo } from './tournament/tournament.repo';
+import { createTournamentService } from './tournament/tournament.service';
+import { createTournamentRouter } from './tournament/tournament.routes';
 import { createScorecardsRepo } from './scorecards/scorecards.repo';
 import { createScorecardsService } from './scorecards/scorecards.service';
 import { createScorecardsRouter } from './scorecards/scorecards.routes';
@@ -91,6 +94,16 @@ export function createApiRouter(db: Database): Router {
     saveBadge: (client, playerId, badge) => checkinsRepoForGame.insertBadge(client, playerId, badge.category, badge.tier),
   });
   api.use(createGameRouter(gameService, auth, optAuth));
+
+  // The tournament scores through the game service rather than repeating its
+  // validation, XP cap and challenge settlement: a tournament round is a Throw
+  // Lab round that also counts for the week's board.
+  const tournamentService = createTournamentService({
+    db,
+    repo: createTournamentRepo(db),
+    submitRound: (playerId, input) => gameService.submit(playerId, input),
+  });
+  api.use(createTournamentRouter(tournamentService, auth, optAuth));
 
   const scorecardsService = createScorecardsService({ repo: createScorecardsRepo(db) });
   api.use(createScorecardsRouter(scorecardsService, auth));
