@@ -10,7 +10,8 @@ import { isPlaceholderCourseName } from './data/placeholder-names';
 
 // Bump when the seeded content below changes so a deploy re-seeds. v1 was the
 // initial placeholder; v2 the full legacy library (71 lessons / 671 courses);
-// v3 expands courses to 1,900+ (curated set + all named US courses from OSM).
+// v3 expands courses to the curated set plus all named US courses from OSM;
+// the placeholder prune then removes the tee/basket rows, leaving ~1,530.
 export const CONTENT_VERSION = 15;
 
 // Clears the fully-replaceable content tables before a re-seed (leaves

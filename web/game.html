@@ -233,7 +233,7 @@
     }
 
     // Build a playable round from whatever the course record actually has.
-    // hole_details is free-form JSONB across 3,550 courses, so read it
+    // hole_details is free-form JSONB across every course, so read it
     // defensively and fall back to par-shaped holes rather than trusting it.
     function buildCourse(c) {
       var count = Math.min(parseInt(c.holes, 10) || 18, 18);
