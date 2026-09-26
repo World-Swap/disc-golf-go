@@ -11,6 +11,17 @@
   <link rel="stylesheet" href="/styles/tokens.css?v=w6" />
   <link rel="stylesheet" href="/styles/app.css?v=w6" />
   <link rel="stylesheet" href="/styles/app-ui.css?v=w6" />
+  <style>
+    /* The line that tells you what this page offers before you tap anything. */
+    .play-intro { margin: -4px 0 2px; font-size: 13px; line-height: 1.5; color: #6d655c; }
+    .play-intro b { color: #202020; }
+    /* Two-line buttons: what it is, and what it does. Stacked so the label
+       reads at a glance instead of "Scorecard" vs "Play in Throw Lab". */
+    .pick-btn { flex: 1; display: flex; flex-direction: column; gap: 2px;
+                align-items: center; padding: 9px 10px; line-height: 1.25; }
+    .pick-btn b { font-size: 12px; }
+    .pick-btn small { font-size: 10px; opacity: .72; font-weight: 500; }
+  </style>
 </head>
 <body>
   <main class="app">
@@ -18,12 +29,19 @@
     <div class="screen stack">
       <div><p class="section-label">Apply your training</p><h1 class="h-display">PLAY<span class="mark" style="width:30%"></span></h1></div>
 
+      <!-- Two different things live on this page and players kept confusing
+           them, so each one says what it actually is up front: Throw Lab is a
+           game on the phone, a scorecard is a real round at a real course. -->
+      <p class="play-intro">Two ways to play — a <b>throwing game</b> you play here on
+        your phone, or a <b>scorecard</b> for a round you're playing for real.</p>
+
       <a class="artcard" href="/game" style="--art:url('/img/cards/throw-lab.webp')">
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
         <span class="artcard__body">
-          <span class="artcard__eyebrow">Throw Lab</span>
+          <span class="artcard__eyebrow">Throw Lab · game</span>
           <span class="artcard__title">Play a quick round →</span>
-          <span class="artcard__sub">3, 6 or 9 holes · shape the line, read the fade</span>
+          <span class="artcard__sub">Tap for power, tap for your angle. 3, 6 or 9 holes,
+            no course needed — earns XP.</span>
         </span>
       </a>
 
@@ -31,7 +49,8 @@
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
         <span class="artcard__body" style="max-width:100%">
           <span class="artcard__eyebrow">Pick a course</span>
-          <span class="artcard__title" style="font-size:18px">Play any course →</span>
+          <span class="artcard__title" style="font-size:18px">Play a real course →</span>
+          <span class="artcard__sub">Its real holes and lengths — in the game, or on a scorecard.</span>
         </span>
       </div>
 
@@ -45,8 +64,10 @@
           <select class="input" id="course"></select>
         </label>
         <div id="picked" style="display:none;gap:8px;margin-top:4px">
-          <a class="btn btn--ghost" id="pick-card" style="flex:1;padding:11px 12px;font-size:11px" href="#">Scorecard</a>
-          <a class="btn" id="pick-play" style="flex:1;padding:11px 12px;font-size:11px" href="#">Play in Throw Lab</a>
+          <a class="btn btn--ghost pick-btn" id="pick-card" href="#">
+            <b>Scorecard</b><small>Keep score for real</small></a>
+          <a class="btn pick-btn" id="pick-play" href="#">
+            <b>Throw Lab</b><small>Play it as a game</small></a>
         </div>
       </div>
 
@@ -120,8 +141,8 @@
         document.getElementById('loc').textContent = label;
         list.className = 'screen';
         list.innerHTML = '<p class="row__sub" style="text-transform:none;letter-spacing:0">' +
-          'Location is off, so check-in is unavailable. Search above to keep a scorecard ' +
-          'or play any course in Throw Lab.</p>';
+          'Location is off, so check-in is unavailable. Everything else still works — ' +
+          'pick any course above to keep a scorecard, or play its holes in the Throw Lab game.</p>';
       }
 
       if (!navigator.geolocation) { noGps('No GPS'); }
@@ -239,8 +260,10 @@
           '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
           '<div class="row__sub">' + bits.filter(Boolean).join(' · ') + '</div></div>' + action +
           '<div style="display:flex;gap:8px;width:100%;margin:10px 0 2px 34px">' +
-            '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/scorecard?course=' + c.id + '">Scorecard</a>' +
-            '<a class="btn btn--ghost" style="padding:9px 12px;font-size:10px;flex:1" href="/game?course=' + c.id + '">Play in Throw Lab</a>' +
+            '<a class="btn btn--ghost pick-btn" href="/scorecard?course=' + c.id + '">' +
+              '<b>Scorecard</b><small>Keep score for real</small></a>' +
+            '<a class="btn btn--ghost pick-btn" href="/game?course=' + c.id + '">' +
+              '<b>Throw Lab</b><small>Play it as a game</small></a>' +
           '</div></div>';
       }
 

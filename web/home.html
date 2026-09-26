@@ -119,9 +119,9 @@
           '<a class="artcard" href="/game" style="--art:url(\'/img/cards/throw-lab.webp\')">' +
             '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
             '<span class="artcard__body">' +
-              '<span class="artcard__eyebrow">Throw Lab</span>' +
+              '<span class="artcard__eyebrow">Throw Lab · game</span>' +
               '<span class="artcard__title">Play a quick round →</span>' +
-              '<span class="artcard__sub">3, 6 or 9 holes · shape the line, read the fade</span>' +
+              '<span class="artcard__sub">Tap for power, tap for your angle. 3, 6 or 9 holes — earns XP.</span>' +
             '</span>' +
           '</a>' +
 
@@ -180,10 +180,21 @@
           // A thumbnail that won't load would otherwise sit there as a black
           // rectangle. Drop that slide instead, and hide the whole section if
           // none of them load at all.
+          //
+          // Each handler holds its own slide and dot rather than an index into
+          // the list. The lists are re-queried after every removal, so a
+          // captured index goes stale the moment one slide goes: the second
+          // failure removed the wrong slide, and the last one indexed past the
+          // end and threw. Every thumbnail fails at once behind an ad blocker
+          // or on a locked-down network, which is exactly when this runs.
           var alive = slides.length;
-          box.querySelectorAll('.slide img').forEach(function (img, i) {
+          Array.prototype.forEach.call(slides, function (slide, i) {
+            var img = slide.querySelector('img');
+            var dot = dots[i];
+            if (!img) return;
             img.addEventListener('error', function () {
-              slides[i].remove(); dots[i].remove();
+              slide.remove();
+              if (dot) dot.remove();
               if (--alive <= 0) { stop(); box.innerHTML = ''; return; }
               slides = box.querySelectorAll('.slide');
               dots = box.querySelectorAll('.dot');

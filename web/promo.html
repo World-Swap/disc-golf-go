@@ -8,7 +8,7 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <meta name="description" content="Disc Golf Go: learn from 13 of the world's top touring pros across 134 video lessons. Earn XP, climb the ranks, and check in at 1,900+ real courses. Free to start." />
+  <meta name="description" content="Disc Golf Go: learn from 13 of the world's top touring pros across 134 video lessons, play the built-in Throw Lab disc golf game, earn XP and check in at 1,500+ real courses. Free to start." />
   <link rel="canonical" href="https://discgolfgo.com/" />
 
   <!-- Open Graph (Facebook, iMessage, Slack, LinkedIn) -->
@@ -52,7 +52,7 @@
         "name": "Disc Golf Go",
         "operatingSystem": "iOS, Android",
         "applicationCategory": "SportsApplication",
-        "description": "A disc golf training app: 134 video lessons coached by 13 touring pros, XP progression, a daily challenge, and check-ins at 1,900+ real courses.",
+        "description": "A disc golf training app: 134 video lessons coached by 13 touring pros, the Throw Lab throwing game, XP progression, a daily challenge, and check-ins at 1,500+ real courses.",
         "url": "https://discgolfgo.com/",
         "downloadUrl": [
           "https://apps.apple.com/us/app/disc-golf-go/id6768128686",
@@ -87,6 +87,20 @@
     .shot__cap{font-size:14px;line-height:1.45;color:var(--color-ash);text-align:center;}
     .shot__cap b{color:var(--color-ink);font-weight:700;}
     @media(max-width:780px){.shots{grid-template-columns:1fr;gap:34px;max-width:340px;}}
+    /* Throw Lab: the in-app game — a phone shot beside what it actually does. */
+    .glab{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:48px;
+      align-items:center;max-width:940px;margin:0 auto;}
+    .glab__shot{margin:0;}
+    .glab__shot img{width:100%;height:auto;display:block;border-radius:18px;
+      border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.28);}
+    .glab__list{list-style:none;margin:0;padding:0;display:grid;gap:20px;}
+    .glab__list li{font-size:15px;line-height:1.6;color:rgba(247,243,236,.74);}
+    .glab__list b{display:block;font-family:var(--font-display);font-weight:700;
+      font-size:16px;color:var(--color-cream,#f7f3ec);margin-bottom:4px;}
+    /* The shot is a tall 520x1125 phone screen — at full column width on a
+       phone it fills the viewport on its own, so cap it and centre it. */
+    @media(max-width:780px){.glab{grid-template-columns:1fr;gap:26px;max-width:420px;}
+      .glab__shot{max-width:240px;margin:0 auto;}}
     /* FAQ accordion + guide cards */
     .faqlist{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
     .faq{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:16px;padding:0 22px;box-shadow:0 6px 16px rgba(43,38,34,.05);}
@@ -108,7 +122,7 @@
 <body>
   <!-- Announcement bar -->
   <div class="banner-wrap">
-    <div class="banner"><b>13 touring pros</b> <span class="dot">•</span> <b>134 lessons</b> <span class="dot">•</span> free to play</div>
+    <div class="banner"><b>13 touring pros</b> <span class="dot">•</span> <b>134 lessons</b> <span class="dot">•</span> <b>Throw Lab game</b> <span class="dot">•</span> free to play</div>
   </div>
 
   <!-- Nav -->
@@ -121,6 +135,7 @@
       <a class="nav__link" href="#pros">The Pros</a>
       <a class="nav__link" href="#learn">Training</a>
       <a class="nav__link" href="#levelup">How it works</a>
+      <a class="nav__link" href="#game">Throw Lab</a>
     </div>
     <a class="btn" href="https://discgolfgo.app/login">Open App</a>
   </nav>
@@ -140,7 +155,8 @@
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">★</span><div><b>Learn from 13 touring pros</b> — <span>Gannon Buhr, Ricky Wysocki, Paul McBeth, Kristin Tattar & more</span></div></li>
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>134 coached lessons</b> — <span>200+ videos across 13 skill paths, each with the key takeaways</span></div></li>
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,900+ courses and apply your training</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,500+ courses and apply your training</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◉</span><div><b>Throw Lab</b> — <span>a disc golf game built in — play a quick round anywhere</span></div></li>
         </ul>
 
         <div class="hero__cta">
@@ -166,15 +182,15 @@
       </div>
       <div class="shots">
         <figure class="shot">
-          <img src="/img/shot-home.png" width="520" height="904" loading="lazy" alt="The Disc Golf Go home screen showing XP progress, the next lesson to continue and today's challenge" />
+          <img src="/img/shot-home.webp" width="520" height="1125" loading="lazy" alt="The Disc Golf Go home screen: a Rookie level 3 XP bar, the next lesson to continue, today's challenge, and the Throw Lab card" />
           <figcaption class="shot__cap"><b>Home</b> — pick up where you left off</figcaption>
         </figure>
         <figure class="shot">
-          <img src="/img/shot-lesson.png" width="520" height="904" loading="lazy" alt="A lesson screen playing a pro coaching video with the key takeaways listed below it" />
+          <img src="/img/shot-lesson.webp" width="520" height="1125" loading="lazy" alt="A lesson screen playing a pro coaching video with the key takeaways listed below it" />
           <figcaption class="shot__cap"><b>Lessons</b> — a pro video plus the key takeaways</figcaption>
         </figure>
         <figure class="shot">
-          <img src="/img/shot-creators.png" width="520" height="904" loading="lazy" alt="The Creators vault listing pro coaches and the videos unlocked so far" />
+          <img src="/img/shot-creators.webp" width="520" height="1125" loading="lazy" alt="The Creators vault listing pro coaches and the videos unlocked so far" />
           <figcaption class="shot__cap"><b>Creators</b> — unlock a pro with every lesson</figcaption>
         </figure>
       </div>
@@ -260,8 +276,37 @@
         <article class="fcard">
           <div class="fcard__ic" aria-hidden="true">◎</div>
           <h3 class="fcard__title">Apply it on course</h3>
-          <p class="fcard__body">Check in at 1,900+ real courses across the country and put your training to work where it counts.</p>
+          <p class="fcard__body">Check in at 1,500+ real courses across the country and put your training to work where it counts.</p>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Throw Lab — the game built into the app -->
+  <section class="sect sect--ink" id="game">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">New · Throw Lab</p>
+        <h2 class="sect__title">There's a disc golf game inside the app.</h2>
+        <p class="sect__lede">Throw Lab is a throwing game you play on your phone. Tap once to start
+          the power bar, tap to lock it, tap to set your angle — then watch the fade bring the disc
+          back, the way a real one does. No course, no GPS, no waiting for the weather.</p>
+      </div>
+      <div class="glab">
+        <figure class="glab__shot">
+          <img src="/img/shot-game.webp" width="520" height="1125" loading="lazy"
+               alt="The Throw Lab game: an aerial view of a tree-lined autumn fairway with the basket at the top, distance bands at 100, 200 and 300 feet, and a putter, mid and driver to choose from." />
+        </figure>
+        <ul class="glab__list">
+          <li><b>Three discs, real flight numbers</b>Putter, mid and driver, each thrown on its own
+            speed, glide, turn and fade — overpower a disc and it turns over, just like it would in your hand.</li>
+          <li><b>21 hand-drawn holes</b>Woods, water, desert, canyon, winter. They're drawn from a
+            shuffled bag, so a round never shows you the same hole twice.</li>
+          <li><b>Or play a real course</b>Pick any of 1,500+ courses and the round is built from its
+            actual holes and lengths — 3, 6, 9, or all 18.</li>
+          <li><b>It counts toward your game</b>Rounds earn XP, drive daily, weekly, monthly and
+            lifetime challenges, and rank you on a Throw Lab leaderboard of its own.</li>
+        </ul>
       </div>
     </div>
   </section>
@@ -302,7 +347,8 @@
         <details class="faq"><summary>How do I get better at disc golf?</summary><p>Improvement comes from structured practice, not just more rounds. Disc Golf Go organizes the game into 13 skill paths — putting, driving, forehand, course strategy, mental game and more — with short video lessons from touring pros so you always know what to work on next.</p></details>
         <details class="faq"><summary>Which pros are featured in the lessons?</summary><p>Lessons are built around instruction from 13 of the world's top touring pros, including Gannon Buhr, Ricky Wysocki, Paul McBeth, Simon Lizotte, Eagle McMahon, Kristin Tattar, Paige Pierce, Scott Stokely, Nate Sexton, Calvin Heimburg, Paul Ulibarri and Isaac Robinson.</p></details>
         <details class="faq"><summary>What disc should a beginner throw?</summary><p>Start with a putter and a lightweight, understable midrange or fairway driver. Lighter, understable plastic is easier to throw straight and flies farther for a new player than a fast, overstable distance driver. See our beginner disc guide for specifics.</p></details>
-        <details class="faq"><summary>Do I need to be at a course to use the app?</summary><p>No. The training lessons work anywhere with no GPS required — practice in your yard or study on the couch. GPS is only used for optional course check-ins when you want to log a round at one of 1,900+ real courses.</p></details>
+        <details class="faq"><summary>Do I need to be at a course to use the app?</summary><p>No. The training lessons work anywhere with no GPS required — practice in your yard or study on the couch, and play a Throw Lab round wherever you are. GPS is only used for optional course check-ins when you want to log a round at one of 1,500+ real courses.</p></details>
+        <details class="faq"><summary>What is Throw Lab?</summary><p>Throw Lab is a disc golf game built into the app. You tap to set your power and your release angle, and the disc flies on its real flight numbers — fade and all. Play a quick 3, 6 or 9-hole round on one of 21 hand-drawn holes, or pick any of 1,500+ real courses and play its actual holes and lengths. Rounds earn XP, advance daily, weekly, monthly and lifetime challenges, and rank you on a Throw Lab leaderboard of its own.</p></details>
         <details class="faq"><summary>How does earning XP work?</summary><p>You earn XP by completing lessons and a rotating daily challenge. XP raises your skill tier and climbs the leaderboard, and finishing a lesson unlocks that pro's video in your Creators vault.</p></details>
       </div>
     </div>
@@ -317,7 +363,8 @@
       {"@type":"Question","name":"How do I get better at disc golf?","acceptedAnswer":{"@type":"Answer","text":"Improvement comes from structured practice, not just more rounds. Disc Golf Go organizes the game into 13 skill paths with short video lessons from touring pros so you always know what to work on next."}},
       {"@type":"Question","name":"Which pros are featured in the lessons?","acceptedAnswer":{"@type":"Answer","text":"Lessons are built around instruction from 13 top touring pros, including Gannon Buhr, Ricky Wysocki, Paul McBeth, Simon Lizotte, Eagle McMahon, Kristin Tattar, Paige Pierce, Scott Stokely, Nate Sexton, Calvin Heimburg, Paul Ulibarri and Isaac Robinson."}},
       {"@type":"Question","name":"What disc should a beginner throw?","acceptedAnswer":{"@type":"Answer","text":"Start with a putter and a lightweight, understable midrange or fairway driver. Lighter, understable plastic is easier to throw straight and flies farther for a new player than a fast, overstable distance driver."}},
-      {"@type":"Question","name":"Do I need to be at a course to use the app?","acceptedAnswer":{"@type":"Answer","text":"No. The training lessons work anywhere with no GPS required. GPS is only used for optional course check-ins when you want to log a round at one of 1,900+ real courses."}},
+      {"@type":"Question","name":"Do I need to be at a course to use the app?","acceptedAnswer":{"@type":"Answer","text":"No. The training lessons work anywhere with no GPS required, and you can play a Throw Lab round wherever you are. GPS is only used for optional course check-ins when you want to log a round at one of 1,500+ real courses."}},
+      {"@type":"Question","name":"What is Throw Lab?","acceptedAnswer":{"@type":"Answer","text":"Throw Lab is a disc golf game built into the Disc Golf Go app. You tap to set your power and your release angle, and the disc flies on its real flight numbers, fade included. Play a quick 3, 6 or 9-hole round on one of 21 hand-drawn holes, or pick any of 1,500+ real courses and play its actual holes and lengths. Rounds earn XP, advance daily, weekly, monthly and lifetime challenges, and rank you on a Throw Lab leaderboard."}},
       {"@type":"Question","name":"How does earning XP work?","acceptedAnswer":{"@type":"Answer","text":"You earn XP by completing lessons and a rotating daily challenge. XP raises your skill tier and climbs the leaderboard, and finishing a lesson unlocks that pro's video in your Creators vault."}}
     ]
   }
