@@ -192,7 +192,7 @@ like with any disc, distance markers every 25 m. Pure feel-building and the defa
 experience. This is where the physics teaches itself.
 
 **Hole Challenge** — a single real hole drawn from the `courses` table, using real par and
-hole count (3,550+ courses, `hole_details` JSONB for per-hole par and distance). Three
+hole count (every course, `hole_details` JSONB for per-hole par and distance). Three
 stars: complete it, make par, make birdie.
 
 **Putting Ladder** — 5 m to 20 m, advancing a step on each make, back two on a miss. Mirrors
@@ -345,6 +345,6 @@ requiring the most course data quality.
 
 ---
 
-*Design grounded in the existing app: 13 training categories, 134 lessons, 3,550+ courses,
+*Design grounded in the existing app: 13 training categories, 134 lessons, 1,500+ courses,
 the XP/tier curve in `src/modules/progression/level.ts`, the gold and vault economy, and
 the brand palette in `web/styles/tokens.css`.*
