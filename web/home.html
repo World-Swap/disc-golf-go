@@ -81,7 +81,7 @@
             '<div class="hbanner__scrim"></div>' +
             '<div class="hbanner__body">' +
               '<div class="hbanner__eyebrow">' + esc(tier) + ' · Level ' + (p.level || 1) + '</div>' +
-              '<div class="hbanner__title">Train today</div>' +
+              '<div class="hbanner__title">Coached by the pros</div>' +
             '</div>' +
           '</div>' +
 
@@ -95,8 +95,9 @@
               '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
               '<span class="artcard__body">' +
                 '<span class="artcard__eyebrow">Continue training</span>' +
-                '<span class="artcard__title">' + esc(next.title) + '</span>' +
-                '<span class="artcard__sub">' + esc(next.category_name || '') + ' →</span>' +
+                '<span class="artcard__title">Train now →</span>' +
+                '<span class="artcard__sub">' + esc(next.title) +
+                  (next.category_name ? '<br>' + esc(next.category_name) : '') + '</span>' +
               '</span>' +
               '<span class="artcard__meta">+' + (next.xp_reward || 0) + ' XP</span>' +
             '</a>'
