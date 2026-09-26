@@ -6,6 +6,7 @@
 import type { PoolClient } from 'pg';
 import { CATEGORIES, LESSONS } from './data/lessons';
 import { COURSES } from './data/courses';
+import { isPlaceholderCourseName } from './data/placeholder-names';
 
 // Bump when the seeded content below changes so a deploy re-seeds. v1 was the
 // initial placeholder; v2 the full legacy library (71 lessons / 671 courses);
@@ -117,10 +118,15 @@ export async function seedDatabase(client: PoolClient): Promise<void> {
     }
   }
 
-  // ── courses (batched multi-row insert; ~1,900 rows) ──
+  // ── courses (batched multi-row insert; ~1,600 rows) ──
+  // The OSM half of the seed includes per-tee and per-basket nodes ("Tee 2 -
+  // Long", "Basket4", "Disc Golf Course"), which are hole designations rather
+  // than courses. Filtering here rather than editing data/courses.ts keeps the
+  // rule in force the next time that auto-generated file is regenerated.
+  const courses = COURSES.filter((c) => !isPlaceholderCourseName(c.name));
   const BATCH = 150;
-  for (let i = 0; i < COURSES.length; i += BATCH) {
-    const slice = COURSES.slice(i, i + BATCH);
+  for (let i = 0; i < courses.length; i += BATCH) {
+    const slice = courses.slice(i, i + BATCH);
     const params: unknown[] = [];
     const rows = slice.map((c, j) => {
       const b = j * 8;

@@ -7,6 +7,7 @@ import type { PoolClient } from 'pg';
 import type { Database } from './types';
 import { SCHEMA_SQL } from './schema';
 import { seedDatabase, CONTENT_VERSION } from './seed';
+import { isPlaceholderCourseName } from './data/placeholder-names';
 
 // One-time (idempotent) repair for completions orphaned by past delete+reinsert
 // reseeds, which churned training_lessons ids. Re-links training_completions to
@@ -51,6 +52,36 @@ async function relinkOrphanedCompletions(client: PoolClient): Promise<void> {
   }
 }
 
+// Removes the per-tee / per-basket rows an earlier OSM seed wrote to `courses`
+// ("Tee 2 - Long", "Hole 10 - Gray", "Basket4", "Disc Golf Course", "Course 1"),
+// which filled the course picker with hole designations instead of courses.
+//
+// The rule lives in one place (data/placeholder-names.ts), so the match is made
+// here in JS over the name list rather than as a second copy of the patterns in
+// SQL. Only the matching ids are deleted, which leaves every real course's id
+// untouched — a full re-seed would renumber them and strip check-ins, reviews
+// and bests of the course they point at. Safe on every boot: once pruned the id
+// list comes back empty and this is a single cheap SELECT.
+export async function pruneUnnamedCourses(client: PoolClient): Promise<void> {
+  const { rows } = await client.query<{ id: number; name: string | null }>(
+    'SELECT id, name FROM courses'
+  );
+  const ids = rows.filter((r) => isPlaceholderCourseName(r.name)).map((r) => r.id);
+  if (!ids.length) return;
+
+  // scorecards cascade on course delete; say so rather than dropping them silently.
+  const cards = await client.query<{ n: string }>(
+    'SELECT COUNT(*)::text AS n FROM scorecards WHERE course_id = ANY($1::int[])',
+    [ids]
+  );
+  const del = await client.query('DELETE FROM courses WHERE id = ANY($1::int[])', [ids]);
+  const lost = Number(cards.rows[0]?.n ?? 0);
+  console.log(
+    `[migrate] pruned ${del.rowCount ?? 0} placeholder courses (tee/basket/hole entries)` +
+      (lost ? `; ${lost} scorecard(s) at them removed` : '')
+  );
+}
+
 export async function runMigrations(db: Database): Promise<void> {
   const client = await db.connect();
   try {
@@ -86,6 +117,13 @@ export async function runMigrations(db: Database): Promise<void> {
       await relinkOrphanedCompletions(client);
     } catch (err) {
       console.error('[migrate] completion re-link skipped:', (err as Error).message);
+    }
+
+    // Drop tee/basket rows an earlier course seed wrote (non-fatal).
+    try {
+      await pruneUnnamedCourses(client);
+    } catch (err) {
+      console.error('[migrate] course prune skipped:', (err as Error).message);
     }
   } finally {
     client.release();
