@@ -8,9 +8,18 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <meta name="description" content="The disc golf training app: 134 pro-coached video lessons, 1,500+ courses, XP, missions and ranks. Turn range reps into lower scores." />
+  <meta name="description" content="The disc golf training app: video lessons coached by touring pros, a throwing game to practise in, and a scorecard for every course worth playing. Free to start." />
   <link rel="stylesheet" href="/styles/tokens.css?v=w7" />
   <link rel="stylesheet" href="/styles/app.css?v=w7" />
+  <style>
+    /* This page is the app's front door, not its brochure. It carries no
+       counts of lessons, courses or pros: the same numbers used to live here
+       and on the .com promo page, and they drifted apart — the course total
+       was corrected in one place and stayed wrong in the other for weeks.
+       The full pitch, with the figures, lives at discgolfgo.com alone. */
+    .front__more { margin-top: 22px; font-size: 14px; color: var(--color-ash, #6d655c); }
+    .front__more a { color: var(--color-orange, #fc6414); font-weight: 700; }
+  </style>
   <!-- The native apps load this page on every cold start. Check for a session
        before anything paints, so a returning player lands in the app instead of
        on the marketing page with a "Log In" button. -->
@@ -18,131 +27,39 @@
   <script>if (window.DGG && DGG.signedIn()) { location.replace('/home'); }</script>
 </head>
 <body>
-  <!-- Announcement bar -->
-  <div class="banner-wrap">
-    <div class="banner"><b>134 lessons</b> <span class="dot">•</span> <b>1,500+ courses</b> <span class="dot">•</span> free to play</div>
-  </div>
-
-  <!-- Nav -->
   <nav class="nav">
     <a class="logo" href="/">
       <span class="logo__glyph" aria-hidden="true"></span>
       Disc Golf Go
     </a>
-    <div class="nav__links">
-      <a class="nav__link" href="#learn">Training</a>
-      <a class="nav__link" href="#play">Courses</a>
-      <a class="nav__link" href="#levelup">Level Up</a>
-    </div>
     <a class="btn" href="/login">Log In</a>
   </nav>
 
-  <!-- Hero -->
   <header class="hero">
     <div class="hero__grid">
       <div class="hero__lead">
-        <span class="eyebrow">Train like a pro · Play anywhere</span>
+        <span class="eyebrow">Coached by the pros</span>
         <h1 class="stacked">
           <span class="stacked__line">Lower your score,</span>
           <span class="stacked__line">one <span class="stacked__line--italic">rep</span> at a time.</span>
         </h1>
-        <p class="hero__sub">The disc golf training app — coached by the pros, built to level up with you.</p>
-
-        <ul class="bullets">
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>Learn from the pros</b> — <span>134 video lessons from touring pros & top disc golf channels</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◆</span><div><b>13 skill paths</b> — <span>driving, putting, approach, forehand, mental game & more</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,500+ courses and apply your training</span></div></li>
-        </ul>
+        <p class="hero__sub">The disc golf training app — video lessons from touring pros, a
+          throwing game to practise in, and a scorecard for every course worth playing.</p>
 
         <div class="hero__cta">
           <a class="btn btn--lg" href="/register">Start Training — Free</a>
           <a class="btn btn--ghost btn--lg" href="/login">Log In</a>
         </div>
+
+        <p class="front__more">New here? <a href="https://discgolfgo.com">See what's inside →</a></p>
       </div>
 
       <div class="hero__media">
         <img src="/img/hero.jpg" alt="An orange disc gliding toward a chain basket at golden hour" />
-        <div class="hero__badge"><b>+50 XP</b> · Lesson complete</div>
       </div>
     </div>
   </header>
 
-  <!-- Skill paths -->
-  <section class="sect sect--peach" id="learn">
-    <div class="sect__inner">
-      <div class="sect__head">
-        <p class="sect__eyebrow">The curriculum</p>
-        <h2 class="sect__title">13 skill paths. 134 coached lessons.</h2>
-        <p class="sect__lede">Every lesson pairs a pro instructional video with the key takeaways and a companion guide — from your first grip to tournament nerves.</p>
-      </div>
-      <div class="numlist">
-        <div class="numrow"><div><div class="numrow__name">Getting Started</div><div class="numrow__meta">New player? Everything for your first round</div></div><span class="numrow__num">7 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Form &amp; Technique</div><div class="numrow__meta">Grip, stance, reach-back, release</div></div><span class="numrow__num">12 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Putting</div><div class="numrow__meta">Circle 1 &amp; 2, routine, drills, nerves</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Driving &amp; Distance</div><div class="numrow__meta">Run-up, timing, power, control</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Approach &amp; Upshots</div><div class="numrow__meta">The 50–150 ft scoring zone</div></div><span class="numrow__num">8 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Forehand / Sidearm</div><div class="numrow__meta">Grip, mechanics, distance, utility</div></div><span class="numrow__num">7 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Disc Selection</div><div class="numrow__meta">Flight numbers, stability, plastics, weight</div></div><span class="numrow__num">13 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Course Strategy</div><div class="numrow__meta">Management, risk/reward, reading wind</div></div><span class="numrow__num">16 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Mental Game</div><div class="numrow__meta">Routine, focus, composure under pressure</div></div><span class="numrow__num">12 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Fitness &amp; Warmup</div><div class="numrow__meta">Mobility, core, power, injury prevention</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Rules &amp; Etiquette</div><div class="numrow__meta">OB, relief, mando, pace of play</div></div><span class="numrow__num">12 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Tournament &amp; Competition</div><div class="numrow__meta">Prep, formats, nerves, bag setup</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Practice &amp; Drills</div><div class="numrow__meta">Field work, drills, filming, pressure</div></div><span class="numrow__num">7 lessons</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Stats -->
-  <section class="sect sect--ink" id="play">
-    <div class="sect__inner">
-      <div class="statsband">
-        <div class="statbig"><div class="statbig__n">134</div><div class="statbig__l">Pro-coached lessons</div></div>
-        <div class="statbig"><div class="statbig__n">1,500+</div><div class="statbig__l">Courses to check in at</div></div>
-        <div class="statbig"><div class="statbig__n">13</div><div class="statbig__l">Skill paths to master</div></div>
-        <div class="statbig"><div class="statbig__n">Free</div><div class="statbig__l">To start playing</div></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <section class="sect sect--cream" id="levelup">
-    <div class="sect__inner">
-      <div class="sect__head">
-        <p class="sect__eyebrow">How it works</p>
-        <h2 class="sect__title">A game that rewards getting better.</h2>
-      </div>
-      <div class="fgrid">
-        <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">▶</div>
-          <h3 class="fcard__title">Watch &amp; learn</h3>
-          <p class="fcard__body">Real coaching from disc golf's best. Every lesson plays the pro video right in the app, with the core tips and a guide to go deeper.</p>
-        </article>
-        <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">▲</div>
-          <h3 class="fcard__title">Earn XP &amp; missions</h3>
-          <p class="fcard__body">Complete lessons and daily challenges to earn XP and gold, rise through skill tiers, and unlock the vault.</p>
-        </article>
-        <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">◎</div>
-          <h3 class="fcard__title">Apply it on course</h3>
-          <p class="fcard__body">Check in at 1,500+ real courses across the country and put your training to work where it counts.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- Final CTA -->
-  <section class="cta-final">
-    <h2 class="sect__title">Ready to level up your game?</h2>
-    <div class="hero__cta" style="justify-content:center">
-      <a class="btn btn--lg" href="/register">Start Training — Free</a>
-      <a class="btn btn--ghost btn--lg" href="/login">Log In</a>
-    </div>
-  </section>
-
-  <!-- Footer -->
   <footer class="foot">
     <div class="foot__inner">
       <span>Disc Golf Go</span>
