@@ -5,6 +5,7 @@ import { createApp } from '../../http/app';
 import { createToken } from '../../middleware/auth';
 import type { Database } from '../../db/types';
 import { periodKey, periodStart, GAME_CHALLENGES } from './game.catalog';
+import { GAME_METRICS } from './game.repo';
 import { VALID_HOLES } from './game.service';
 
 let handler: (sql: string, params?: unknown[]) => { rows: unknown[]; rowCount?: number } = () => ({ rows: [] });
@@ -189,6 +190,69 @@ test('game endpoints', async (t) => {
     const r = await fetch(base + '/api/game/leaderboard?period=fortnightly');
     const j = (await r.json()) as { period: string };
     assert.equal(j.period, 'weekly');
+  });
+
+  // A board is ranked by whatever `?metric=` asks for, so that string decides
+  // an ORDER BY. It must never reach SQL: it only ever selects an entry in
+  // GAME_METRICS, whose fragments are written here in the source.
+  await t.test('every metric ranks by its own column, and says which way is better', async () => {
+    for (const [key, meta] of Object.entries(GAME_METRICS)) {
+      let seen = '';
+      handler = (sql) => {
+        if (/FROM game_rounds g JOIN players/.test(sql)) { seen = sql; return { rows: [] }; }
+        return { rows: [] };
+      };
+      const r = await fetch(base + '/api/game/leaderboard?period=lifetime&metric=' + key);
+      const j = (await r.json()) as { metric: string; metric_label: string; lower_is_better: boolean };
+      assert.equal(j.metric, key);
+      assert.equal(j.metric_label, meta.label);
+      assert.equal(j.lower_is_better, meta.dir === 'ASC', key + ' sorts the right way');
+      assert.ok(seen.includes(meta.expr), key + ' ranks on its own expression');
+      assert.ok(seen.includes(meta.having), key + ' excludes players with none of it');
+    }
+  });
+
+  await t.test('an injected metric selects nothing and never reaches the SQL', async () => {
+    const attack = "xp; DROP TABLE players; --";
+    let seen = '';
+    handler = (sql) => {
+      if (/FROM game_rounds g JOIN players/.test(sql)) { seen = sql; return { rows: [] }; }
+      return { rows: [] };
+    };
+    const r = await fetch(base + '/api/game/leaderboard?metric=' + encodeURIComponent(attack));
+    const j = (await r.json()) as { metric: string };
+    assert.equal(j.metric, 'xp', 'an unknown metric falls back rather than erroring');
+    assert.ok(!seen.includes('DROP'), 'the request string is not in the query');
+  });
+
+  // `is_me` is the only thing that lets a player find their own row on a board
+  // read by name. It was shipped being read by the client and never sent, so
+  // it is pinned here on a row that is deliberately not rank 1.
+  await t.test('is_me marks the caller\'s own row, and nobody\'s when signed out', async () => {
+    handler = (sql) => {
+      if (/FROM game_rounds g JOIN players/.test(sql)) {
+        return { rows: [
+          { id: 7, display_name: 'Ahead', value: 300 },
+          { id: 4, display_name: 'Me',    value: 120 },
+        ] };
+      }
+      return { rows: [] };
+    };
+    const signedIn = await (await fetch(base + '/api/game/leaderboard?period=lifetime', {
+      headers: { Authorization: 'Bearer ' + createToken({ id: 4, player_uuid: 'u4' }) },
+    })).json() as { players: Array<{ id: number; is_me: boolean }> };
+    assert.deepEqual(signedIn.players.map((p) => p.is_me), [false, true], 'the second row is mine');
+
+    const anon = await (await fetch(base + '/api/game/leaderboard?period=lifetime')).json() as
+      { players: Array<{ is_me: boolean }> };
+    assert.deepEqual(anon.players.map((p) => p.is_me), [false, false], 'signed out, no row is mine');
+  });
+
+  await t.test('the metric list a client builds its tabs from matches the boards', async () => {
+    handler = () => ({ rows: [] });
+    const j = (await (await fetch(base + '/api/game/metrics')).json()) as
+      { metrics: Array<{ key: string; label: string }> };
+    assert.deepEqual(j.metrics.map((m) => m.key), Object.keys(GAME_METRICS));
   });
 
   server.close();

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Your record · Disc Golf Go</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w9" />
+  <style>
+    .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+            color: var(--color-ash, #6d655c); text-decoration: none; }
+    /* Stat grid: three to a row, each a number over what it counts. */
+    .sgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+             background: var(--hair, #e4dfd6); border: 1px solid var(--hair, #e4dfd6);
+             border-radius: 4px; overflow: hidden; }
+    .sgrid--2 { grid-template-columns: repeat(2, 1fr); }
+    .stat { background: #fff; padding: 14px 10px; text-align: center; }
+    .stat__n { font-family: var(--font-display, system-ui); font-weight: 800; font-size: 22px;
+               line-height: 1.1; color: #202020; }
+    .stat__n[data-good="1"] { color: #2e7d57; }
+    .stat__n[data-muted="1"] { color: #b5aca1; }
+    .stat__l { font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+               color: #8a8279; margin-top: 5px; line-height: 1.3; }
+    .stat__sub { font-size: 10px; color: #b5aca1; margin-top: 2px; }
+    /* A headline figure that deserves its own row. */
+    .hero-stat { background: #16130f; color: #f7f4ef; border-radius: 4px; padding: 16px 18px; }
+    .hero-stat__l { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #fc6414; font-weight: 700; }
+    .hero-stat__n { font-family: var(--font-display, system-ui); font-weight: 800; font-size: 30px; margin: 4px 0 2px; }
+    .hero-stat__sub { font-size: 12px; color: rgba(247,244,239,.66); line-height: 1.45; }
+    .medal { font-size: 15px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar"><span class="topbar__title">Your record</span><span class="pill" id="xp">—</span></header>
+    <div class="screen stack">
+      <div>
+        <a class="back" href="/checkin">← Play</a>
+        <p class="section-label">Throw Lab &amp; tournaments</p>
+        <h1 class="h-display">RECORD<span class="mark" style="width:28%"></span></h1>
+      </div>
+      <div id="content" class="loading">Loading…</div>
+      <!-- Every number above is also a public board, so the record ends by
+           pointing at the one place it can be compared. -->
+      <a class="row" href="/ranks" style="border:1px solid var(--hair,#e4dfd6);border-radius:4px;background:#fff">
+        <span class="row__glyph">▲</span>
+        <div class="row__body">
+          <div class="row__title">Rankings →</div>
+          <div class="row__sub" style="text-transform:none;letter-spacing:0">See where these numbers place you</div>
+        </div>
+      </a>
+    </div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js?v=w9"></script>
+  <script>
+    (function () {
+      'use strict';
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('play');
+      var esc = DGG.esc, API = DGG.API;
+      var content = document.getElementById('content');
+
+      // A score is only ever shown against par: "E", "-4", "+7". A raw stroke
+      // count means nothing across 3-, 9- and 18-hole rounds.
+      function vs(n) { return n == null ? '—' : n === 0 ? 'E' : (n > 0 ? '+' + n : String(n)); }
+      function num(n) { return n == null ? '—' : String(n); }
+      function stat(n, label, opts) {
+        opts = opts || {};
+        return '<div class="stat"><div class="stat__n"' +
+          (opts.good ? ' data-good="1"' : '') + (opts.muted ? ' data-muted="1"' : '') + '>' +
+          esc(String(n)) + '</div><div class="stat__l">' + esc(label) + '</div>' +
+          (opts.sub ? '<div class="stat__sub">' + esc(opts.sub) + '</div>' : '') + '</div>';
+      }
+      function grid(cells, two) {
+        return '<div class="sgrid' + (two ? ' sgrid--2' : '') + '">' + cells.join('') + '</div>';
+      }
+      function when(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        return isNaN(d) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      Promise.all([
+        API.get('/game/stats').catch(function () { return null; }),
+        API.get('/tournament/career').catch(function () { return null; })
+      ]).then(function (res) {
+        var g = res[0], t = res[1];
+        if (!g && !t) {
+          content.className = 'screen';
+          content.innerHTML = '<div class="error">Could not load your record.</div>';
+          return;
+        }
+        var html = '';
+
+        // ------------------------------------------------------ Throw Lab
+        if (g && g.career) {
+          var c = g.career;
+          document.getElementById('xp').textContent = (c.xp || 0) + ' XP';
+
+          if (c.rounds === 0) {
+            html += '<div class="card"><p class="card__eyebrow">Throw Lab</p>' +
+              '<p class="row__sub" style="text-transform:none;letter-spacing:0;margin-top:8px">' +
+              'No rounds yet. Play one and your record starts here.</p>' +
+              '<a class="btn btn--block" href="/game" style="margin-top:12px">Play a round →</a></div>';
+          } else {
+            if (g.best_round) {
+              var b = g.best_round;
+              html += '<div class="hero-stat">' +
+                '<div class="hero-stat__l">Best round</div>' +
+                '<div class="hero-stat__n">' + esc(vs(b.vs_par)) + '</div>' +
+                '<div class="hero-stat__sub">' + b.holes + ' holes · ' + b.strokes + ' strokes' +
+                  (b.course_name ? ' · ' + esc(b.course_name) : ' · quick round') +
+                  (when(b.created_at) ? ' · ' + esc(when(b.created_at)) : '') +
+                '</div></div>';
+            }
+
+            html += '<div><p class="section-label">Rounds</p>' + grid([
+              stat(c.rounds, 'Rounds played'),
+              stat(c.full_rounds, '18-hole rounds'),
+              stat(c.holes, 'Holes played'),
+              stat(c.courses, 'Courses played'),
+              stat(c.under_par, 'Rounds under par', { good: c.under_par > 0, sub: c.under_par_rate != null ? c.under_par_rate + '% of rounds' : '' }),
+              stat(vs(c.best_full_round), 'Best 18', { good: c.best_full_round != null && c.best_full_round < 0 }),
+            ]) + '</div>';
+
+            html += '<div><p class="section-label">Scoring</p>' + grid([
+              stat(c.aces, 'Aces', { good: c.aces > 0 }),
+              stat(c.eagles, 'Eagles', { good: c.eagles > 0 }),
+              stat(c.birdies, 'Birdies', { good: c.birdies > 0 }),
+              stat(c.birdies_per_round == null ? '—' : c.birdies_per_round, 'Birdies a round'),
+              stat(c.avg_vs_par_per_18 == null ? '—' : vs(c.avg_vs_par_per_18), 'Average per 18'),
+              stat(g.challenges_completed || 0, 'Challenges won'),
+            ]) + '</div>';
+
+            html += '<div><p class="section-label">Time on the course</p>' + grid([
+              stat(c.days_played, 'Days played'),
+              stat(c.course_rounds, 'At a real course'),
+              stat(c.xp, 'XP from play'),
+            ]) + '</div>';
+
+            if (g.top_courses && g.top_courses.length) {
+              html += '<div><p class="section-label">Courses you play most</p><div class="rows">' +
+                g.top_courses.map(function (x) {
+                  return '<div class="row"><span class="row__glyph">◎</span>' +
+                    '<div class="row__body"><div class="row__title">' + esc(x.name) + '</div>' +
+                    '<div class="row__sub">' + (x.state ? esc(x.state) + ' · ' : '') +
+                      x.rounds + (x.rounds === 1 ? ' round' : ' rounds') + '</div></div>' +
+                    '<span class="row__meta">best ' + esc(vs(x.best)) + '</span></div>';
+                }).join('') + '</div></div>';
+            }
+          }
+        }
+
+        // ----------------------------------------------------- tournaments
+        if (t) {
+          var r = t.record, cur = t.current;
+          html += '<div><p class="section-label">Tournaments</p>' + grid([
+            stat(r.played, 'Played', { sub: 'finished weeks' }),
+            stat(r.wins, 'Wins', { good: r.wins > 0 }),
+            stat(r.podiums, 'Podiums', { good: r.podiums > 0 }),
+            stat(r.best_finish == null ? '—' : '#' + r.best_finish, 'Best finish'),
+            stat(vs(r.best_score), 'Best score', { good: r.best_score != null && r.best_score < 0 }),
+            stat(r.avg_finish == null ? '—' : r.avg_finish, 'Average finish'),
+          ]) + '</div>';
+
+          if (cur) {
+            html += '<div class="card" style="margin-top:2px">' +
+              '<p class="card__eyebrow">This week · ' + esc(cur.week_key) + '</p>' +
+              '<div class="row__title" style="font-size:17px;margin:4px 0 2px">' + esc(cur.course.name) + '</div>' +
+              '<div class="row__sub" style="text-transform:none;letter-spacing:0">' +
+                (cur.best ? 'Your best ' + esc(vs(cur.best.vs_par)) + (cur.place ? ' · currently #' + cur.place : '') +
+                            ' · ' : 'No score posted yet · ') +
+                cur.entries_remaining + ' of 2 entries left' +
+              '</div>' +
+              (cur.entries_remaining > 0
+                ? '<a class="btn btn--block" href="/checkin" style="margin-top:12px">Play this week →</a>' : '') +
+              '</div>';
+          }
+
+          // The week still running has its own card above, and a section
+          // called "Past weeks" should not list it.
+          var past = (t.history || []).filter(function (h) { return !h.in_progress; });
+          if (past.length) {
+            html += '<div><p class="section-label">Past weeks</p><div class="rows">' +
+              past.map(function (h) {
+                var medal = h.place === 1 ? '🥇' : h.place === 2 ? '🥈' : h.place === 3 ? '🥉' : '▦';
+                return '<div class="row"><span class="row__glyph">' + medal + '</span>' +
+                  '<div class="row__body"><div class="row__title">' + esc(h.course_name) + '</div>' +
+                  '<div class="row__sub">' + esc(h.week_key) + ' · #' + h.place + ' of ' + h.players + '</div></div>' +
+                  '<span class="row__meta">' + esc(vs(h.vs_par)) + '</span></div>';
+              }).join('') + '</div></div>';
+          }
+        }
+
+        content.className = 'screen stack';
+        content.innerHTML = html;
+      }).catch(function (e) {
+        content.className = 'screen';
+        content.innerHTML = '<div class="error">' + esc((e && e.message) || 'Could not load your record.') + '</div>';
+      });
+    })();
+  </script>
+</body>
+</html>

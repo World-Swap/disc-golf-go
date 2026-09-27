@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Database } from '../../db/types';
 import { createTournamentService, MAX_ENTRIES, TOURNAMENT_HOLES } from './tournament.service';
+import { TOURNAMENT_METRICS } from './tournament.repo';
 import type { TournamentRepo, TournamentRow, EntryRow, BoardRow } from './tournament.repo';
 
 // A transaction stub: withTransaction only needs connect(), BEGIN/COMMIT and
@@ -18,6 +19,7 @@ function fakeRepo(opts: { courses?: { id: number; name: string }[] } = {}) {
     { id: 22, name: 'Idlewild' },
   ];
   const tournaments: TournamentRow[] = [];
+  const asked: string[] = [];
   const entries: EntryRow[] = [];
   let nextEntry = 1;
   let draws = 0;
@@ -95,11 +97,24 @@ function fakeRepo(opts: { courses?: { id: number; name: string }[] } = {}) {
       }
       return ahead + 1;
     },
+    // career() and history() are window-function SQL; the fake keeps the type
+    // honest, and the real queries are verified against Postgres instead.
+    async career() {
+      return { played: 0, wins: 0, podiums: 0, best_finish: null, best_score: null, avg_finish: null, entries_used: entries.length };
+    },
+    async history() { return []; },
+    async careerBoard(_e: unknown, metric: string) {
+      asked.push(metric);
+      return [
+        { id: 7, display_name: 'Ahead', played: 3, wins: 2, best_finish: 1, value: 2 },
+        { id: 4, display_name: 'Me',    played: 3, wins: 1, best_finish: 2, value: 1 },
+      ] as never;
+    },
     async playerCount(_e, tid) {
       return new Set(entries.filter((e) => e.tournament_id === tid && e.status === 'completed').map((e) => e.player_id)).size;
     },
   };
-  return { repo, entries, tournaments };
+  return { repo, entries, tournaments, asked };
 }
 
 /** A submitter that scores the card the way the game service would. */
@@ -320,5 +335,49 @@ test('the board', async (t) => {
     assert.equal(view.leaderboard.length, 1);
     assert.equal(view.holes, TOURNAMENT_HOLES);
     assert.ok(view.course.name);
+  });
+});
+
+test('the all-time records boards', async (t) => {
+  // Same contract as the game boards: `?metric=` only ever picks an entry in
+  // TOURNAMENT_METRICS, so a request string never decides an ORDER BY.
+  await t.test('each metric is named back with the right direction', async () => {
+    for (const [key, meta] of Object.entries(TOURNAMENT_METRICS)) {
+      const { repo, asked } = fakeRepo();
+      const svc = createTournamentService({ db, repo, submitRound });
+      const r = await svc.records(key);
+      assert.equal(r.metric, key);
+      assert.equal(r.metric_label, meta.label);
+      assert.equal(r.lower_is_better, meta.dir === 'ASC', key + ' sorts the right way');
+      assert.deepEqual(asked, [key], 'the repo is asked for exactly that metric');
+    }
+  });
+
+  await t.test('an unknown or injected metric falls back to wins', async () => {
+    const { repo, asked } = fakeRepo();
+    const svc = createTournamentService({ db, repo, submitRound });
+    const r = await svc.records("podiums'; DROP TABLE tournaments; --");
+    assert.equal(r.metric, 'wins');
+    assert.deepEqual(asked, ['wins'], 'the request string is not passed through');
+  });
+
+  await t.test('is_me marks my row, and nothing when signed out', async () => {
+    const { repo } = fakeRepo();
+    const svc = createTournamentService({ db, repo, submitRound });
+    const mine = await svc.records('wins', 25, 4);
+    assert.deepEqual(mine.players.map((p) => p.is_me), [false, true]);
+    assert.deepEqual(mine.players.map((p) => p.rank), [1, 2]);
+    const anon = await svc.records('wins', 25, null);
+    assert.deepEqual(anon.players.map((p) => p.is_me), [false, false]);
+  });
+
+  await t.test('best score is the one board where lower wins', async () => {
+    const { repo } = fakeRepo();
+    const svc = createTournamentService({ db, repo, submitRound });
+    const lower = Object.entries(TOURNAMENT_METRICS)
+      .filter(([, m]) => m.dir === 'ASC').map(([k]) => k);
+    assert.deepEqual(lower, ['best_score']);
+    assert.equal((await svc.records('best_score')).lower_is_better, true);
+    assert.equal((await svc.records('wins')).lower_is_better, false);
   });
 });

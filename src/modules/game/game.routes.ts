@@ -50,9 +50,19 @@ export function createGameRouter(service: GameService, requireAuth: RequestHandl
     '/game/leaderboard',
     optionalAuth,
     asyncHandler(async (req, res) => {
-      res.json(await service.leaderboard(req.query.period, parseInt(String(req.query.limit ?? '25'), 10)));
+      res.json(await service.leaderboard(
+        req.query.period,
+        parseInt(String(req.query.limit ?? '25'), 10),
+        req.query.metric,
+        req.player?.id ?? null
+      ));
     })
   );
+
+  // The boards a client can show, so the picker is not a second hard-coded list.
+  router.get('/game/metrics', optionalAuth, asyncHandler(async (_req, res) => {
+    res.json({ metrics: service.metrics() });
+  }));
 
   return router;
 }

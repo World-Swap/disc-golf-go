@@ -8,9 +8,9 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w8" />
-  <link rel="stylesheet" href="/styles/app.css?v=w8" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w8" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w9" />
   <style>
     /* The line that tells you what this page offers before you tap anything. */
     .play-intro { margin: -4px 0 2px; font-size: 13px; line-height: 1.5; color: #6d655c; }
@@ -77,6 +77,26 @@
         </span>
       </a>
 
+      <!-- The record sits under the three ways to play: it is where you go
+           after a round, not before one. -->
+      <a class="row" href="/stats" style="border:1px solid var(--hair,#e4dfd6);border-radius:4px;background:#fff">
+        <span class="row__glyph">▦</span>
+        <div class="row__body">
+          <div class="row__title">Your record →</div>
+          <div class="row__sub" style="text-transform:none;letter-spacing:0">Rounds, best scores, aces, tournament wins and podiums</div>
+        </div>
+      </a>
+
+      <!-- The same numbers, ranked against everyone else. The record answers
+           "how am I doing"; the board answers "compared to who". -->
+      <a class="row" href="/ranks" style="border:1px solid var(--hair,#e4dfd6);border-radius:4px;background:#fff">
+        <span class="row__glyph">▲</span>
+        <div class="row__body">
+          <div class="row__title">Rankings →</div>
+          <div class="row__sub" style="text-transform:none;letter-spacing:0">Where you place on every board — XP, best rounds, aces, wins</div>
+        </div>
+      </a>
+
       <div id="challenges"></div>
       <div id="rounds"></div>
 
@@ -84,7 +104,7 @@
       <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w8"></script>
+  <script src="/js/app.js?v=w9"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;

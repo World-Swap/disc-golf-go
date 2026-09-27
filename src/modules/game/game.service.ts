@@ -14,6 +14,7 @@ import { badRequest } from '../../http/errors';
 import type { Database } from '../../db/types';
 import { grantXp, grantGold, evaluateBadges, type EarnedBadge, type XpEvent, type GoldEvent } from '../progression';
 import { GAME_CHALLENGES, PERIOD_REWARD, periodKey, periodStart, type Period, type GameChallenge } from './game.catalog';
+import { GAME_METRICS, type GameMetric } from './game.repo';
 import type { GameRepo, PeriodMetrics } from './game.repo';
 
 export const VALID_HOLES = [3, 6, 9, 18];
@@ -155,29 +156,75 @@ export function createGameService(deps: GameDeps) {
       return out;
     },
 
+    /**
+     * The whole Throw Lab record. Every figure is an aggregate over
+     * game_rounds, so nothing here can disagree with the rounds behind it.
+     */
     async stats(playerId: number) {
       const now = new Date();
-      const [lifetime, daily] = await Promise.all([
+      const [lifetime, daily, career, best, courses, challenges, recent, paidToday] = await Promise.all([
         repo.metrics(db, playerId, null),
         repo.metrics(db, playerId, periodStart('daily', now)),
+        repo.career(playerId),
+        repo.bestRound(playerId),
+        repo.topCourses(playerId, 5),
+        repo.completedCount(playerId),
+        repo.recentRounds(playerId, 5),
+        xpRoundsTodayRead(playerId),
       ]);
+
+      // Derived rates, only where there is something to divide by — "par per
+      // 18" on nobody's rounds is not 0, it is nothing to report.
+      const per18 = career.holes > 0 ? (career.strokes - career.par) / (career.holes / 18) : null;
+      const birdiesPerRound = career.rounds > 0 ? career.birdies / career.rounds : null;
+
       return {
         lifetime,
         today: daily,
-        challenges_completed: await repo.completedCount(playerId),
-        recent: await repo.recentRounds(playerId, 5),
-        daily_xp_rounds_left: Math.max(0, DAILY_XP_ROUNDS - (await xpRoundsTodayRead(playerId))),
+        career: {
+          ...career,
+          vs_par_total: career.strokes - career.par,
+          avg_vs_par_per_18: per18 == null ? null : Math.round(per18 * 10) / 10,
+          birdies_per_round: birdiesPerRound == null ? null : Math.round(birdiesPerRound * 10) / 10,
+          under_par_rate: career.rounds > 0 ? Math.round((career.under_par / career.rounds) * 100) : null,
+        },
+        best_round: best,
+        top_courses: courses,
+        challenges_completed: challenges,
+        recent,
+        daily_xp_rounds_left: Math.max(0, DAILY_XP_ROUNDS - paidToday),
       };
     },
 
-    async leaderboard(periodRaw: unknown, limit = 25) {
+    async leaderboard(periodRaw: unknown, limit = 25, metricRaw?: unknown, viewerId?: number | null) {
       const period: Period = PERIODS.includes(periodRaw as Period) ? (periodRaw as Period) : 'weekly';
-      const rows = await repo.leaderboard(periodStart(period, new Date()), Math.min(Math.max(limit, 1), 100));
+      // An unknown metric falls back to XP rather than erroring: a board is a
+      // read, and a stale link should still show something.
+      const metric: GameMetric =
+        typeof metricRaw === 'string' && metricRaw in GAME_METRICS ? (metricRaw as GameMetric) : 'xp';
+      const rows = await repo.leaderboard(periodStart(period, new Date()), Math.min(Math.max(limit, 1), 100), metric);
+      const meta = GAME_METRICS[metric];
       return {
         board: 'game',
         period,
-        players: rows.map((r, i) => ({ rank: i + 1, ...(r as Record<string, unknown>) })),
+        metric,
+        metric_label: meta.label,
+        metric_unit: meta.unit,
+        lower_is_better: meta.dir === 'ASC',
+        // The board is read by name; `is_me` is what lets a player find their
+        // own row on it. It was being read by the client and never sent.
+        players: rows.map((r, i) => {
+          const row = r as Record<string, unknown>;
+          return { rank: i + 1, ...row, is_me: viewerId != null && row.id === viewerId };
+        }),
       };
+    },
+
+    /** The metrics a client can offer, so the picker is built from one list. */
+    metrics() {
+      return Object.entries(GAME_METRICS).map(([key, m]) => ({
+        key, label: m.label, unit: m.unit, lower_is_better: m.dir === 'ASC',
+      }));
     },
   };
 

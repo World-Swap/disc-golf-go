@@ -28,6 +28,34 @@ export interface PeriodMetrics {
   best_round: number | null;   // lowest vs_par in the window
 }
 
+/**
+ * The metrics the Throw Lab board can be ranked by. The SQL lives here, keyed
+ * by a name, so the value that arrives over HTTP only ever selects an entry —
+ * it is never concatenated into a query.
+ */
+export const GAME_METRICS = {
+  xp:          { expr: 'COALESCE(SUM(g.xp_awarded), 0)',                    dir: 'DESC', having: 'COALESCE(SUM(g.xp_awarded), 0) > 0',   label: 'XP', unit: 'XP' },
+  best_round:  { expr: 'MIN(g.vs_par)',                                     dir: 'ASC',  having: 'MIN(g.vs_par) IS NOT NULL',            label: 'Best round', unit: 'vs par' },
+  best_18:     { expr: 'MIN(g.vs_par) FILTER (WHERE g.holes = 18)',         dir: 'ASC',  having: 'MIN(g.vs_par) FILTER (WHERE g.holes = 18) IS NOT NULL', label: 'Best 18', unit: 'vs par' },
+  aces:        { expr: 'COALESCE(SUM(g.aces), 0)',                          dir: 'DESC', having: 'COALESCE(SUM(g.aces), 0) > 0',         label: 'Aces', unit: '' },
+  full_rounds: { expr: "COUNT(*) FILTER (WHERE g.holes = 18)",              dir: 'DESC', having: "COUNT(*) FILTER (WHERE g.holes = 18) > 0", label: '18-hole rounds', unit: '' },
+  courses:     { expr: 'COUNT(DISTINCT g.course_id) FILTER (WHERE g.course_id IS NOT NULL)', dir: 'DESC', having: 'COUNT(DISTINCT g.course_id) FILTER (WHERE g.course_id IS NOT NULL) > 0', label: 'Courses played', unit: '' },
+  rounds:      { expr: 'COUNT(*)',                                          dir: 'DESC', having: 'COUNT(*) > 0',                          label: 'Rounds', unit: '' },
+  birdies:     { expr: 'COALESCE(SUM(g.birdies), 0)',                       dir: 'DESC', having: 'COALESCE(SUM(g.birdies), 0) > 0',       label: 'Birdies', unit: '' },
+  under_par:   { expr: 'COUNT(*) FILTER (WHERE g.vs_par < 0)',              dir: 'DESC', having: 'COUNT(*) FILTER (WHERE g.vs_par < 0) > 0', label: 'Rounds under par', unit: '' },
+} as const;
+
+export type GameMetric = keyof typeof GAME_METRICS;
+
+export interface CareerStats {
+  rounds: number; full_rounds: number; course_rounds: number;
+  holes: number; strokes: number; par: number;
+  birdies: number; eagles: number; aces: number; xp: number;
+  under_par: number; courses: number;
+  best_round: number | null; best_full_round: number | null;
+  days_played: number; first_round_at: string | null;
+}
+
 const ZERO: PeriodMetrics = { rounds: 0, holes: 0, birdies: 0, aces: 0, under_par: 0, courses: 0, best_round: null };
 
 export function createGameRepo(db: Queryable) {
@@ -109,6 +137,75 @@ export function createGameRepo(db: Queryable) {
       return (r.rowCount ?? 0) > 0;
     },
 
+    /**
+     * A player's whole Throw Lab record in one pass. Everything here is an
+     * aggregate over game_rounds — nothing is kept as a running counter, so it
+     * cannot drift from the rounds that produced it.
+     */
+    async career(playerId: number): Promise<CareerStats> {
+      const r = await db.query<Record<string, string | null>>(
+        `SELECT COUNT(*)                                          AS rounds,
+                COUNT(*) FILTER (WHERE holes = 18)                AS full_rounds,
+                COUNT(*) FILTER (WHERE mode = 'course')           AS course_rounds,
+                COALESCE(SUM(holes), 0)                           AS holes,
+                COALESCE(SUM(strokes), 0)                         AS strokes,
+                COALESCE(SUM(par), 0)                             AS par,
+                COALESCE(SUM(birdies), 0)                         AS birdies,
+                COALESCE(SUM(eagles), 0)                          AS eagles,
+                COALESCE(SUM(aces), 0)                            AS aces,
+                COALESCE(SUM(xp_awarded), 0)                      AS xp,
+                COUNT(*) FILTER (WHERE vs_par < 0)                AS under_par,
+                COUNT(DISTINCT course_id)
+                  FILTER (WHERE course_id IS NOT NULL)            AS courses,
+                MIN(vs_par)                                       AS best_round,
+                MIN(vs_par) FILTER (WHERE holes = 18)             AS best_full_round,
+                COUNT(DISTINCT date_trunc('day', created_at))     AS days_played,
+                MIN(created_at)                                   AS first_round_at
+         FROM game_rounds WHERE player_id = $1`,
+        [playerId]
+      );
+      const row = r.rows[0] ?? {};
+      const n = (k: string) => parseInt(row[k] ?? '0', 10) || 0;
+      const nullable = (k: string) => (row[k] == null ? null : parseInt(row[k]!, 10));
+      return {
+        rounds: n('rounds'), full_rounds: n('full_rounds'), course_rounds: n('course_rounds'),
+        holes: n('holes'), strokes: n('strokes'), par: n('par'),
+        birdies: n('birdies'), eagles: n('eagles'), aces: n('aces'), xp: n('xp'),
+        under_par: n('under_par'), courses: n('courses'),
+        best_round: nullable('best_round'), best_full_round: nullable('best_full_round'),
+        days_played: n('days_played'), first_round_at: row['first_round_at'] ?? null,
+      };
+    },
+
+    /** The best round itself, so the number on the page can say where it happened. */
+    async bestRound(playerId: number) {
+      const r = await db.query(
+        `SELECT g.vs_par, g.strokes, g.par, g.holes, g.created_at, c.name AS course_name
+         FROM game_rounds g
+         LEFT JOIN courses c ON c.id = g.course_id
+         WHERE g.player_id = $1
+         ORDER BY g.vs_par ASC, g.holes DESC, g.created_at ASC
+         LIMIT 1`,
+        [playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    /** Courses the player has actually played in the game, most played first. */
+    async topCourses(playerId: number, limit: number) {
+      const r = await db.query(
+        `SELECT c.id, c.name, c.state, COUNT(*)::int AS rounds, MIN(g.vs_par)::int AS best
+         FROM game_rounds g
+         JOIN courses c ON c.id = g.course_id
+         WHERE g.player_id = $1 AND g.course_id IS NOT NULL
+         GROUP BY c.id, c.name, c.state
+         ORDER BY rounds DESC, best ASC
+         LIMIT $2`,
+        [playerId, limit]
+      );
+      return r.rows;
+    },
+
     async completedCount(playerId: number): Promise<number> {
       const r = await db.query<{ cnt: string }>(
         'SELECT COUNT(*) AS cnt FROM player_game_challenges WHERE player_id = $1',
@@ -134,17 +231,37 @@ export function createGameRepo(db: Queryable) {
      * and it is comparable across 3-hole and 18-hole rounds, which raw score
      * is not. Best round rides along as the headline stat.
      */
-    async leaderboard(since: Date | null, limit: number) {
+    /**
+     * The Throw Lab board, ranked by one of several metrics.
+     *
+     * `metric` is a key into GAME_METRICS and never reaches SQL as a string —
+     * the SQL fragments below are all written here, so a value off the wire
+     * cannot become part of the query.
+     *
+     * Each board also filters out the players who have nothing to show on it:
+     * a board of "most aces" is not useful padded with thirty zeroes, and one
+     * of "best 18" should not list players who have never played eighteen.
+     */
+    async leaderboard(since: Date | null, limit: number, metric: GameMetric = 'xp') {
+      const m = GAME_METRICS[metric] ?? GAME_METRICS.xp;
       const r = await db.query(
         `SELECT p.id, p.player_uuid, p.username, p.display_name, p.level,
-                COALESCE(SUM(g.xp_awarded), 0)::int AS game_xp,
-                COUNT(*)::int AS rounds,
-                MIN(g.vs_par)::int AS best_vs_par,
-                COALESCE(SUM(g.birdies), 0)::int AS birdies
+                COALESCE(SUM(g.xp_awarded), 0)::int                       AS game_xp,
+                COUNT(*)::int                                             AS rounds,
+                COUNT(*) FILTER (WHERE g.holes = 18)::int                 AS full_rounds,
+                MIN(g.vs_par)::int                                        AS best_vs_par,
+                MIN(g.vs_par) FILTER (WHERE g.holes = 18)::int            AS best_18,
+                COALESCE(SUM(g.birdies), 0)::int                          AS birdies,
+                COALESCE(SUM(g.aces), 0)::int                             AS aces,
+                COUNT(*) FILTER (WHERE g.vs_par < 0)::int                 AS under_par,
+                COUNT(DISTINCT g.course_id)
+                  FILTER (WHERE g.course_id IS NOT NULL)::int             AS courses,
+                (${m.expr})::int                                          AS value
          FROM game_rounds g JOIN players p ON p.id = g.player_id
          WHERE ($1::timestamptz IS NULL OR g.created_at >= $1)
          GROUP BY p.id
-         ORDER BY game_xp DESC, best_vs_par ASC, rounds DESC
+         HAVING ${m.having}
+         ORDER BY (${m.expr}) ${m.dir}, COUNT(*) DESC, p.id ASC
          LIMIT $2`,
         [since, limit]
       );

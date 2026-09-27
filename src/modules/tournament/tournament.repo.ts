@@ -44,6 +44,26 @@ export interface BoardRow {
   completed_at: string;
 }
 
+/** Metrics the tournament record board can be ranked by. SQL lives here. */
+export const TOURNAMENT_METRICS = {
+  wins:       { expr: 'y.wins',       dir: 'DESC', having: 'y.wins > 0',       label: 'Wins', unit: '' },
+  podiums:    { expr: 'y.podiums',    dir: 'DESC', having: 'y.podiums > 0',    label: 'Podiums', unit: '' },
+  played:     { expr: 'y.played',     dir: 'DESC', having: 'y.played > 0',     label: 'Weeks played', unit: '' },
+  best_score: { expr: 'y.best_score', dir: 'ASC',  having: 'y.best_score IS NOT NULL', label: 'Best score', unit: 'vs par' },
+} as const;
+
+export type TournamentMetric = keyof typeof TOURNAMENT_METRICS;
+
+export interface CareerRecord {
+  played: number;
+  wins: number;
+  podiums: number;
+  best_finish: number | null;
+  best_score: number | null;
+  avg_finish: number | null;
+  entries_used: number;
+}
+
 export function createTournamentRepo(_db: Queryable) {
   return {
     async find(exec: Queryable, weekKey: string): Promise<TournamentRow | null> {
@@ -207,6 +227,127 @@ export function createTournamentRepo(_db: Queryable) {
       );
       const v = r.rows[0]?.place;
       return v == null ? null : parseInt(v, 10);
+    },
+
+    /**
+     * A player's tournament record: played, wins, podiums, best finish.
+     *
+     * Only **finished** weeks count. A first place in a week still running is
+     * not a win yet — anyone can still post — so the current week is reported
+     * separately as a standing rather than folded into the record.
+     *
+     * The rank is computed here rather than stored: RANK() over each week's
+     * field, ordered the same way the live board is (score, then who posted
+     * it first), so a player's place in the record matches what they saw.
+     */
+    async career(exec: Queryable, playerId: number): Promise<CareerRecord> {
+      const r = await exec.query<Record<string, string | null>>(
+        `WITH best AS (
+           SELECT DISTINCT ON (e.tournament_id, e.player_id)
+                  e.tournament_id, e.player_id, e.vs_par, e.strokes, e.completed_at
+           FROM tournament_entries e
+           JOIN tournaments t ON t.id = e.tournament_id
+           WHERE e.status = 'completed' AND e.vs_par IS NOT NULL AND t.ends_at <= NOW()
+           ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
+         ), ranked AS (
+           SELECT *, RANK() OVER (PARTITION BY tournament_id
+                                  ORDER BY vs_par ASC, completed_at ASC) AS place
+           FROM best
+         )
+         SELECT COUNT(*)                                  AS played,
+                COUNT(*) FILTER (WHERE place = 1)         AS wins,
+                COUNT(*) FILTER (WHERE place <= 3)        AS podiums,
+                MIN(place)                                AS best_finish,
+                MIN(vs_par)                               AS best_score,
+                ROUND(AVG(place), 1)::text                AS avg_finish
+         FROM ranked WHERE player_id = $1`,
+        [playerId]
+      );
+      const row = r.rows[0] ?? {};
+      const n = (k: string) => parseInt(row[k] ?? '0', 10) || 0;
+      const nullable = (k: string) => (row[k] == null ? null : parseInt(row[k]!, 10));
+
+      const entries = await exec.query<{ n: string }>(
+        `SELECT COUNT(*)::text AS n FROM tournament_entries WHERE player_id = $1`,
+        [playerId]
+      );
+      return {
+        played: n('played'), wins: n('wins'), podiums: n('podiums'),
+        best_finish: nullable('best_finish'), best_score: nullable('best_score'),
+        avg_finish: row['avg_finish'] == null ? null : Number(row['avg_finish']),
+        entries_used: parseInt(entries.rows[0]?.n ?? '0', 10),
+      };
+    },
+
+    /** The player's finished weeks, newest first, with where they placed. */
+    async history(exec: Queryable, playerId: number, limit: number) {
+      const r = await exec.query(
+        `WITH best AS (
+           SELECT DISTINCT ON (e.tournament_id, e.player_id)
+                  e.tournament_id, e.player_id, e.vs_par, e.strokes, e.completed_at
+           FROM tournament_entries e
+           WHERE e.status = 'completed' AND e.vs_par IS NOT NULL
+           ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
+         ), ranked AS (
+           SELECT *, RANK() OVER (PARTITION BY tournament_id
+                                  ORDER BY vs_par ASC, completed_at ASC) AS place,
+                     COUNT(*) OVER (PARTITION BY tournament_id) AS players
+           FROM best
+         )
+         SELECT t.week_key, t.course_name, t.holes, t.ends_at,
+                r.vs_par::int, r.strokes::int, r.place::int, r.players::int,
+                (t.ends_at > NOW()) AS in_progress
+         FROM ranked r
+         JOIN tournaments t ON t.id = r.tournament_id
+         WHERE r.player_id = $1
+         ORDER BY t.starts_at DESC
+         LIMIT $2`,
+        [playerId, limit]
+      );
+      return r.rows;
+    },
+
+    /**
+     * A board over every player's tournament record — most wins, most
+     * podiums, most weeks played. Finished weeks only, for the same reason
+     * the personal record uses them: an open week has no result yet.
+     *
+     * `metric` selects an entry in TOURNAMENT_METRICS; nothing from the
+     * request is ever concatenated into the query.
+     */
+    async careerBoard(exec: Queryable, metric: TournamentMetric, limit: number) {
+      const m = TOURNAMENT_METRICS[metric] ?? TOURNAMENT_METRICS.wins;
+      const r = await exec.query(
+        `WITH best AS (
+           SELECT DISTINCT ON (e.tournament_id, e.player_id)
+                  e.tournament_id, e.player_id, e.vs_par, e.completed_at
+           FROM tournament_entries e
+           JOIN tournaments t ON t.id = e.tournament_id
+           WHERE e.status = 'completed' AND e.vs_par IS NOT NULL AND t.ends_at <= NOW()
+           ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
+         ), ranked AS (
+           SELECT *, RANK() OVER (PARTITION BY tournament_id
+                                  ORDER BY vs_par ASC, completed_at ASC) AS place
+           FROM best
+         ), tally AS (
+           SELECT player_id,
+                  COUNT(*)::int                             AS played,
+                  COUNT(*) FILTER (WHERE place = 1)::int    AS wins,
+                  COUNT(*) FILTER (WHERE place <= 3)::int   AS podiums,
+                  MIN(vs_par)::int                          AS best_score,
+                  MIN(place)::int                           AS best_finish
+           FROM ranked GROUP BY player_id
+         )
+         SELECT p.id, p.username, p.display_name, p.level,
+                y.played, y.wins, y.podiums, y.best_score, y.best_finish,
+                (${m.expr})::int AS value
+         FROM tally y JOIN players p ON p.id = y.player_id
+         WHERE ${m.having}
+         ORDER BY (${m.expr}) ${m.dir}, y.wins DESC, y.played DESC, p.id ASC
+         LIMIT $1`,
+        [limit]
+      );
+      return r.rows;
     },
 
     async playerCount(exec: Queryable, tournamentId: number): Promise<number> {

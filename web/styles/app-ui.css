@@ -138,6 +138,17 @@
 /* Segmented control */
 .segbar { display: inline-flex; gap: 4px; padding: 4px; background: #ece5da; border-radius: var(--radius-pill); width: 100%; }
 .seg { flex: 1; text-align: center; font-family: var(--font-display); font-size: 13px; font-weight: var(--weight-medium); color: var(--color-ash); padding: 9px 12px; border: none; border-radius: var(--radius-pill); background: transparent; transition: background 140ms ease, color 140ms ease; }
+/* A bar with more than four choices cannot give each one a fair share of a
+   phone's width, so it scrolls instead of shrinking the labels to nothing. */
+.segbar--scroll { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.segbar--scroll::-webkit-scrollbar { display: none; }
+.segbar--scroll .seg { flex: 0 0 auto; padding-left: 13px; padding-right: 13px; white-space: nowrap; }
+/* Whether there is more to the right is otherwise only visible when a tab
+   happens to straddle the edge: eight metrics peek, five can land flush and
+   read as the whole set. The fade says there is more either way, and is
+   removed once scrolled to the end so it never lies. */
+.segbar--scroll { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%); }
+.segbar--scroll.is-end { mask-image: none; }
 .seg[aria-selected='true'], .seg.is-active { background: var(--color-white); color: var(--color-ink); box-shadow: var(--shadow-soft); }
 
 /* Forms */

@@ -15,6 +15,7 @@ import { badRequest, notFound, conflict } from '../../http/errors';
 import { withTransaction } from '../../db/pool';
 import type { Database } from '../../db/types';
 import { periodKey, periodStart } from '../game/game.catalog';
+import { TOURNAMENT_METRICS, type TournamentMetric } from './tournament.repo';
 import type { TournamentRepo, TournamentRow, EntryRow } from './tournament.repo';
 
 export const MAX_ENTRIES = 2;
@@ -226,6 +227,58 @@ export function createTournamentService(deps: TournamentDeps) {
       return {
         entry: shapeEntry(updated),
         entries_remaining: Math.max(0, MAX_ENTRIES - entriesUsed(entries)),
+      };
+    },
+
+    /**
+     * A player's tournament record. Finished weeks only for wins and podiums;
+     * the week still running is reported beside it as a standing, because a
+     * lead in an open week is not a win.
+     */
+    async career(playerId: number, now = new Date()) {
+      const t = await current(now);
+      const [record, history, entries, place] = await Promise.all([
+        repo.career(db, playerId),
+        repo.history(db, playerId, 10),
+        repo.entries(db, t.id, playerId),
+        repo.place(db, t.id, playerId),
+      ]);
+      const best = bestOf(entries);
+      return {
+        record,
+        history,
+        current: {
+          week_key: t.week_key,
+          course: { id: t.course_id, name: t.course_name },
+          ends_at: t.ends_at,
+          entries_used: entriesUsed(entries),
+          entries_remaining: Math.max(0, MAX_ENTRIES - entriesUsed(entries)),
+          best: best ? shapeEntry(best) : null,
+          place,
+        },
+      };
+    },
+
+    /** All-time tournament boards: most wins, most podiums, weeks played. */
+    async records(metricRaw?: unknown, limit = 25, viewerId?: number | null) {
+      const metric: TournamentMetric =
+        typeof metricRaw === 'string' && metricRaw in TOURNAMENT_METRICS
+          ? (metricRaw as TournamentMetric) : 'wins';
+      const meta = TOURNAMENT_METRICS[metric];
+      const rows = await repo.careerBoard(db, metric, Math.min(Math.max(limit, 1), 100));
+      return {
+        board: 'tournament_records',
+        metric,
+        metric_label: meta.label,
+        metric_unit: meta.unit,
+        lower_is_better: meta.dir === 'ASC',
+        metrics: Object.entries(TOURNAMENT_METRICS).map(([key, m]) => ({
+          key, label: m.label, unit: m.unit, lower_is_better: m.dir === 'ASC',
+        })),
+        players: rows.map((r, i) => {
+          const row = r as Record<string, unknown>;
+          return { rank: i + 1, ...row, is_me: viewerId != null && row.id === viewerId };
+        }),
       };
     },
 
