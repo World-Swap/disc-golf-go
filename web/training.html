@@ -46,11 +46,18 @@
           var rec = await API.get('/training/recommendations');
           var top = (rec.recommendations || []).find(function (r) { return r.type === 'lesson'; });
           if (top && top.lesson) {
-            recWrap = '<a class="card card--tap" href="/training?cat=' + esc(top.lesson.category_slug) + '&lesson=' + top.lesson.id + '" style="display:block">' +
-              '<p class="card__eyebrow">' + esc(top.reason || 'Recommended') + '</p>' +
-              '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px">' +
-                '<span class="h-title">' + esc(top.lesson.title) + '</span><span class="row__meta">+' + (top.lesson.xp_reward || 0) + ' XP</span></div>' +
-              '<p class="row__sub" style="margin-top:8px">' + esc(top.lesson.category_name || '') + ' →</p></a>';
+            // The same feature art the Home card carries, so the lesson you
+            // are being sent to looks like the one thing on the page to press
+            // -- it was a plain white card among plain white category rows.
+            recWrap = '<a class="artcard" href="/training?cat=' + esc(top.lesson.category_slug) +
+                '&lesson=' + top.lesson.id + '" style="--art:url(\'/img/cards/training.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">' + esc(top.reason || 'Recommended') + '</span>' +
+                '<span class="artcard__title">' + esc(top.lesson.title) + ' →</span>' +
+                '<span class="artcard__sub">' + esc(top.lesson.category_name || '') + '</span>' +
+              '</span>' +
+              '<span class="artcard__meta">+' + (top.lesson.xp_reward || 0) + ' XP</span></a>';
           }
         } catch (e) {}
 
