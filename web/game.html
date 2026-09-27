@@ -50,6 +50,12 @@
     .g-disc__n { font-weight: 800; font-size: 13px; color: #202020; }
     .g-disc__f { font-size: 10px; color: #8a8279; margin-top: 2px; }
     .g-disc__d { font-size: 10px; font-weight: 700; color: #fc6414; margin-top: 2px; }
+    /* The two ways out of a finished round. Taller than a disc chip because
+       they are the only thing to press on the screen. */
+    .g-disc--act { padding: 12px 4px; }
+    .g-disc--act:first-child { border-color: #fc6414; background: #fc6414; }
+    .g-disc--act:first-child .g-disc__n { color: #fff; font-size: 14px; }
+    .g-disc--act:first-child .g-disc__f { color: rgba(255,255,255,0.8); }
 
     /* Prompt / result banner under the field */
     .g-msg { min-height: 58px; padding: 10px 16px 14px; text-align: center; }
@@ -111,8 +117,23 @@
     // No tab bar while playing: the field takes the screen and there is one
     // way out, back to where the player came from.
     document.getElementById('back').addEventListener('click', function () {
+      // Walking out mid-round loses it, and on a tournament attempt the entry
+      // is already spent -- so leaving asks first once a throw has been made.
+      // Before the first throw, and once the round is over, it just goes.
+      if (roundUnderway()) {
+        var msg = ENTRY
+          ? 'Leave this tournament round? The entry is already used \u2014 you will not get it back.'
+          : 'Leave this round? Your score will not be saved.';
+        if (!confirm(msg)) return;
+      }
       if (history.length > 1) history.back(); else location.href = '/checkin';
     });
+
+    /** A round is underway once it has begun and has not yet been carded. */
+    function roundUnderway() {
+      return S.phase !== 'choose' && S.phase !== 'gameEnd' &&
+             (S.hole > 1 || S.throws > 0 || CARD.length > 0);
+    }
 
     // ---------------------------------------------------------------- setup
     var cv = document.getElementById('g-canvas');
@@ -300,7 +321,12 @@
       else if (S.phase === 'angle')  { release(); }
       else if (S.phase === 'result') { nextThrow(); }
       else if (S.phase === 'holeEnd'){ S.hole++; if (S.hole > HOLES) endGame(); else newHole(); }
-      else if (S.phase === 'gameEnd'){ S.hole = 1; S.total = 0; CARD = []; SUBMITTED = false; artBag = []; newHole(); }
+      // 'gameEnd' deliberately does nothing. It used to restart the round on
+      // the next tap, which wiped the card with no warning -- and on a
+      // tournament entry dropped the player into a round that could never be
+      // posted, because the entry was already spent. Leaving a round is now
+      // an explicit button.
+      else if (S.phase === 'gameEnd'){ return; }
     }
 
     function release() {
@@ -390,8 +416,40 @@
       S.phase = 'gameEnd';
       var t = S.total;
       var headline = 'Round complete: ' + (t === 0 ? 'even par' : (t > 0 ? '+' + t : t));
-      say(headline, 'Saving your round…');
+      say(headline, 'Saving your round\u2026');
+      endOptions();
       submitRound(headline);
+    }
+
+    /** The ways out of a finished round, in the bag strip under the card. */
+    function endOptions() {
+      var bag = document.getElementById('bag');
+      // A tournament entry is spent the moment the round starts, so replaying
+      // here would be a round that can never be posted. The board is offered
+      // instead of a Play again that would mislead.
+      var buttons = ENTRY
+        ? [['board', 'See the board', 'this week'], ['leave', 'Done', 'back to Play']]
+        : [['again', 'Play again', 'new round'], ['leave', 'Done', 'back to Play']];
+      bag.innerHTML = buttons.map(function (b) {
+        return '<button class="g-disc g-disc--act" data-act="' + b[0] + '">' +
+               '<div class="g-disc__n">' + b[1] + '</div>' +
+               '<div class="g-disc__f">' + b[2] + '</div></button>';
+      }).join('');
+      bag.querySelectorAll('[data-act]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var act = this.dataset.act;
+          if (act === 'board') { location.href = '/ranks'; return; }
+          if (act === 'leave') { location.href = '/checkin'; return; }
+          replay();
+        });
+      });
+      setTimeout(resize, 0);
+    }
+
+    /** Start a fresh round of the same shape -- only ever from the button. */
+    function replay() {
+      S.hole = 1; S.total = 0; CARD = []; SUBMITTED = false; artBag = [];
+      newHole();   // paintBag() puts the discs back over these buttons
     }
 
     // Send the card up and report what it earned. The round is only ever sent
@@ -478,6 +536,51 @@
       if (S.phase === 'flight') flight(cx, top, bottom);
       if (S.phase === 'power') powerBar();
       if (S.phase === 'angle') angleBar();
+      // The finished round covers the hole: at the end you want your card,
+      // not the fairway you have already played.
+      if (S.phase === 'gameEnd') card();
+    }
+
+    /** The round's card, hole by hole, over a scrim on the last hole's art. */
+    function card() {
+      ctx.fillStyle = 'rgba(32,32,32,0.86)';
+      ctx.fillRect(0, 0, W, H);
+      if (!CARD.length) return;
+
+      // One column per hole, wrapped so 18 holes fit a phone as two rows.
+      var perRow = CARD.length > 9 ? Math.ceil(CARD.length / 2) : CARD.length;
+      var rows = Math.ceil(CARD.length / perRow);
+      var colW = Math.min(46, (W - 32) / perRow);
+      var gridW = colW * perRow;
+      var rowH = 52;
+      var top0 = (H - rows * rowH) / 2 + 8;
+
+      ctx.textAlign = 'center';
+      CARD.forEach(function (h, i) {
+        var r = Math.floor(i / perRow), c = i % perRow;
+        var x = (W - gridW) / 2 + c * colW + colW / 2;
+        var y = top0 + r * rowH;
+        var v = h.strokes - h.par;
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '9px system-ui';
+        ctx.fillText(String(i + 1), x, y);
+        // Under par reads green, over par orange -- the same language the
+        // record page uses for a score.
+        ctx.fillStyle = v < 0 ? '#5fd39b' : v > 0 ? '#ff9a5c' : '#ffffff';
+        ctx.font = '700 19px system-ui';
+        ctx.fillText(String(h.strokes), x, y + 22);
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.font = '9px system-ui';
+        ctx.fillText('par ' + h.par, x, y + 36);
+      });
+
+      var strokes = CARD.reduce(function (a, h) { return a + h.strokes; }, 0);
+      var par = CARD.reduce(function (a, h) { return a + h.par; }, 0);
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.font = '11px system-ui';
+      ctx.fillText(strokes + ' throws  \u00b7  par ' + par + '  \u00b7  ' + fmtVs(strokes - par),
+                   W / 2, top0 + rows * rowH + 16);
+      ctx.textAlign = 'start';
     }
 
     // The logo, drawn in primitives: charcoal band, chains, tray, pole.
