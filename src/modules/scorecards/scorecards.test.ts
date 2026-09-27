@@ -151,5 +151,46 @@ test('scorecards endpoints', async (t) => {
     assert.equal(j.vs_par, 0, 'even par, not 18 under');
   });
 
+  // A card started and never scored is the one state the player cannot score
+  // their way out of: finishing is refused, so deleting is the only exit. It
+  // shipped with the route in place and nothing calling it.
+  await t.test('an unscored card cannot be finished', async () => {
+    handler = (sql) => {
+      if (/FROM scorecards s LEFT JOIN courses/.test(sql)) {
+        return { rows: [{ id: 5, player_id: 42, holes: 9, par: 27, strokes: 0, completed: false }] };
+      }
+      if (/FROM scorecard_holes/.test(sql)) {
+        // Every hole present, none played -- exactly what start() writes.
+        return { rows: Array.from({ length: 9 }, (_, i) => ({ hole_number: i + 1, par: 3, strokes: null })) };
+      }
+      return { rows: [] };
+    };
+    const r = await fetch(base + '/api/scorecards/5/finish', { method: 'POST', headers: auth });
+    assert.equal(r.status, 400);
+    assert.match(((await r.json()) as { error: string }).error, /at least one hole/i);
+  });
+
+  await t.test('discarding one deletes it, and only for its owner', async () => {
+    let sawParams: unknown[] = [];
+    handler = (sql, params) => {
+      if (/DELETE FROM scorecards/.test(sql)) {
+        sawParams = params ?? [];
+        return { rows: [{ id: 5 }], rowCount: 1 };
+      }
+      return { rows: [] };
+    };
+    const r = await fetch(base + '/api/scorecards/5', { method: 'DELETE', headers: auth });
+    assert.equal(r.status, 200);
+    assert.deepEqual((await r.json()) as unknown, { success: true });
+    // The player id is part of the WHERE, so one player cannot delete another's.
+    assert.deepEqual(sawParams, [5, 42]);
+  });
+
+  await t.test('discarding a card that is not yours -> 404', async () => {
+    handler = () => ({ rows: [], rowCount: 0 });
+    const r = await fetch(base + '/api/scorecards/5', { method: 'DELETE', headers: auth });
+    assert.equal(r.status, 404);
+  });
+
   server.close();
 });
