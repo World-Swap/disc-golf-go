@@ -14,6 +14,7 @@ import { badRequest } from '../../http/errors';
 import type { Database } from '../../db/types';
 import { grantXp, grantGold, evaluateBadges, type EarnedBadge, type XpEvent, type GoldEvent } from '../progression';
 import { GAME_CHALLENGES, PERIOD_REWARD, periodKey, periodStart, type Period, type GameChallenge } from './game.catalog';
+import { GAME_METRICS, type GameMetric } from './game.repo';
 import type { GameRepo, PeriodMetrics } from './game.repo';
 
 export const VALID_HOLES = [3, 6, 9, 18];
@@ -195,14 +196,35 @@ export function createGameService(deps: GameDeps) {
       };
     },
 
-    async leaderboard(periodRaw: unknown, limit = 25) {
+    async leaderboard(periodRaw: unknown, limit = 25, metricRaw?: unknown, viewerId?: number | null) {
       const period: Period = PERIODS.includes(periodRaw as Period) ? (periodRaw as Period) : 'weekly';
-      const rows = await repo.leaderboard(periodStart(period, new Date()), Math.min(Math.max(limit, 1), 100));
+      // An unknown metric falls back to XP rather than erroring: a board is a
+      // read, and a stale link should still show something.
+      const metric: GameMetric =
+        typeof metricRaw === 'string' && metricRaw in GAME_METRICS ? (metricRaw as GameMetric) : 'xp';
+      const rows = await repo.leaderboard(periodStart(period, new Date()), Math.min(Math.max(limit, 1), 100), metric);
+      const meta = GAME_METRICS[metric];
       return {
         board: 'game',
         period,
-        players: rows.map((r, i) => ({ rank: i + 1, ...(r as Record<string, unknown>) })),
+        metric,
+        metric_label: meta.label,
+        metric_unit: meta.unit,
+        lower_is_better: meta.dir === 'ASC',
+        // The board is read by name; `is_me` is what lets a player find their
+        // own row on it. It was being read by the client and never sent.
+        players: rows.map((r, i) => {
+          const row = r as Record<string, unknown>;
+          return { rank: i + 1, ...row, is_me: viewerId != null && row.id === viewerId };
+        }),
       };
+    },
+
+    /** The metrics a client can offer, so the picker is built from one list. */
+    metrics() {
+      return Object.entries(GAME_METRICS).map(([key, m]) => ({
+        key, label: m.label, unit: m.unit, lower_is_better: m.dir === 'ASC',
+      }));
     },
   };
 

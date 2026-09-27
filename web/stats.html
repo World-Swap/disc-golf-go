@@ -8,9 +8,9 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w8" />
-  <link rel="stylesheet" href="/styles/app.css?v=w8" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w8" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w9" />
   <style>
     .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
             color: var(--color-ash, #6d655c); text-decoration: none; }
@@ -45,11 +45,20 @@
         <h1 class="h-display">RECORD<span class="mark" style="width:28%"></span></h1>
       </div>
       <div id="content" class="loading">Loading…</div>
+      <!-- Every number above is also a public board, so the record ends by
+           pointing at the one place it can be compared. -->
+      <a class="row" href="/ranks" style="border:1px solid var(--hair,#e4dfd6);border-radius:4px;background:#fff">
+        <span class="row__glyph">▲</span>
+        <div class="row__body">
+          <div class="row__title">Rankings →</div>
+          <div class="row__sub" style="text-transform:none;letter-spacing:0">See where these numbers place you</div>
+        </div>
+      </a>
     </div>
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w8"></script>
+  <script src="/js/app.js?v=w9"></script>
   <script>
     (function () {
       'use strict';

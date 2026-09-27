@@ -67,6 +67,19 @@ export function createTournamentRouter(
     })
   );
 
+  // All-time boards — wins, podiums, weeks played. Public, like the weekly one.
+  router.get(
+    '/tournament/records',
+    optionalAuth,
+    asyncHandler(async (req, res) => {
+      res.json(await service.records(
+        req.query.metric,
+        parseInt(String(req.query.limit ?? '25'), 10) || 25,
+        req.player?.id ?? null
+      ));
+    })
+  );
+
   router.get(
     '/tournament/leaderboard',
     optionalAuth,

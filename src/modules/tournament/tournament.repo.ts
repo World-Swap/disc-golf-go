@@ -44,6 +44,16 @@ export interface BoardRow {
   completed_at: string;
 }
 
+/** Metrics the tournament record board can be ranked by. SQL lives here. */
+export const TOURNAMENT_METRICS = {
+  wins:       { expr: 'y.wins',       dir: 'DESC', having: 'y.wins > 0',       label: 'Wins', unit: '' },
+  podiums:    { expr: 'y.podiums',    dir: 'DESC', having: 'y.podiums > 0',    label: 'Podiums', unit: '' },
+  played:     { expr: 'y.played',     dir: 'DESC', having: 'y.played > 0',     label: 'Weeks played', unit: '' },
+  best_score: { expr: 'y.best_score', dir: 'ASC',  having: 'y.best_score IS NOT NULL', label: 'Best score', unit: 'vs par' },
+} as const;
+
+export type TournamentMetric = keyof typeof TOURNAMENT_METRICS;
+
 export interface CareerRecord {
   played: number;
   wins: number;
@@ -293,6 +303,49 @@ export function createTournamentRepo(_db: Queryable) {
          ORDER BY t.starts_at DESC
          LIMIT $2`,
         [playerId, limit]
+      );
+      return r.rows;
+    },
+
+    /**
+     * A board over every player's tournament record — most wins, most
+     * podiums, most weeks played. Finished weeks only, for the same reason
+     * the personal record uses them: an open week has no result yet.
+     *
+     * `metric` selects an entry in TOURNAMENT_METRICS; nothing from the
+     * request is ever concatenated into the query.
+     */
+    async careerBoard(exec: Queryable, metric: TournamentMetric, limit: number) {
+      const m = TOURNAMENT_METRICS[metric] ?? TOURNAMENT_METRICS.wins;
+      const r = await exec.query(
+        `WITH best AS (
+           SELECT DISTINCT ON (e.tournament_id, e.player_id)
+                  e.tournament_id, e.player_id, e.vs_par, e.completed_at
+           FROM tournament_entries e
+           JOIN tournaments t ON t.id = e.tournament_id
+           WHERE e.status = 'completed' AND e.vs_par IS NOT NULL AND t.ends_at <= NOW()
+           ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
+         ), ranked AS (
+           SELECT *, RANK() OVER (PARTITION BY tournament_id
+                                  ORDER BY vs_par ASC, completed_at ASC) AS place
+           FROM best
+         ), tally AS (
+           SELECT player_id,
+                  COUNT(*)::int                             AS played,
+                  COUNT(*) FILTER (WHERE place = 1)::int    AS wins,
+                  COUNT(*) FILTER (WHERE place <= 3)::int   AS podiums,
+                  MIN(vs_par)::int                          AS best_score,
+                  MIN(place)::int                           AS best_finish
+           FROM ranked GROUP BY player_id
+         )
+         SELECT p.id, p.username, p.display_name, p.level,
+                y.played, y.wins, y.podiums, y.best_score, y.best_finish,
+                (${m.expr})::int AS value
+         FROM tally y JOIN players p ON p.id = y.player_id
+         WHERE ${m.having}
+         ORDER BY (${m.expr}) ${m.dir}, y.wins DESC, y.played DESC, p.id ASC
+         LIMIT $1`,
+        [limit]
       );
       return r.rows;
     },
