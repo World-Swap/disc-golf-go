@@ -155,18 +155,43 @@ export function createGameService(deps: GameDeps) {
       return out;
     },
 
+    /**
+     * The whole Throw Lab record. Every figure is an aggregate over
+     * game_rounds, so nothing here can disagree with the rounds behind it.
+     */
     async stats(playerId: number) {
       const now = new Date();
-      const [lifetime, daily] = await Promise.all([
+      const [lifetime, daily, career, best, courses, challenges, recent, paidToday] = await Promise.all([
         repo.metrics(db, playerId, null),
         repo.metrics(db, playerId, periodStart('daily', now)),
+        repo.career(playerId),
+        repo.bestRound(playerId),
+        repo.topCourses(playerId, 5),
+        repo.completedCount(playerId),
+        repo.recentRounds(playerId, 5),
+        xpRoundsTodayRead(playerId),
       ]);
+
+      // Derived rates, only where there is something to divide by — "par per
+      // 18" on nobody's rounds is not 0, it is nothing to report.
+      const per18 = career.holes > 0 ? (career.strokes - career.par) / (career.holes / 18) : null;
+      const birdiesPerRound = career.rounds > 0 ? career.birdies / career.rounds : null;
+
       return {
         lifetime,
         today: daily,
-        challenges_completed: await repo.completedCount(playerId),
-        recent: await repo.recentRounds(playerId, 5),
-        daily_xp_rounds_left: Math.max(0, DAILY_XP_ROUNDS - (await xpRoundsTodayRead(playerId))),
+        career: {
+          ...career,
+          vs_par_total: career.strokes - career.par,
+          avg_vs_par_per_18: per18 == null ? null : Math.round(per18 * 10) / 10,
+          birdies_per_round: birdiesPerRound == null ? null : Math.round(birdiesPerRound * 10) / 10,
+          under_par_rate: career.rounds > 0 ? Math.round((career.under_par / career.rounds) * 100) : null,
+        },
+        best_round: best,
+        top_courses: courses,
+        challenges_completed: challenges,
+        recent,
+        daily_xp_rounds_left: Math.max(0, DAILY_XP_ROUNDS - paidToday),
       };
     },
 

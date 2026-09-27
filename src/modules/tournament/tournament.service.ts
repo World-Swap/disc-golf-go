@@ -229,6 +229,35 @@ export function createTournamentService(deps: TournamentDeps) {
       };
     },
 
+    /**
+     * A player's tournament record. Finished weeks only for wins and podiums;
+     * the week still running is reported beside it as a standing, because a
+     * lead in an open week is not a win.
+     */
+    async career(playerId: number, now = new Date()) {
+      const t = await current(now);
+      const [record, history, entries, place] = await Promise.all([
+        repo.career(db, playerId),
+        repo.history(db, playerId, 10),
+        repo.entries(db, t.id, playerId),
+        repo.place(db, t.id, playerId),
+      ]);
+      const best = bestOf(entries);
+      return {
+        record,
+        history,
+        current: {
+          week_key: t.week_key,
+          course: { id: t.course_id, name: t.course_name },
+          ends_at: t.ends_at,
+          entries_used: entriesUsed(entries),
+          entries_remaining: Math.max(0, MAX_ENTRIES - entriesUsed(entries)),
+          best: best ? shapeEntry(best) : null,
+          place,
+        },
+      };
+    },
+
     async leaderboard(limit = 25, now = new Date()) {
       const t = await current(now);
       const board = await repo.board(db, t.id, limit);

@@ -58,6 +58,15 @@ export function createTournamentRouter(
     })
   );
 
+  // A player's own tournament record — played, wins, podiums, past weeks.
+  router.get(
+    '/tournament/career',
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      res.json(await service.career(player(req)));
+    })
+  );
+
   router.get(
     '/tournament/leaderboard',
     optionalAuth,

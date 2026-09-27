@@ -44,6 +44,16 @@ export interface BoardRow {
   completed_at: string;
 }
 
+export interface CareerRecord {
+  played: number;
+  wins: number;
+  podiums: number;
+  best_finish: number | null;
+  best_score: number | null;
+  avg_finish: number | null;
+  entries_used: number;
+}
+
 export function createTournamentRepo(_db: Queryable) {
   return {
     async find(exec: Queryable, weekKey: string): Promise<TournamentRow | null> {
@@ -207,6 +217,84 @@ export function createTournamentRepo(_db: Queryable) {
       );
       const v = r.rows[0]?.place;
       return v == null ? null : parseInt(v, 10);
+    },
+
+    /**
+     * A player's tournament record: played, wins, podiums, best finish.
+     *
+     * Only **finished** weeks count. A first place in a week still running is
+     * not a win yet — anyone can still post — so the current week is reported
+     * separately as a standing rather than folded into the record.
+     *
+     * The rank is computed here rather than stored: RANK() over each week's
+     * field, ordered the same way the live board is (score, then who posted
+     * it first), so a player's place in the record matches what they saw.
+     */
+    async career(exec: Queryable, playerId: number): Promise<CareerRecord> {
+      const r = await exec.query<Record<string, string | null>>(
+        `WITH best AS (
+           SELECT DISTINCT ON (e.tournament_id, e.player_id)
+                  e.tournament_id, e.player_id, e.vs_par, e.strokes, e.completed_at
+           FROM tournament_entries e
+           JOIN tournaments t ON t.id = e.tournament_id
+           WHERE e.status = 'completed' AND e.vs_par IS NOT NULL AND t.ends_at <= NOW()
+           ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
+         ), ranked AS (
+           SELECT *, RANK() OVER (PARTITION BY tournament_id
+                                  ORDER BY vs_par ASC, completed_at ASC) AS place
+           FROM best
+         )
+         SELECT COUNT(*)                                  AS played,
+                COUNT(*) FILTER (WHERE place = 1)         AS wins,
+                COUNT(*) FILTER (WHERE place <= 3)        AS podiums,
+                MIN(place)                                AS best_finish,
+                MIN(vs_par)                               AS best_score,
+                ROUND(AVG(place), 1)::text                AS avg_finish
+         FROM ranked WHERE player_id = $1`,
+        [playerId]
+      );
+      const row = r.rows[0] ?? {};
+      const n = (k: string) => parseInt(row[k] ?? '0', 10) || 0;
+      const nullable = (k: string) => (row[k] == null ? null : parseInt(row[k]!, 10));
+
+      const entries = await exec.query<{ n: string }>(
+        `SELECT COUNT(*)::text AS n FROM tournament_entries WHERE player_id = $1`,
+        [playerId]
+      );
+      return {
+        played: n('played'), wins: n('wins'), podiums: n('podiums'),
+        best_finish: nullable('best_finish'), best_score: nullable('best_score'),
+        avg_finish: row['avg_finish'] == null ? null : Number(row['avg_finish']),
+        entries_used: parseInt(entries.rows[0]?.n ?? '0', 10),
+      };
+    },
+
+    /** The player's finished weeks, newest first, with where they placed. */
+    async history(exec: Queryable, playerId: number, limit: number) {
+      const r = await exec.query(
+        `WITH best AS (
+           SELECT DISTINCT ON (e.tournament_id, e.player_id)
+                  e.tournament_id, e.player_id, e.vs_par, e.strokes, e.completed_at
+           FROM tournament_entries e
+           WHERE e.status = 'completed' AND e.vs_par IS NOT NULL
+           ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
+         ), ranked AS (
+           SELECT *, RANK() OVER (PARTITION BY tournament_id
+                                  ORDER BY vs_par ASC, completed_at ASC) AS place,
+                     COUNT(*) OVER (PARTITION BY tournament_id) AS players
+           FROM best
+         )
+         SELECT t.week_key, t.course_name, t.holes, t.ends_at,
+                r.vs_par::int, r.strokes::int, r.place::int, r.players::int,
+                (t.ends_at > NOW()) AS in_progress
+         FROM ranked r
+         JOIN tournaments t ON t.id = r.tournament_id
+         WHERE r.player_id = $1
+         ORDER BY t.starts_at DESC
+         LIMIT $2`,
+        [playerId, limit]
+      );
+      return r.rows;
     },
 
     async playerCount(exec: Queryable, tournamentId: number): Promise<number> {

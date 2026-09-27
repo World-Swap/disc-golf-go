@@ -95,6 +95,12 @@ function fakeRepo(opts: { courses?: { id: number; name: string }[] } = {}) {
       }
       return ahead + 1;
     },
+    // career() and history() are window-function SQL; the fake keeps the type
+    // honest, and the real queries are verified against Postgres instead.
+    async career() {
+      return { played: 0, wins: 0, podiums: 0, best_finish: null, best_score: null, avg_finish: null, entries_used: entries.length };
+    },
+    async history() { return []; },
     async playerCount(_e, tid) {
       return new Set(entries.filter((e) => e.tournament_id === tid && e.status === 'completed').map((e) => e.player_id)).size;
     },
