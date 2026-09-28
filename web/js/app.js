@@ -146,7 +146,7 @@
     }).join('');
   }
 
-  // The Player Lounge card said "Player Lounge" and nothing else, in every
+  // The Players Lounge card said "Players Lounge" and nothing else, in every
   // place it appeared -- a label rather than a reason to press it. Any page
   // showing the card gives its sub the id `loungeSub` and calls this, which
   // names the most recent upload instead, so the card says what is waiting
