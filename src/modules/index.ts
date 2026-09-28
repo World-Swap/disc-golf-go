@@ -44,6 +44,9 @@ import { createTournamentRouter } from './tournament/tournament.routes';
 import { createScorecardsRepo } from './scorecards/scorecards.repo';
 import { createScorecardsService } from './scorecards/scorecards.service';
 import { createScorecardsRouter } from './scorecards/scorecards.routes';
+import { createVideosRepo } from './videos/videos.repo';
+import { createVideosService } from './videos/videos.service';
+import { createVideosRouter } from './videos/videos.routes';
 import { createReviewsService } from './reviews/reviews.service';
 import { createReviewsRouter } from './reviews/reviews.routes';
 import { createFeedbackRouter } from './feedback/feedback';
@@ -107,6 +110,10 @@ export function createApiRouter(db: Database): Router {
 
   const scorecardsService = createScorecardsService({ repo: createScorecardsRepo(db) });
   api.use(createScorecardsRouter(scorecardsService, auth));
+
+  // The channel feed is public: it is the creators' own public uploads, and
+  // gating it would only make the app look emptier than it is.
+  api.use(createVideosRouter(createVideosService({ repo: createVideosRepo(db) })));
 
   const playersService = createPlayersService({ db });
   api.use(createPlayersRouter(playersService, auth));

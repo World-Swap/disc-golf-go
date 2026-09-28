@@ -710,4 +710,28 @@ CREATE TABLE IF NOT EXISTS scorecard_holes (
   strokes INTEGER,
   UNIQUE (scorecard_id, hole_number)
 );
+
+-- Uploads pulled from the instructional channels' own YouTube feeds. One row
+-- per video; video_id is unique, so a refresh that sees the same upload again
+-- updates the title rather than duplicating it. Nothing here is
+-- player-specific -- it is one shared feed, refreshed on a schedule.
+CREATE TABLE IF NOT EXISTS channel_videos (
+  id SERIAL PRIMARY KEY,
+  video_id TEXT NOT NULL UNIQUE,
+  channel_id TEXT NOT NULL,
+  channel_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  published_at TIMESTAMPTZ NOT NULL,
+  -- The feed states this outright: an entry's alternate link is /shorts/<id>
+  -- for a Short and /watch?v=<id> otherwise. Shorts are recorded but kept out
+  -- of the feed -- these channels post a lot of clips, and a section meant to
+  -- be instructional filled up with them. Stored rather than dropped so
+  -- showing them later is a query change, not another pull.
+  is_short BOOLEAN NOT NULL DEFAULT FALSE,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS is_short BOOLEAN NOT NULL DEFAULT FALSE;
+-- The newest list and the per-creator lists are the only two reads.
+CREATE INDEX IF NOT EXISTS idx_channel_videos_recent ON channel_videos(is_short, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_channel_videos_channel ON channel_videos(channel_id, is_short, published_at DESC);
 `;
