@@ -75,6 +75,10 @@
     .pro-chip b{color:var(--color-orange,#fa5e0f);}
     .stores{display:flex;gap:14px 18px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:24px;}
     .badge{display:block;height:54px;width:auto;}
+    /* In the hero the badges follow a left-aligned CTA, so they start at the
+       same edge rather than centring like the pair at the foot of the page. */
+    .stores--hero{justify-content:flex-start;gap:10px 12px;margin-top:18px;}
+    @media(max-width:900px){.stores--hero{justify-content:center;}}
     /* Google's badge PNG has built-in clear-space padding — size it up so it visually matches Apple's pill */
     .badge-google{height:62px;margin:-4px 0;}
     .store{display:inline-flex;align-items:center;gap:10px;background:var(--color-ink,#2b2622);color:#fff;
@@ -152,6 +156,24 @@
         </h1>
         <p class="hero__sub">Disc Golf Go turns pro coaching into lower scores — learn from 13 touring pros, earn XP, and take it to the course.</p>
 
+        <div class="hero__cta">
+          <a class="btn btn--lg" href="https://discgolfgo.app/register">Start Training — Free</a>
+          <a class="btn btn--ghost btn--lg" href="https://discgolfgo.app/login">Open the App</a>
+        </div>
+
+        <!-- The store badges also sit at the foot of the page. Someone who
+             arrives wanting the app should not have to read the whole thing to
+             find them. Only the two badges here -- the browser route is
+             already the button directly above. -->
+        <div class="stores stores--hero">
+          <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" target="_blank" rel="noopener" aria-label="Download Disc Golf Go on the App Store">
+            <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" width="162" height="54" />
+          </a>
+          <a href="https://play.google.com/store/apps/details?id=the.discgolfgo.app" target="_blank" rel="noopener" aria-label="Get Disc Golf Go on Google Play">
+            <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" width="160" height="62" />
+          </a>
+        </div>
+
         <ul class="bullets">
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">★</span><div><b>Learn from 13 touring pros</b> — <span>Gannon Buhr, Ricky Wysocki, Paul McBeth, Kristin Tattar & more</span></div></li>
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>134 coached lessons</b> — <span>200 videos across 13 skill paths, each with the key takeaways</span></div></li>
@@ -161,10 +183,6 @@
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">△</span><div><b>A tournament every week</b> — <span>one course, everyone, two attempts — then see where you placed</span></div></li>
         </ul>
 
-        <div class="hero__cta">
-          <a class="btn btn--lg" href="https://discgolfgo.app/register">Start Training — Free</a>
-          <a class="btn btn--ghost btn--lg" href="https://discgolfgo.app/login">Open the App</a>
-        </div>
       </div>
 
       <div class="hero__media">
@@ -428,10 +446,10 @@
     </div>
     <div class="stores">
       <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" target="_blank" rel="noopener" aria-label="Download Disc Golf Go on the App Store">
-        <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" />
+        <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" width="162" height="54" />
       </a>
       <a href="https://play.google.com/store/apps/details?id=the.discgolfgo.app" target="_blank" rel="noopener" aria-label="Get Disc Golf Go on Google Play">
-        <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" />
+        <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" width="160" height="62" />
       </a>
       <a class="store" href="https://discgolfgo.app/register"><div><span>Or play now in</span>Your Browser</div></a>
     </div>
