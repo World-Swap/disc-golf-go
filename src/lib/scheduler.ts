@@ -45,6 +45,11 @@ const JOBS: Job[] = [
   { name: 'training-daily-tip', script: 'training-daily-tip.js', hourUtc: 8, minuteUtc: 0 },
   { name: 'training-reminder', script: 'training-reminder.js', hourUtc: 10, minuteUtc: 0 },
   { name: 'training-reengagement', script: 'training-reengagement.js', hourUtc: 12, minuteUtc: 0 },
+  // The channel feed. Every write is an upsert keyed on the video id, so this
+  // is safe on boot too -- and a fresh deploy should not show an empty Newest
+  // section until the next morning. 06:00 UTC puts the day's pull before the
+  // US wakes up, which is where most of these channels post from.
+  { name: 'videos-refresh', script: 'videos-refresh.js', hourUtc: 6, minuteUtc: 0, runOnBoot: true },
 ];
 
 const hhmm = (j: Job): string =>
