@@ -71,6 +71,10 @@
       // Two sections, which is the whole shape of it: the ten most recent
       // uploads across every channel, then everything older reached through
       // the creator who made it. A video is in exactly one of the two.
+      //
+      // The lounge takes whatever the channels post -- it is not filtered to
+      // instruction. Teaching videos belong to the training library, which
+      // curates them lesson by lesson; this is the couch, not the classroom.
       async function loadLounge() {
         loading();
         crumb.textContent = 'Player Lounge';
@@ -94,7 +98,7 @@
           view.className = 'screen stack';
           view.innerHTML = vids
             ? '<p class="row__sub" style="text-transform:none;letter-spacing:0;margin:0">' +
-                'The latest from the channels that teach this game.</p>' +
+                'Everything the disc golf channels posted lately \u2014 rounds, reviews, vlogs and coaching.</p>' +
               '<div><p class="section-label">Newest videos</p><div class="rows">' + vids + '</div></div>' +
               (creators ? '<div><p class="section-label">More from these creators</p>' +
                           '<div class="rows">' + creators + '</div></div>' : '')

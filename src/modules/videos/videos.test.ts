@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
 import { createApp } from '../../http/app';
 import type { Database } from '../../db/types';
-import { NEWEST_COUNT } from './videos.service';
+import { NEWEST_COUNT, PER_CHANNEL_CAP } from './videos.service';
 
 let handler: (sql: string, params?: unknown[]) => { rows: unknown[]; rowCount?: number } = () => ({ rows: [] });
 const db = {
@@ -44,7 +44,7 @@ test('the channel video feed', async (t) => {
   await t.test('the newest list is capped at NEWEST_COUNT however many are asked for', async () => {
     let asked = 0;
     handler = (sql, params) => {
-      if (/ORDER BY published_at DESC/.test(sql) && !/ROW_NUMBER/.test(sql)) asked = Number((params ?? [])[0]);
+      if (/FROM eligible/.test(sql)) asked = Number((params ?? [])[0]);
       return { rows: [] };
     };
     await fetch(base + '/api/videos/newest?limit=500');
@@ -53,18 +53,42 @@ test('the channel video feed', async (t) => {
     assert.equal(asked, 3, 'a smaller limit is still honoured');
   });
 
-  // The whole shape of the feature: the newest N are the Newest section, and
-  // everything past them is reached through its creator. If the creator
-  // queries did not skip the same N, a video would show up in both places.
-  await t.test('creator lists start where the newest list stops', async () => {
-    const skips: number[] = [];
+  // The whole shape of the feature: the Newest list is the top N subject to a
+  // per-channel cap, and the creator lists are exactly what it is not showing.
+  // Both reads must define that set identically or a video lands in both
+  // places, or in neither.
+  await t.test('every read defines the newest set the same way', async () => {
+    const seen: Array<{ sql: string; params: unknown[] }> = [];
     handler = (sql, params) => {
-      if (/ROW_NUMBER/.test(sql)) skips.push(Number((params ?? [])[/channel_id = \$1/.test(sql) ? 1 : 0]));
+      if (/channel_videos/.test(sql)) seen.push({ sql, params: params ?? [] });
       return { rows: [] };
     };
+    await fetch(base + '/api/videos/newest');
     await fetch(base + '/api/videos/creators');
     await fetch(base + '/api/videos/creators/UCaaaaaaaaaaaaaaaaaaaaaa');
-    assert.deepEqual(skips, [NEWEST_COUNT, NEWEST_COUNT], 'both skip the newest cut');
+    assert.equal(seen.length, 3);
+    for (const { sql, params } of seen) {
+      assert.match(sql, /PARTITION BY channel_id/, 'ranks each channel separately');
+      assert.equal(params[1], PER_CHANNEL_CAP, 'same cap everywhere');
+    }
+    // The two creator reads subtract precisely the Newest list.
+    for (const { sql, params } of seen.slice(1)) {
+      assert.match(sql, /NOT IN \(SELECT video_id FROM eligible WHERE grn <= \$1\)/);
+      assert.equal(params[0], NEWEST_COUNT, 'subtracting the same N the list shows');
+    }
+  });
+
+  // Without the cap one channel owns the section: JomezPro posts four round
+  // coverage videos on an event day and took six of the ten slots.
+  await t.test('no channel can take more than the cap', async () => {
+    let capUsed = -1;
+    handler = (sql, params) => {
+      if (/PARTITION BY channel_id/.test(sql)) capUsed = Number((params ?? [])[1]);
+      return { rows: [] };
+    };
+    await fetch(base + '/api/videos/newest?limit=10');
+    assert.equal(capUsed, PER_CHANNEL_CAP);
+    assert.ok(PER_CHANNEL_CAP < NEWEST_COUNT, 'a cap that cannot bind is not a cap');
   });
 
   await t.test('a channel id that is not one is refused', async () => {
