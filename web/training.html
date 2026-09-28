@@ -11,6 +11,15 @@
   <link rel="stylesheet" href="/styles/tokens.css?v=w9" />
   <link rel="stylesheet" href="/styles/app.css?v=w9" />
   <link rel="stylesheet" href="/styles/app-ui.css?v=w9" />
+  <style>
+    /* Same video row as the Player Lounge: 16:9 thumbnail, wrapping title.
+       This block must sit AFTER app-ui.css -- .row__title there is nowrap +
+       ellipsis, and a video's title is the whole reason to press it. */
+    .vthumb { flex: none; width: 80px; height: 45px; border-radius: 4px;
+              object-fit: cover; background: #e8e2d8; margin-right: 12px; }
+    .vrow .row__title { white-space: normal; overflow: visible; text-overflow: clip;
+                        line-height: 1.25; }
+  </style>
 </head>
 <body>
   <main class="app">
@@ -75,7 +84,56 @@
         content.className = 'screen stack';
         content.innerHTML =
           '<div><p class="section-label">Skill up</p><h1 class="h-display">TRAIN<span class="mark" style="width:44%"></span></h1></div>' +
-          recWrap + '<div><p class="section-label">Categories</p><div class="stack">' + cats + '</div></div>';
+          recWrap +
+          '<div id="fresh"></div>' +
+          '<div><p class="section-label">Categories</p><div class="stack">' + cats + '</div></div>';
+        loadFresh();
+      }
+
+      // ── New training videos ──
+      // Fresh instruction pulled from the coaching channels, as opposed to the
+      // library below it, which is curated lesson by lesson. Only uploads that
+      // pass the instructional filter reach this list -- the rounds, reviews
+      // and vlogs from the same channels go to the Player Lounge instead.
+      //
+      // It loads after the hub is already on screen: this is a nice-to-have
+      // beside the lessons, and it must never delay them or break the page if
+      // the feed is empty.
+      function when(iso) {
+        var d = Math.floor((Date.now() - Date.parse(iso)) / 86400000);
+        if (!isFinite(d)) return '';
+        return d <= 0 ? 'today' : d === 1 ? 'yesterday'
+             : d < 7 ? d + ' days ago'
+             : d < 30 ? Math.floor(d / 7) + 'w ago' : Math.floor(d / 30) + 'mo ago';
+      }
+
+      async function loadFresh() {
+        var host = document.getElementById('fresh');
+        if (!host) return;
+        var d;
+        try { d = await API.get('/videos/teaching'); } catch (e) { return; }
+        var vids = d.videos || [];
+        if (!vids.length) return;
+
+        var SHOWN = 5;
+        function row(v) {
+          return '<a class="row vrow" href="' + esc(v.url) + '" target="_blank" rel="noopener">' +
+            '<img class="vthumb" src="' + esc(v.thumbnail) + '" alt="" loading="lazy" width="80" height="45">' +
+            '<div class="row__body"><div class="row__title">' + esc(v.title) + '</div>' +
+            '<div class="row__sub" style="text-transform:none;letter-spacing:0">' +
+              esc(v.channel_name) + ' \u00b7 ' + when(v.published_at) + '</div></div></a>';
+        }
+        function paint(all) {
+          host.innerHTML = '<p class="section-label">New training videos</p>' +
+            '<div class="rows">' + (all ? vids : vids.slice(0, SHOWN)).map(row).join('') + '</div>' +
+            (!all && vids.length > SHOWN
+              ? '<button class="btn btn--ghost btn--block" id="moreFresh" style="margin-top:8px">' +
+                'Show ' + (vids.length - SHOWN) + ' more</button>'
+              : '');
+          var b = document.getElementById('moreFresh');
+          if (b) b.addEventListener('click', function () { paint(true); });
+        }
+        paint(false);
       }
 
       // ── Category: lessons list ──

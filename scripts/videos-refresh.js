@@ -13,6 +13,11 @@
 try { require('dotenv').config({ path: require('path').join(__dirname, '../.env') }); } catch { /* Render injects env directly */ }
 const { Pool } = require('pg');
 const { VIDEO_CHANNELS } = require('./video-channels.json');
+// One rule, one place. The classifier is TypeScript because the API and its
+// tests use it too; this job runs it through ts-node rather than keeping a
+// second copy of the patterns that could drift from the first.
+require('ts-node/register/transpile-only');
+const { teaches } = require('../src/modules/videos/teaches');
 
 const FEED = 'https://www.youtube.com/feeds/videos.xml?channel_id=';
 const TIMEOUT_MS = 15000;
@@ -112,17 +117,22 @@ async function run() {
       }
       for (const v of feed.videos) {
         const r = await client.query(
-          `INSERT INTO channel_videos (video_id, channel_id, channel_name, title, published_at, is_short, feed_hidden)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO channel_videos (video_id, channel_id, channel_name, title, published_at, is_short, feed_hidden, teaches)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (video_id) DO UPDATE
               SET title = EXCLUDED.title,
                   channel_name = EXCLUDED.channel_name,
                   is_short = EXCLUDED.is_short,
                   feed_hidden = EXCLUDED.feed_hidden,
+                  teaches = EXCLUDED.teaches,
                   fetched_at = NOW()
            RETURNING (xmax = 0) AS inserted`,
-          // A Short is hidden unless this channel teaches in Shorts.
-          [v.videoId, ch.channel_id, name, v.title, v.published, v.isShort, v.isShort && !ch.shorts]
+          // A Short is hidden unless this channel teaches in Shorts. The
+          // training feed additionally needs the channel to be one we trust to
+          // teach at all -- `ch.teaches === false` keeps a channel in the
+          // lounge while keeping it out of the training list.
+          [v.videoId, ch.channel_id, name, v.title, v.published, v.isShort,
+           v.isShort && !ch.shorts, ch.teaches !== false && teaches(v.title)]
         );
         if (r.rows[0] && r.rows[0].inserted) added++; else updated++;
       }
@@ -134,15 +144,25 @@ async function run() {
         'WHERE channel_id = $1 AND feed_hidden IS DISTINCT FROM ($2::boolean AND is_short)',
         [ch.channel_id, !ch.shorts]
       );
+      // A channel dropped from the training allowlist must lose its old rows
+      // there too, not just stop adding new ones.
+      if (ch.teaches === false) {
+        await client.query(
+          'UPDATE channel_videos SET teaches = FALSE WHERE channel_id = $1 AND teaches',
+          [ch.channel_id]
+        );
+      }
       await wait(GAP_MS);
     }
     const total = await client.query(
       `SELECT COUNT(*) FILTER (WHERE NOT feed_hidden)::text AS shown,
-              COUNT(*) FILTER (WHERE feed_hidden)::text AS hidden
+              COUNT(*) FILTER (WHERE feed_hidden)::text AS hidden,
+              COUNT(*) FILTER (WHERE teaches AND NOT feed_hidden)::text AS teaching
          FROM channel_videos`);
     console.log('[videos] ' + added + ' new, ' + updated + ' refreshed, ' + failed +
                 ' channel(s) unavailable; showing ' + total.rows[0].shown + ' videos (' +
-                total.rows[0].hidden + ' shorts hidden)');
+                total.rows[0].hidden + ' shorts hidden), of which ' +
+                total.rows[0].teaching + ' teach');
   } finally {
     client.release();
     await pool.end();

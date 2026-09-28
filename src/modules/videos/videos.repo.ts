@@ -93,6 +93,30 @@ export function createVideosRepo(db: Database) {
     },
 
     /**
+     * The newest uploads that teach, capped per channel for the same reason
+     * the lounge is: without it one prolific coaching channel owns the list.
+     * `teaches` is written by the refresh job, so the rule lives in one place
+     * and this read never second-guesses it.
+     */
+    async teaching(limit: number, cap: number): Promise<VideoRow[]> {
+      const r = await db.query<VideoRow>(
+        `WITH capped AS (
+           SELECT video_id, channel_id, channel_name, title, published_at, id,
+                  ROW_NUMBER() OVER (PARTITION BY channel_id ORDER BY published_at DESC, id DESC) AS crn
+             FROM channel_videos
+            WHERE teaches AND NOT feed_hidden
+         )
+         SELECT video_id, channel_id, channel_name, title, published_at
+           FROM capped
+          WHERE crn <= $2
+          ORDER BY published_at DESC, id DESC
+          LIMIT $1`,
+        [limit, cap]
+      );
+      return r.rows;
+    },
+
+    /**
      * Record one upload. Seeing the same video again updates its title (a
      * creator can rename an upload) rather than inserting a duplicate, which
      * is what makes the refresh job safe to run as often as we like.
