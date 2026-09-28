@@ -276,24 +276,48 @@
 
     // Typical throwing distance for a hole of each par, used when a course
     // knows its par but not its hole lengths.
-    function lengthForPar(par) {
-      if (par >= 5) return Math.round(640 + Math.random() * 180);
-      if (par === 4) return Math.round(410 + Math.random() * 200);
-      return Math.round(200 + Math.random() * 180);
+    //
+    // `key` makes this DETERMINISTIC for a real course. It used to be a plain
+    // Math.random(), which meant a course's holes were re-drawn on every page
+    // load: the same course was a different course each time you played it,
+    // and the weekly tournament -- one course, everyone, ranked together --
+    // was handing every player their own layout. A quick round passes no key
+    // and still varies, which is the one place that is wanted.
+    function lengthForPar(par, key) {
+      var lo = par >= 5 ? 650 : par === 4 ? 400 : 215;
+      var hi = par >= 5 ? 900 : par === 4 ? 640 : 395;
+      return Math.round(lo + unit(key) * (hi - lo));
+    }
+
+    /** 0..1 from a string key, or random when there is no key to be stable to. */
+    function unit(key) {
+      if (key == null) return Math.random();
+      var h = 2166136261;
+      for (var i = 0; i < key.length; i++) {
+        h ^= key.charCodeAt(i);
+        h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+      }
+      return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
     }
 
     // Build a playable round from whatever the course record actually has.
     // hole_details is free-form JSONB across every course, so read it
     // defensively and fall back to par-shaped holes rather than trusting it.
     function buildCourse(c) {
-      var count = Math.min(parseInt(c.holes, 10) || 18, 18);
-      var totalPar = parseInt(c.par, 10) || count * 3;
+      var all = parseInt(c.holes, 10) || 18;          // what the course really has
+      var count = Math.min(all, 18);                  // what we play of it
+      var totalPar = parseInt(c.par, 10) || all * 3;
+      // Par per hole is the course's par over its OWN hole count, not over the
+      // 18 we play. Dividing by `count` turned a 36-hole par-108 course into
+      // eighteen par SIX holes, and a 27-hole par-81 into eighteen par 5s --
+      // 26 courses were affected.
+      var parPerHole = Math.max(3, Math.round(totalPar / all));
       var details = Array.isArray(c.hole_details) ? c.hole_details : null;
       var holes = [];
       for (var i = 0; i < count; i++) {
         var d = details && details[i] && typeof details[i] === 'object' ? details[i] : null;
         var par = d ? parseInt(d.par, 10) : NaN;
-        if (!(par >= 2 && par <= 6)) par = Math.max(3, Math.round(totalPar / count));
+        if (!(par >= 2 && par <= 6)) par = parPerHole;
         // Feet are the native unit. A *_ft field is already feet; an
         // unlabelled number of 120 or less must be metres, since no disc golf
         // hole is 120 ft — that's a long putt, not a hole.
@@ -303,7 +327,11 @@
           var raw = d ? parseFloat(d.distance || d.length) : NaN;
           if (raw > 0) feet = raw <= 120 ? Math.round(raw * 3.28084) : Math.round(raw);
         }
-        if (!(feet >= 80 && feet <= 1100)) feet = lengthForPar(par);
+        // Keyed by the course and hole, so a course with no stored card still
+        // plays the same way for every player rather than being re-rolled.
+        if (!(feet >= 80 && feet <= 1100)) {
+          feet = lengthForPar(par, c.id != null ? c.id + ':' + (i + 1) : null);
+        }
         holes.push({ par: par, feet: feet });
       }
       return { name: c.name || 'Course', holes: holes };

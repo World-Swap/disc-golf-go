@@ -8,6 +8,7 @@ import type { Database } from './types';
 import { SCHEMA_SQL } from './schema';
 import { seedDatabase, CONTENT_VERSION } from './seed';
 import { isPlaceholderCourseName } from './data/placeholder-names';
+import { buildLayout } from './data/hole-layouts';
 
 // One-time (idempotent) repair for completions orphaned by past delete+reinsert
 // reseeds, which churned training_lessons ids. Re-links training_completions to
@@ -82,6 +83,67 @@ export async function pruneUnnamedCourses(client: PoolClient): Promise<void> {
   );
 }
 
+/**
+ * Give every course a stable per-hole card.
+ *
+ * `courses.hole_details` has never been written by anything -- it was read
+ * defensively by the game and was NULL on all 1,536 rows -- so the game fell
+ * back to `Math.random()` for each hole's length, freshly, on every page load.
+ * A course was therefore a different course every time it was played, and the
+ * weekly tournament ranked players against each other while quietly handing
+ * each of them their own layout.
+ *
+ * The cards written here are DERIVED, not surveyed (see data/hole-layouts.ts):
+ * the source data holds only a hole count and a total par. They are marked
+ * `source: 'derived'` so that real imported data is never overwritten by them,
+ * and so this can tell its own rows apart from anyone else's.
+ *
+ * Idempotent: buildLayout is a pure function of the course id, so a second run
+ * writes identical JSON and updates nothing.
+ */
+export async function backfillHoleDetails(client: PoolClient): Promise<void> {
+  const { rows } = await client.query<{
+    id: number; holes: number | null; par: number | null;
+    detail_count: number | null; detail_source: string | null;
+  }>(
+    `SELECT id, holes, par,
+            CASE WHEN jsonb_typeof(hole_details) = 'array'
+                 THEN jsonb_array_length(hole_details) END AS detail_count,
+            hole_details -> 0 ->> 'source' AS detail_source
+       FROM courses`
+  );
+
+  const stale = rows.filter((r) => {
+    if (r.detail_count == null) return true;                 // never written
+    if (r.detail_source !== 'derived') return false;         // real data: leave it
+    // Our own row, but the course's hole count has moved since.
+    const want = Math.max(1, Math.min(Math.floor(r.holes ?? 18) || 18, 36));
+    return r.detail_count !== want;
+  });
+  if (!stale.length) return;
+
+  const BATCH = 200;
+  let written = 0;
+  for (let i = 0; i < stale.length; i += BATCH) {
+    const slice = stale.slice(i, i + BATCH);
+    const ids: number[] = [];
+    const cards: string[] = [];
+    for (const c of slice) {
+      ids.push(c.id);
+      cards.push(JSON.stringify(buildLayout(c.id, c.holes ?? 18, c.par)));
+    }
+    const res = await client.query(
+      `UPDATE courses c
+          SET hole_details = v.card::jsonb, updated_at = NOW()
+         FROM (SELECT UNNEST($1::int[]) AS id, UNNEST($2::text[]) AS card) v
+        WHERE c.id = v.id`,
+      [ids, cards]
+    );
+    written += res.rowCount ?? 0;
+  }
+  console.log(`[migrate] wrote derived hole cards for ${written} course(s)`);
+}
+
 export async function runMigrations(db: Database): Promise<void> {
   const client = await db.connect();
   try {
@@ -124,6 +186,14 @@ export async function runMigrations(db: Database): Promise<void> {
       await pruneUnnamedCourses(client);
     } catch (err) {
       console.error('[migrate] course prune skipped:', (err as Error).message);
+    }
+
+    // Give every surviving course a stable card to play (non-fatal). After the
+    // prune, so no work is done for rows that are about to be deleted.
+    try {
+      await backfillHoleDetails(client);
+    } catch (err) {
+      console.error('[migrate] hole-detail backfill skipped:', (err as Error).message);
     }
   } finally {
     client.release();
