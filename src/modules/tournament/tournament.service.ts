@@ -42,11 +42,36 @@ export interface TournamentDeps {
 export function createTournamentService(deps: TournamentDeps) {
   const { db, repo, submitRound } = deps;
 
+  /**
+   * A tournament whose course row disappeared underneath it. course_id is
+   * ON DELETE SET NULL, so the week survives the loss but has nothing to play
+   * on -- /game?entry= dead-ends on "This week has no course yet" with the
+   * entry already spent. The name is kept denormalised precisely so this is
+   * recoverable: look the same course up by name first, because a course that
+   * came back under a new id means the week carries on unchanged, and only
+   * draw a fresh one if it is really gone.
+   */
+  async function repairCourse(t: TournamentRow): Promise<TournamentRow> {
+    if (t.course_id != null) return t;
+    const same = await repo.findCourseByName(db, t.course_name);
+    const course = same ?? (await repo.randomCourse(db));
+    if (!course) return t; // No courses at all -- nothing to repair it with.
+    const healed = await repo.setCourse(db, t.id, course);
+    if (healed) {
+      console.log(
+        `[tournament] ${t.week_key} lost its course row; ` +
+          (same ? `re-linked to "${course.name}"` : `redrawn as "${course.name}"`)
+      );
+    }
+    // If setCourse matched nothing another request healed it first; re-read.
+    return healed ?? (await repo.find(db, t.week_key)) ?? t;
+  }
+
   /** The week's tournament, created on first use so no scheduled job is needed. */
   async function current(now = new Date()): Promise<TournamentRow> {
     const weekKey = periodKey('weekly', now);
     const existing = await repo.find(db, weekKey);
-    if (existing) return existing;
+    if (existing) return repairCourse(existing);
 
     return withTransaction(db, async (client) => {
       // Another request may have created it between the read and here.

@@ -38,6 +38,13 @@ function fakeRepo(opts: { courses?: { id: number; name: string }[] } = {}) {
       tournaments.push(row);
       return row;
     },
+    async findCourseByName(_e, name) { return courses.find((c) => c.name === name) ?? null; },
+    async setCourse(_e, tid, course) {
+      const t = tournaments.find((x) => x.id === tid);
+      if (!t || t.course_id != null) return null;    // WHERE course_id IS NULL
+      t.course_id = course.id; t.course_name = course.name;
+      return t;
+    },
     async entries(_e, tid, pid) { return entries.filter((e) => e.tournament_id === tid && e.player_id === pid); },
     async entryById(_e, id, pid) { return entries.find((e) => e.id === id && e.player_id === pid) ?? null; },
     async takeEntry(_c, tid, pid, attempt) {
@@ -159,6 +166,46 @@ test('the tournament is one course a week, 18 holes', async (t) => {
     await svc.current(new Date('2026-10-01T12:00:00Z'));   // the following week
     assert.equal(tournaments.length, 2);
     assert.notEqual(tournaments[0]!.week_key, tournaments[1]!.week_key);
+  });
+
+  // course_id is ON DELETE SET NULL, so losing the course row leaves the week
+  // alive but unplayable: the game page dead-ends on "This week has no course
+  // yet" with the player's entry already spent. It used to happen every time
+  // the content seed ran, because that deleted and re-inserted every course.
+  await t.test('a week whose course row vanished is put back together', async () => {
+    const { repo, tournaments } = fakeRepo();
+    const svc = createTournamentService({ db, repo, submitRound });
+    const made = await svc.current(NOW);
+    tournaments[0]!.course_id = null;                    // the FK fired
+
+    const healed = await svc.current(NOW);
+    assert.equal(healed.week_key, made.week_key, 'still the same week');
+    assert.ok(healed.course_id != null, 'and it has somewhere to play again');
+    assert.equal(healed.course_name, made.course_name, 'the same course, by name');
+    assert.equal(healed.course_id, made.course_id, 'found under its own id');
+  });
+
+  // The name is only a fallback route back to the same course. If the course
+  // is genuinely gone, a dead week is worse than a different one.
+  await t.test('if that course is really gone, the week draws another', async () => {
+    const { repo, tournaments } = fakeRepo();
+    const svc = createTournamentService({ db, repo, submitRound });
+    await svc.current(NOW);
+    tournaments[0]!.course_id = null;
+    tournaments[0]!.course_name = 'A course that no longer exists';
+
+    const healed = await svc.current(NOW);
+    assert.ok(healed.course_id != null, 'playable again');
+    assert.notEqual(healed.course_name, 'A course that no longer exists');
+  });
+
+  await t.test('a week that still has its course is left alone', async () => {
+    const { repo, tournaments } = fakeRepo();
+    const svc = createTournamentService({ db, repo, submitRound });
+    const made = await svc.current(NOW);
+    const again = await svc.current(NOW);
+    assert.equal(again.course_id, made.course_id, 'no redraw for a healthy week');
+    assert.equal(tournaments.length, 1);
   });
 });
 

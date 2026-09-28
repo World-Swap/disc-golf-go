@@ -20,8 +20,21 @@ export const CONTENT_VERSION = 16;
 // across reseeds. Deleting + re-inserting them churned the SERIAL ids, which
 // orphaned every training_completions.lesson_id and made lesson progress and
 // leaderboard XP appear to reset on each content deploy.
+//
+// COURSES ARE NOT DROPPED HERE EITHER, for exactly the same reason and with
+// worse consequences. `DELETE FROM courses` renumbered every course on each
+// content deploy, and half the app carries a course_id:
+//   · tournaments.course_id  ON DELETE SET NULL — the week's course vanished,
+//     so /game?entry= dead-ended on "This week has no course yet" with the
+//     player's entry already spent. This is how that bug happened.
+//   · scorecards.course_id   ON DELETE CASCADE  — players' real rounds deleted.
+//   · game_rounds.course_id  ON DELETE SET NULL — rounds lost their course.
+//   · checkins / course_reviews / player_course_bests carry a course_id with
+//     no FK at all, so they silently came to point at a DIFFERENT course.
+// Courses are upserted by (name, city, state) in seedDatabase() instead, which
+// is unique across all 1,536 seeded rows and also spares the courses added by
+// the scripts/add-*-courses.js imports, which a delete took with it.
 const RESET_CONTENT_SQL = `
-DELETE FROM courses;
 DELETE FROM daily_challenge_pool;
 DELETE FROM items;
 DELETE FROM vault_items;
@@ -119,12 +132,26 @@ export async function seedDatabase(client: PoolClient): Promise<void> {
     }
   }
 
-  // ── courses (batched multi-row insert; ~1,600 rows) ──
+  // ── courses (batched upsert; ~1,600 rows) ──
   // The OSM half of the seed includes per-tee and per-basket nodes ("Tee 2 -
   // Long", "Basket4", "Disc Golf Course"), which are hole designations rather
   // than courses. Filtering here rather than editing data/courses.ts keeps the
   // rule in force the next time that auto-generated file is regenerated.
+  //
+  // UPSERT, never delete + re-insert: a course id is referenced by tournaments,
+  // scorecards, game_rounds, checkins, course_reviews and player_course_bests,
+  // and renumbering them broke all six (see RESET_CONTENT_SQL above). The key
+  // is (name, city, state), which is unique across all 1,536 seeded rows. It is
+  // matched with IS NOT DISTINCT FROM because city and state are nullable and
+  // `= NULL` would match nothing, re-inserting those rows every deploy.
+  //
+  // Two statements rather than ON CONFLICT: there is no unique index on that
+  // triple, and adding one would fail on any live database that already holds
+  // a duplicate from the delete-and-re-insert era or a manual import.
   const courses = COURSES.filter((c) => !isPlaceholderCourseName(c.name));
+  const KEY_MATCH = `c.name = v.name
+       AND c.city IS NOT DISTINCT FROM v.city
+       AND c.state IS NOT DISTINCT FROM v.state`;
   const BATCH = 150;
   for (let i = 0; i < courses.length; i += BATCH) {
     const slice = courses.slice(i, i + BATCH);
@@ -132,12 +159,31 @@ export async function seedDatabase(client: PoolClient): Promise<void> {
     const rows = slice.map((c, j) => {
       const b = j * 8;
       params.push(c.name, c.city, c.state, c.lat, c.lng, c.holes, c.par, c.difficulty);
-      // country / hole_count / is_active are constant or mirror `holes`.
-      return `($${b + 1}, $${b + 2}, $${b + 3}, 'US', $${b + 4}, $${b + 5}, $${b + 6}, $${b + 6}, $${b + 7}, $${b + 8}, TRUE)`;
+      // The first row carries the casts; VALUES takes the rest of the column's
+      // type from it, and an uncast parameter here is "text" to Postgres.
+      return j === 0
+        ? `($1::text, $2::text, $3::text, $4::numeric, $5::numeric, $6::int, $7::int, $8::text)`
+        : `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8})`;
     });
+    const values = `(VALUES ${rows.join(', ')}) AS v(name, city, state, lat, lng, holes, par, difficulty)`;
+
+    // Refresh the rows that are already there, keeping their ids.
+    await client.query(
+      `UPDATE courses c
+          SET lat = v.lat, lng = v.lng, holes = v.holes, hole_count = v.holes,
+              par = v.par, difficulty = COALESCE(v.difficulty, c.difficulty),
+              country = COALESCE(c.country, 'US'), is_active = TRUE, updated_at = NOW()
+         FROM ${values}
+        WHERE ${KEY_MATCH}`,
+      params
+    );
+
+    // Then add only the ones that are genuinely new.
     await client.query(
       `INSERT INTO courses (name, city, state, country, lat, lng, holes, hole_count, par, difficulty, is_active)
-       VALUES ${rows.join(', ')}`,
+       SELECT v.name, v.city, v.state, 'US', v.lat, v.lng, v.holes, v.holes, v.par, v.difficulty, TRUE
+         FROM ${values}
+        WHERE NOT EXISTS (SELECT 1 FROM courses c WHERE ${KEY_MATCH})`,
       params
     );
   }
