@@ -112,27 +112,37 @@ async function run() {
       }
       for (const v of feed.videos) {
         const r = await client.query(
-          `INSERT INTO channel_videos (video_id, channel_id, channel_name, title, published_at, is_short)
-                VALUES ($1, $2, $3, $4, $5, $6)
+          `INSERT INTO channel_videos (video_id, channel_id, channel_name, title, published_at, is_short, feed_hidden)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (video_id) DO UPDATE
               SET title = EXCLUDED.title,
                   channel_name = EXCLUDED.channel_name,
                   is_short = EXCLUDED.is_short,
+                  feed_hidden = EXCLUDED.feed_hidden,
                   fetched_at = NOW()
            RETURNING (xmax = 0) AS inserted`,
-          [v.videoId, ch.channel_id, name, v.title, v.published, v.isShort]
+          // A Short is hidden unless this channel teaches in Shorts.
+          [v.videoId, ch.channel_id, name, v.title, v.published, v.isShort, v.isShort && !ch.shorts]
         );
         if (r.rows[0] && r.rows[0].inserted) added++; else updated++;
       }
+      // The feed only carries the latest ~15, so flipping a channel's shorts
+      // setting would otherwise leave its older rows on the old decision
+      // forever. Reconcile the whole channel, not just what came back today.
+      await client.query(
+        'UPDATE channel_videos SET feed_hidden = ($2::boolean AND is_short) ' +
+        'WHERE channel_id = $1 AND feed_hidden IS DISTINCT FROM ($2::boolean AND is_short)',
+        [ch.channel_id, !ch.shorts]
+      );
       await wait(GAP_MS);
     }
     const total = await client.query(
-      `SELECT COUNT(*) FILTER (WHERE NOT is_short)::text AS full,
-              COUNT(*) FILTER (WHERE is_short)::text AS shorts
+      `SELECT COUNT(*) FILTER (WHERE NOT feed_hidden)::text AS shown,
+              COUNT(*) FILTER (WHERE feed_hidden)::text AS hidden
          FROM channel_videos`);
     console.log('[videos] ' + added + ' new, ' + updated + ' refreshed, ' + failed +
-                ' channel(s) unavailable; holding ' + total.rows[0].full + ' videos (+ ' +
-                total.rows[0].shorts + ' shorts, not shown)');
+                ' channel(s) unavailable; showing ' + total.rows[0].shown + ' videos (' +
+                total.rows[0].hidden + ' shorts hidden)');
   } finally {
     client.release();
     await pool.end();

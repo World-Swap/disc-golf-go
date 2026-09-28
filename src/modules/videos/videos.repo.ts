@@ -31,7 +31,7 @@ export function createVideosRepo(db: Database) {
       const r = await db.query<VideoRow>(
         `SELECT video_id, channel_id, channel_name, title, published_at
            FROM channel_videos
-          WHERE NOT is_short
+          WHERE NOT feed_hidden
           ORDER BY published_at DESC, id DESC
           LIMIT $1 OFFSET $2`,
         [limit, offset]
@@ -46,7 +46,7 @@ export function createVideosRepo(db: Database) {
            SELECT channel_id, channel_name, published_at,
                   ROW_NUMBER() OVER (ORDER BY published_at DESC, id DESC) AS rn
              FROM channel_videos
-            WHERE NOT is_short
+            WHERE NOT feed_hidden
          )
          SELECT channel_id, channel_name,
                 COUNT(*)::int AS videos,
@@ -67,7 +67,7 @@ export function createVideosRepo(db: Database) {
            SELECT video_id, channel_id, channel_name, title, published_at, id,
                   ROW_NUMBER() OVER (ORDER BY published_at DESC, id DESC) AS rn
              FROM channel_videos
-            WHERE NOT is_short
+            WHERE NOT feed_hidden
          )
          SELECT video_id, channel_id, channel_name, title, published_at
            FROM ranked
@@ -100,7 +100,7 @@ export function createVideosRepo(db: Database) {
 
     async count(): Promise<number> {
       const r = await db.query<{ n: string }>(
-        'SELECT COUNT(*)::text AS n FROM channel_videos WHERE NOT is_short');
+        'SELECT COUNT(*)::text AS n FROM channel_videos WHERE NOT feed_hidden');
       return parseInt(r.rows[0]?.n ?? '0', 10);
     },
   };

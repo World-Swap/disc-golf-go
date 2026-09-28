@@ -25,22 +25,23 @@
       <div class="segbar" id="tabs">
         <button class="seg" data-tab="library" aria-selected="true">My Library</button>
         <button class="seg" data-tab="bonus">Creators</button>
-        <button class="seg" data-tab="newest">Newest</button>
       </div>
       <div id="view" class="loading">Loading…</div>
+      <!-- The channel feed used to be a third tab here. It is not the vault's
+           kind of thing -- the vault holds what you have unlocked, the feed is
+           what the creators posted this week -- so it has its own page, and
+           this is the way through to it. -->
+      <a class="row" href="/lounge" style="border:1px solid var(--hair,#e4dfd6);border-radius:4px;background:#fff">
+        <span class="row__glyph">▷</span>
+        <div class="row__body">
+          <div class="row__title">Player Lounge →</div>
+          <div class="row__sub" style="text-transform:none;letter-spacing:0">The newest videos from the channels that teach this game</div>
+        </div>
+      </a>
     </div>
     <nav id="tabbar"></nav>
   </main>
 
-  <style>
-    /* 16:9 at the row's height. `flex:none` so a long title cannot squeeze it. */
-    .vthumb { flex: none; width: 80px; height: 45px; border-radius: 4px;
-              object-fit: cover; background: #e8e2d8; margin-right: 12px; }
-    /* A video's title is the whole reason to press it, so it wraps rather
-       than ellipsing after four words the way a one-line row title does. */
-    .vrow .row__title { white-space: normal; overflow: visible; text-overflow: clip;
-                        line-height: 1.25; }
-  </style>
   <script src="/js/app.js?v=w9"></script>
   <script>
     (function () {
@@ -57,10 +58,7 @@
       document.getElementById('tabs').addEventListener('click', function (e) {
         var b = e.target.closest('.seg'); if (!b) return;
         [].forEach.call(this.children, function (c) { c.setAttribute('aria-selected', c === b ? 'true' : 'false'); });
-        var tab = b.getAttribute('data-tab');
-        if (tab === 'bonus') loadBonus();
-        else if (tab === 'newest') loadNewest();
-        else loadLibrary();
+        b.getAttribute('data-tab') === 'bonus' ? loadBonus() : loadLibrary();
       });
 
       function loading() { view.className = 'loading'; view.textContent = 'Loading…'; }
@@ -112,68 +110,6 @@
               }).join('');
               return '<div><p class="section-label">' + esc(c.channel) + ' · ' + (c.unlocked || 0) + '/' + (c.video_count || 0) + '</p><div class="rows">' + vids + '</div></div>';
             }).join('');
-        } catch (e) { fail(e); }
-      }
-
-      // ── Newest: the feed pulled from the instructional channels ──
-      // Two sections, which is the whole shape of it: the ten most recent
-      // uploads across every channel, then everything older reached through
-      // the creator who made it. A video is in exactly one of the two.
-      function when(iso) {
-        var d = Math.floor((Date.now() - Date.parse(iso)) / 86400000);
-        if (!isFinite(d)) return '';
-        return d <= 0 ? 'today' : d === 1 ? 'yesterday'
-             : d < 7 ? d + ' days ago'
-             : d < 30 ? Math.floor(d / 7) + 'w ago'
-             : Math.floor(d / 30) + 'mo ago';
-      }
-
-      function videoRow(v) {
-        return '<a class="row vrow" href="' + esc(v.url) + '" target="_blank" rel="noopener">' +
-          '<img class="vthumb" src="' + esc(v.thumbnail) + '" alt="" loading="lazy" width="80" height="45">' +
-          '<div class="row__body"><div class="row__title">' + esc(v.title) + '</div>' +
-          '<div class="row__sub" style="text-transform:none;letter-spacing:0">' +
-            esc(v.channel_name) + ' \u00b7 ' + when(v.published_at) + '</div></div></a>';
-      }
-
-      async function loadNewest() {
-        loading();
-        try {
-          var d = await API.get('/videos/newest');
-          var c = await API.get('/videos/creators');
-          var vids = (d.videos || []).map(videoRow).join('');
-          var creators = (c.creators || []).map(function (x) {
-            return '<button class="row" data-channel="' + esc(x.channel_id) + '" style="width:100%;text-align:left;border:0;background:none;font:inherit">' +
-              '<span class="row__glyph">\u25b7</span>' +
-              '<div class="row__body"><div class="row__title">' + esc(x.channel_name) + '</div>' +
-              '<div class="row__sub" style="text-transform:none;letter-spacing:0">' +
-                x.videos + (x.videos === 1 ? ' video' : ' videos') + '</div></div>' +
-              '<span class="row__meta">\u203a</span></button>';
-          }).join('');
-
-          view.className = 'screen stack';
-          view.innerHTML = vids
-            ? '<div><p class="section-label">Newest videos</p><div class="rows">' + vids + '</div></div>' +
-              (creators ? '<div><p class="section-label">More from these creators</p>' +
-                          '<div class="rows">' + creators + '</div></div>' : '')
-            : '<div class="loading">No videos yet \u2014 the feed refreshes daily.</div>';
-
-          view.querySelectorAll('[data-channel]').forEach(function (b) {
-            b.addEventListener('click', function () { loadCreator(this.dataset.channel); });
-          });
-        } catch (e) { fail(e); }
-      }
-
-      async function loadCreator(channelId) {
-        loading();
-        try {
-          var d = await API.get('/videos/creators/' + encodeURIComponent(channelId));
-          view.className = 'screen stack';
-          view.innerHTML =
-            '<div><button class="back" id="backNewest" style="border:0;background:none;font:inherit;cursor:pointer">\u2190 Newest</button>' +
-              '<h1 class="h-title" style="margin-top:6px">' + esc(d.channel_name || 'Creator') + '</h1></div>' +
-            '<div class="rows">' + (d.videos || []).map(videoRow).join('') + '</div>';
-          document.getElementById('backNewest').addEventListener('click', loadNewest);
         } catch (e) { fail(e); }
       }
 

@@ -49,6 +49,7 @@ const PAGES: Record<string, string> = {
   '/missions': 'missions.html',
   '/ranks': 'ranks.html',
   '/vault': 'vault.html',
+  '/lounge': 'lounge.html',
   '/shop': 'shop.html',
   '/profile': 'profile.html',
   '/settings': 'settings.html',

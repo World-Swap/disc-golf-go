@@ -75,6 +75,22 @@ test('the channel video feed', async (t) => {
     }
   });
 
+  // Shorts are hidden by the refresh job writing feed_hidden, not by the
+  // reads testing is_short -- that is what lets a channel whose teaching is
+  // entirely Shorts (Scott Stokely posts nothing else) appear at all.
+  await t.test('the feed filters on feed_hidden, never on is_short', async () => {
+    const seen: string[] = [];
+    handler = (sql) => { if (/channel_videos/.test(sql)) seen.push(sql); return { rows: [] }; };
+    await fetch(base + '/api/videos/newest');
+    await fetch(base + '/api/videos/creators');
+    await fetch(base + '/api/videos/creators/UC4LCYbEROzep8Cw0lZWAJ4A');
+    assert.ok(seen.length >= 3, 'all three reads hit the table');
+    for (const sql of seen) {
+      assert.match(sql, /NOT feed_hidden/, 'every read respects the feed flag');
+      assert.doesNotMatch(sql, /NOT is_short/, 'no read second-guesses it');
+    }
+  });
+
   await t.test('a valid-looking channel id is accepted', async () => {
     handler = () => ({ rows: [] });
     const r = await fetch(base + '/api/videos/creators/UC4LCYbEROzep8Cw0lZWAJ4A');

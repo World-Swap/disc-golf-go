@@ -728,10 +728,21 @@ CREATE TABLE IF NOT EXISTS channel_videos (
   -- be instructional filled up with them. Stored rather than dropped so
   -- showing them later is a query change, not another pull.
   is_short BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Whether the feed shows it, which is not the same question as whether it
+  -- is a Short. Most channels post clips we do not want; a few teach entirely
+  -- in Shorts -- Scott Stokely's uploads are 100% Shorts, so excluding them
+  -- made adding him show nothing at all. A channel can opt in, and this column
+  -- records the outcome so is_short stays a plain fact about the video.
+  feed_hidden BOOLEAN NOT NULL DEFAULT FALSE,
   fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS is_short BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS feed_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+-- No backfill here on purpose. This file runs on every boot, so an UPDATE
+-- setting feed_hidden = is_short would undo the per-channel shorts opt-in
+-- every time the app restarted. The refresh job owns this column and
+-- reconciles each channel on its own run, including on boot.
 -- The newest list and the per-creator lists are the only two reads.
-CREATE INDEX IF NOT EXISTS idx_channel_videos_recent ON channel_videos(is_short, published_at DESC);
-CREATE INDEX IF NOT EXISTS idx_channel_videos_channel ON channel_videos(channel_id, is_short, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_channel_videos_recent ON channel_videos(feed_hidden, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_channel_videos_channel ON channel_videos(channel_id, feed_hidden, published_at DESC);
 `;

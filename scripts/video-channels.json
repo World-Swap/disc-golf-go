@@ -1,30 +1,115 @@
 {
-  "_comment": "The instructional channels the Newest-videos feed pulls from. Ranked by how many lessons in the training library cite them, with the tail chosen on merit because everything below two citations is tied. Channel ids were resolved from each channel's own page and every feed was checked to return entries. The `name` here is only a label for this file: the refresh job takes the channel's real name from its feed, because resolving a channel from a video page gives whichever channel HOSTED that video -- which is how 'Paul McBeth' first resolved to JomezPro and 'Foundation Disc Golf' to Gladiator. To add or drop a channel, edit this list; nothing else needs to change.",
+  "_comment": "The instructional channels the Newest-videos feed pulls from. Ranked by how many lessons in the training library cite them, with the tail chosen on merit because everything below two citations is tied. Channel ids were resolved from each channel's own page and every feed was checked to return entries. The `name` here is only a label for this file: the refresh job takes the channel's real name from its feed, because resolving a channel from a video page gives whichever channel HOSTED that video -- which is how 'Paul McBeth' first resolved to JomezPro and 'Foundation Disc Golf' to Gladiator. Simon Lizotte and Ricky Wysocki are here for the Lounge rather than for teaching: their channels are vlogs and practice rounds, which is lounge content, not lessons. To add or drop a channel, edit this list; nothing else needs to change.",
   "VIDEO_CHANNELS": [
-    { "channel_id": "UC4LCYbEROzep8Cw0lZWAJ4A", "name": "Overthrow Disc Golf" },
-    { "channel_id": "UC_p7Tr6a_LWrIFIdhkYFm3A", "name": "Foundation Disc Golf" },
-    { "channel_id": "UCTAcTwBLAZGKhXp-UTgAozg", "name": "Dynamic Discs" },
-    { "channel_id": "UCDXxhX_k0QdpBeAm1FVE99Q", "name": "PDGA" },
-    { "channel_id": "UCKFgm3T-5-znjkI_felRY_w", "name": "Gannon Buhr" },
-    { "channel_id": "UCh4ZF0oqGJuLQxtpsVAejmA", "name": "Robbie C Disc Golf" },
-    { "channel_id": "UC8ofor3Qu6oBwjjsWF_Raqw", "name": "JustDisc" },
-    { "channel_id": "UCGXC_YbchbZGwLSGDvegrrA", "name": "Disc Golf Strong" },
-    { "channel_id": "UCvRjiGAFdMgTUg8Oyfd1Fxw", "name": "Innova Discs" },
-    { "channel_id": "UCEs4x4mXXpuRPTRfOkfwEkg", "name": "Latitude 64" },
-    { "channel_id": "UCnBhKQeI6Sxbhq35M7V4_jA", "name": "Scott Stokely" },
-    { "channel_id": "UCaQzGb28PL9_BGOSJpVDkag", "name": "7th Street Wellness Club" },
-    { "channel_id": "UCGd46aX194mErozDW43A5ug", "name": "Part Time Disc Golf" },
-    { "channel_id": "UCx6mJBjducOT73gM7d4ZBEw", "name": "Infinite Discs" },
-    { "channel_id": "UCQv9VX_JOF4DQOnz0vnpO4A", "name": "Swanky Disc Golf" },
-    { "channel_id": "UCCECtqX1FVHWrkvAK4BoDDg", "name": "Discraft" },
-    { "channel_id": "UCjCGCMfqom3ZX7rlFHQqbBg", "name": "DGaiden" },
-    { "channel_id": "UC6cRwi54Ci9b0rcLBZ2VyHA", "name": "Another Round Disc Golf" },
-    { "channel_id": "UCYG3UliyY73poU81Mw8Pr8Q", "name": "Bodanza Disc Golf" },
-    { "channel_id": "UCNymG62cTYZpK2MYPDoQmmg", "name": "BlitzDG" },
-    { "channel_id": "UCejpLhSv96A6e4rWX3ciclw", "name": "Gladiator Disc Golf" },
-    { "channel_id": "UCf0CyShv2qqO2eTBQ6FPzAA", "name": "Paul McBeth" },
-    { "channel_id": "UC2VGodlZLCRY1n3TAU3YQNw", "name": "Danny Lindahl" },
-    { "channel_id": "UCU3XyUNp03z0De43KD8ASmQ", "name": "Coach Reese" },
-    { "channel_id": "UCM0_0odEU8b6-oMm-AzEHSA", "name": "Throw Like Her" }
+    {
+      "channel_id": "UC4LCYbEROzep8Cw0lZWAJ4A",
+      "name": "Overthrow Disc Golf"
+    },
+    {
+      "channel_id": "UC_p7Tr6a_LWrIFIdhkYFm3A",
+      "name": "Foundation Disc Golf"
+    },
+    {
+      "channel_id": "UCTAcTwBLAZGKhXp-UTgAozg",
+      "name": "Dynamic Discs"
+    },
+    {
+      "channel_id": "UCDXxhX_k0QdpBeAm1FVE99Q",
+      "name": "PDGA"
+    },
+    {
+      "channel_id": "UCKFgm3T-5-znjkI_felRY_w",
+      "name": "Gannon Buhr"
+    },
+    {
+      "channel_id": "UCh4ZF0oqGJuLQxtpsVAejmA",
+      "name": "Robbie C Disc Golf"
+    },
+    {
+      "channel_id": "UC8ofor3Qu6oBwjjsWF_Raqw",
+      "name": "JustDisc"
+    },
+    {
+      "channel_id": "UCGXC_YbchbZGwLSGDvegrrA",
+      "name": "Disc Golf Strong"
+    },
+    {
+      "channel_id": "UCvRjiGAFdMgTUg8Oyfd1Fxw",
+      "name": "Innova Discs"
+    },
+    {
+      "channel_id": "UCEs4x4mXXpuRPTRfOkfwEkg",
+      "name": "Latitude 64"
+    },
+    {
+      "channel_id": "UCnBhKQeI6Sxbhq35M7V4_jA",
+      "name": "Scott Stokely",
+      "shorts": true,
+      "note": "Posts exclusively Shorts, and they are coaching tips -- excluding them showed nothing at all for this channel."
+    },
+    {
+      "channel_id": "UCaQzGb28PL9_BGOSJpVDkag",
+      "name": "7th Street Wellness Club"
+    },
+    {
+      "channel_id": "UCGd46aX194mErozDW43A5ug",
+      "name": "Part Time Disc Golf"
+    },
+    {
+      "channel_id": "UCx6mJBjducOT73gM7d4ZBEw",
+      "name": "Infinite Discs"
+    },
+    {
+      "channel_id": "UCQv9VX_JOF4DQOnz0vnpO4A",
+      "name": "Swanky Disc Golf"
+    },
+    {
+      "channel_id": "UCCECtqX1FVHWrkvAK4BoDDg",
+      "name": "Discraft"
+    },
+    {
+      "channel_id": "UCjCGCMfqom3ZX7rlFHQqbBg",
+      "name": "DGaiden"
+    },
+    {
+      "channel_id": "UC6cRwi54Ci9b0rcLBZ2VyHA",
+      "name": "Another Round Disc Golf"
+    },
+    {
+      "channel_id": "UCYG3UliyY73poU81Mw8Pr8Q",
+      "name": "Bodanza Disc Golf"
+    },
+    {
+      "channel_id": "UCNymG62cTYZpK2MYPDoQmmg",
+      "name": "BlitzDG"
+    },
+    {
+      "channel_id": "UCejpLhSv96A6e4rWX3ciclw",
+      "name": "Gladiator Disc Golf"
+    },
+    {
+      "channel_id": "UCf0CyShv2qqO2eTBQ6FPzAA",
+      "name": "Paul McBeth"
+    },
+    {
+      "channel_id": "UC2VGodlZLCRY1n3TAU3YQNw",
+      "name": "Danny Lindahl"
+    },
+    {
+      "channel_id": "UCU3XyUNp03z0De43KD8ASmQ",
+      "name": "Coach Reese"
+    },
+    {
+      "channel_id": "UCM0_0odEU8b6-oMm-AzEHSA",
+      "name": "Throw Like Her"
+    },
+    {
+      "channel_id": "UCed6me7QtjJiV-tvVgF7Rpg",
+      "name": "Simon Lizotte"
+    },
+    {
+      "channel_id": "UCsKzQ6cQfiFrq3JRUQQKxfQ",
+      "name": "Ricky Wysocki"
+    }
   ]
 }
