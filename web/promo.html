@@ -8,19 +8,19 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <meta name="description" content="Disc Golf Go: learn from 13 of the world's top touring pros across 134 video lessons, play the built-in Throw Lab disc golf game, earn XP and check in at 1,500+ real courses. Free to start." />
+  <meta name="description" content="Disc Golf Go: learn from 13 of the world's top touring pros across 134 video lessons, play the built-in Throw Lab disc golf game, enter a new tournament every week, and check in at 1,500+ real courses. Free to start." />
   <link rel="canonical" href="https://discgolfgo.com/" />
 
   <!-- Open Graph (Facebook, iMessage, Slack, LinkedIn) -->
   <meta property="og:site_name" content="Disc Golf Go" />
   <meta property="og:title" content="Disc Golf Go — Coached by the pros" />
-  <meta property="og:description" content="13 touring pros. 134 video lessons. 198 videos. Train like a pro and lower your score — free on iOS &amp; Android." />
+  <meta property="og:description" content="13 touring pros. 134 video lessons. 200 videos. Train like a pro and lower your score — free on iOS &amp; Android." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://discgolfgo.com/" />
   <meta property="og:image" content="https://discgolfgo.com/img/og-cover.png?v=2" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Disc Golf Go — 13 touring pros, 134 video lessons, 198 videos." />
+  <meta property="og:image:alt" content="Disc Golf Go — 13 touring pros, 134 video lessons, 200 videos." />
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -52,7 +52,7 @@
         "name": "Disc Golf Go",
         "operatingSystem": "iOS, Android",
         "applicationCategory": "SportsApplication",
-        "description": "A disc golf training app: 134 video lessons coached by 13 touring pros, the Throw Lab throwing game, XP progression, a daily challenge, and check-ins at 1,500+ real courses.",
+        "description": "A disc golf training app: 134 video lessons coached by 13 touring pros, the Throw Lab throwing game, a weekly tournament, leaderboards and a career record, the Players Lounge video feed, XP progression, a daily challenge, and check-ins at 1,500+ real courses.",
         "url": "https://discgolfgo.com/",
         "downloadUrl": [
           "https://apps.apple.com/us/app/disc-golf-go/id6768128686",
@@ -75,6 +75,10 @@
     .pro-chip b{color:var(--color-orange,#fa5e0f);}
     .stores{display:flex;gap:14px 18px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:24px;}
     .badge{display:block;height:54px;width:auto;}
+    /* In the hero the badges follow a left-aligned CTA, so they start at the
+       same edge rather than centring like the pair at the foot of the page. */
+    .stores--hero{justify-content:flex-start;gap:10px 12px;margin-top:18px;}
+    @media(max-width:900px){.stores--hero{justify-content:center;}}
     /* Google's badge PNG has built-in clear-space padding — size it up so it visually matches Apple's pill */
     .badge-google{height:62px;margin:-4px 0;}
     .store{display:inline-flex;align-items:center;gap:10px;background:var(--color-ink,#2b2622);color:#fff;
@@ -136,6 +140,7 @@
       <a class="nav__link" href="#learn">Training</a>
       <a class="nav__link" href="#levelup">How it works</a>
       <a class="nav__link" href="#game">Throw Lab</a>
+      <a class="nav__link" href="#compete">Compete</a>
     </div>
     <a class="btn" href="https://discgolfgo.app/login">Open App</a>
   </nav>
@@ -151,18 +156,33 @@
         </h1>
         <p class="hero__sub">Disc Golf Go turns pro coaching into lower scores — learn from 13 touring pros, earn XP, and take it to the course.</p>
 
-        <ul class="bullets">
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">★</span><div><b>Learn from 13 touring pros</b> — <span>Gannon Buhr, Ricky Wysocki, Paul McBeth, Kristin Tattar & more</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>134 coached lessons</b> — <span>198 videos across 13 skill paths, each with the key takeaways</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,500+ courses and apply your training</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◉</span><div><b>Throw Lab</b> — <span>a disc golf game built in — play a quick round anywhere</span></div></li>
-        </ul>
-
         <div class="hero__cta">
           <a class="btn btn--lg" href="https://discgolfgo.app/register">Start Training — Free</a>
           <a class="btn btn--ghost btn--lg" href="https://discgolfgo.app/login">Open the App</a>
         </div>
+
+        <!-- The store badges also sit at the foot of the page. Someone who
+             arrives wanting the app should not have to read the whole thing to
+             find them. Only the two badges here -- the browser route is
+             already the button directly above. -->
+        <div class="stores stores--hero">
+          <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" target="_blank" rel="noopener" aria-label="Download Disc Golf Go on the App Store">
+            <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" width="162" height="54" />
+          </a>
+          <a href="https://play.google.com/store/apps/details?id=the.discgolfgo.app" target="_blank" rel="noopener" aria-label="Get Disc Golf Go on Google Play">
+            <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" width="160" height="62" />
+          </a>
+        </div>
+
+        <ul class="bullets">
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">★</span><div><b>Learn from 13 touring pros</b> — <span>Gannon Buhr, Ricky Wysocki, Paul McBeth, Kristin Tattar & more</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>134 coached lessons</b> — <span>200 videos across 13 skill paths, each with the key takeaways</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,500+ courses and apply your training</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◉</span><div><b>Throw Lab</b> — <span>a disc golf game built in — play a quick round anywhere</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">△</span><div><b>A tournament every week</b> — <span>one course, everyone, two attempts — then see where you placed</span></div></li>
+        </ul>
+
       </div>
 
       <div class="hero__media">
@@ -182,7 +202,7 @@
       </div>
       <div class="shots">
         <figure class="shot">
-          <img src="/img/shot-home.webp" width="520" height="1125" loading="lazy" alt="The Disc Golf Go home screen: a Rookie level 3 XP bar, the next lesson to continue, today's challenge, and the Throw Lab card" />
+          <img src="/img/shot-home.webp" width="520" height="1125" loading="lazy" alt="The Disc Golf Go home screen: an XP bar, cards to continue training, play a round and open the Players Lounge, and today's challenge" />
           <figcaption class="shot__cap"><b>Home</b> — pick up where you left off</figcaption>
         </figure>
         <figure class="shot">
@@ -190,8 +210,8 @@
           <figcaption class="shot__cap"><b>Lessons</b> — a pro video plus the key takeaways</figcaption>
         </figure>
         <figure class="shot">
-          <img src="/img/shot-creators.webp" width="520" height="1125" loading="lazy" alt="The Creators vault listing pro coaches and the videos unlocked so far" />
-          <figcaption class="shot__cap"><b>Creators</b> — unlock a pro with every lesson</figcaption>
+          <img src="/img/shot-lounge.webp" width="520" height="1125" loading="lazy" alt="The Players Lounge: the newest videos from the disc golf channels, each with a thumbnail, the channel name and how long ago it was posted" />
+          <figcaption class="shot__cap"><b>Players Lounge</b> — the newest videos, every day</figcaption>
         </figure>
       </div>
     </div>
@@ -209,7 +229,7 @@
         <div class="statbig"><div class="statbig__n">13</div><div class="statbig__l">Touring pros</div></div>
         <div class="statbig"><div class="statbig__n">77</div><div class="statbig__l">Pro-coached videos</div></div>
         <div class="statbig"><div class="statbig__n">134</div><div class="statbig__l">Lessons</div></div>
-        <div class="statbig"><div class="statbig__n">198</div><div class="statbig__l">Videos in all</div></div>
+        <div class="statbig"><div class="statbig__n">200</div><div class="statbig__l">Videos in all</div></div>
       </div>
       <div class="pros-names">
         <span class="pro-chip"><b>Gannon Buhr</b></span>
@@ -235,7 +255,7 @@
       <div class="sect__head">
         <p class="sect__eyebrow">The curriculum</p>
         <h2 class="sect__title">13 skill paths. 134 coached lessons.</h2>
-        <p class="sect__lede">Every lesson pairs a pro instructional video with the key takeaways and a companion guide — from your first grip to tournament nerves.</p>
+        <p class="sect__lede">Every lesson pairs a pro instructional video with the key takeaways and a companion guide — from your first grip to tournament nerves. New coaching videos land beside them as the channels post them, filtered down to the ones that actually teach.</p>
       </div>
       <div class="numlist">
         <div class="numrow"><div><div class="numrow__name">Getting Started</div><div class="numrow__meta">New player? Everything for your first round</div></div><span class="numrow__num">7 lessons</span></div>
@@ -278,6 +298,13 @@
           <h3 class="fcard__title">Apply it on course</h3>
           <p class="fcard__body">Check in at 1,500+ real courses across the country and put your training to work where it counts.</p>
         </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">▷</div>
+          <h3 class="fcard__title">The Players Lounge</h3>
+          <p class="fcard__body">The newest videos from 27 disc golf channels, pulled in every
+            day — rounds, reviews, vlogs and coaching, all in one place, with the rest of each
+            creator's uploads a tap away.</p>
+        </article>
       </div>
     </div>
   </section>
@@ -307,6 +334,42 @@
           <li><b>It counts toward your game</b>Rounds earn XP, drive daily, weekly, monthly and
             lifetime challenges, and rank you on a Throw Lab leaderboard of its own.</li>
         </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compete: the weekly tournament and the boards it feeds -->
+  <section class="sect sect--peach" id="compete">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">New · Compete</p>
+        <h2 class="sect__title">One course. Everyone. Two shots at it.</h2>
+        <p class="sect__lede">Every Monday a course is drawn at random and it is the same
+          eighteen holes for every player in the app. You get two attempts at it — and an
+          attempt is spent the moment you tee off, so walking away from a bad start costs you
+          one. Best of the two counts.</p>
+      </div>
+      <div class="fgrid">
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">△</div>
+          <h3 class="fcard__title">The weekly tournament</h3>
+          <p class="fcard__body">The same 18 holes for everyone, a fresh course each week. Ties
+            go to whoever posted first, so there is a reason to play early.</p>
+        </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">≡</div>
+          <h3 class="fcard__title">Boards for everything</h3>
+          <p class="fcard__body">Training, Throw Lab and the tournament each get their own
+            leaderboard — ranked by XP, best round, best 18, aces, courses played, wins and
+            podiums, with your own row marked wherever you land.</p>
+        </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">▦</div>
+          <h3 class="fcard__title">Your record</h3>
+          <p class="fcard__body">Rounds played, holes, courses, best round, aces, birdies a
+            round, average against par, tournament weeks, wins and podiums — every figure
+            counted from the rounds themselves, so none of it can drift.</p>
+        </article>
       </div>
     </div>
   </section>
@@ -349,6 +412,8 @@
         <details class="faq"><summary>What disc should a beginner throw?</summary><p>Start with a putter and a lightweight, understable midrange or fairway driver. Lighter, understable plastic is easier to throw straight and flies farther for a new player than a fast, overstable distance driver. See our beginner disc guide for specifics.</p></details>
         <details class="faq"><summary>Do I need to be at a course to use the app?</summary><p>No. The training lessons work anywhere with no GPS required — practice in your yard or study on the couch, and play a Throw Lab round wherever you are. GPS is only used for optional course check-ins when you want to log a round at one of 1,500+ real courses.</p></details>
         <details class="faq"><summary>What is Throw Lab?</summary><p>Throw Lab is a disc golf game built into the app. You tap to set your power and your release angle, and the disc flies on its real flight numbers — fade and all. Play a quick 3, 6 or 9-hole round on one of 21 hand-drawn holes, or pick any of 1,500+ real courses and play its actual holes and lengths. Rounds earn XP, advance daily, weekly, monthly and lifetime challenges, and rank you on a Throw Lab leaderboard of its own.</p></details>
+        <details class="faq"><summary>Is there a tournament?</summary><p>Yes — a new one every week. One course is drawn at random on Monday and it is the same 18 holes for every player in the app. You get two attempts, and an attempt is spent the moment you tee off, so leaving a bad round part-way through still uses one. The better of your two scores counts, and ties go to whoever posted first.</p></details>
+        <details class="faq"><summary>What is the Players Lounge?</summary><p>A feed of the newest videos from 27 disc golf channels — tournament coverage, disc reviews, vlogs and coaching — refreshed every day. The ten most recent sit at the top and the rest are grouped by creator. Instructional videos are also filtered out into the training section, so lessons and entertainment stay separate.</p></details>
         <details class="faq"><summary>How does earning XP work?</summary><p>You earn XP by completing lessons and a rotating daily challenge. XP raises your skill tier and climbs the leaderboard, and finishing a lesson unlocks that pro's video in your Creators vault.</p></details>
       </div>
     </div>
@@ -365,6 +430,8 @@
       {"@type":"Question","name":"What disc should a beginner throw?","acceptedAnswer":{"@type":"Answer","text":"Start with a putter and a lightweight, understable midrange or fairway driver. Lighter, understable plastic is easier to throw straight and flies farther for a new player than a fast, overstable distance driver."}},
       {"@type":"Question","name":"Do I need to be at a course to use the app?","acceptedAnswer":{"@type":"Answer","text":"No. The training lessons work anywhere with no GPS required, and you can play a Throw Lab round wherever you are. GPS is only used for optional course check-ins when you want to log a round at one of 1,500+ real courses."}},
       {"@type":"Question","name":"What is Throw Lab?","acceptedAnswer":{"@type":"Answer","text":"Throw Lab is a disc golf game built into the Disc Golf Go app. You tap to set your power and your release angle, and the disc flies on its real flight numbers, fade included. Play a quick 3, 6 or 9-hole round on one of 21 hand-drawn holes, or pick any of 1,500+ real courses and play its actual holes and lengths. Rounds earn XP, advance daily, weekly, monthly and lifetime challenges, and rank you on a Throw Lab leaderboard."}},
+      {"@type":"Question","name":"Is there a tournament?","acceptedAnswer":{"@type":"Answer","text":"Yes — a new one every week. One course is drawn at random on Monday and it is the same 18 holes for every player in the app. You get two attempts, and an attempt is spent the moment you tee off, so leaving a bad round part-way through still uses one. The better of your two scores counts, and ties go to whoever posted first."}},
+      {"@type":"Question","name":"What is the Players Lounge?","acceptedAnswer":{"@type":"Answer","text":"A feed of the newest videos from 27 disc golf channels — tournament coverage, disc reviews, vlogs and coaching — refreshed every day. The ten most recent sit at the top and the rest are grouped by creator. Instructional videos are also filtered out into the training section, so lessons and entertainment stay separate."}},
       {"@type":"Question","name":"How does earning XP work?","acceptedAnswer":{"@type":"Answer","text":"You earn XP by completing lessons and a rotating daily challenge. XP raises your skill tier and climbs the leaderboard, and finishing a lesson unlocks that pro's video in your Creators vault."}}
     ]
   }
@@ -379,10 +446,10 @@
     </div>
     <div class="stores">
       <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" target="_blank" rel="noopener" aria-label="Download Disc Golf Go on the App Store">
-        <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" />
+        <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" width="162" height="54" />
       </a>
       <a href="https://play.google.com/store/apps/details?id=the.discgolfgo.app" target="_blank" rel="noopener" aria-label="Get Disc Golf Go on Google Play">
-        <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" />
+        <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" width="160" height="62" />
       </a>
       <a class="store" href="https://discgolfgo.app/register"><div><span>Or play now in</span>Your Browser</div></a>
     </div>
