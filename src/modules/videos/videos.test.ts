@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
 import { createApp } from '../../http/app';
 import type { Database } from '../../db/types';
-import { NEWEST_COUNT, PER_CHANNEL_CAP } from './videos.service';
+import { NEWEST_COUNT, PER_CHANNEL_CAP, TEACHING_COUNT } from './videos.service';
 
 let handler: (sql: string, params?: unknown[]) => { rows: unknown[]; rowCount?: number } = () => ({ rows: [] });
 const db = {
@@ -89,6 +89,25 @@ test('the channel video feed', async (t) => {
     await fetch(base + '/api/videos/newest?limit=10');
     assert.equal(capUsed, PER_CHANNEL_CAP);
     assert.ok(PER_CHANNEL_CAP < NEWEST_COUNT, 'a cap that cannot bind is not a cap');
+  });
+
+  // The training feed makes a promise the lounge does not: everything under
+  // "new training videos" teaches. That promise is kept by the column, written
+  // once by the refresh job, so the read can never widen it by accident.
+  await t.test('the training feed reads only rows marked as teaching', async () => {
+    let sql = '';
+    handler = (s) => { if (/channel_videos/.test(s)) sql = s; return { rows: [] }; };
+    await fetch(base + '/api/videos/teaching');
+    assert.match(sql, /WHERE teaches AND NOT feed_hidden/, 'both gates, and no others');
+    assert.match(sql, /PARTITION BY channel_id/, 'still capped per channel');
+  });
+
+  await t.test('the training feed is capped and cannot be widened by a query string', async () => {
+    let params: unknown[] = [];
+    handler = (s, p) => { if (/WHERE teaches/.test(s)) params = p ?? []; return { rows: [] }; };
+    await fetch(base + '/api/videos/teaching?limit=9999');
+    assert.equal(params[0], TEACHING_COUNT, 'a big limit cannot drain the table');
+    assert.equal(params[1], PER_CHANNEL_CAP, 'one channel cannot own the list');
   });
 
   await t.test('a channel id that is not one is refused', async () => {

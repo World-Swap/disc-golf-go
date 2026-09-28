@@ -734,10 +734,18 @@ CREATE TABLE IF NOT EXISTS channel_videos (
   -- made adding him show nothing at all. A channel can opt in, and this column
   -- records the outcome so is_short stays a plain fact about the video.
   feed_hidden BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Whether this upload teaches something, decided from its title by
+  -- modules/videos/teaches.ts and written by the refresh job. The lounge
+  -- ignores it; the training feed shows nothing else, because a round of
+  -- tournament coverage under "new training videos" is a lie about what the
+  -- app is for.
+  teaches BOOLEAN NOT NULL DEFAULT FALSE,
   fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS is_short BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS feed_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS teaches BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS idx_channel_videos_teaches ON channel_videos(teaches, published_at DESC);
 -- No backfill here on purpose. This file runs on every boot, so an UPDATE
 -- setting feed_hidden = is_short would undo the per-channel shorts opt-in
 -- every time the app restarted. The refresh job owns this column and

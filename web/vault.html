@@ -8,9 +8,9 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w9" />
-  <link rel="stylesheet" href="/styles/app.css?v=w9" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w9" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w10" />
   <style>
   </style>
 </head>
@@ -22,27 +22,30 @@
     </header>
     <div class="screen stack">
       <div><h1 class="h-display">VAULT<span class="mark" style="width:38%"></span></h1></div>
+      <!-- The channel feed used to be a third tab here. It is not the vault's
+           kind of thing -- the vault holds the lesson videos you have
+           unlocked, the lounge is whatever the channels posted this week --
+           so it has its own page. This sits ABOVE the tabs deliberately: put
+           below them it is pushed off the bottom by whichever tab is open,
+           and it is the same card on both, so repeating it per tab is worse. -->
+      <a class="artcard" href="/lounge" style="--art:url('/img/cards/lounge.webp')">
+        <span class="artcard__art"></span><span class="artcard__scrim"></span>
+        <span class="artcard__body">
+          <span class="artcard__eyebrow">Player Lounge</span>
+          <span class="artcard__title">New videos →</span>
+          <span class="artcard__sub" id="loungeSub">Rounds, reviews and coaching from 27 channels</span>
+        </span>
+      </a>
       <div class="segbar" id="tabs">
         <button class="seg" data-tab="library" aria-selected="true">My Library</button>
         <button class="seg" data-tab="bonus">Creators</button>
       </div>
       <div id="view" class="loading">Loading…</div>
-      <!-- The channel feed used to be a third tab here. It is not the vault's
-           kind of thing -- the vault holds the lesson videos you have
-           unlocked, the lounge is whatever the channels posted this week,
-           instruction or not -- so it has its own page. -->
-      <a class="row" href="/lounge" style="border:1px solid var(--hair,#e4dfd6);border-radius:4px;background:#fff">
-        <span class="row__glyph">▷</span>
-        <div class="row__body">
-          <div class="row__title">Player Lounge →</div>
-          <div class="row__sub" style="text-transform:none;letter-spacing:0">Rounds, reviews, vlogs and coaching from the disc golf channels</div>
-        </div>
-      </a>
     </div>
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w9"></script>
+  <script src="/js/app.js?v=w10"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
@@ -112,6 +115,9 @@
             }).join('');
         } catch (e) { fail(e); }
       }
+
+
+      DGG.loungeSub();
 
       loadLibrary();
     })();

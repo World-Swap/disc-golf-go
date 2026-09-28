@@ -57,7 +57,11 @@
 .artcard__title { display: block; font-family: var(--font-display); font-weight: var(--weight-bold);
   font-size: 21px; line-height: 1.12; letter-spacing: -0.01em; margin-top: 6px;
   text-shadow: 0 1px 14px rgba(0,0,0,0.4); }
-.artcard__sub { display: block; font-size: 12.5px; line-height: 1.35; margin-top: 7px; color: rgba(255,255,255,0.84); }
+/* Two lines, whatever is in it. The sub can carry live text now -- the
+   lounge card names its newest upload -- and a long video title ran the card
+   to 162px beside 126px neighbours. Clamping keeps a stack of cards even. */
+.artcard__sub { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; font-size: 12.5px; line-height: 1.35; margin-top: 7px; color: rgba(255,255,255,0.84); }
 .artcard__meta { position: absolute; right: 14px; top: 14px; font-size: 12px; font-weight: var(--weight-bold);
   color: #fff; background: rgba(252,100,20,0.92); border-radius: var(--radius-pill); padding: 5px 11px; }
 .artcard:active { transform: scale(0.995); }

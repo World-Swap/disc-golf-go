@@ -22,6 +22,13 @@ export function createVideosRouter(service: VideosService): Router {
   );
 
   router.get(
+    '/videos/teaching',
+    asyncHandler(async (req, res) => {
+      res.json(await service.teaching(parseInt(String(req.query.limit ?? '12'), 10) || 12));
+    })
+  );
+
+  router.get(
     '/videos/creators',
     asyncHandler(async (_req, res) => {
       res.json(await service.creators());

@@ -1,5 +1,5 @@
 {
-  "_comment": "The disc golf channels the Player Lounge pulls from. The lounge takes whatever they post -- rounds, reviews, vlogs, coverage, coaching -- so a channel earns its place by being worth watching, NOT by being instructional; teaching videos are curated separately, lesson by lesson, in the training library. (This list started as an instruction-only list, which is why JomezPro was once left out for being coverage.) Channel ids were resolved from each channel's own page and every feed was checked to return entries. The `name` here is only a label for this file: the refresh job takes the channel's real name from its feed, because resolving a channel from a video page gives whichever channel HOSTED that video -- which is how 'Paul McBeth' first resolved to JomezPro and 'Foundation Disc Golf' to Gladiator. `shorts: true` opts a channel's Shorts into the feed, for channels like Scott Stokely that post nothing else. To add or drop a channel, edit this list; nothing else needs to change.",
+  "_comment": "The disc golf channels the Player Lounge pulls from. The lounge takes whatever they post -- rounds, reviews, vlogs, coverage, coaching -- so a channel earns its place by being worth watching, NOT by being instructional; teaching videos are curated separately, lesson by lesson, in the training library. (This list started as an instruction-only list, which is why JomezPro was once left out for being coverage.) Channel ids were resolved from each channel's own page and every feed was checked to return entries. The `name` here is only a label for this file: the refresh job takes the channel's real name from its feed, because resolving a channel from a video page gives whichever channel HOSTED that video -- which is how 'Paul McBeth' first resolved to JomezPro and 'Foundation Disc Golf' to Gladiator. `shorts: true` opts a channel's Shorts into the feed, for channels like Scott Stokely that post nothing else. `teaches: false` keeps a channel out of the training feed while leaving it in the lounge -- for pure coverage. Everything else is eligible for training, but a video still has to pass the title rule in src/modules/videos/teaches.ts, so being on this list is necessary and not sufficient. To add or drop a channel, edit this list; nothing else needs to change.",
   "VIDEO_CHANNELS": [
     {
       "channel_id": "UC4LCYbEROzep8Cw0lZWAJ4A",
@@ -96,10 +96,6 @@
       "name": "Danny Lindahl"
     },
     {
-      "channel_id": "UCU3XyUNp03z0De43KD8ASmQ",
-      "name": "Coach Reese"
-    },
-    {
       "channel_id": "UCM0_0odEU8b6-oMm-AzEHSA",
       "name": "Throw Like Her"
     },
@@ -113,7 +109,9 @@
     },
     {
       "channel_id": "UCmGyCEbHfY91NFwHgioNLMQ",
-      "name": "JomezPro"
+      "name": "JomezPro",
+      "teaches": false,
+      "note": "Coverage only -- lounge yes, training no."
     }
   ]
 }

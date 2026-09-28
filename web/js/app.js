@@ -146,5 +146,24 @@
     }).join('');
   }
 
-  window.DGG = { API: API, requireAuth: requireAuth, signedIn: signedIn, logout: logout, esc: esc, tabbar: tabbar };
+  // The Player Lounge card said "Player Lounge" and nothing else, in every
+  // place it appeared -- a label rather than a reason to press it. Any page
+  // showing the card gives its sub the id `loungeSub` and calls this, which
+  // names the most recent upload instead, so the card says what is waiting
+  // and changes daily. It fails silently: the written fallback is already
+  // true, so a network hiccup costs nothing.
+  function loungeSub() {
+    var el = document.getElementById('loungeSub');
+    if (!el) return;
+    API.get('/videos/newest?limit=1').then(function (d) {
+      var v = (d.videos || [])[0];
+      if (!v) return;
+      var day = Math.floor((Date.now() - Date.parse(v.published_at)) / 86400000);
+      var ago = day <= 0 ? 'today' : day === 1 ? 'yesterday' : day + ' days ago';
+      // textContent, so the title needs no escaping.
+      el.textContent = v.channel_name + ' \u00b7 ' + ago + ' \u00b7 ' + v.title;
+    }).catch(function () {});
+  }
+
+  window.DGG = { API: API, requireAuth: requireAuth, signedIn: signedIn, logout: logout, esc: esc, tabbar: tabbar, loungeSub: loungeSub };
 })();

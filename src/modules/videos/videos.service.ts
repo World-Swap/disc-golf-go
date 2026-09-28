@@ -25,6 +25,9 @@ export const NEWEST_COUNT = 10;
 /** Most slots any one channel may take in that list, so it stays a survey. */
 export const PER_CHANNEL_CAP = 2;
 
+/** How many lessons the Train page's "new training videos" strip holds. */
+export const TEACHING_COUNT = 12;
+
 /** A YouTube id is 11 characters of [A-Za-z0-9_-]; anything else is not one. */
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
@@ -72,6 +75,17 @@ export function createVideosService(deps: { repo: VideosRepo }) {
           url: 'https://www.youtube.com/channel/' + c.channel_id,
         })),
       };
+    },
+
+    /**
+     * New instructional uploads, for the Train page. Two gates, both applied
+     * when the row was written: the channel must be one we trust to teach,
+     * and the title must say it teaches. Nothing else reaches this list.
+     */
+    async teaching(limit = TEACHING_COUNT) {
+      const n = Math.min(Math.max(limit, 1), TEACHING_COUNT);
+      const rows = await repo.teaching(n, PER_CHANNEL_CAP);
+      return { videos: rows.map(present) };
     },
 
     async byCreator(channelId: unknown, limit = 50) {
