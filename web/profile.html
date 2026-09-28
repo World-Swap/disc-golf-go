@@ -63,11 +63,33 @@
               '<span class="caption">' + (ts.categories_mastered || 0) + ' mastered</span></div>' +
               meter(ts.total_lessons ? Math.round((ts.lessons_completed / ts.total_lessons) * 100) : 0) +
             '</div>' +
-            '<div class="rows" style="margin-top:12px">' +
-              '<a class="row" href="/ranks"><span class="row__glyph">🏆</span><div class="row__body"><div class="row__title">Rankings</div>' +
-              '<div class="row__sub">See where you stand</div></div><span class="row__meta">›</span></a>' +
-              '<a class="row" href="/training"><span class="row__glyph">🎯</span><div class="row__body"><div class="row__title">Continue training</div>' +
-              '<div class="row__sub">' + (ts.total_lessons ? ((ts.total_lessons - (ts.lessons_completed || 0)) + ' lessons left') : 'Browse all lessons') + '</div></div><span class="row__meta">›</span></a>' +
+            // The two places this page sends you carry the same feature art
+            // as the cards on Home, so a destination looks like itself
+            // wherever you reach it from.
+            '<div class="stack" style="margin-top:12px">' +
+              '<a class="artcard" href="/ranks" style="--art:url(\'/img/cards/ranks.webp\')">' +
+                '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+                '<span class="artcard__body">' +
+                  '<span class="artcard__eyebrow">Rankings</span>' +
+                  '<span class="artcard__title">See where you stand →</span>' +
+                  '<span class="artcard__sub">Where you place on every board</span>' +
+                '</span></a>' +
+              '<a class="artcard" href="/training" style="--art:url(\'/img/cards/training.webp\')">' +
+                '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+                '<span class="artcard__body">' +
+                  '<span class="artcard__eyebrow">Continue training</span>' +
+                  '<span class="artcard__title">Train now →</span>' +
+                  '<span class="artcard__sub">' +
+                    (ts.total_lessons ? ((ts.total_lessons - (ts.lessons_completed || 0)) + ' lessons left') : 'Browse all lessons') +
+                  '</span>' +
+                '</span></a>' +
+              '<a class="artcard" href="/lounge" style="--art:url(\'/img/cards/lounge.webp\')">' +
+                '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+                '<span class="artcard__body">' +
+                  '<span class="artcard__eyebrow">Player Lounge</span>' +
+                  '<span class="artcard__title">Watch the newest →</span>' +
+                  '<span class="artcard__sub">The newest disc golf videos, daily</span>' +
+                '</span></a>' +
             '</div>' +
           '</div>' +
 

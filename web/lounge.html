@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Player Lounge · Disc Golf Go</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app.css?v=w9" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w9" />
+  <style>
+    /* 16:9 at the row's height. `flex:none` so a long title cannot squeeze it. */
+    .vthumb { flex: none; width: 80px; height: 45px; border-radius: 4px;
+              object-fit: cover; background: #e8e2d8; margin-right: 12px; }
+    /* A video's title is the whole reason to press it, so it wraps rather
+       than ellipsing after four words the way a one-line row title does. */
+    .vrow .row__title { white-space: normal; overflow: visible; text-overflow: clip;
+                        line-height: 1.25; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title" id="crumb">Player Lounge</span>
+      <span class="pill" id="count">—</span>
+    </header>
+    <div class="screen stack">
+      <div>
+        <p class="section-label">Off the course</p>
+        <h1 class="h-display">LOUNGE<span class="mark" style="width:40%"></span></h1>
+      </div>
+      <div id="view" class="loading">Loading…</div>
+    </div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js?v=w9"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      DGG.tabbar('vault');
+      var esc = DGG.esc, API = DGG.API;
+      var view = document.getElementById('view');
+      var crumb = document.getElementById('crumb');
+
+      function loading() { view.className = 'loading'; view.textContent = 'Loading…'; }
+      function fail(e) { view.className = 'screen'; view.innerHTML = '<div class="error">' + esc(e.message || 'Error') + '</div>'; }
+
+      // "3 days ago" reads faster than a date on a feed, and the exact day
+      // stops mattering once a video is more than a week old.
+      function when(iso) {
+        var d = Math.floor((Date.now() - Date.parse(iso)) / 86400000);
+        if (!isFinite(d)) return '';
+        return d <= 0 ? 'today' : d === 1 ? 'yesterday'
+             : d < 7 ? d + ' days ago'
+             : d < 30 ? Math.floor(d / 7) + 'w ago'
+             : Math.floor(d / 30) + 'mo ago';
+      }
+
+      function videoRow(v) {
+        return '<a class="row vrow" href="' + esc(v.url) + '" target="_blank" rel="noopener">' +
+          '<img class="vthumb" src="' + esc(v.thumbnail) + '" alt="" loading="lazy" width="80" height="45">' +
+          '<div class="row__body"><div class="row__title">' + esc(v.title) + '</div>' +
+          '<div class="row__sub" style="text-transform:none;letter-spacing:0">' +
+            esc(v.channel_name) + ' · ' + when(v.published_at) + '</div></div></a>';
+      }
+
+      // Two sections, which is the whole shape of it: the ten most recent
+      // uploads across every channel, then everything older reached through
+      // the creator who made it. A video is in exactly one of the two.
+      //
+      // The lounge takes whatever the channels post -- it is not filtered to
+      // instruction. Teaching videos belong to the training library, which
+      // curates them lesson by lesson; this is the couch, not the classroom.
+      async function loadLounge() {
+        loading();
+        crumb.textContent = 'Player Lounge';
+        try {
+          var d = await API.get('/videos/newest');
+          var c = await API.get('/videos/creators');
+          var vids = (d.videos || []).map(videoRow).join('');
+          var creators = (c.creators || []).map(function (x) {
+            return '<button class="row" data-channel="' + esc(x.channel_id) + '" style="width:100%;text-align:left;border:0;background:none;font:inherit">' +
+              '<span class="row__glyph">▷</span>' +
+              '<div class="row__body"><div class="row__title">' + esc(x.channel_name) + '</div>' +
+              '<div class="row__sub" style="text-transform:none;letter-spacing:0">' +
+                x.videos + (x.videos === 1 ? ' video' : ' videos') + '</div></div>' +
+              '<span class="row__meta">›</span></button>';
+          }).join('');
+
+          var total = (d.videos || []).length +
+            (c.creators || []).reduce(function (a, x) { return a + x.videos; }, 0);
+          document.getElementById('count').textContent = total ? total + ' videos' : '—';
+
+          view.className = 'screen stack';
+          view.innerHTML = vids
+            ? '<p class="row__sub" style="text-transform:none;letter-spacing:0;margin:0">' +
+                'Everything the disc golf channels posted lately \u2014 rounds, reviews, vlogs and coaching.</p>' +
+              '<div><p class="section-label">Newest videos</p><div class="rows">' + vids + '</div></div>' +
+              (creators ? '<div><p class="section-label">More from these creators</p>' +
+                          '<div class="rows">' + creators + '</div></div>' : '')
+            : '<div class="loading">No videos yet — the lounge refreshes daily.</div>';
+
+          view.querySelectorAll('[data-channel]').forEach(function (b) {
+            b.addEventListener('click', function () { loadCreator(this.dataset.channel); });
+          });
+        } catch (e) { fail(e); }
+      }
+
+      async function loadCreator(channelId) {
+        loading();
+        try {
+          var d = await API.get('/videos/creators/' + encodeURIComponent(channelId));
+          crumb.textContent = d.channel_name || 'Creator';
+          view.className = 'screen stack';
+          view.innerHTML =
+            '<div><button class="back" id="backLounge" style="border:0;background:none;font:inherit;cursor:pointer">← Lounge</button>' +
+              '<h1 class="h-title" style="margin-top:6px">' + esc(d.channel_name || 'Creator') + '</h1></div>' +
+            '<div class="rows">' + (d.videos || []).map(videoRow).join('') + '</div>';
+          document.getElementById('count').textContent = (d.videos || []).length + ' videos';
+          document.getElementById('backLounge').addEventListener('click', loadLounge);
+        } catch (e) { fail(e); }
+      }
+
+      loadLounge();
+    })();
+  </script>
+</body>
+</html>
