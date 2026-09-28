@@ -8,9 +8,9 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <link rel="stylesheet" href="/styles/tokens.css?v=w9" />
-  <link rel="stylesheet" href="/styles/app.css?v=w9" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w9" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w10" />
 </head>
 <body>
   <main class="app">
@@ -22,7 +22,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w9"></script>
+  <script src="/js/app.js?v=w10"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
@@ -87,8 +87,8 @@
                 '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
                 '<span class="artcard__body">' +
                   '<span class="artcard__eyebrow">Player Lounge</span>' +
-                  '<span class="artcard__title">Watch the newest →</span>' +
-                  '<span class="artcard__sub">The newest disc golf videos, daily</span>' +
+                  '<span class="artcard__title">New videos →</span>' +
+                  '<span class="artcard__sub" id="loungeSub">The newest disc golf videos, daily</span>' +
                 '</span></a>' +
             '</div>' +
           '</div>' +
@@ -107,6 +107,8 @@
               '<a class="row" href="/delete-account"><span class="row__glyph">⊘</span><div class="row__body"><div class="row__title">Delete account</div></div><span class="row__meta">›</span></a>' +
             '</div>' +
           '</div>';
+
+        DGG.loungeSub();   // name the newest upload on the lounge card
       }).catch(function (e) {
         content.className = 'screen'; content.innerHTML = '<div class="error">' + esc(e.message || 'Could not load profile') + '</div>';
       });
