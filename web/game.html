@@ -57,8 +57,16 @@
     .g-disc--act:first-child .g-disc__n { color: #fff; font-size: 14px; }
     .g-disc--act:first-child .g-disc__f { color: rgba(255,255,255,0.8); }
 
-    /* Prompt / result banner under the field */
-    .g-msg { min-height: 58px; padding: 10px 16px 14px; text-align: center; }
+    /* Prompt / result banner under the field.
+       The height is FIXED, not fitted to the text. Every tap changes this
+       message -- "Tap to start your power" carries a coaching line, "Tap to
+       lock power" does not -- and when the block resized itself the canvas
+       above it was re-measured and re-sized on every single tap, so the hole
+       jumped between looking at it and throwing. Reserving one big line plus
+       two sub lines (21 + 3 + 34 + 24 of padding) means the ordinary throw
+       cycle never changes the chrome at all. The line heights are stated
+       rather than inherited so that number is the same on every device. */
+    .g-msg { min-height: 82px; padding: 10px 16px 14px; text-align: center; }
     .g-how { list-style: none; margin: 0 16px 14px; padding: 12px 14px; display: grid; gap: 7px;
              background: #f7f4ef; border: 1px solid #e6dfd5; border-radius: 14px; }
     /* `display: grid` outranks the UA's `[hidden] { display: none }`, so the
@@ -68,8 +76,12 @@
     .g-how b { flex: none; width: 19px; height: 19px; border-radius: 50%; background: #fc6414;
                color: #fff; font-size: 11px; display: grid; place-items: center; }
     .g-msg__big { font-family: var(--font-display, system-ui); font-weight: 800;
-                  font-size: 17px; color: #202020; }
-    .g-msg__sub { font-size: 13px; color: #6d655c; margin-top: 3px; }
+                  font-size: 17px; line-height: 21px; color: #202020; }
+    /* Clamped to the two lines the block reserves, so a long coaching line
+       cannot push the field's height around mid-round. */
+    .g-msg__sub { font-size: 13px; line-height: 17px; color: #6d655c; margin-top: 3px;
+                  display: -webkit-box; -webkit-box-orient: vertical;
+                  -webkit-line-clamp: 2; overflow: hidden; }
     .g-msg__sub b { color: #fc6414; }
   </style>
 </head>
@@ -140,6 +152,10 @@
     var ctx = cv.getContext('2d');
     var ORANGE = '#fc6414', INK = '#202020', BONE = '#f7f4ef', GREEN = '#2e7d57';
 
+    // The device pixel ratio the field is drawn at, capped at 2: past that the
+    // extra pixels cost more in fill rate than they return on a phone.
+    function DPR() { return Math.min(window.devicePixelRatio || 1, 2); }
+
     // Fit the canvas to the viewport minus the HUD/message chrome, on a device
     // pixel ratio so the art stays crisp on phones.
     // The canvas takes whatever is left after the real chrome, measured rather
@@ -162,7 +178,12 @@
       // sits behind the back and home buttons.
       var sab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0;
       var h = Math.max(240, window.innerHeight - chrome - sab);
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Nothing to do if the field is already this size -- and it matters that
+      // we do nothing, because assigning cv.width CLEARS the canvas. resize()
+      // is called after every message change, so without this guard the hole
+      // was wiped and redrawn at a new height on every tap.
+      if (w === W && h === H && cv.width === Math.round(w * DPR())) return;
+      var dpr = DPR();
       cv.width = w * dpr; cv.height = h * dpr;
       cv.style.height = h + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

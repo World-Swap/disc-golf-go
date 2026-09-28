@@ -95,6 +95,37 @@ export function createTournamentRepo(_db: Queryable) {
     },
 
     /**
+     * The course this week was drawn on, looked up by the name we kept. The
+     * denormalised course_name is what makes a lost course_id recoverable:
+     * a course that came back under a new id is found here and the week
+     * carries on unchanged.
+     */
+    async findCourseByName(exec: Queryable, name: string): Promise<{ id: number; name: string } | null> {
+      const r = await exec.query<{ id: number; name: string }>(
+        `SELECT id, name FROM courses
+         WHERE name = $1 AND is_active IS NOT FALSE
+         ORDER BY COALESCE(holes, 0) DESC, id LIMIT 1`,
+        [name]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    /** Point a tournament at a course, and return the row as it now stands. */
+    async setCourse(
+      exec: Queryable,
+      tournamentId: number,
+      course: { id: number; name: string }
+    ): Promise<TournamentRow | null> {
+      const r = await exec.query<TournamentRow>(
+        `UPDATE tournaments SET course_id = $2, course_name = $3
+          WHERE id = $1 AND course_id IS NULL
+      RETURNING id, week_key, course_id, course_name, holes, starts_at, ends_at`,
+        [tournamentId, course.id, course.name]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    /**
      * Insert this week's tournament, or return the one another request just
      * made. ON CONFLICT DO NOTHING plus a re-read is what makes two players
      * opening the page at the same moment land on the same course.
