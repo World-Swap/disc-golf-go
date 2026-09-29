@@ -28,7 +28,8 @@
     "android:debug": "node scripts/ensure-android-permissions.js && cd android && ./gradlew assembleDebug",
     "android:bundle": "node scripts/ensure-android-permissions.js && cd android && ./gradlew bundleRelease",
     "android:release": "node scripts/bump-android-version.js && node scripts/ensure-android-permissions.js && cd android && ./gradlew clean bundleRelease",
-    "ios:sync": "npx cap sync ios"
+    "ios:sync": "npx cap sync ios",
+    "shots": "node scripts/store-screenshots.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
