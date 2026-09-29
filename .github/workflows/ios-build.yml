@@ -45,6 +45,10 @@ on:
       - 'scripts/ensure-android-permissions.js'
       - 'scripts/bump-android-version.js'
       - 'scripts/generate-capacitor-assets-sources.js'
+      # The workflow runs these two directly, so a change to either
+      # really does change the built app.
+      - 'scripts/patch-ios-info-plist.sh'
+      - 'scripts/patch-ios-launch-storyboard.sh'
       - '.github/workflows/ios-build.yml'
 
 jobs:
