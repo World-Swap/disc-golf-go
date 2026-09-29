@@ -18,6 +18,17 @@ on:
     paths:
       - 'capacitor.config.ts'
       - 'web/**'
+      # Marketing assets are NOT in the native app. The apps load the live
+      # site, and these files are only ever served to a browser — the social
+      # post images, the link-preview card, the discgolfgo.com promo page and
+      # its SEO guides. Editing them used to ship a TestFlight build and an
+      # AAB: ten builds of 1.4.0 went up in one day that way, none of which
+      # changed a pixel of the app. A later "!" pattern overrides an earlier
+      # match, so 'web/**' still covers everything else under web/.
+      - '!web/img/social/**'
+      - '!web/img/og-cover.png'
+      - '!web/promo.html'
+      - '!web/guide-*.html'
       - 'package.json'
       - 'android/**'
       - 'resources/**'
