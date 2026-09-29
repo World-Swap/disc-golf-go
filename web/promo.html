@@ -77,10 +77,19 @@
     .badge{display:block;height:54px;width:auto;}
     /* In the hero the badges follow a left-aligned CTA, so they start at the
        same edge rather than centring like the pair at the foot of the page. */
-    .stores--hero{justify-content:flex-start;gap:10px 12px;margin-top:18px;}
+    .stores--hero{justify-content:flex-start;gap:10px 12px;margin-top:30px;}
     @media(max-width:900px){.stores--hero{justify-content:center;}}
     /* Google's badge PNG has built-in clear-space padding — size it up so it visually matches Apple's pill */
     .badge-google{height:62px;margin:-4px 0;}
+    /* The browser route, kept but demoted: downloading is the priority, so the
+       store badges carry the weight and this sits under them as a text link. */
+    .altroute{margin-top:16px;font-size:14px;font-family:var(--font-display);}
+    .altroute a{color:var(--color-ash,#6b6560);font-weight:600;text-decoration:underline;text-underline-offset:3px;}
+    .altroute a:hover{color:var(--color-ink,#202020);}
+    .altroute .sep{opacity:.45;margin:0 9px;}
+    @media(max-width:900px){.hero__lead .altroute{text-align:center;}}
+    .cta-final .altroute a{color:rgba(255,255,255,.88);}
+    .cta-final .altroute a:hover{color:#fff;}
     .store{display:inline-flex;align-items:center;gap:10px;background:var(--color-ink,#2b2622);color:#fff;
       border-radius:14px;padding:12px 18px;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:14px;}
     .store span{opacity:.7;font-weight:600;font-size:12px;display:block;line-height:1;margin-bottom:2px;}
@@ -142,7 +151,7 @@
       <a class="nav__link" href="#game">Throw Lab</a>
       <a class="nav__link" href="#compete">Compete</a>
     </div>
-    <a class="btn" href="https://discgolfgo.app/login">Open App</a>
+    <a class="btn btn--ghost" href="https://discgolfgo.app/login">Log in</a>
   </nav>
 
   <!-- Hero -->
@@ -156,15 +165,10 @@
         </h1>
         <p class="hero__sub">Disc Golf Go turns pro coaching into lower scores — learn from touring pros and the channels that coach them, earn XP, and take it to the course.</p>
 
-        <div class="hero__cta">
-          <a class="btn btn--lg" href="https://discgolfgo.app/register">Start Training — Free</a>
-          <a class="btn btn--ghost btn--lg" href="https://discgolfgo.app/login">Open the App</a>
-        </div>
-
-        <!-- The store badges also sit at the foot of the page. Someone who
-             arrives wanting the app should not have to read the whole thing to
-             find them. Only the two badges here -- the browser route is
-             already the button directly above. -->
+        <!-- Downloading is the priority, so the badges ARE the call to action
+             here rather than sitting under a pair of buttons into the web app.
+             The browser route is kept for anyone who does not want to install
+             -- and for desktop, where they cannot -- as the link beneath. -->
         <div class="stores stores--hero">
           <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" target="_blank" rel="noopener" aria-label="Download Disc Golf Go on the App Store">
             <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" width="162" height="54" />
@@ -173,6 +177,11 @@
             <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" width="160" height="62" />
           </a>
         </div>
+        <p class="altroute">
+          <a href="https://discgolfgo.app/register">Or play free in your browser</a>
+          <span class="sep">•</span>
+          <a href="https://discgolfgo.app/login">Log in</a>
+        </p>
 
         <ul class="bullets">
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">★</span><div><b>Learn from pros and top channels</b> — <span>Gannon Buhr, Scott Stokely, Paul McBeth, Ricky Wysocki, Overthrow, Foundation, the PDGA &amp; more</span></div></li>
@@ -440,10 +449,6 @@
   <!-- Final CTA -->
   <section class="cta-final">
     <h2 class="sect__title">Ready to train like a pro?</h2>
-    <div class="hero__cta" style="justify-content:center">
-      <a class="btn btn--lg" href="https://discgolfgo.app/register">Start Training — Free</a>
-      <a class="btn btn--ghost btn--lg" href="https://discgolfgo.app/login">Open the App</a>
-    </div>
     <div class="stores">
       <a href="https://apps.apple.com/us/app/disc-golf-go/id6768128686" target="_blank" rel="noopener" aria-label="Download Disc Golf Go on the App Store">
         <img class="badge badge-apple" src="/img/appstore-badge.svg" alt="Download on the App Store" width="162" height="54" />
@@ -451,8 +456,12 @@
       <a href="https://play.google.com/store/apps/details?id=the.discgolfgo.app" target="_blank" rel="noopener" aria-label="Get Disc Golf Go on Google Play">
         <img class="badge badge-google" src="/img/googleplay-badge.png" alt="Get it on Google Play" width="160" height="62" />
       </a>
-      <a class="store" href="https://discgolfgo.app/register"><div><span>Or play now in</span>Your Browser</div></a>
     </div>
+    <p class="altroute">
+      <a href="https://discgolfgo.app/register">Or play free in your browser</a>
+      <span class="sep">•</span>
+      <a href="https://discgolfgo.app/login">Log in</a>
+    </p>
   </section>
 
   <!-- Footer -->
