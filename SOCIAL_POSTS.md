@@ -119,7 +119,7 @@ carry it too, so the ask survives being reshared without the caption.
 >
 > Tap for power, tap for your release angle. Three discs with real flight numbers, fade that always comes back, and a coaching line after every throw telling you what that shot actually did.
 >
-> Play a quick round, or play a real course from the 1,536 in the app — its own holes and lengths, across 21 hand-drawn hole templates. It pays real XP either way.
+> Play a quick round, or play a real course from the 1,536 in the app — its own holes and lengths, across 21 illustrated hole designs. It pays real XP either way.
 >
 > Download it free on iOS or Android.
 > https://discgolfgo.com
