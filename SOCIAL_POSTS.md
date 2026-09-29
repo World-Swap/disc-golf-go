@@ -28,6 +28,11 @@ is the web app itself — sending people straight there is how you get a browser
 user instead of a download. The store links above are for the places that take
 a direct one (an Instagram link sticker, a Facebook app-install ad).
 
+**Every call to action says "download", in the copy and on the image.** "Free
+to start" and "link in bio" are not asks; they leave the reader to decide what
+to do next, and the thing we want them to do is install the app. The images
+carry it too, so the ask survives being reshared without the caption.
+
 ---
 
 ## 1 · Coached by the pros
@@ -40,7 +45,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > Every lesson is short, has one video that earns its place, and gives you XP when you finish it. So you always know what to work on next.
 >
-> Free to start — iOS and Android. 👇
+> Download it free on iOS or Android. 👇
 > https://discgolfgo.com
 
 ### Instagram
@@ -50,7 +55,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > Pick a weakness. Get a lesson. Earn the XP. Take it to the course.
 >
-> Free on iOS & Android — link in bio.
+> Download free on iOS & Android — link in bio.
 >
 > #discgolf #discgolftips #discgolflife #discgolfeveryday #putting #forehand #backhand #discgolfcourse #teampractice #discgolfer
 
@@ -66,7 +71,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > The weekly tournament is still there with its two entries, and both have their own leaderboard, so you can chase a day or chase a week.
 >
-> 18 holes, in your pocket, free.
+> 18 holes, in your pocket. Download it free:
 > https://discgolfgo.com
 
 ### Instagram
@@ -76,7 +81,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > The weekly is still running too. Two boards, two chases.
 >
-> Free on iOS & Android — link in bio.
+> Download free on iOS & Android — link in bio.
 >
 > #discgolf #discgolftournament #dailychallenge #discgolflife #discgolfeveryday #compete #discgolfer #leaderboard
 
@@ -92,7 +97,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > Then take it further: a career record that counts your rounds, birdies, aces and days played, and public boards for all of it.
 >
-> Free to start.
+> Download it free and find yours.
 > https://discgolfgo.com
 
 ### Instagram
@@ -102,7 +107,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > What's your home course? 👇
 >
-> Free on iOS & Android — link in bio.
+> Download free on iOS & Android — link in bio.
 >
 > #discgolf #discgolfcourse #discgolflife #homecourse #discgolfeveryday #roadtrip #discgolfer #discgolfcommunity
 
@@ -118,7 +123,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > Play a quick round, or play a real course from the 1,536 in the app — its own holes and lengths, across 21 hand-drawn hole templates. It pays real XP either way.
 >
-> Free on iOS and Android.
+> Download it free on iOS or Android.
 > https://discgolfgo.com
 
 ### Instagram
@@ -126,7 +131,7 @@ a direct one (an Instagram link sticker, a Facebook app-install ad).
 >
 > Throw Lab: tap for power, tap for your angle. Real flight numbers, real fade, real XP — and you can play any of the 1,536 real courses in the app.
 >
-> Free on iOS & Android — link in bio.
+> Download free on iOS & Android — link in bio.
 >
 > #discgolf #discgolfgame #throwlab #discgolflife #mobilegame #discgolfeveryday #practice #discgolfer
 
