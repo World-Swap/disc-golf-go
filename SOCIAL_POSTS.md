@@ -139,7 +139,7 @@ number put on it was wrong in both directions.
 
   | Post | Art |
   | --- | --- |
-  | 1 · Coached by the pros | `web/img/shot-lesson.webp` — a real screenshot of a lesson |
+  | 1 · Coached by the pros | `web/img/shot-home.webp` — a real screenshot of the home screen, whose own hero reads *Coached by the pros* |
   | 2 · A new course every day | `web/img/cards/daily.webp` — the target card |
   | 3 · 1,536 courses | `web/img/cards/course.webp` — the aerial fairway |
   | 4 · Throw Lab | `web/img/cards/throw-lab.webp` + `web/img/shot-game.webp` |
@@ -147,9 +147,10 @@ number put on it was wrong in both directions.
   `cards/training.webp` and `cards/ranks.webp` were deliberately **not** used:
   both silhouettes hold a disc.
 
-  The one photograph of a disc in someone's hand is inside post 1's screenshot —
-  it is the real YouTube thumbnail of the lesson's video, not artwork. Say the
-  word and that post can use `shot-home.webp` instead.
+  There is no disc in anyone's hand anywhere in the set. Post 1 used to show the
+  lesson screen, whose video thumbnail is a photo of a pro holding one; the home
+  screen says the same thing better, because its hero banner carries the post's
+  own headline.
 - **Type is composited, not generated**, from the exact strings above, so there
   are no spelling artefacts to proofread.
 - **Sizes:** 1080×1080 (IG feed), 1200×630 (FB link preview), 1080×1350 (IG
