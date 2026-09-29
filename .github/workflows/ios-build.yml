@@ -34,7 +34,17 @@ on:
       - '.npmrc'
       - 'ios/**'
       - 'resources/**'
-      - 'scripts/**'
+      # NOT 'scripts/**'. Most of these are data and tooling — the lesson
+      # audit, the course importers, the screenshot capture — and none of
+      # them change a byte of the app. Adding scripts/store-screenshots.js
+      # alone kicked off a TestFlight build and an AAB. Only the scripts the
+      # native pipeline actually runs belong here; add a new one when it
+      # genuinely affects the built app.
+      - 'scripts/generate-ios-splash.js'
+      - 'scripts/write-android-styles.js'
+      - 'scripts/ensure-android-permissions.js'
+      - 'scripts/bump-android-version.js'
+      - 'scripts/generate-capacitor-assets-sources.js'
       - '.github/workflows/ios-build.yml'
 
 jobs:
