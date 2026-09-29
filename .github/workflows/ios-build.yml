@@ -238,6 +238,19 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" \
             ios/App/App/Info.plist
           echo "CFBundleVersion set to ${{ github.run_number }}"
+
+          # CFBundleShortVersionString is hardcoded in Info.plist too, and
+          # nothing used to sync it with MARKETING_VERSION. They drifted: the
+          # pbxproj said one thing, the shipped binary another, and every
+          # upload after 1.4.0 was approved failed with "Invalid Pre-Release
+          # Train. The train version '1.4.0' is closed for new build
+          # submissions". Take it from the pbxproj so the two cannot disagree.
+          MV=$(perl -ne 'print $1 and exit if /MARKETING_VERSION = ([0-9.]+);/' \
+            ios/App/App.xcodeproj/project.pbxproj)
+          if [ -z "$MV" ]; then echo "::error::no MARKETING_VERSION in project.pbxproj"; exit 1; fi
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $MV" \
+            ios/App/App/Info.plist
+          echo "CFBundleShortVersionString set to $MV (from MARKETING_VERSION)"
           /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ios/App/App/Info.plist
           grep -n "CURRENT_PROJECT_VERSION" ios/App/App.xcodeproj/project.pbxproj
 
