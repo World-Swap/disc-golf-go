@@ -39,7 +39,7 @@ import { createGameRepo } from './game/game.repo';
 import { createGameService } from './game/game.service';
 import { createGameRouter } from './game/game.routes';
 import { createTournamentRepo } from './tournament/tournament.repo';
-import { createTournamentService } from './tournament/tournament.service';
+import { createTournamentService, TOURNAMENT_KINDS } from './tournament/tournament.service';
 import { createTournamentRouter } from './tournament/tournament.routes';
 import { createScorecardsRepo } from './scorecards/scorecards.repo';
 import { createScorecardsService } from './scorecards/scorecards.service';
@@ -98,15 +98,27 @@ export function createApiRouter(db: Database): Router {
   });
   api.use(createGameRouter(gameService, auth, optAuth));
 
-  // The tournament scores through the game service rather than repeating its
+  // The tournaments score through the game service rather than repeating its
   // validation, XP cap and challenge settlement: a tournament round is a Throw
-  // Lab round that also counts for the week's board.
-  const tournamentService = createTournamentService({
-    db,
-    repo: createTournamentRepo(db),
-    submitRound: (playerId, input) => gameService.submit(playerId, input),
+  // Lab round that also counts for a board.
+  //
+  // Two kinds, one module. The weekly keeps the bare /api/tournament paths it
+  // has always had -- four pages in web/ call them -- and the daily is the
+  // same service under /api/tournament/daily with its own config: still 18
+  // holes, but ONE entry, gone at midnight UTC.
+  const tournamentRepo = createTournamentRepo(db);
+  const submitRound = (playerId: number, input: Parameters<typeof gameService.submit>[1]) =>
+    gameService.submit(playerId, input);
+
+  const weeklyTournament = createTournamentService({
+    db, repo: tournamentRepo, submitRound, config: TOURNAMENT_KINDS.weekly,
   });
-  api.use(createTournamentRouter(tournamentService, auth, optAuth));
+  api.use(createTournamentRouter(weeklyTournament, auth, optAuth));
+
+  const dailyTournament = createTournamentService({
+    db, repo: tournamentRepo, submitRound, config: TOURNAMENT_KINDS.daily,
+  });
+  api.use(createTournamentRouter(dailyTournament, auth, optAuth, 'tournament/daily'));
 
   const scorecardsService = createScorecardsService({ repo: createScorecardsRepo(db) });
   api.use(createScorecardsRouter(scorecardsService, auth));

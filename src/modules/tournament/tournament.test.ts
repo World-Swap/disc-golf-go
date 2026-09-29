@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Database } from '../../db/types';
-import { createTournamentService, MAX_ENTRIES, TOURNAMENT_HOLES } from './tournament.service';
+import { createTournamentService, MAX_ENTRIES, TOURNAMENT_HOLES, TOURNAMENT_KINDS } from './tournament.service';
 import { TOURNAMENT_METRICS } from './tournament.repo';
 import type { TournamentRepo, TournamentRow, EntryRow, BoardRow } from './tournament.repo';
 
@@ -25,13 +25,13 @@ function fakeRepo(opts: { courses?: { id: number; name: string }[] } = {}) {
   let draws = 0;
 
   const repo: TournamentRepo = {
-    async find(_e, weekKey) { return tournaments.find((t) => t.week_key === weekKey) ?? null; },
+    async find(_e, weekKey, kind = 'weekly') { return tournaments.find((t) => t.week_key === weekKey && t.kind === kind) ?? null; },
     async randomCourse() { return courses[draws++ % courses.length] ?? null; },
-    async create(_c, weekKey, course, holes, startsAt, endsAt) {
-      const found = tournaments.find((t) => t.week_key === weekKey);
+    async create(_c, weekKey, course, holes, startsAt, endsAt, kind = 'weekly') {
+      const found = tournaments.find((t) => t.week_key === weekKey && t.kind === kind);
       if (found) return found;                       // ON CONFLICT DO NOTHING
       const row: TournamentRow = {
-        id: tournaments.length + 1, week_key: weekKey, course_id: course.id,
+        id: tournaments.length + 1, kind, week_key: weekKey, course_id: course.id,
         course_name: course.name, holes,
         starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(),
       };
@@ -426,5 +426,87 @@ test('the all-time records boards', async (t) => {
     assert.deepEqual(lower, ['best_score']);
     assert.equal((await svc.records('best_score')).lower_is_better, true);
     assert.equal((await svc.records('wins')).lower_is_better, false);
+  });
+});
+
+// ── the daily ───────────────────────────────────────────────────────────────
+// The daily is the weekly's code with a different config, so what is worth
+// testing is precisely the places the two must NOT share: the period they key
+// on, how many entries you get, and -- most importantly -- that neither one's
+// results leak into the other's record.
+const daily = (repo: TournamentRepo) => createTournamentService({
+  db, repo, submitRound, config: TOURNAMENT_KINDS.daily,
+});
+
+test('the daily tournament', async (t) => {
+  await t.test('keys on the day, not the week', async () => {
+    const { repo, tournaments } = fakeRepo();
+    const svc = daily(repo);
+    await svc.current(new Date('2026-09-29T09:00:00Z'));
+    await svc.current(new Date('2026-09-29T23:59:00Z'));   // same day
+    assert.equal(tournaments.length, 1, 'one tournament for the whole day');
+    assert.equal(tournaments[0].week_key, '2026-09-29');
+    assert.equal(tournaments[0].kind, 'daily');
+
+    await svc.current(new Date('2026-09-30T00:01:00Z'));   // the next day
+    assert.equal(tournaments.length, 2, 'midnight UTC starts a new one');
+  });
+
+  await t.test('a day and a week can both be open at once', async () => {
+    const { repo, tournaments } = fakeRepo();
+    const now = new Date('2026-09-29T12:00:00Z');
+    await createTournamentService({ db, repo, submitRound, config: TOURNAMENT_KINDS.weekly }).current(now);
+    await daily(repo).current(now);
+    assert.equal(tournaments.length, 2, 'they are separate tournaments');
+    assert.deepEqual(tournaments.map((x) => x.kind).sort(), ['daily', 'weekly']);
+  });
+
+  await t.test('one entry a day, and starting it spends it', async () => {
+    const { repo } = fakeRepo();
+    const svc = daily(repo);
+    const now = new Date('2026-09-29T12:00:00Z');
+    const first = await svc.startEntry(7, now);
+    assert.equal(first.entries_remaining, 0, 'the only entry is gone once taken');
+
+    await assert.rejects(() => svc.startEntry(7, now), /used your entry/,
+      'a second attempt on the same day is refused');
+  });
+
+  await t.test('the refusal says when a new one starts, not "Monday"', async () => {
+    const { repo } = fakeRepo();
+    const svc = daily(repo);
+    const now = new Date('2026-09-29T12:00:00Z');
+    await svc.startEntry(3, now);
+    await assert.rejects(() => svc.startEntry(3, now), /midnight UTC/);
+  });
+
+  await t.test('a new day gives the entry back', async () => {
+    const { repo } = fakeRepo();
+    const svc = daily(repo);
+    await svc.startEntry(5, new Date('2026-09-29T12:00:00Z'));
+    const tomorrow = await svc.startEntry(5, new Date('2026-09-30T12:00:00Z'));
+    assert.equal(tomorrow.entry.attempt, 1, 'attempt 1 of a fresh day');
+  });
+
+  await t.test('it is still 18 holes', async () => {
+    const { repo, tournaments } = fakeRepo();
+    await daily(repo).current(new Date('2026-09-29T12:00:00Z'));
+    assert.equal(tournaments[0].holes, TOURNAMENT_HOLES);
+  });
+
+  // The one that would be silently wrong: both kinds share every table, so a
+  // missing kind filter anywhere makes a daily round count toward the weekly.
+  await t.test('a kind only ever reads its own tournaments', async () => {
+    const seen: string[] = [];
+    const { repo } = fakeRepo();
+    const spy: TournamentRepo = {
+      ...repo,
+      async career(e, pid, kind = 'weekly') { seen.push('career:' + kind); return repo.career(e, pid, kind); },
+      async history(e, pid, lim, kind = 'weekly') { seen.push('history:' + kind); return repo.history(e, pid, lim, kind); },
+      async careerBoard(e, m, lim, kind = 'weekly') { seen.push('board:' + kind); return repo.careerBoard(e, m, lim, kind); },
+    };
+    await daily(spy).career(1, new Date('2026-09-29T12:00:00Z'));
+    await daily(spy).records('wins', 25, 1);
+    assert.deepEqual(seen.sort(), ['board:daily', 'career:daily', 'history:daily']);
   });
 });

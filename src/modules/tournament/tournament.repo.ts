@@ -12,6 +12,7 @@ import type { Queryable } from '../../db/types';
 
 export interface TournamentRow {
   id: number;
+  kind: string;
   week_key: string;
   course_id: number | null;
   course_name: string;
@@ -66,11 +67,11 @@ export interface CareerRecord {
 
 export function createTournamentRepo(_db: Queryable) {
   return {
-    async find(exec: Queryable, weekKey: string): Promise<TournamentRow | null> {
+    async find(exec: Queryable, weekKey: string, kind = 'weekly'): Promise<TournamentRow | null> {
       const r = await exec.query<TournamentRow>(
-        `SELECT id, week_key, course_id, course_name, holes, starts_at, ends_at
-         FROM tournaments WHERE week_key = $1`,
-        [weekKey]
+        `SELECT id, kind, week_key, course_id, course_name, holes, starts_at, ends_at
+         FROM tournaments WHERE kind = $2 AND week_key = $1`,
+        [weekKey, kind]
       );
       return r.rows[0] ?? null;
     },
@@ -119,7 +120,7 @@ export function createTournamentRepo(_db: Queryable) {
       const r = await exec.query<TournamentRow>(
         `UPDATE tournaments SET course_id = $2, course_name = $3
           WHERE id = $1 AND course_id IS NULL
-      RETURNING id, week_key, course_id, course_name, holes, starts_at, ends_at`,
+      RETURNING id, kind, week_key, course_id, course_name, holes, starts_at, ends_at`,
         [tournamentId, course.id, course.name]
       );
       return r.rows[0] ?? null;
@@ -136,18 +137,19 @@ export function createTournamentRepo(_db: Queryable) {
       course: { id: number; name: string },
       holes: number,
       startsAt: Date,
-      endsAt: Date
+      endsAt: Date,
+      kind = 'weekly'
     ): Promise<TournamentRow> {
       await client.query(
-        `INSERT INTO tournaments (week_key, course_id, course_name, holes, starts_at, ends_at)
-         VALUES ($1,$2,$3,$4,$5,$6)
-         ON CONFLICT (week_key) DO NOTHING`,
-        [weekKey, course.id, course.name, holes, startsAt, endsAt]
+        `INSERT INTO tournaments (kind, week_key, course_id, course_name, holes, starts_at, ends_at)
+         VALUES ($7,$1,$2,$3,$4,$5,$6)
+         ON CONFLICT (kind, week_key) DO NOTHING`,
+        [weekKey, course.id, course.name, holes, startsAt, endsAt, kind]
       );
       const r = await client.query<TournamentRow>(
-        `SELECT id, week_key, course_id, course_name, holes, starts_at, ends_at
-         FROM tournaments WHERE week_key = $1`,
-        [weekKey]
+        `SELECT id, kind, week_key, course_id, course_name, holes, starts_at, ends_at
+         FROM tournaments WHERE kind = $2 AND week_key = $1`,
+        [weekKey, kind]
       );
       return r.rows[0]!;
     },
@@ -271,7 +273,7 @@ export function createTournamentRepo(_db: Queryable) {
      * field, ordered the same way the live board is (score, then who posted
      * it first), so a player's place in the record matches what they saw.
      */
-    async career(exec: Queryable, playerId: number): Promise<CareerRecord> {
+    async career(exec: Queryable, playerId: number, kind = 'weekly'): Promise<CareerRecord> {
       const r = await exec.query<Record<string, string | null>>(
         `WITH best AS (
            SELECT DISTINCT ON (e.tournament_id, e.player_id)
@@ -279,6 +281,7 @@ export function createTournamentRepo(_db: Queryable) {
            FROM tournament_entries e
            JOIN tournaments t ON t.id = e.tournament_id
            WHERE e.status = 'completed' AND e.vs_par IS NOT NULL AND t.ends_at <= NOW()
+             AND t.kind = $2
            ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
          ), ranked AS (
            SELECT *, RANK() OVER (PARTITION BY tournament_id
@@ -292,15 +295,18 @@ export function createTournamentRepo(_db: Queryable) {
                 MIN(vs_par)                               AS best_score,
                 ROUND(AVG(place), 1)::text                AS avg_finish
          FROM ranked WHERE player_id = $1`,
-        [playerId]
+        [playerId, kind]
       );
       const row = r.rows[0] ?? {};
       const n = (k: string) => parseInt(row[k] ?? '0', 10) || 0;
       const nullable = (k: string) => (row[k] == null ? null : parseInt(row[k]!, 10));
 
       const entries = await exec.query<{ n: string }>(
-        `SELECT COUNT(*)::text AS n FROM tournament_entries WHERE player_id = $1`,
-        [playerId]
+        `SELECT COUNT(*)::text AS n
+           FROM tournament_entries e
+           JOIN tournaments t ON t.id = e.tournament_id
+          WHERE e.player_id = $1 AND t.kind = $2`,
+        [playerId, kind]
       );
       return {
         played: n('played'), wins: n('wins'), podiums: n('podiums'),
@@ -311,7 +317,7 @@ export function createTournamentRepo(_db: Queryable) {
     },
 
     /** The player's finished weeks, newest first, with where they placed. */
-    async history(exec: Queryable, playerId: number, limit: number) {
+    async history(exec: Queryable, playerId: number, limit: number, kind = 'weekly') {
       const r = await exec.query(
         `WITH best AS (
            SELECT DISTINCT ON (e.tournament_id, e.player_id)
@@ -330,10 +336,10 @@ export function createTournamentRepo(_db: Queryable) {
                 (t.ends_at > NOW()) AS in_progress
          FROM ranked r
          JOIN tournaments t ON t.id = r.tournament_id
-         WHERE r.player_id = $1
+         WHERE r.player_id = $1 AND t.kind = $3
          ORDER BY t.starts_at DESC
          LIMIT $2`,
-        [playerId, limit]
+        [playerId, limit, kind]
       );
       return r.rows;
     },
@@ -346,7 +352,7 @@ export function createTournamentRepo(_db: Queryable) {
      * `metric` selects an entry in TOURNAMENT_METRICS; nothing from the
      * request is ever concatenated into the query.
      */
-    async careerBoard(exec: Queryable, metric: TournamentMetric, limit: number) {
+    async careerBoard(exec: Queryable, metric: TournamentMetric, limit: number, kind = 'weekly') {
       const m = TOURNAMENT_METRICS[metric] ?? TOURNAMENT_METRICS.wins;
       const r = await exec.query(
         `WITH best AS (
@@ -355,6 +361,7 @@ export function createTournamentRepo(_db: Queryable) {
            FROM tournament_entries e
            JOIN tournaments t ON t.id = e.tournament_id
            WHERE e.status = 'completed' AND e.vs_par IS NOT NULL AND t.ends_at <= NOW()
+             AND t.kind = $2
            ORDER BY e.tournament_id, e.player_id, e.vs_par ASC, e.completed_at ASC
          ), ranked AS (
            SELECT *, RANK() OVER (PARTITION BY tournament_id
@@ -376,7 +383,7 @@ export function createTournamentRepo(_db: Queryable) {
          WHERE ${m.having}
          ORDER BY (${m.expr}) ${m.dir}, y.wins DESC, y.played DESC, p.id ASC
          LIMIT $1`,
-        [limit]
+        [limit, kind]
       );
       return r.rows;
     },

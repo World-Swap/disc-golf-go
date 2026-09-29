@@ -663,14 +663,23 @@ CREATE TABLE IF NOT EXISTS player_game_challenges (
 );
 CREATE INDEX IF NOT EXISTS idx_pgc_player ON player_game_challenges(player_id, completed_at DESC);
 
--- One tournament per ISO week. The course is drawn at random the first time a
--- week is asked for and then fixed, so everyone that week plays the same 18
+-- One tournament per period. The course is drawn at random the first time a
+-- period is asked for and then fixed, so everyone playing it gets the same 18
 -- holes — a tournament where players got different courses would not be one.
 -- course_name is denormalised: the course row can go (the placeholder prune
 -- deletes rows), and a past tournament still has to say where it was played.
+--
+-- The kind column is what makes this table hold both the weekly and the daily.
+-- It is part of the key rather than a separate table because everything else
+-- about them is identical: the same entries, the same board, the same placing.
+-- week_key holds the period key of whichever kind it is (an ISO week for the
+-- weekly, a date for the daily); renaming a live column that six queries read
+-- is a worse trade than a slightly stale name.
+-- (No backticks in this file: SCHEMA_SQL is a JS template literal.)
 CREATE TABLE IF NOT EXISTS tournaments (
   id SERIAL PRIMARY KEY,
-  week_key TEXT NOT NULL UNIQUE,
+  kind TEXT NOT NULL DEFAULT 'weekly',
+  week_key TEXT NOT NULL,
   course_id INTEGER REFERENCES courses(id) ON DELETE SET NULL,
   course_name TEXT NOT NULL,
   holes INTEGER NOT NULL DEFAULT 18,
@@ -678,6 +687,33 @@ CREATE TABLE IF NOT EXISTS tournaments (
   ends_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Existing databases have the pre-kind shape: the column missing and a bare
+-- UNIQUE on week_key. Both are fixed here rather than in a migration file,
+-- because this schema is applied on every boot and has to be able to move a
+-- live table forward. Every statement is a no-op the second time it runs.
+ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'weekly';
+DO $$
+BEGIN
+  -- The old single-column unique would reject the daily that shares a key
+  -- shape with nothing, but more importantly it is simply the wrong key now.
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = 'tournaments'::regclass AND contype = 'u'
+       AND pg_get_constraintdef(oid) = 'UNIQUE (week_key)'
+  ) THEN
+    EXECUTE (
+      SELECT 'ALTER TABLE tournaments DROP CONSTRAINT ' || quote_ident(conname)
+        FROM pg_constraint
+       WHERE conrelid = 'tournaments'::regclass AND contype = 'u'
+         AND pg_get_constraintdef(oid) = 'UNIQUE (week_key)'
+    );
+  END IF;
+END $$;
+-- One tournament per (kind, period). This is the lock behind the lazy create:
+-- two players opening the app at the same moment race to INSERT, one wins, and
+-- the loser's ON CONFLICT DO NOTHING plus a re-read gets them the same row.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tournaments_kind_key ON tournaments(kind, week_key);
 
 -- One row per attempt, written when the round STARTS. That is the whole point:
 -- an entry is spent the moment it begins, so walking away from a bad round
