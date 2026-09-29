@@ -18,8 +18,45 @@ import { periodKey, periodStart } from '../game/game.catalog';
 import { TOURNAMENT_METRICS, type TournamentMetric } from './tournament.repo';
 import type { TournamentRepo, TournamentRow, EntryRow } from './tournament.repo';
 
-export const MAX_ENTRIES = 2;
-export const TOURNAMENT_HOLES = 18;
+/**
+ * The two tournaments are one piece of code with two configurations. They
+ * differ only in how long a period lasts and how many shots you get at it:
+ * the weekly is an event you can have another go at, the daily is one round
+ * that is gone at midnight. Everything else -- entries spent on tee-off, the
+ * board, placing, the career record -- is identical, which is why this is a
+ * config rather than a second module.
+ */
+export const TOURNAMENT_KINDS = {
+  weekly: {
+    kind: 'weekly' as const,
+    period: 'weekly' as const,
+    holes: 18,
+    maxEntries: 2,
+    label: 'weekly tournament',
+    /** Said when a player has used them all. */
+    exhausted: (key: string) => `You have used both entries for ${key}. The tournament resets Monday.`,
+  },
+  daily: {
+    kind: 'daily' as const,
+    period: 'daily' as const,
+    holes: 18,
+    // One attempt, deliberately. The weekly gives a second because a week is
+    // long enough to come back to; a day is not, and one shot is what makes
+    // the day's board worth looking at.
+    maxEntries: 1,
+    label: 'daily tournament',
+    exhausted: (key: string) => `You have used your entry for ${key}. A new daily starts at midnight UTC.`,
+  },
+} as const;
+
+export type TournamentKind = keyof typeof TOURNAMENT_KINDS;
+export type TournamentConfig = (typeof TOURNAMENT_KINDS)[TournamentKind];
+
+// The weekly's numbers, kept as named exports because tests and callers use
+// them. Typed as plain numbers: `as const` above makes them the literals 2 and
+// 18, which would make every comparison against them a type error.
+export const MAX_ENTRIES: number = TOURNAMENT_KINDS.weekly.maxEntries;
+export const TOURNAMENT_HOLES: number = TOURNAMENT_KINDS.weekly.holes;
 
 export interface HoleResult { par: number; strokes: number }
 
@@ -37,10 +74,16 @@ export interface TournamentDeps {
   db: Database;
   repo: TournamentRepo;
   submitRound: RoundSubmitter;
+  /** Which tournament this instance is. Defaults to the weekly. */
+  config?: TournamentConfig;
 }
 
 export function createTournamentService(deps: TournamentDeps) {
   const { db, repo, submitRound } = deps;
+  const cfg = deps.config ?? TOURNAMENT_KINDS.weekly;
+  const KIND = cfg.kind;
+  const MAX = cfg.maxEntries;
+  const HOLES = cfg.holes;
 
   /**
    * A tournament whose course row disappeared underneath it. course_id is
@@ -64,26 +107,27 @@ export function createTournamentService(deps: TournamentDeps) {
       );
     }
     // If setCourse matched nothing another request healed it first; re-read.
-    return healed ?? (await repo.find(db, t.week_key)) ?? t;
+    return healed ?? (await repo.find(db, t.week_key, KIND)) ?? t;
   }
 
   /** The week's tournament, created on first use so no scheduled job is needed. */
   async function current(now = new Date()): Promise<TournamentRow> {
-    const weekKey = periodKey('weekly', now);
-    const existing = await repo.find(db, weekKey);
+    const weekKey = periodKey(cfg.period, now);
+    const existing = await repo.find(db, weekKey, KIND);
     if (existing) return repairCourse(existing);
 
     return withTransaction(db, async (client) => {
       // Another request may have created it between the read and here.
-      const again = await repo.find(client, weekKey);
+      const again = await repo.find(client, weekKey, KIND);
       if (again) return again;
 
       const course = await repo.randomCourse(client);
       if (!course) throw badRequest('No course is available to hold a tournament on');
 
-      const start = periodStart('weekly', now)!;
-      const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
-      return repo.create(client, weekKey, course, TOURNAMENT_HOLES, start, end);
+      const start = periodStart(cfg.period, now)!;
+      const days = cfg.period === 'daily' ? 1 : 7;
+      const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
+      return repo.create(client, weekKey, course, HOLES, start, end, KIND);
     });
   }
 
@@ -125,7 +169,7 @@ export function createTournamentService(deps: TournamentDeps) {
         mine = {
           entries: entries.map(shapeEntry),
           used,
-          remaining: Math.max(0, MAX_ENTRIES - used),
+          remaining: Math.max(0, MAX - used),
           best: best ? shapeEntry(best) : null,
           // From the whole field, not the 25 rows on screen.
           place: await repo.place(db, t.id, playerId),
@@ -139,7 +183,7 @@ export function createTournamentService(deps: TournamentDeps) {
         course: { id: t.course_id, name: t.course_name },
         starts_at: t.starts_at,
         ends_at: t.ends_at,
-        max_entries: MAX_ENTRIES,
+        max_entries: MAX,
         players,
         leaderboard: board.map((r, i) => ({
           rank: i + 1,
@@ -163,8 +207,8 @@ export function createTournamentService(deps: TournamentDeps) {
       return withTransaction(db, async (client) => {
         const entries = await repo.entries(client, t.id, playerId);
         const used = entriesUsed(entries);
-        if (used >= MAX_ENTRIES) {
-          throw conflict(`You have used both entries for ${t.week_key}. The tournament resets Monday.`);
+        if (used >= MAX) {
+          throw conflict(cfg.exhausted(t.week_key));
         }
 
         // Starting a new attempt closes one left open. It was already spent by
@@ -180,7 +224,7 @@ export function createTournamentService(deps: TournamentDeps) {
 
         return {
           entry: shapeEntry(entry),
-          entries_remaining: Math.max(0, MAX_ENTRIES - (used + 1)),
+          entries_remaining: Math.max(0, MAX - (used + 1)),
           tournament: {
             week_key: t.week_key,
             holes: t.holes,
@@ -223,7 +267,7 @@ export function createTournamentService(deps: TournamentDeps) {
       return {
         entry: shapeEntry(saved),
         best: best ? shapeEntry(best) : null,
-        entries_remaining: Math.max(0, MAX_ENTRIES - entriesUsed(entries)),
+        entries_remaining: Math.max(0, MAX - entriesUsed(entries)),
         place: await repo.place(db, t.id, playerId),
         players: await repo.playerCount(db, t.id),
         xp_earned: played.xp_earned,
@@ -243,7 +287,7 @@ export function createTournamentService(deps: TournamentDeps) {
       if (!entry) throw notFound('Entry not found');
       if (entry.status !== 'in_progress') {
         const all = await repo.entries(db, t.id, playerId);
-        return { entry: shapeEntry(entry), entries_remaining: Math.max(0, MAX_ENTRIES - entriesUsed(all)) };
+        return { entry: shapeEntry(entry), entries_remaining: Math.max(0, MAX - entriesUsed(all)) };
       }
 
       await withTransaction(db, (client) => repo.abandonOpen(client, t.id, playerId));
@@ -251,7 +295,7 @@ export function createTournamentService(deps: TournamentDeps) {
       const updated = entries.find((e) => e.id === entry.id)!;
       return {
         entry: shapeEntry(updated),
-        entries_remaining: Math.max(0, MAX_ENTRIES - entriesUsed(entries)),
+        entries_remaining: Math.max(0, MAX - entriesUsed(entries)),
       };
     },
 
@@ -263,8 +307,8 @@ export function createTournamentService(deps: TournamentDeps) {
     async career(playerId: number, now = new Date()) {
       const t = await current(now);
       const [record, history, entries, place] = await Promise.all([
-        repo.career(db, playerId),
-        repo.history(db, playerId, 10),
+        repo.career(db, playerId, KIND),
+        repo.history(db, playerId, 10, KIND),
         repo.entries(db, t.id, playerId),
         repo.place(db, t.id, playerId),
       ]);
@@ -277,7 +321,7 @@ export function createTournamentService(deps: TournamentDeps) {
           course: { id: t.course_id, name: t.course_name },
           ends_at: t.ends_at,
           entries_used: entriesUsed(entries),
-          entries_remaining: Math.max(0, MAX_ENTRIES - entriesUsed(entries)),
+          entries_remaining: Math.max(0, MAX - entriesUsed(entries)),
           best: best ? shapeEntry(best) : null,
           place,
         },
@@ -290,7 +334,7 @@ export function createTournamentService(deps: TournamentDeps) {
         typeof metricRaw === 'string' && metricRaw in TOURNAMENT_METRICS
           ? (metricRaw as TournamentMetric) : 'wins';
       const meta = TOURNAMENT_METRICS[metric];
-      const rows = await repo.careerBoard(db, metric, Math.min(Math.max(limit, 1), 100));
+      const rows = await repo.careerBoard(db, metric, Math.min(Math.max(limit, 1), 100), KIND);
       return {
         board: 'tournament_records',
         metric,

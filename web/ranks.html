@@ -27,7 +27,8 @@
       <div class="segbar" id="boards">
         <button class="seg" data-board="training" aria-selected="true">Training</button>
         <button class="seg" data-board="game">Throw Lab</button>
-        <button class="seg" data-board="tournament">Tournament</button>
+        <button class="seg" data-board="tournament">Weekly</button>
+        <button class="seg" data-board="daily">Daily</button>
       </div>
       <div class="segbar segbar--scroll" id="tabs">
         <button class="seg" data-tab="overall" aria-selected="true">XP</button>
@@ -60,7 +61,8 @@
         game: [['daily', 'Today'], ['weekly', 'Week'], ['monthly', 'Month'], ['lifetime', 'All-time']],
         // Tournament boards are either this week's or all-time; neither takes
         // a period, so the bar is hidden for them.
-        tournament: []
+        tournament: [],
+        daily: []
       };
 
       // What each board can be ranked by. The keys are the API's metric names,
@@ -70,6 +72,8 @@
         game: [['xp', 'XP'], ['best_round', 'Best round'], ['best_18', 'Best 18'], ['aces', 'Aces'],
                ['full_rounds', '18-hole'], ['courses', 'Courses'], ['birdies', 'Birdies'],
                ['under_par', 'Under par']],
+        daily: [['week', 'Today'], ['wins', 'Wins'], ['podiums', 'Podiums'],
+                ['played', 'Days'], ['best_score', 'Best round']],
         tournament: [['week', 'This week'], ['wins', 'Wins'], ['podiums', 'Podiums'],
                      ['played', 'Weeks played'], ['best_score', 'Best score']]
       };
@@ -116,7 +120,21 @@
           load();
         });
       }
-      bind('boards', 'board');
+      // Switching board is not the same as switching a tab within one: the new
+      // board may not have the tab that is selected, so the bars have to be
+      // repainted -- which is what corrects state.tab -- BEFORE the fetch.
+      // Binding this with bind() ran load() first, on the previous board's tab,
+      // so picking Tournament from Training landed on an all-time board instead
+      // of this week's. Adding the daily surfaced it; it was always there.
+      document.getElementById('boards').addEventListener('click', function (e) {
+        var b = e.target.closest('.seg'); if (!b) return;
+        [].forEach.call(this.children, function (c) {
+          c.setAttribute('aria-selected', c === b ? 'true' : 'false');
+        });
+        state.board = b.getAttribute('data-board');
+        paintTabs(); paintPeriods();
+        load();
+      });
       document.getElementById('tabs').addEventListener('click', function (e) {
         var b = e.target.closest('.seg'); if (!b) return;
         state.tab = b.getAttribute('data-tab');
@@ -129,7 +147,6 @@
         state.period = b.getAttribute('data-period');
         paintPeriods(); load();
       });
-      document.getElementById('boards').addEventListener('click', function () { paintTabs(); paintPeriods(); });
 
       function row(rank, title, sub, meta, isMe) {
         return '<div class="row' + (isMe ? ' row--me' : '') + '">' +
@@ -145,12 +162,19 @@
         board.className = 'loading'; board.textContent = 'Loading…';
         try {
           var rows;
-          if (state.board === 'tournament' && state.tab !== 'week') {
+          // The weekly and the daily are the same two views over different
+          // endpoints, so the only thing that varies is the base and the noun.
+          var isTourn = state.board === 'tournament' || state.board === 'daily';
+          var tb = state.board === 'daily'
+            ? { base: '/tournament/daily', period: 'Today', noun: 'day', nouns: 'days', closes: 'at midnight UTC', resets: 'every day' }
+            : { base: '/tournament', period: 'This week', noun: 'week', nouns: 'weeks', closes: 'when it closes', resets: 'every Monday' };
+
+          if (isTourn && state.tab !== 'week') {
             // All-time tournament boards: most wins, most podiums, and so on.
-            var rec = await API.get('/tournament/records?metric=' + state.tab);
+            var rec = await API.get(tb.base + '/records?metric=' + state.tab);
             document.getElementById('period-pill').textContent = 'All-time';
             rows = (rec.players || []).map(function (p) {
-              var bits = [p.played + (p.played === 1 ? ' week' : ' weeks')];
+              var bits = [p.played + ' ' + (p.played === 1 ? tb.noun : tb.nouns)];
               if (p.wins) bits.push(p.wins + (p.wins === 1 ? ' win' : ' wins'));
               if (p.best_finish) bits.push('best #' + p.best_finish);
               return row(p.rank, p.display_name || p.username || 'Player', bits.join(' · '),
@@ -161,14 +185,14 @@
             // still being played is not a result yet, so it would be wrong to
             // count it as a win. Said plainly, or the totals look short.
             var note = '<p class="row__sub" style="text-transform:none;letter-spacing:0;margin:0 0 10px">' +
-              'Completed weeks only — this week counts once it closes.</p>';
+              'Completed ' + tb.nouns + ' only \u2014 ' + tb.period.toLowerCase() + ' counts ' + tb.closes + '.</p>';
             board.innerHTML = note + (rows ? '<div class="rows">' + rows + '</div>'
               : '<div class="loading">No one has a ' + esc(rec.metric_label.toLowerCase()) +
-                ' yet — the tournament resets every Monday.</div>');
+                ' yet \u2014 the tournament resets ' + tb.resets + '.</div>');
             return;
           }
-          if (state.board === 'tournament') {
-            var t = await API.get('/tournament');
+          if (isTourn) {
+            var t = await API.get(tb.base);
             var me = t.me || {};
             rows = (t.leaderboard || []).map(function (p) {
               return row(p.rank, p.name, 'through ' + t.holes + ' holes',
@@ -178,11 +202,14 @@
             document.getElementById('period-pill').textContent = t.week_key;
             board.className = '';
             board.innerHTML =
-              '<div class="card" style="margin-bottom:12px"><p class="card__eyebrow">This week</p>' +
+              '<div class="card" style="margin-bottom:12px"><p class="card__eyebrow">' + tb.period + '</p>' +
                 '<div class="row__title" style="font-size:18px;margin:4px 0 2px">' + esc(t.course.name) + '</div>' +
                 '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + t.holes +
                   ' holes · ' + t.players + ' player' + (t.players === 1 ? '' : 's') +
-                  (me.used != null ? ' · you have used ' + me.used + ' of ' + t.max_entries + ' entries' : '') +
+                  (me.used != null
+                    ? ' \u00b7 you have used ' + me.used + ' of ' + t.max_entries +
+                      (t.max_entries === 1 ? ' entry' : ' entries')
+                    : '') +
                 '</div></div>' +
               (rows ? '<div class="rows">' + rows + '</div>'
                     : '<div class="loading">No scores posted yet — play the tournament from the Play tab.</div>');

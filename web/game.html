@@ -133,9 +133,11 @@
       // is already spent -- so leaving asks first once a throw has been made.
       // Before the first throw, and once the round is over, it just goes.
       if (roundUnderway()) {
-        var msg = ENTRY
-          ? 'Leave this tournament round? The entry is already used \u2014 you will not get it back.'
-          : 'Leave this round? Your score will not be saved.';
+        var msg = !ENTRY
+          ? 'Leave this round? Your score will not be saved.'
+          : ENTRY.daily
+            ? 'Leave this daily round? Your entry for today is already used \u2014 the next one is at midnight UTC.'
+            : 'Leave this tournament round? The entry is already used \u2014 you will not get it back.';
         if (!confirm(msg)) return;
       }
       if (history.length > 1) history.back(); else location.href = '/checkin';
@@ -268,6 +270,10 @@
     // is already spent by the time this page loads — the Play tab took it —
     // so there is no picker and no way back to a different length.
     var ENTRY = null;
+    // '/tournament' for the weekly, '/tournament/daily' for the daily. Set
+    // from ?kind= before anything asks the server about the entry, because a
+    // daily entry simply is not in the weekly's list and vice versa.
+    var TBASE = '/tournament';
 
     // Round lengths: a quick round is a short session, a course round is the
     // full 18, looping the course's own holes when it has fewer.
@@ -477,7 +483,7 @@
       // here would be a round that can never be posted. The board is offered
       // instead of a Play again that would mislead.
       var buttons = ENTRY
-        ? [['board', 'See the board', 'this week'], ['leave', 'Done', 'back to Play']]
+        ? [['board', 'See the board', ENTRY.daily ? 'today' : 'this week'], ['leave', 'Done', 'back to Play']]
         : [['again', 'Play again', 'new round'], ['leave', 'Done', 'back to Play']];
       bag.innerHTML = buttons.map(function (b) {
         return '<button class="g-disc g-disc--act" data-act="' + b[0] + '">' +
@@ -508,7 +514,7 @@
       SUBMITTED = true;
       // A tournament card is posted against its entry, which scores it through
       // the same game endpoint server-side and puts it on the week's board.
-      var path = ENTRY ? '/tournament/entries/' + ENTRY.id + '/finish' : '/game/rounds';
+      var path = ENTRY ? TBASE + '/entries/' + ENTRY.id + '/finish' : '/game/rounds';
       var body = { holes: CARD.slice() };
       if (!ENTRY) {
         body.mode = COURSE ? 'course' : 'quick';
@@ -780,7 +786,9 @@
       var where = document.getElementById('where');
       if (where) {
         where.textContent = ENTRY
-          ? 'Tournament · entry ' + ENTRY.attempt + ' of 2'
+          ? (ENTRY.daily
+              ? 'Daily · ' + (ENTRY.of > 1 ? 'entry ' + ENTRY.attempt + ' of ' + ENTRY.of : 'your entry')
+              : 'Tournament · entry ' + ENTRY.attempt + ' of ' + ENTRY.of)
           : (COURSE ? COURSE.name : 'Throw Lab · quick round');
       }
       document.getElementById('h-hole').textContent = S.hole;
@@ -854,7 +862,10 @@
       var courseId = qs.get('course');
       var asked = parseInt(qs.get('holes'), 10);
 
-      if (entryId) return bootTournament(entryId);
+      if (entryId) {
+        if (qs.get('kind') === 'daily') TBASE = '/tournament/daily';
+        return bootTournament(entryId);
+      }
 
       if (!courseId) {
         if (QUICK_LENGTHS.indexOf(asked) !== -1) { HOLES = asked; newHole(); return; }
@@ -883,8 +894,9 @@
     // this page opens, so there is nothing to choose — it goes straight to the
     // first tee. The entry was spent when the Play tab took it.
     function bootTournament(entryId) {
-      say('Loading the tournament…', '');
-      DGG.API.get('/tournament').then(function (t) {
+      var daily = TBASE !== '/tournament';
+      say('Loading the ' + (daily ? 'daily' : 'tournament') + '…', '');
+      DGG.API.get(TBASE).then(function (t) {
         var mine = (t.me && t.me.entries) || [];
         var entry = mine.filter(function (e) { return String(e.id) === String(entryId); })[0];
         if (!entry) throw new Error('That entry is not yours.');
@@ -893,12 +905,15 @@
             ? 'That entry already has a score.'
             : 'That entry was used up.');
         }
-        ENTRY = { id: entry.id, attempt: entry.attempt, week: t.week_key };
-        if (!t.course || !t.course.id) throw new Error('This week has no course yet.');
+        ENTRY = { id: entry.id, attempt: entry.attempt, week: t.week_key,
+                  daily: daily, of: t.max_entries || 2 };
+        if (!t.course || !t.course.id) {
+          throw new Error(daily ? 'Today has no course yet.' : 'This week has no course yet.');
+        }
         return DGG.API.get('/courses/' + encodeURIComponent(t.course.id)).then(function (c) {
           COURSE = buildCourse(c);
           COURSE.id = Number(t.course.id);
-          document.title = 'Tournament · ' + COURSE.name;
+          document.title = (daily ? 'Daily' : 'Tournament') + ' · ' + COURSE.name;
           HOLES = t.holes || 18;
           layoutCourse(HOLES);
           newHole();
