@@ -1,7 +1,7 @@
 # Disc Golf Go — social posts
 
 Images: `web/img/social/` — committed, and therefore also live at
-`https://discgolfgo.app/img/social/<file>` if you want to link one rather than
+`https://discgolfgo.com/img/social/<file>` if you want to link one rather than
 upload it. **This file deliberately sits at the repo root, not in that folder**:
 everything under `web/` is served by `express.static`, so the posting notes
 below would otherwise be public at `/img/social/POSTS.md`.
@@ -21,7 +21,12 @@ number put on it was wrong in both directions.
 **Links**
 - App Store — https://apps.apple.com/us/app/disc-golf-go/id6768128686
 - Google Play — https://play.google.com/store/apps/details?id=the.discgolfgo.app
-- Web — https://discgolfgo.app · About — https://discgolfgo.com
+
+**Every post links to https://discgolfgo.com**, never discgolfgo.app. The goal
+is installs: .com is the landing page that carries the store badges, while .app
+is the web app itself — sending people straight there is how you get a browser
+user instead of a download. The store links above are for the places that take
+a direct one (an Instagram link sticker, a Facebook app-install ad).
 
 ---
 
@@ -36,7 +41,7 @@ number put on it was wrong in both directions.
 > Every lesson is short, has one video that earns its place, and gives you XP when you finish it. So you always know what to work on next.
 >
 > Free to start — iOS and Android. 👇
-> https://discgolfgo.app
+> https://discgolfgo.com
 
 ### Instagram
 > Stop throwing. Start training. 🥏
@@ -62,7 +67,7 @@ number put on it was wrong in both directions.
 > The weekly tournament is still there with its two entries, and both have their own leaderboard, so you can chase a day or chase a week.
 >
 > 18 holes, in your pocket, free.
-> https://discgolfgo.app
+> https://discgolfgo.com
 
 ### Instagram
 > One course. One entry. One day. ⏳
@@ -88,7 +93,7 @@ number put on it was wrong in both directions.
 > Then take it further: a career record that counts your rounds, birdies, aces and days played, and public boards for all of it.
 >
 > Free to start.
-> https://discgolfgo.app
+> https://discgolfgo.com
 
 ### Instagram
 > 1,536 courses. 48 states. 🗺️
@@ -114,7 +119,7 @@ number put on it was wrong in both directions.
 > Play a quick round, or play a real course from the 1,536 in the app — its own holes and lengths, across 21 hand-drawn hole templates. It pays real XP either way.
 >
 > Free on iOS and Android.
-> https://discgolfgo.app
+> https://discgolfgo.com
 
 ### Instagram
 > Rained off? Play anyway. 🌧️🥏
