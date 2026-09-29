@@ -5,6 +5,29 @@ Disc Golf Go is a mobile-first **training app** (web + Capacitor Android/iOS) th
 
 > The app began life as an RPG-style app (rounds scoring, PvP battles, crews, crew wars). Those features were dropped in the pivot to a training focus and are **not** part of the current app.
 
+## Positioning — what we sell, and in what order
+
+This governs **all** marketing copy and imagery: the promo site, the app's own
+landing pages, store listings, `SOCIAL_POSTS.md`, and anything else outward
+facing. It is a standing rule, not a campaign.
+
+1. **The training library is always the lead.** 134 coached lessons, 199 videos
+   across 13 skill paths, taught by touring pros and the channels that coach
+   them. This is the thing no one else has, so it goes first and gets the most
+   room.
+2. **Throw Lab is second, and it is a game.** Frame it as fun — something to
+   play when you cannot get to a course. **Never claim it improves your game.**
+   It does not exercise the shots the lessons teach, so "practise", "train",
+   "drill", "sharpen your skills" and similar are wrong for it. "Play", "for
+   fun", "when you're rained off" are right.
+3. **Scorecards and course check-in are not selling points.** Every disc golf
+   app has a scorecard and a course list; leading with ours invites a
+   comparison we gain nothing from winning. They are features we mention once
+   people are already interested, not reasons to download.
+
+The one-line version: **learn from the pros, then mess about in Throw Lab.**
+Not "track your rounds".
+
 ## Stack
 TypeScript + Express · PostgreSQL (Neon) · Node.js · Resend (email) · Deployed on Render (auto-deploy on push to `main`) · Android/iOS via Capacitor · Custom domain: discgolfgo.app
 

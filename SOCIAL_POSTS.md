@@ -87,23 +87,21 @@ carry it too, so the ask survives being reshared without the caption.
 
 ---
 
-## 3 · 1,536 courses. 48 states.
+## 3 · Learn the shot, then go throw it
 **Image:** `web/img/social/ig-portrait-courses.png` (1080×1350, IG feed portrait — best feed real estate)
 
 ### Facebook
-> Your home course is in here. So are 1,535 others.
+> Your training shouldn't stop at the screen.
 >
-> Disc Golf Go carries **1,536 courses across 48 states**. Check in when you're standing on the tee, keep a card hole by hole, and see your best round at every course you've played.
->
-> Then take it further: a career record that counts your rounds, birdies, aces and days played, and public boards for all of it.
+> Disc Golf Go's **134 coached lessons** teach the shots — grip, drives, forehand, putting, the mental game — and then **1,536 real courses across 48 states** give you somewhere to throw them. Check in when you get there, and the app keeps your best round at every course you play.
 >
 > Download it free and find yours.
 > https://discgolfgo.com
 
 ### Instagram
-> 1,536 courses. 48 states. 🗺️
+> Learn the shot. Then go throw it. 🥏
 >
-> Check in on the tee. Keep a card. Watch your best round at every course you play.
+> 134 coached lessons from touring pros and the channels that coach them — and 1,536 real courses across 48 states to take them to.
 >
 > What's your home course? 👇
 >
@@ -113,7 +111,7 @@ carry it too, so the ask survives being reshared without the caption.
 
 ---
 
-## 4 · Practice in your pocket  (Throw Lab)
+## 4 · A game in your pocket  (Throw Lab)
 **Image:** `web/img/social/ig-story-throwlab.png` (1080×1920, IG/FB Story or Reel cover)
 
 ### Facebook
@@ -133,7 +131,7 @@ carry it too, so the ask survives being reshared without the caption.
 >
 > Download free on iOS & Android — link in bio.
 >
-> #discgolf #discgolfgame #throwlab #discgolflife #mobilegame #discgolfeveryday #practice #discgolfer
+> #discgolf #discgolfgame #throwlab #discgolflife #mobilegame #discgolfeveryday #discgolfcommunity #discgolfer
 
 ---
 
@@ -151,8 +149,8 @@ carry it too, so the ask survives being reshared without the caption.
   | --- | --- |
   | 1 · Coached by the pros | `web/img/shot-home.webp` — a real screenshot of the home screen, whose own hero reads *Coached by the pros* |
   | 2 · A new course every day | `web/img/cards/daily.webp` — the target card |
-  | 3 · 1,536 courses | `web/img/cards/course.webp` — the aerial fairway |
-  | 4 · Throw Lab | `web/img/cards/throw-lab.webp` + `web/img/shot-game.webp` |
+  | 3 · Learn the shot, then go throw it | `web/img/cards/course.webp` — the aerial fairway |
+  | 4 · A game in your pocket | `web/img/cards/throw-lab.webp` + `web/img/shot-game.webp` |
 
   `cards/training.webp` and `cards/ranks.webp` were deliberately **not** used:
   both silhouettes hold a disc.
