@@ -103,7 +103,7 @@ number put on it was wrong in both directions.
 
 ---
 
-## 4 · Practise in your pocket  (Throw Lab)
+## 4 · Practice in your pocket  (Throw Lab)
 **Image:** `web/img/social/ig-story-throwlab.png` (1080×1920, IG/FB Story or Reel cover)
 
 ### Facebook
