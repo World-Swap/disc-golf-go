@@ -7,9 +7,16 @@ everything under `web/` is served by `express.static`, so the posting notes
 below would otherwise be public at `/img/social/POSTS.md`.
 
 Four posts, each with a Facebook and an Instagram version of the same idea.
-Every number below was checked against the live library and database today, not
-taken from the old marketing copy — which is how "13 touring pros" survived for
-weeks while the real figure was 15, out of 64 creators.
+Every number below was recounted from `src/db/data/lessons.ts` and the course
+seed, not taken from the marketing copy. That is how the last two errors were
+caught: "13 touring pros" outlived the figure by weeks, and "64 creators" was
+inflated by two channels each credited under two spellings (the real count is
+**62**).
+
+No specific "touring pros" count is quoted anywhere below. The honest line is
+the one the site uses — *touring pros and the channels that coach them* —
+because which creators count as touring pros is a judgement, and the last
+number put on it was wrong in both directions.
 
 **Links**
 - App Store — https://apps.apple.com/us/app/disc-golf-go/id6768128686
@@ -24,7 +31,7 @@ weeks while the real figure was 15, out of 64 creators.
 ### Facebook
 > Most rounds don't make you better. Structured practice does.
 >
-> Disc Golf Go breaks the game into 13 skill paths — putting, driving, forehand, course strategy, the mental game — and fills them with **134 video lessons** from the people actually worth learning from: **64 creators**, 15 of them touring pros, including Gannon Buhr, Scott Stokely, Paul McBeth, Ricky Wysocki, Simon Lizotte, Kristin Tattar and Paige Pierce.
+> Disc Golf Go breaks the game into 13 skill paths — putting, driving, forehand, course strategy, the mental game — and fills them with **134 video lessons** from the people actually worth learning from: **62 creators** — touring pros and the channels that coach them, including Gannon Buhr, Scott Stokely, Paul McBeth, Ricky Wysocki, Simon Lizotte, Kristin Tattar and Paige Pierce.
 >
 > Every lesson is short, has one video that earns its place, and gives you XP when you finish it. So you always know what to work on next.
 >
@@ -34,7 +41,7 @@ weeks while the real figure was 15, out of 64 creators.
 ### Instagram
 > Stop throwing. Start training. 🥏
 >
-> 134 video lessons · 13 skill paths · 64 creators, 15 of them touring pros.
+> 134 video lessons · 13 skill paths · 62 creators — pros and top channels.
 >
 > Pick a weakness. Get a lesson. Earn the XP. Take it to the course.
 >
@@ -126,11 +133,30 @@ weeks while the real figure was 15, out of 64 creators.
   out with the next Render deploy. Open the Play tab and confirm the daily card
   is there before you post it — everything else in these posts has been live
   for a while.
-- **Images have no text baked in by a model.** The type was composited from the
-  exact strings above, so there are no AI spelling artefacts to proofread.
+- **Nothing in these images is generated.** Every piece of art is a file the app
+  already ships, so the baskets are the logo's basket by construction and no
+  illustrated figure is holding a disc:
+
+  | Post | Art |
+  | --- | --- |
+  | 1 · Coached by the pros | `web/img/shot-lesson.webp` — a real screenshot of a lesson |
+  | 2 · A new course every day | `web/img/cards/daily.webp` — the target card |
+  | 3 · 1,536 courses | `web/img/cards/course.webp` — the aerial fairway |
+  | 4 · Throw Lab | `web/img/cards/throw-lab.webp` + `web/img/shot-game.webp` |
+
+  `cards/training.webp` and `cards/ranks.webp` were deliberately **not** used:
+  both silhouettes hold a disc.
+
+  The one photograph of a disc in someone's hand is inside post 1's screenshot —
+  it is the real YouTube thumbnail of the lesson's video, not artwork. Say the
+  word and that post can use `shot-home.webp` instead.
+- **Type is composited, not generated**, from the exact strings above, so there
+  are no spelling artefacts to proofread.
 - **Sizes:** 1080×1080 (IG feed), 1200×630 (FB link preview), 1080×1350 (IG
   portrait), 1080×1920 (Story). The FB one is sized for a link card, so it will
   not crop badly in the feed.
 - **Numbers to keep true.** If the library grows, these change: lessons (134),
-  skill paths (13), creators (64), touring pros (15), courses (1,536), states
-  (48), hole templates (21). `npm run lessons:audit` checks the lesson half.
+  skill paths (13), creators (62), video references (204 / 199 distinct),
+  courses (1,536), states (48), hole templates (21). `npm run lessons:audit`
+  checks the lesson half; the course figures come from `src/db/data/courses.ts`
+  filtered through `isPlaceholderCourseName`.
