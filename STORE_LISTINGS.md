@@ -107,6 +107,61 @@ Free to play. Start training today.
 
 ---
 
+---
+
+## What's New — 1.4.1
+
+Everything below shipped after build 166 (25 Sep), which is the last build that
+reached TestFlight. The native apps load the live site, so "what's new in the
+version" is everything deployed since then, not just what changed in the
+native shell.
+
+Ordered by the Positioning rule: training first, the tournaments and Throw Lab
+as the fun, courses last.
+
+### App Store — What's New in This Version  (4000 char limit)
+
+```
+TRAINING
+• All 134 lessons were re-checked against YouTube. 19 primary videos were replaced with better ones — including clips from Scott Stokely, Gannon Buhr and Ricky Wysocki — and every title and credit now matches what the channel actually published.
+• New: fresh training videos on the Train tab, filtered down to the uploads that actually teach something.
+
+PLAYERS LOUNGE
+• A new home for the latest uploads from 27 disc golf channels — rounds, reviews, coaching and vlogs, refreshed daily.
+
+TOURNAMENTS
+• Daily tournament: one course for everyone, 18 holes, one entry. At midnight it's gone and a new course is drawn.
+• Weekly tournament: one course for the week, two entries. Your entry is spent the moment you tee off, so the board means something.
+• Both have their own leaderboard.
+
+THROW LAB
+• Every course now plays one fixed layout. Holes used to be generated fresh for each player, so the same course could be a different course every time you played it — and tournament players were being ranked against each other on layouts that were never the same.
+• A real end-of-round screen: your card hole by hole, what you scored, and what it earned.
+• A round you don't want to finish can now be left or discarded instead of sitting unfinished forever.
+• The playing field no longer resizes itself on every tap.
+
+YOUR RECORD
+• A career page — rounds, birdies, aces, best round, days played, courses played, tournament wins and podiums.
+• Public leaderboards for all of it, across Training, Throw Lab and both tournaments.
+
+COURSES
+• Courses have their own page now, with a state picker, name search and a nearby list.
+• The course list was cleaned of tee pads, baskets, signs and shops that had been imported as though they were courses. 1,536 real courses across 48 states.
+
+FIXES
+• On Android phones with three-button navigation, the page no longer scrolls underneath the system buttons.
+```
+
+### Google Play — What's new  (500 char limit)
+
+```
+NEW: Daily and weekly tournaments — one course for everyone, one shared board. NEW: Players Lounge, the newest videos from 27 disc golf channels. NEW: a career record and public leaderboards.
+
+Every course now plays its real fixed layout; holes used to be generated fresh for each player. All 134 lessons re-checked against YouTube, 19 videos replaced.
+
+Fixed: the game field resizing on every tap, and the page scrolling under Android's navigation buttons.
+```
+
 ## What was wrong in the old listings
 
 | Claim | Reality | Why it matters |
