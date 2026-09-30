@@ -150,5 +150,32 @@ test('search indexing', async (t) => {
     assert.deepEqual(absent, [], 'named on the promo page but not in the library');
   });
 
+  // discgolfgo.app has no inbox. Every address a human is told to write to had
+  // been on it -- including the account-deletion email, which tells someone
+  // "if you did not request this, contact us immediately" and gave an address
+  // that bounces. A guard, because a dead contact address fails silently: the
+  // sender gets nothing back and we never learn they tried.
+  await t.test('no contact address is on a domain that receives no mail', () => {
+    const roots = [path.join(__dirname, '..'), WEB];
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walk(full); continue; }
+        if (!/\.(ts|html|js)$/.test(entry.name)) continue;
+        const text = fs.readFileSync(full, 'utf8');
+        // Any mailbox on .app EXCEPT a sender: a domain can be verified for
+        // sending without receiving, so EMAIL_FROM may legitimately live there.
+        for (const m of text.matchAll(/([A-Za-z0-9._%+-]+)@discgolfgo\.app/g)) {
+          if (/^no-?reply$/i.test(m[1]!)) continue;
+          offenders.push(`${path.relative(path.join(__dirname, '..', '..'), full)}: ${m[0]}`);
+        }
+      }
+    };
+    roots.forEach(walk);
+    assert.deepEqual(offenders, [], 'these addresses bounce — use contact@discgolfgo.com');
+  });
+
   await new Promise<void>((r) => server.close(() => r()));
 });

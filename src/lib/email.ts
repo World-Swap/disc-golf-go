@@ -7,6 +7,14 @@
 //   RESEND_API_KEY  — from resend.com › API Keys
 //   EMAIL_FROM      — verified sender, e.g. "Disc Golf Go <no-reply@discgolfgo.app>"
 //                     (defaults to Resend's shared onboarding sender for testing)
+//
+// The SENDER and the CONTACT address are different things and only one of them
+// needs an inbox. discgolfgo.app receives no mail at all, so every address a
+// human is told to write to is contact@discgolfgo.com -- but a domain can be
+// verified for SENDING without receiving, so EMAIL_FROM may legitimately stay
+// on .app. Do not "fix" it to match the contact address without checking which
+// domain is actually verified in Resend: change it to an unverified one and
+// every outbound email in the app stops.
 
 export interface EmailMessage {
   to: string;

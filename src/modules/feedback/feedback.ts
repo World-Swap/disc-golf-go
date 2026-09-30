@@ -12,10 +12,10 @@
 // here, and the report is the thing worth keeping.
 //
 // Render env:
-//   FEEDBACK_EMAIL — where reports go. Defaults to contact@discgolfgo.com.
-//                    NOTE: every other address in this repo is @discgolfgo.app;
-//                    if .com does not receive mail, set this rather than
-//                    letting reports bounce silently.
+//   FEEDBACK_EMAIL — where reports go. Defaults to contact@discgolfgo.com, the
+//                    one address that has an inbox. discgolfgo.app receives no
+//                    mail, which is why every contact address in the repo was
+//                    moved off it.
 
 import { Router, type RequestHandler } from 'express';
 import { asyncHandler } from '../../http/async-handler';
