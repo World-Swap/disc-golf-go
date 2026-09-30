@@ -87,6 +87,7 @@
       <button data-tab="players" aria-selected="true">Players</button>
       <button data-tab="stats" aria-selected="false">Stats</button>
       <button data-tab="notifications" aria-selected="false">Notifications</button>
+      <button data-tab="email" aria-selected="false">Email</button>
     </div>
 
     <section class="card" id="tab-players">
@@ -99,13 +100,46 @@
       </form>
       <div class="scroll"><table>
         <thead><tr><th>ID</th><th>Player</th><th>Email</th><th class="num">XP</th>
-          <th>Created</th><th></th></tr></thead>
+          <th>Created</th><th style="width:1%"></th></tr></thead>
         <tbody id="userRows"><tr><td colspan="6" class="muted">Search to list players.</td></tr></tbody>
       </table></div>
       <p class="muted" id="userCount" style="margin-bottom:0"></p>
     </section>
 
     <section class="card hide" id="tab-stats"><h2>Dashboard</h2><div id="statGrid" class="stats"></div></section>
+
+    <section class="card hide" id="tab-email">
+      <h2>Email blast</h2>
+      <div class="note note--err" id="emailWarn">
+        This sends a real email through Resend. "Everyone" cannot be undone or recalled.
+      </div>
+      <label for="eSubject">Subject</label><input id="eSubject" required />
+      <div style="height:10px"></div>
+      <label for="eBody">Body</label><textarea id="eBody" style="min-height:150px"></textarea>
+      <div style="height:12px"></div>
+      <label for="eWho">Send to</label>
+      <select id="eWho">
+        <option value="individual">Specific people</option>
+        <option value="all">Everyone with an email address</option>
+      </select>
+      <div id="eIndividual">
+        <div style="height:10px"></div>
+        <form class="row" id="eSearchForm">
+          <div><label for="eq">Find people</label><input id="eq" placeholder="name or email" /></div>
+          <div class="narrow"><button type="submit" class="ghost">Search</button></div>
+        </form>
+        <div id="eResults" class="scroll"></div>
+        <p class="muted" id="ePicked">No one selected.</p>
+      </div>
+      <div style="height:12px"></div>
+      <button id="eSend">Send</button>
+      <div style="height:20px"></div>
+      <h2>Recent sends</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Subject</th><th>To</th><th class="num">Count</th><th>Status</th><th>When</th></tr></thead>
+        <tbody id="emailRows"></tbody>
+      </table></div>
+    </section>
 
     <section class="card hide" id="tab-notifications">
       <h2>In-app notifications</h2>
@@ -196,11 +230,12 @@
     var b = e.target.closest('button[data-tab]');
     if (!b) return;
     [].forEach.call($('tabs').children, function (x) { x.setAttribute('aria-selected', String(x === b)); });
-    ['players', 'stats', 'notifications'].forEach(function (t) {
+    ['players', 'stats', 'notifications', 'email'].forEach(function (t) {
       $('tab-' + t).classList.toggle('hide', t !== b.dataset.tab);
     });
     if (b.dataset.tab === 'stats') loadStats();
     if (b.dataset.tab === 'notifications') loadNotifs();
+    if (b.dataset.tab === 'email') loadEmails();
   });
 
   // ── players ──
@@ -234,7 +269,9 @@
         '<td class="muted">' + esc(u.email || '—') + '</td>' +
         '<td class="num">' + (u.xp || 0) + '</td>' +
         '<td class="muted">' + esc(when(u.created_at)) + '</td>' +
-        '<td><button class="danger" data-del="' + u.id +
+        '<td style="white-space:nowrap">' +
+          '<button class="ghost" data-manage="' + u.id + '">Manage</button> ' +
+          '<button class="danger" data-del="' + u.id +
           '" data-username="' + esc(u.username || '') +
           '" data-name="' + esc(u.display_name || '') + '">Delete</button></td>' +
       '</tr>';
@@ -246,6 +283,58 @@
   $('showGuests').addEventListener('click', function () { $('q').value = 'guest_'; loadUsers('guest_'); });
 
   $('userRows').addEventListener('click', async function (e) {
+    // Open or close the per-player panel.
+    var m = e.target.closest('button[data-manage]');
+    if (m) {
+      var id = m.dataset.manage;
+      var open = $('userRows').querySelector('tr[data-panel="' + id + '"]');
+      $('userRows').querySelectorAll('tr[data-panel]').forEach(function (r) { r.remove(); });
+      if (!open) {
+        var name = m.closest('tr').querySelector('b').textContent;
+        m.closest('tr').insertAdjacentHTML('afterend', managePanel(id, name));
+      }
+      return;
+    }
+
+    var g = e.target.closest('button[data-grant]');
+    if (g) {
+      var type = panelValue(g, 'gtype');
+      var amount = parseInt(panelValue(g, 'gamount'), 10);
+      if (!amount || amount <= 0) { note('Enter a positive amount.', 'err'); return; }
+      if (!window.confirm('Grant ' + amount + ' ' + type + ' to this player?')) return;
+      try {
+        var r1 = await api('/admin/users/' + g.dataset.grant + '/grant', { method: 'POST', body: { type: type, amount: amount } });
+        note(type + ': ' + r1.old_value + ' -> ' + r1.new_value + '.', 'ok');
+        loadUsers(lastSearch);
+      } catch (err) { note(err.message, 'err'); }
+      return;
+    }
+
+    var rs = e.target.closest('button[data-reset]');
+    if (rs) {
+      var field = panelValue(rs, 'rfield');
+      // Zeroing a stat is not reversible, so it is typed, not clicked.
+      if (window.prompt('Reset "' + field + '" to zero for this player.\n\nType RESET to confirm:') !== 'RESET') return;
+      try {
+        var r2 = await api('/admin/users/' + rs.dataset.reset + '/reset-stat', { method: 'POST', body: { field: field } });
+        note(field + ': ' + r2.old_value + ' -> 0.', 'ok');
+        loadUsers(lastSearch);
+      } catch (err) { note(err.message, 'err'); }
+      return;
+    }
+
+    var bd = e.target.closest('button[data-badge]');
+    if (bd) {
+      var cat = panelValue(bd, 'bcat');
+      var tier = panelValue(bd, 'btier');
+      if (!cat) { note('Badge category is required.', 'err'); return; }
+      try {
+        await api('/admin/users/' + bd.dataset.badge + '/badges', { method: 'POST', body: { category: cat, tier: tier } });
+        note('Added ' + cat + ' (' + tier + ').', 'ok');
+      } catch (err) { note(err.message, 'err'); }
+      return;
+    }
+
     var b = e.target.closest('button[data-del]');
     if (!b) return;
     var username = b.dataset.username;
@@ -263,6 +352,121 @@
       loadUsers(lastSearch);
     } catch (err) { b.disabled = false; note(err.message, 'err'); }
   });
+
+  // ── manage one player: grants, stat resets, badges ──
+  // These live inline under the row rather than on their own tab, because they
+  // all act on one player and picking the wrong one is the expensive mistake.
+  var RESETTABLE = ['xp', 'gold', 'total_rounds', 'login_streak', 'best_streak',
+    'total_distance_m', 'total_birdies', 'total_aces', 'total_checkins',
+    'total_courses_visited', 'challenges_completed', 'battle_wins', 'battle_losses'];
+  var TIERS = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
+
+  function managePanel(id, name) {
+    return '<tr data-panel="' + id + '"><td colspan="6" style="background:#faf8f4">' +
+      '<b>' + esc(name) + '</b> <span class="muted">(id ' + id + ')</span>' +
+      '<div style="height:10px"></div>' +
+      '<div class="row">' +
+        '<div><label>Grant</label><select data-f="gtype">' +
+          '<option value="xp">XP</option><option value="gold">Gold</option></select></div>' +
+        '<div><label>Amount</label><input data-f="gamount" type="number" min="1" placeholder="100" /></div>' +
+        '<div class="narrow"><button data-grant="' + id + '">Grant</button></div>' +
+      '</div><div style="height:10px"></div>' +
+      '<div class="row">' +
+        '<div><label>Reset a stat to zero</label><select data-f="rfield">' +
+          RESETTABLE.map(function (f) { return '<option value="' + f + '">' + f.replace(/_/g, ' ') + '</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="narrow"><button class="danger" data-reset="' + id + '">Reset</button></div>' +
+      '</div><div style="height:10px"></div>' +
+      '<div class="row">' +
+        '<div><label>Badge category</label><input data-f="bcat" placeholder="e.g. Challenger" /></div>' +
+        '<div><label>Tier</label><select data-f="btier">' +
+          TIERS.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="narrow"><button data-badge="' + id + '">Add badge</button></div>' +
+      '</div></td></tr>';
+  }
+
+  function panelValue(el, field) {
+    var row = el.closest('tr[data-panel]');
+    var n = row && row.querySelector('[data-f="' + field + '"]');
+    return n ? n.value.trim() : '';
+  }
+
+  // ── email blast ──
+  var picked = {};   // id -> display name
+
+  function renderPicked() {
+    var ids = Object.keys(picked);
+    $('ePicked').textContent = ids.length
+      ? 'Sending to ' + ids.length + ': ' + ids.map(function (i) { return picked[i]; }).join(', ')
+      : 'No one selected.';
+  }
+
+  $('eWho').addEventListener('change', function () {
+    $('eIndividual').classList.toggle('hide', this.value !== 'individual');
+  });
+
+  $('eSearchForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    try {
+      var d = await api('/admin/emails/users-search?q=' + encodeURIComponent($('eq').value.trim()));
+      var list = d.users || d || [];
+      $('eResults').innerHTML = list.length
+        ? '<table><tbody>' + list.map(function (u) {
+            return '<tr><td>' + esc(u.display_name || u.username) +
+              '<br><span class="muted">' + esc(u.email || '') + '</span></td>' +
+              '<td style="width:1%"><button class="ghost" data-pick="' + u.id +
+              '" data-label="' + esc(u.display_name || u.username) + '">Add</button></td></tr>';
+          }).join('') + '</tbody></table>'
+        : '<p class="muted">No one matched.</p>';
+    } catch (err) { note(err.message, 'err'); }
+  });
+
+  $('eResults').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-pick]');
+    if (!b) return;
+    picked[b.dataset.pick] = b.dataset.label;
+    renderPicked();
+  });
+
+  $('eSend').addEventListener('click', async function () {
+    var who = $('eWho').value;
+    var subject = $('eSubject').value.trim();
+    var body = $('eBody').value.trim();
+    if (!subject || !body) { note('Subject and body are both required.', 'err'); return; }
+
+    var ids = Object.keys(picked);
+    if (who === 'individual' && !ids.length) { note('Pick at least one recipient.', 'err'); return; }
+    // Sending to everyone cannot be recalled, so it takes a typed confirmation.
+    if (who === 'all' && window.prompt('This emails EVERY player with an address.\n\nType SEND to confirm:') !== 'SEND') {
+      note('Not sent.', 'err'); return;
+    }
+
+    $('eSend').disabled = true;
+    try {
+      var out = await api('/admin/emails/send', { method: 'POST', body: {
+        subject: subject, body: body, recipient_type: who,
+        recipient_ids: who === 'individual' ? ids.map(Number) : undefined } });
+      note('Sent ' + (out.sent != null ? out.sent : '') + (out.failed ? (', ' + out.failed + ' failed') : '') + '.', 'ok');
+      $('eSubject').value = ''; $('eBody').value = '';
+      picked = {}; renderPicked();
+      loadEmails();
+    } catch (err) { note(err.message, 'err'); }
+    $('eSend').disabled = false;
+  });
+
+  async function loadEmails() {
+    $('emailRows').innerHTML = '<tr><td colspan="5" class="muted">Loading…</td></tr>';
+    try {
+      var d = await api('/admin/emails');
+      var list = d.emails || d || [];
+      $('emailRows').innerHTML = list.length ? list.map(function (m) {
+        return '<tr><td>' + esc(m.subject) + '</td><td class="muted">' + esc(m.recipient_type) + '</td>' +
+          '<td class="num">' + (m.recipient_count || 0) + '</td><td>' + esc(m.status) + '</td>' +
+          '<td class="muted">' + esc(when(m.sent_at)) + '</td></tr>';
+      }).join('') : '<tr><td colspan="5" class="muted">Nothing sent yet.</td></tr>';
+    } catch (err) { $('emailRows').innerHTML = '<tr><td colspan="5" class="muted">' + esc(err.message) + '</td></tr>'; }
+  }
 
   // ── stats ──
   async function loadStats() {
