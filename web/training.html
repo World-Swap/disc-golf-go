@@ -85,8 +85,12 @@
         content.innerHTML =
           '<div><p class="section-label">Skill up</p><h1 class="h-display">TRAIN<span class="mark" style="width:44%"></span></h1></div>' +
           recWrap +
-          '<div id="fresh"></div>' +
-          '<div><p class="section-label">Categories</p><div class="stack">' + cats + '</div></div>';
+          // The categories come FIRST. They are the curated path of
+          // progression the app is selling; the fresh channel uploads are a
+          // nice-to-have beside them, so they sit underneath rather than
+          // pushing the library below the fold.
+          '<div><p class="section-label">Categories</p><div class="stack">' + cats + '</div></div>' +
+          '<div id="fresh"></div>';
         loadFresh();
       }
 
