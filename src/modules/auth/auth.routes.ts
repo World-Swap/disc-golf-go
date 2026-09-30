@@ -4,6 +4,7 @@
 
 import { Router, type RequestHandler } from 'express';
 import { asyncHandler } from '../../http/async-handler';
+import { rateLimit } from '../../middleware/rate-limit';
 import { createToken } from '../../middleware/auth';
 import { unauthorized } from '../../http/errors';
 import type { AuthService } from './auth.service';
@@ -25,8 +26,12 @@ export function createAuthRouter(service: AuthService, requireAuth: RequestHandl
     })
   );
 
+  // 168 accounts, most of them bot signups with harvested email addresses,
+  // arrived through an endpoint with no limit at all. Five an hour per IP is
+  // far more than a real person needs and far less than a crawler wants.
   router.post(
     '/auth/signup',
+    rateLimit({ name: 'signup', windowMs: 60 * 60 * 1000, max: 5 }),
     asyncHandler(async (req, res) => {
       const result = await service.signup(parseSignup(req.body));
       res.status(201).json(result);
@@ -35,6 +40,7 @@ export function createAuthRouter(service: AuthService, requireAuth: RequestHandl
 
   router.post(
     '/auth/login',
+    rateLimit({ name: 'login', windowMs: 15 * 60 * 1000, max: 20 }),
     asyncHandler(async (req, res) => {
       const result = await service.login(parseLogin(req.body));
       res.json(result);
@@ -43,6 +49,7 @@ export function createAuthRouter(service: AuthService, requireAuth: RequestHandl
 
   router.post(
     '/auth/guest',
+    rateLimit({ name: 'guest', windowMs: 60 * 60 * 1000, max: 10 }),
     asyncHandler(async (_req, res) => {
       const result = await service.createGuest();
       res.status(201).json(result);
@@ -51,6 +58,7 @@ export function createAuthRouter(service: AuthService, requireAuth: RequestHandl
 
   router.post(
     '/auth/forgot-password',
+    rateLimit({ name: 'forgot', windowMs: 60 * 60 * 1000, max: 5 }),
     asyncHandler(async (req, res) => {
       await service.requestPasswordReset(parseEmail(req.body));
       res.json({ success: true });

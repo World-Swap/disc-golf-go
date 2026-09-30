@@ -101,6 +101,12 @@
         <button type="button" data-filter="all" aria-selected="true">All players</button>
         <button type="button" data-filter="guest" aria-selected="false">Guests</button>
         <button type="button" data-filter="named" aria-selected="false">Registered</button>
+        <button type="button" data-filter="bots" aria-selected="false">Suspected bots</button>
+      </div>
+      <div id="bulkBar" class="note note--err hide">
+        <span id="bulkText"></span>
+        <div style="height:8px"></div>
+        <button class="danger" id="bulkDelete">Delete all shown</button>
       </div>
       <div class="scroll"><table>
         <thead><tr><th>ID</th><th>Player</th><th>Email</th><th class="num">XP</th>
@@ -245,6 +251,7 @@
   // ── players ──
   var lastSearch = '';
   var lastPayload = { users: [], total: 0 };
+  var shown = [];
   async function loadUsers(search) {
     lastSearch = search;
     $('userRows').innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
@@ -258,11 +265,38 @@
 
   var isGuest = function (u) { return !u.email && /^guest_/.test(u.username || ''); };
 
+  /**
+   * Spam signups share a very specific shape, and real accounts do not come
+   * close to it: a 14+ character username of nothing but lowercase letters
+   * (no digits, no separators) AND a 14+ character display name with no
+   * spaces, and no XP at all. Real users on this database look like
+   * "delpikles", "jhoffman017", "keithmcrocks", "chanman" — short, or
+   * containing digits. The bots look like "evycmohqbbycrykyhp" paired with
+   * "babVBbrVVxUlLKKQxsNgcrTm".
+   *
+   * All three conditions must hold. Any XP at all means a human played, so
+   * the account is never flagged whatever it is called.
+   */
+  var isBot = function (u) {
+    if (isGuest(u)) return false;
+    if ((u.xp || 0) > 0) return false;
+    var un = u.username || '', dn = u.display_name || '';
+    return /^[a-z]{14,}$/.test(un) && dn.length >= 14 && !/\s/.test(dn);
+  };
+
   function render(d) {
     var all = (d && d.users) || [];
     var users = filter === 'guest' ? all.filter(isGuest)
-      : filter === 'named' ? all.filter(function (u) { return !isGuest(u); })
+      : filter === 'bots' ? all.filter(isBot)
+      : filter === 'named' ? all.filter(function (u) { return !isGuest(u) && !isBot(u); })
       : all;
+    shown = users;
+    $('bulkBar').classList.toggle('hide', filter !== 'bots' || !users.length);
+    if (filter === 'bots' && users.length) {
+      $('bulkText').textContent = users.length + ' accounts match the spam pattern: a long all-lowercase ' +
+        'username, a long run-together display name, and no XP. Read the list before deleting — this is a ' +
+        'guess, not a fact, and deleting is permanent.';
+    }
     if (!users.length) {
       $('userRows').innerHTML = '<tr><td colspan="6" class="muted">No players match that.</td></tr>';
       $('userCount').textContent = '';
@@ -370,6 +404,34 @@
       note('Deleted ' + username + '.', 'ok');
       loadUsers(lastSearch);
     } catch (err) { b.disabled = false; note(err.message, 'err'); }
+  });
+
+  // Bulk delete is the one place a single click can destroy many accounts, so
+  // it asks for the count to be typed — a number you can only produce by
+  // having read the list — and deletes one at a time through the same endpoint
+  // and the same confirm_username check as a single delete.
+  $('bulkDelete').addEventListener('click', async function () {
+    var targets = shown.slice();
+    if (!targets.length) return;
+    var typed = window.prompt(
+      'Permanently delete ' + targets.length + ' accounts.\n\n' +
+      'This cannot be undone. Type the number ' + targets.length + ' to confirm:');
+    if (typed === null) return;
+    if (typed.trim() !== String(targets.length)) { note('That did not match — nothing deleted.', 'err'); return; }
+
+    $('bulkDelete').disabled = true;
+    var ok = 0, failed = 0;
+    for (var i = 0; i < targets.length; i++) {
+      $('bulkText').textContent = 'Deleting ' + (i + 1) + ' of ' + targets.length + '…';
+      try {
+        await api('/admin/users/' + targets[i].id, { method: 'DELETE',
+          body: { confirm_username: targets[i].username } });
+        ok++;
+      } catch (err) { failed++; }
+    }
+    $('bulkDelete').disabled = false;
+    note('Deleted ' + ok + (failed ? (', ' + failed + ' failed') : '') + '.', failed ? 'err' : 'ok');
+    loadUsers(lastSearch);
   });
 
   // ── manage one player: grants, stat resets, badges ──

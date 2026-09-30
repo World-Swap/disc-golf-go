@@ -37,6 +37,14 @@
           <span class="field__label">Password · 8+ characters</span>
           <input class="input" type="password" name="password" autocomplete="new-password" required minlength="8" placeholder="••••••••" />
         </label>
+        <!-- Honeypot. Not display:none, which some bots detect and skip: it is
+             moved off-screen, taken out of the tab order and hidden from
+             assistive tech, so a person can neither see nor reach it while a
+             crawler that fills every input still does. The server rejects any
+             signup where it arrives non-empty. -->
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden">
+          <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+        </div>
         <button class="btn btn--block" type="submit" id="submit">Create Account</button>
       </form>
 
@@ -72,6 +80,7 @@
             username: fd.get('username'),
             email: fd.get('email'),
             password: fd.get('password'),
+            website: fd.get('website'),   // honeypot; empty for a real person
           };
           var ref = new URLSearchParams(location.search).get('ref');
           if (ref) body.referral_code = ref;
