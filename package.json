@@ -30,7 +30,8 @@
     "android:release": "node scripts/bump-android-version.js && node scripts/ensure-android-permissions.js && cd android && ./gradlew clean bundleRelease",
     "ios:sync": "npx cap sync ios",
     "shots": "node scripts/store-screenshots.js",
-    "art:categories": "node scripts/generate-category-art.js"
+    "art:categories": "node scripts/generate-category-art.js",
+    "sitemap": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

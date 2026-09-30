@@ -7,7 +7,7 @@ import { securityHeaders } from '../middleware/security';
 import { errorHandler } from './error-handler';
 import { healthRouter } from '../modules/health/health.routes';
 import { createApiRouter } from '../modules';
-import { mountFrontend, comHostSplit } from './static';
+import { mountFrontend, comHostSplit, robotsTxt } from './static';
 import type { Database } from '../db/types';
 
 export interface AppOptions {
@@ -35,6 +35,10 @@ export function createApp(db: Database, opts: AppOptions = {}): Express {
   app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
 
   app.use(securityHeaders);
+
+  // Before comHostSplit and the static middleware: both would answer /robots.txt
+  // first, and it has to differ between the marketing domain and the app.
+  app.use(robotsTxt());
 
   // discgolfgo.com = promo site; app routes there redirect to discgolfgo.app.
   // Runs before /api and the frontend so it can intercept. No-op on .app.
