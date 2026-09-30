@@ -55,15 +55,22 @@
           var rec = await API.get('/training/recommendations');
           var top = (rec.recommendations || []).find(function (r) { return r.type === 'lesson'; });
           if (top && top.lesson) {
-            // The same feature art the Home card carries, so the lesson you
-            // are being sent to looks like the one thing on the page to press
-            // -- it was a plain white card among plain white category rows.
+            // Carry the art of the lesson's OWN category, so the recommendation
+            // is the colour of the thing it recommends and matches the cards
+            // right below it. It used to be the generic training.webp, which
+            // after the category art was redrawn left this card the only one
+            // on the page in the old style -- and it said nothing about the
+            // lesson. Falls back to the generic art if a slug is ever missing,
+            // since a broken --art would leave a bare dark card.
+            var recArt = top.lesson.category_slug
+              ? '/img/cards/cat/' + top.lesson.category_slug + '.webp'
+              : '/img/cards/training.webp';
             recWrap = '<a class="artcard" href="/training?cat=' + esc(top.lesson.category_slug) +
-                '&lesson=' + top.lesson.id + '" style="--art:url(\'/img/cards/training.webp\')">' +
+                '&lesson=' + top.lesson.id + '" style="--art:url(\'' + esc(recArt) + '\')">' +
               '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
               '<span class="artcard__body">' +
                 '<span class="artcard__eyebrow">' + esc(top.reason || 'Recommended') + '</span>' +
-                '<span class="artcard__title">' + esc(top.lesson.title) + ' →</span>' +
+                '<span class="artcard__title">' + esc(top.lesson.title) + '\u00a0→</span>' +
                 '<span class="artcard__sub">' + esc(top.lesson.category_name || '') + '</span>' +
               '</span>' +
               '<span class="artcard__meta">+' + (top.lesson.xp_reward || 0) + ' XP</span></a>';
@@ -82,7 +89,7 @@
               '<span class="artcard__body">' +
                 '<span class="artcard__eyebrow">' +
                   (c.completed_count || 0) + ' / ' + (c.lesson_count || 0) + ' lessons</span>' +
-                '<span class="artcard__title">' + esc(c.name) + ' \u2192</span>' +
+                '<span class="artcard__title">' + esc(c.name) + '\u00a0\u2192</span>' +
               '</span>' +
               '<span class="artcard__meta">' + pct + '%</span></a>' +
             '<div style="height:10px"></div>' + meter(pct) + '</div>';
