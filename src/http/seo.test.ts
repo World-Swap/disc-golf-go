@@ -5,6 +5,7 @@ import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { createApp } from './app';
 import { learnUrls } from './learn';
+import { LESSONS, CATEGORIES } from '../db/data/lessons';
 import type { Database } from '../db/types';
 
 const db = {
@@ -87,6 +88,66 @@ test('search indexing', async (t) => {
     const html = await (await get('/learn/putting', 'discgolfgo.com')).text();
     assert.match(html, /youtube\.com|youtu\.be/, 'lessons should link out to the video they teach from');
     assert.match(html, /class="vid"/, 'the video credit line should render');
+  });
+
+  // Every number the promo page states, counted from the library rather than
+  // trusted. This exists because "13 touring pros" survived a pass that claimed
+  // to have retired it from "every instance" -- that pass worked from a list of
+  // TEXT locations (meta, OpenGraph, JSON-LD, hero, FAQs) and never looked at
+  // the stats panel. A day later the page still said 13, alongside 77 and 200
+  // that had gone stale when 19 videos were replaced. A list of places to check
+  // is not a guard; counting is.
+  await t.test('the promo page states only numbers the library supports', async () => {
+    const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
+    const stat = (label: string): number | null => {
+      const m = new RegExp(
+        `statbig__n">(\\d[\\d,]*)</div><div class="statbig__l">${label}<`, 'i'
+      ).exec(html);
+      return m ? Number(m[1]!.replace(/,/g, '')) : null;
+    };
+
+    const videos = new Set<string>();
+    const creators = new Set<string>();
+    for (const l of LESSONS) {
+      if (l.youtube_url) videos.add(l.youtube_url);
+      if (l.youtube_channel?.trim()) creators.add(l.youtube_channel.trim());
+      for (const r of l.resources) {
+        if (r.resource_type === 'video' && r.url) videos.add(r.url);
+        if (r.author?.trim()) creators.add(r.author.trim());
+      }
+    }
+    // Creators are counted over VIDEO credits only -- an article's author is a
+    // writer, not someone you learn the shot from.
+    const videoCreators = new Set<string>();
+    for (const l of LESSONS) {
+      if (l.youtube_url && l.youtube_channel?.trim()) videoCreators.add(l.youtube_channel.trim());
+      for (const r of l.resources) {
+        if (r.resource_type === 'video' && r.url && r.author?.trim()) videoCreators.add(r.author.trim());
+      }
+    }
+
+    assert.equal(stat('Lessons'), LESSONS.length, 'lesson count');
+    assert.equal(stat('Videos'), videos.size, 'distinct video count');
+    assert.equal(stat('Creators'), videoCreators.size, 'video-credit count');
+    assert.equal(stat('Skill paths'), CATEGORIES.length, 'skill path count');
+
+    // A pro count is a JUDGEMENT, not a fact, and it has been wrong in both
+    // directions. The page names pros and does not count them; keep it so.
+    // Match the STAT MARKUP, not the phrase anywhere: the comment above this
+    // panel in promo.html explains why the count was removed and necessarily
+    // quotes it, which a loose regex flags as the very thing it is warning
+    // about. (It did, on the first run.)
+    assert.doesNotMatch(html, /statbig__l">\s*Touring pros/i,
+      'do not put a pro COUNT back in the stats band');
+    assert.doesNotMatch(html, /statbig__l">\s*Pro-coached/i,
+      'same: that number needs re-judging on every content change');
+
+    // Every name the page claims must actually appear in the library.
+    const hay = JSON.stringify(LESSONS).toLowerCase();
+    const chips = [...html.matchAll(/<span class="pro-chip">(?:<b>)?([^<]+)/g)].map((m) => m[1]!.trim());
+    assert.ok(chips.length >= 10, 'expected the pro list to still be there');
+    const absent = chips.filter((n) => !hay.includes(n.toLowerCase()));
+    assert.deepEqual(absent, [], 'named on the promo page but not in the library');
   });
 
   await new Promise<void>((r) => server.close(() => r()));

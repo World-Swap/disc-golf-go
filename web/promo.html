@@ -68,6 +68,7 @@
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
   <style>
     /* promo-only touches layered on the shared design system */
+    .pros-intro{font-family:var(--font-display);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px;opacity:.6;margin:30px 0 12px;}
     .pros-names{display:flex;flex-wrap:wrap;gap:10px 14px;justify-content:center;max-width:820px;margin:26px auto 0;}
     .pro-chip{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:var(--radius-pill,9999px);
       padding:9px 16px;font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--color-ink,#2b2622);
@@ -232,14 +233,23 @@
       <div class="sect__head">
         <p class="sect__eyebrow">Learn from the best</p>
         <h2 class="sect__title">The world's top pros are now your coaches.</h2>
-        <p class="sect__lede">We've woven instruction from 13 of the game's best players into the lessons — so you're learning the right thing from the people who do it best.</p>
+        <p class="sect__lede">We've woven instruction from touring pros and the channels that coach them into the lessons — so you're learning the right thing from the people who do it best.</p>
       </div>
+      <!-- Counts only, no judgements. "13 Touring pros" lived here for a day
+           after it was retired everywhere else, because that pass worked from a
+           list of TEXT locations (meta, OG, JSON-LD, hero, FAQs) and never
+           looked at this panel. It was also wrong twice over: the library
+           credits Eric Oakley and Eric McCabe too, and "who counts as a touring
+           pro" is a judgement that has now been wrong in both directions.
+           Every number below is counted from src/db/data/lessons.ts and pinned
+           by a test, so it cannot quietly rot again. -->
       <div class="statsband">
-        <div class="statbig"><div class="statbig__n">13</div><div class="statbig__l">Touring pros</div></div>
-        <div class="statbig"><div class="statbig__n">77</div><div class="statbig__l">Pro-coached videos</div></div>
         <div class="statbig"><div class="statbig__n">134</div><div class="statbig__l">Lessons</div></div>
-        <div class="statbig"><div class="statbig__n">200</div><div class="statbig__l">Videos in all</div></div>
+        <div class="statbig"><div class="statbig__n">199</div><div class="statbig__l">Videos</div></div>
+        <div class="statbig"><div class="statbig__n">62</div><div class="statbig__l">Creators</div></div>
+        <div class="statbig"><div class="statbig__n">13</div><div class="statbig__l">Skill paths</div></div>
       </div>
+      <p class="pros-intro">Including</p>
       <div class="pros-names">
         <span class="pro-chip"><b>Gannon Buhr</b></span>
         <span class="pro-chip">Ricky Wysocki</span>
@@ -254,6 +264,8 @@
         <span class="pro-chip">Paul Ulibarri</span>
         <span class="pro-chip">Isaac Robinson</span>
         <span class="pro-chip">Chris Dickerson</span>
+        <span class="pro-chip">Eric Oakley</span>
+        <span class="pro-chip">Eric McCabe</span>
       </div>
     </div>
   </section>
