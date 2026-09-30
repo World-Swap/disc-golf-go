@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin · Disc Golf Go</title>
+  <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
+  <style>
+    /* Standalone on purpose: this page does not use the player shell (no tab
+       bar, no player token) and must keep working if app-ui.css changes. */
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f2efe8; color: #202020;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 15px; }
+    a { color: #2e7d57; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 80px; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    header img { width: 34px; height: 34px; }
+    header h1 { font-size: 19px; margin: 0; letter-spacing: .04em; }
+    header .spacer { flex: 1; }
+    .card { background: #fff; border: 1px solid #e4dfd6; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    .card h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: #6b6560; }
+    label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .09em;
+      color: #6b6560; margin: 0 0 5px; }
+    input, textarea, select { width: 100%; padding: 10px 12px; font: inherit; color: inherit;
+      background: #fff; border: 1px solid #d9d3c8; border-radius: 8px; }
+    textarea { min-height: 96px; resize: vertical; }
+    button { font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+      border: 1px solid transparent; background: #fc6414; color: #fff; }
+    button.ghost { background: #fff; color: #202020; border-color: #d9d3c8; }
+    button.danger { background: #b3261e; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .row > * { flex: 1 1 180px; }
+    .row > .narrow { flex: 0 0 auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #efeae1; vertical-align: middle; }
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: #6b6560; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .muted { color: #6b6560; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+      background: #f2efe8; color: #6b6560; }
+    .tag--guest { background: #fdeadf; color: #b3430a; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
+    .stat { background: #faf8f4; border: 1px solid #efeae1; border-radius: 10px; padding: 10px 12px; }
+    .stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+    .stat span { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #6b6560; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .tabs button { background: #fff; color: #6b6560; border-color: #e4dfd6; padding: 8px 14px; }
+    .tabs button[aria-selected="true"] { background: #202020; color: #fff; border-color: #202020; }
+    .note { padding: 10px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+    .note--err { background: #fdecea; color: #8c1d18; }
+    .note--ok { background: #e7f4ed; color: #1c5f40; }
+    .hide { display: none !important; }
+    .scroll { overflow-x: auto; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="/img/logo-mark.png" alt="" />
+    <h1>ADMIN</h1>
+    <span class="spacer"></span>
+    <button class="ghost narrow hide" id="signout">Sign out</button>
+  </header>
+
+  <div id="msg"></div>
+
+  <!-- Login -->
+  <section class="card" id="loginCard">
+    <h2>Sign in</h2>
+    <p class="muted" style="margin-top:0">
+      Uses the <code>ADMIN_PASSWORD</code> environment variable on the server.
+      The token it returns lasts 8 hours and is kept in this tab only.
+    </p>
+    <form id="loginForm" class="row">
+      <div><label for="pw">Admin password</label>
+        <input id="pw" type="password" autocomplete="current-password" required /></div>
+      <div class="narrow"><button type="submit">Sign in</button></div>
+    </form>
+  </section>
+
+  <!-- Console -->
+  <div id="console" class="hide">
+    <div class="tabs" id="tabs">
+      <button data-tab="players" aria-selected="true">Players</button>
+      <button data-tab="stats" aria-selected="false">Stats</button>
+      <button data-tab="notifications" aria-selected="false">Notifications</button>
+    </div>
+
+    <section class="card" id="tab-players">
+      <h2>Players</h2>
+      <form class="row" id="searchForm" style="margin-bottom:14px">
+        <div><label for="q">Search name, username or email</label>
+          <input id="q" placeholder="e.g. guest" /></div>
+        <div class="narrow"><button type="submit">Search</button></div>
+        <div class="narrow"><button type="button" class="ghost" id="showGuests">Guests only</button></div>
+      </form>
+      <div class="scroll"><table>
+        <thead><tr><th>ID</th><th>Player</th><th>Email</th><th class="num">XP</th>
+          <th>Created</th><th></th></tr></thead>
+        <tbody id="userRows"><tr><td colspan="6" class="muted">Search to list players.</td></tr></tbody>
+      </table></div>
+      <p class="muted" id="userCount" style="margin-bottom:0"></p>
+    </section>
+
+    <section class="card hide" id="tab-stats"><h2>Dashboard</h2><div id="statGrid" class="stats"></div></section>
+
+    <section class="card hide" id="tab-notifications">
+      <h2>In-app notifications</h2>
+      <form id="notifForm" style="margin-bottom:16px">
+        <label for="nTitle">Title</label><input id="nTitle" required />
+        <div style="height:10px"></div>
+        <label for="nBody">Message</label><textarea id="nBody" required></textarea>
+        <div style="height:10px"></div>
+        <button type="submit">Publish notification</button>
+      </form>
+      <div class="scroll"><table>
+        <thead><tr><th>Title</th><th>Message</th><th>Active</th><th></th></tr></thead>
+        <tbody id="notifRows"></tbody>
+      </table></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // The admin token is sessionStorage, not localStorage: it dies with the tab,
+  // so a shared or forgotten browser does not keep admin rights around.
+  var KEY = 'dgg_admin_token';
+  var token = sessionStorage.getItem(KEY) || '';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var when = function (iso) { return iso ? new Date(iso).toISOString().slice(0, 16).replace('T', ' ') : '—'; };
+
+  function note(text, kind) {
+    $('msg').innerHTML = text
+      ? '<div class="note note--' + (kind || 'ok') + '">' + esc(text) + '</div>' : '';
+    if (text) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['x-admin-token'] = token;
+    var res = await fetch('/api' + path, {
+      method: opts.method || 'GET', headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    var data = null;
+    try { data = await res.json(); } catch (e) { /* empty body */ }
+    if (res.status === 401 && token) { signOut('Session expired — sign in again.'); throw new Error('unauthorized'); }
+    if (!res.ok) throw new Error((data && data.error) || ('Request failed (' + res.status + ')'));
+    return data;
+  }
+
+  function signOut(why) {
+    token = '';
+    sessionStorage.removeItem(KEY);
+    $('console').classList.add('hide');
+    $('loginCard').classList.remove('hide');
+    $('signout').classList.add('hide');
+    if (why) note(why, 'err');
+  }
+
+  function signedIn() {
+    $('loginCard').classList.add('hide');
+    $('console').classList.remove('hide');
+    $('signout').classList.remove('hide');
+  }
+
+  // ── login ──
+  $('loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    note('');
+    try {
+      var out = await api('/admin/login', { method: 'POST', body: { password: $('pw').value } });
+      token = out.token;
+      sessionStorage.setItem(KEY, token);
+      $('pw').value = '';
+      signedIn();
+      loadUsers('');
+    } catch (err) { note(err.message, 'err'); }
+  });
+  $('signout').addEventListener('click', function () { signOut(''); });
+
+  // ── tabs ──
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tab]');
+    if (!b) return;
+    [].forEach.call($('tabs').children, function (x) { x.setAttribute('aria-selected', String(x === b)); });
+    ['players', 'stats', 'notifications'].forEach(function (t) {
+      $('tab-' + t).classList.toggle('hide', t !== b.dataset.tab);
+    });
+    if (b.dataset.tab === 'stats') loadStats();
+    if (b.dataset.tab === 'notifications') loadNotifs();
+  });
+
+  // ── players ──
+  var lastSearch = '';
+  async function loadUsers(search) {
+    lastSearch = search;
+    $('userRows').innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
+    try {
+      var d = await api('/admin/users?limit=100&search=' + encodeURIComponent(search));
+      render(d);
+    } catch (err) {
+      $('userRows').innerHTML = '<tr><td colspan="6" class="muted">' + esc(err.message) + '</td></tr>';
+    }
+  }
+
+  function render(d) {
+    var users = d.users || [];
+    if (!users.length) {
+      $('userRows').innerHTML = '<tr><td colspan="6" class="muted">No players match that.</td></tr>';
+      $('userCount').textContent = '';
+      return;
+    }
+    $('userRows').innerHTML = users.map(function (u) {
+      // A guest has no email and the username the guest signup generates.
+      var guest = !u.email && /^guest_/.test(u.username || '');
+      return '<tr>' +
+        '<td class="muted">' + u.id + '</td>' +
+        '<td><b>' + esc(u.display_name || '—') + '</b><br>' +
+          '<span class="muted">' + esc(u.username || '') + '</span> ' +
+          (guest ? '<span class="tag tag--guest">guest</span>' : '') + '</td>' +
+        '<td class="muted">' + esc(u.email || '—') + '</td>' +
+        '<td class="num">' + (u.xp || 0) + '</td>' +
+        '<td class="muted">' + esc(when(u.created_at)) + '</td>' +
+        '<td><button class="danger" data-del="' + u.id +
+          '" data-username="' + esc(u.username || '') +
+          '" data-name="' + esc(u.display_name || '') + '">Delete</button></td>' +
+      '</tr>';
+    }).join('');
+    $('userCount').textContent = users.length + ' shown of ' + d.total + ' total';
+  }
+
+  $('searchForm').addEventListener('submit', function (e) { e.preventDefault(); loadUsers($('q').value.trim()); });
+  $('showGuests').addEventListener('click', function () { $('q').value = 'guest_'; loadUsers('guest_'); });
+
+  $('userRows').addEventListener('click', async function (e) {
+    var b = e.target.closest('button[data-del]');
+    if (!b) return;
+    var username = b.dataset.username;
+    // The API requires confirm_username to match, so ask for it rather than
+    // sending a blind delete. Deleting a player is not reversible.
+    var typed = window.prompt(
+      'Permanently delete "' + (b.dataset.name || username) + '" and all their data.\n\n' +
+      'Type the username to confirm:\n' + username);
+    if (typed === null) return;
+    if (typed.trim().toLowerCase() !== username.toLowerCase()) { note('That did not match the username — nothing deleted.', 'err'); return; }
+    b.disabled = true;
+    try {
+      await api('/admin/users/' + b.dataset.del, { method: 'DELETE', body: { confirm_username: username } });
+      note('Deleted ' + username + '.', 'ok');
+      loadUsers(lastSearch);
+    } catch (err) { b.disabled = false; note(err.message, 'err'); }
+  });
+
+  // ── stats ──
+  async function loadStats() {
+    $('statGrid').innerHTML = '<p class="muted">Loading…</p>';
+    try {
+      var s = await api('/admin/stats');
+      var cells = [];
+      Object.keys(s).forEach(function (group) {
+        Object.keys(s[group]).forEach(function (k) {
+          cells.push('<div class="stat"><b>' + Number(s[group][k]).toLocaleString() + '</b><span>' +
+            esc(k.replace(/_/g, ' ')) + '</span></div>');
+        });
+      });
+      $('statGrid').innerHTML = cells.join('');
+    } catch (err) { $('statGrid').innerHTML = '<p class="muted">' + esc(err.message) + '</p>'; }
+  }
+
+  // ── notifications ──
+  async function loadNotifs() {
+    $('notifRows').innerHTML = '<tr><td colspan="4" class="muted">Loading…</td></tr>';
+    try {
+      var d = await api('/admin/notifications');
+      var list = d.notifications || d || [];
+      $('notifRows').innerHTML = list.length ? list.map(function (n) {
+        return '<tr><td><b>' + esc(n.title) + '</b></td><td class="muted">' + esc(n.message) + '</td>' +
+          '<td>' + (n.is_active ? '<span class="tag">active</span>' : '<span class="muted">off</span>') + '</td>' +
+          '<td><button class="ghost" data-ndel="' + n.id + '">Delete</button></td></tr>';
+      }).join('') : '<tr><td colspan="4" class="muted">None yet.</td></tr>';
+    } catch (err) { $('notifRows').innerHTML = '<tr><td colspan="4" class="muted">' + esc(err.message) + '</td></tr>'; }
+  }
+
+  $('notifForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    try {
+      await api('/admin/notifications', { method: 'POST',
+        body: { title: $('nTitle').value.trim(), message: $('nBody').value.trim(), is_active: true } });
+      $('nTitle').value = ''; $('nBody').value = '';
+      note('Notification published.', 'ok');
+      loadNotifs();
+    } catch (err) { note(err.message, 'err'); }
+  });
+
+  $('notifRows').addEventListener('click', async function (e) {
+    var b = e.target.closest('button[data-ndel]');
+    if (!b) return;
+    if (!window.confirm('Delete this notification?')) return;
+    try { await api('/admin/notifications/' + b.dataset.ndel, { method: 'DELETE' }); loadNotifs(); }
+    catch (err) { note(err.message, 'err'); }
+  });
+
+  // A token in sessionStorage means this tab already signed in. Prove it is
+  // still valid with a real request rather than trusting its presence.
+  if (token) {
+    signedIn();
+    api('/admin/stats').then(function () { loadUsers(''); }).catch(function () { /* signOut already ran */ });
+  }
+})();
+</script>
+</body>
+</html>
