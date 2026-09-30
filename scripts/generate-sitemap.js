@@ -25,11 +25,29 @@ const REPO = path.resolve(__dirname, '..');
 const ORIGIN = 'https://discgolfgo.com';
 const OUT = path.join(REPO, 'web', 'sitemap.xml');
 
+/**
+ * The training library pages are rendered from src/db/data/lessons.ts rather
+ * than from files under web/, so the route list is asked of the module that
+ * owns it. Adding a category to the library therefore adds it to the sitemap,
+ * with no second place to remember.
+ */
+function learnPages() {
+  require('ts-node').register({ transpileOnly: true, compilerOptions: { module: 'commonjs' } });
+  const { learnUrls } = require(path.join(REPO, 'src/http/learn.ts'));
+  return learnUrls().map((url) => ({
+    url,
+    file: 'src/db/data/lessons.ts',
+    priority: url === '/learn' ? '0.9' : '0.7',
+    changefreq: 'monthly',
+  }));
+}
+
 /** Each entry: the public path, the file whose git date dates it, a priority. */
 const PAGES = [
   { url: '/', file: 'web/promo.html', priority: '1.0', changefreq: 'weekly' },
   { url: '/guides/how-to-putt-disc-golf', file: 'web/guide-putting.html', priority: '0.8', changefreq: 'monthly' },
   { url: '/guides/best-beginner-disc-golf-discs', file: 'web/guide-beginner-discs.html', priority: '0.8', changefreq: 'monthly' },
+  ...learnPages(),
 ];
 
 /** The date of the last commit touching a file, YYYY-MM-DD. */

@@ -8,7 +8,7 @@ const WEB_DIR = path.join(__dirname, '..', '..', 'web');
 
 // The marketing domain. discgolfgo.app is the app; discgolfgo.com is the promo
 // site. Both currently resolve to this same service, so we split by host.
-const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
+export const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
 
 // On the .com marketing domain: serve the promo page at '/', let static assets
 // (files with an extension) fall through so the promo's CSS/images load, and

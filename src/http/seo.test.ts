@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { createApp } from './app';
+import { learnUrls } from './learn';
 import type { Database } from '../db/types';
 
 const db = {
@@ -62,6 +63,30 @@ test('search indexing', async (t) => {
       const res = await get(new URL(loc).pathname, 'discgolfgo.com');
       assert.equal(res.status, 200, `${loc} is in the sitemap but returned ${res.status}`);
     }
+  });
+
+  // These exist because 134 one-page-per-lesson URLs would have been thin
+  // content -- a lesson is a median of 28 words. The bar a category page has to
+  // clear is the guide pages already on the site, which run about 570 words.
+  await t.test('every training-library page is substantial, and only on .com', async () => {
+    const thin: string[] = [];
+    for (const url of learnUrls()) {
+      const res = await get(url, 'discgolfgo.com');
+      assert.equal(res.status, 200, `${url} returned ${res.status} on the marketing host`);
+      const words = (await res.text()).replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length;
+      if (words < 450) thin.push(`${url} is only ${words} words`);
+    }
+    assert.deepEqual(thin, [], 'a page this short is not worth indexing');
+
+    // The app domain is noindex, so it must not serve a second copy of these.
+    const onApp = await get('/learn', 'discgolfgo.app');
+    assert.notEqual(onApp.status, 200, 'the app domain should not serve library pages');
+  });
+
+  await t.test('a library page credits the channel each video comes from', async () => {
+    const html = await (await get('/learn/putting', 'discgolfgo.com')).text();
+    assert.match(html, /youtube\.com|youtu\.be/, 'lessons should link out to the video they teach from');
+    assert.match(html, /class="vid"/, 'the video credit line should render');
   });
 
   await new Promise<void>((r) => server.close(() => r()));
