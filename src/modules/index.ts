@@ -158,7 +158,9 @@ export function createApiRouter(db: Database): Router {
   api.use(createShopRouter(createShopService(db), auth));
   api.use(createOnboardingRouter(createOnboardingService(db), trainingResolve));
   api.use(createReviewsRouter(createReviewsService(db), auth));
-  api.use(createFeedbackRouter(db));
+  // optionalAuth so a signed-in report carries the player id, which is most of
+  // what makes it reproducible, without requiring an account to report a bug.
+  api.use(createFeedbackRouter(db, optAuth));
   api.use(createDeleteAccountRouter(createDeleteAccountService({ db }), auth));
   api.use(createReferralsRouter(createReferralsService(db), auth));
   api.use(createNotificationsRouter(db, auth));

@@ -780,6 +780,12 @@ CREATE TABLE IF NOT EXISTS channel_videos (
 );
 ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS is_short BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS feed_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- A bug report without the app version, the page it happened on and the device
+-- is a report you cannot act on. Captured by the client and stored beside the
+-- message, so it survives even when the notification email does not.
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS player_id INTEGER;
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS context JSONB;
 ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS teaches BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE INDEX IF NOT EXISTS idx_channel_videos_teaches ON channel_videos(teaches, published_at DESC);
 -- No backfill here on purpose. This file runs on every boot, so an UPDATE
