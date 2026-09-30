@@ -18,7 +18,21 @@ export function createApp(db: Database, opts: AppOptions = {}): Express {
   const app = express();
 
   // Behind Render's proxy: trust X-Forwarded-* so req.hostname/req.ip are correct.
-  app.set('trust proxy', true);
+  //
+  // A COUNT, not `true`. With `true` Express trusts every hop, which makes
+  // req.ip the LEFTMOST X-Forwarded-For entry -- and that entry is whatever the
+  // client sent, because a proxy appends to the header rather than replacing
+  // it. Every per-IP rate limit was therefore bypassable by adding one header:
+  // measured on the signup limit (5/hour), a fixed X-Forwarded-For got 429 on
+  // the 6th request while a rotating one never got a 429 at all.
+  //
+  // With a count of n, Express skips the n hops nearest the app and takes the
+  // address the outermost trusted proxy actually observed. One hop is right for
+  // Render today; TRUST_PROXY_HOPS exists so that is correctable from the
+  // dashboard without a deploy if it ever gains another. Setting it too HIGH is
+  // the safer error (real users share a bucket and get limited together);
+  // setting it too low hands the key back to the client.
+  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
 
   app.use(securityHeaders);
 
