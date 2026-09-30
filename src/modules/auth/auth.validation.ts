@@ -35,6 +35,15 @@ export function parseSignup(body: unknown): SignupInput {
   const email = str(b.email);
   const password = str(b.password);
 
+  // Honeypot. The register form carries a hidden "website" field that is kept
+  // out of the tab order and hidden from screen readers, so a person never
+  // fills it and a crawler that fills every input does. The error is
+  // deliberately the same one a missing field gives, so a bot learns nothing
+  // about why it failed.
+  if (str(b.website)) {
+    throw badRequest('display_name, username, email, and password are required');
+  }
+
   if (!display_name || !username || !email || !password) {
     throw badRequest('display_name, username, email, and password are required');
   }
