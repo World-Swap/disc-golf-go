@@ -72,13 +72,20 @@
 
         var cats = (data.categories || []).map(function (c) {
           var pct = c.lesson_count ? Math.round((c.completed_count / c.lesson_count) * 100) : 0;
-          return '<a class="card card--tap" href="/training?cat=' + esc(c.slug) + '" style="display:block">' +
-            '<div style="display:flex;align-items:center;gap:14px">' +
-              '<span class="row__glyph">' + esc(c.icon || '▤') + '</span>' +
-              '<div class="row__body"><div class="row__title">' + esc(c.name) + '</div>' +
-              '<div class="row__sub">' + (c.completed_count || 0) + ' / ' + (c.lesson_count || 0) + ' lessons</div></div>' +
-              '<span class="row__meta">' + pct + '%</span></div>' +
-            '<div style="height:12px"></div>' + meter(pct) + '</a>';
+          // Each category carries its own feature art (scripts/generate-category-art.js).
+          // The meter sits outside the artcard because .artcard is an <a> whose
+          // body is spans, and the meter is a div.
+          return '<div>' +
+            '<a class="artcard" href="/training?cat=' + esc(c.slug) + '"' +
+              ' style="--art:url(\'/img/cards/cat/' + esc(c.slug) + '.webp\')">' +
+              '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+              '<span class="artcard__body">' +
+                '<span class="artcard__eyebrow">' +
+                  (c.completed_count || 0) + ' / ' + (c.lesson_count || 0) + ' lessons</span>' +
+                '<span class="artcard__title">' + esc(c.name) + ' \u2192</span>' +
+              '</span>' +
+              '<span class="artcard__meta">' + pct + '%</span></a>' +
+            '<div style="height:10px"></div>' + meter(pct) + '</div>';
         }).join('');
 
         content.className = 'screen stack';
