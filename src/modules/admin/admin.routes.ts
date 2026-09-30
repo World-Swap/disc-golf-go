@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../../http/async-handler';
 import { badRequest } from '../../http/errors';
 import { requireAdmin } from '../../middleware/admin-auth';
+import { rateLimit, globalFailureLimit } from '../../middleware/rate-limit';
 import type { AdminService } from './admin.service';
 
 function intParam(value: string, label = 'id'): number {
@@ -17,9 +18,28 @@ function intParam(value: string, label = 'id'): number {
 export function createAdminRouter(service: AdminService): Router {
   const router = Router();
 
-  router.post('/admin/login', asyncHandler(async (req, res) => {
-    res.json(service.login((req.body as { password?: unknown })?.password));
-  }));
+  // The only unauthenticated admin route, and the one guarding a password a
+  // person chose rather than a random secret. Two bounds, because they fail in
+  // different ways: the per-IP one is the everyday control and is real now that
+  // the client cannot forge its address; the global one is a backstop for an
+  // attack spread over many sources.
+  //
+  // The global numbers are loose (50 failures, and only a 2 minute refusal) on
+  // purpose. A tight cap here would let anyone lock the owner out of their own
+  // dashboard by sending a handful of bad passwords, since once it trips it
+  // refuses the right password too. Two minutes is a bounded, self-healing
+  // annoyance; 50 failures a window is still ~3 orders of magnitude below an
+  // unthrottled guessing rate.
+  router.post(
+    '/admin/login',
+    rateLimit({ name: 'admin-login', windowMs: 15 * 60 * 1000, max: 10 }),
+    globalFailureLimit({
+      name: 'admin-login-global', windowMs: 10 * 60 * 1000, max: 50, cooldownMs: 2 * 60 * 1000,
+    }),
+    asyncHandler(async (req, res) => {
+      res.json(service.login((req.body as { password?: unknown })?.password));
+    })
+  );
 
   router.get('/admin/stats', requireAdmin, asyncHandler(async (_req, res) => {
     res.json(await service.stats());
