@@ -10,32 +10,32 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w11" />
   <style>
     /* The line that tells you what this page offers before you tap anything. */
     .play-intro { margin: -4px 0 2px; font-size: 13px; line-height: 1.5; color: #6d655c; }
     .play-intro b { color: #202020; }
     /* Weekly tournament. Dark like the artcards so it reads as an event
        rather than another row, with the entries spent shown as pips. */
-    .trn { background: #16130f; color: #f7f4ef; border-radius: 18px; padding: 18px; }
+    .trn { background: #16130f; color: #f7f4ef; border-radius: 16px; padding: 14px 15px; }
     .trn__top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
     .trn__eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #fc6414; font-weight: 700; }
     .trn__ends { font-size: 11px; color: rgba(247,244,239,.6); }
-    .trn__course { font-family: var(--font-display, system-ui); font-weight: 800; font-size: 22px;
-                   line-height: 1.2; margin: 6px 0 2px; }
+    .trn__course { font-family: var(--font-display, system-ui); font-weight: 800; font-size: 17px;
+      line-height: 1.2; margin: 5px 0 3px; letter-spacing: -0.01em; }
     .trn__sub { font-size: 12.5px; color: rgba(247,244,239,.72); line-height: 1.5; }
-    .trn__stats { display: flex; gap: 18px; margin: 14px 0 4px; }
-    .trn__stat b { display: flex; align-items: center; height: 25px;
+    .trn__stats { display: flex; gap: 16px; margin: 11px 0 2px; }
+    .trn__stat b { display: flex; align-items: center; height: 21px;
                    font-family: var(--font-display, system-ui); font-size: 19px; }
     .trn__stat span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(247,244,239,.55); }
     /* The pips sit where a stat's number goes, so they take that line's height
        and the label below stays on the same baseline as the other stats. */
-    .trn__pips { display: flex; align-items: center; gap: 5px; height: 25px; }
+    .trn__pips { display: flex; align-items: center; gap: 5px; height: 21px; }
     .trn__pip { display: block; width: 20px; height: 6px; border-radius: 3px; background: rgba(247,244,239,.22); }
     .trn__pip[data-used="1"] { background: #fc6414; }
-    .trn__warn { font-size: 11.5px; color: rgba(247,244,239,.6); margin-top: 10px; line-height: 1.5; }
-    .trn__board { margin-top: 14px; border-top: 1px solid rgba(247,244,239,.14); padding-top: 10px; }
-    .trn__row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+    .trn__warn { font-size: 11px; color: rgba(247,244,239,.55); margin-top: 8px; line-height: 1.45; }
+    .trn__board { margin-top: 11px; border-top: 1px solid rgba(247,244,239,.14); padding-top: 7px; }
+    .trn__row { display: flex; align-items: center; gap: 10px; padding: 3px 0; font-size: 12.5px; }
     .trn__row[data-me="1"] { color: #fc6414; font-weight: 700; }
     .trn__rank { width: 20px; color: rgba(247,244,239,.5); font-size: 12px; }
     .trn__row[data-me="1"] .trn__rank { color: #fc6414; }
@@ -62,7 +62,7 @@
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
         <span class="artcard__body">
           <span class="artcard__eyebrow">Throw Lab · game</span>
-          <span class="artcard__title">Play a quick round →</span>
+          <span class="artcard__title">Play a quick round&nbsp;→</span>
           <span class="artcard__sub">Tap for power, tap for your angle. 3, 6 or 9 holes,
             no course needed — earns XP.</span>
         </span>
@@ -173,7 +173,7 @@
 
         var board = '';
         if (t.leaderboard && t.leaderboard.length) {
-          board = '<div class="trn__board">' + t.leaderboard.slice(0, 5).map(function (r) {
+          board = '<div class="trn__board">' + t.leaderboard.slice(0, 3).map(function (r) {
             return '<div class="trn__row" data-me="' + (me.place && r.rank === me.place ? 1 : 0) + '">' +
               '<span class="trn__rank">' + r.rank + '</span>' +
               '<span class="trn__name">' + esc(r.name) + '</span>' +
@@ -194,8 +194,10 @@
               '<div class="trn__stat"><span class="trn__pips">' + pips + '</span><span>Entries</span></div>' +
             '</div>' +
             board +
-            '<div style="margin-top:12px">' + action + '</div>' +
-            '<p class="trn__warn">' + cfg.warn + '</p>' +
+            '<div style="margin-top:10px">' + action + '</div>' +
+            // The rules line is only worth the space before you have played.
+            // Once the entry is spent the button itself says what happened.
+            (me.used >= t.max_entries ? '' : '<p class="trn__warn">' + cfg.warn + '</p>') +
           '</div>';
 
         var start = document.getElementById('trn-start-' + cfg.slot);

@@ -141,7 +141,10 @@
 
 /* Segmented control */
 .segbar { display: inline-flex; gap: 4px; padding: 4px; background: #ece5da; border-radius: var(--radius-pill); width: 100%; }
-.seg { flex: 1; text-align: center; font-family: var(--font-display); font-size: 13px; font-weight: var(--weight-medium); color: var(--color-ash); padding: 9px 12px; border: none; border-radius: var(--radius-pill); background: transparent; transition: background 140ms ease, color 140ms ease; }
+/* nowrap matters on the fixed bar too, not just the scrolling one: with four
+   boards, "Throw Lab" broke onto a second line and made that bar taller and
+   ragged against the others. */
+.seg { flex: 1; text-align: center; white-space: nowrap; font-family: var(--font-display); font-size: 13px; font-weight: var(--weight-medium); color: var(--color-ash); padding: 9px 10px; border: none; border-radius: var(--radius-pill); background: transparent; transition: background 140ms ease, color 140ms ease; }
 /* A bar with more than four choices cannot give each one a fair share of a
    phone's width, so it scrolls instead of shrinking the labels to nothing. */
 .segbar--scroll { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }

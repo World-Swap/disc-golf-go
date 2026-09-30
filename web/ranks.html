@@ -10,10 +10,21 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w11" />
   <style>
     .rank { width:26px; font-family:var(--font-mono); font-size:13px; color:var(--color-ash); text-align:right; flex:none; }
     .row--me { background:var(--color-peach); }
+    /* Every board opens with this same strip, so switching boards changes the
+       numbers and not the furniture. */
+    .bhead { margin:0 0 10px; padding:0 2px; }
+    /* #board carries .loading itself while fetching, and wraps a .loading child
+       for an empty board. Both need the page edge, not --edge-pad on top of it. */
+    #board.loading, #board .loading { padding:18px 2px; }
+    .bhead__eyebrow { font-family:var(--font-display); font-size:11px; font-weight:700;
+      letter-spacing:.12em; text-transform:uppercase; color:var(--color-orange); }
+    .bhead__title { font-family:var(--font-display); font-weight:800; font-size:16px;
+      line-height:1.25; margin:3px 0 2px; color:var(--color-ink); }
+    .bhead__sub { font-family:var(--font-display); font-size:12px; color:var(--color-ash); line-height:1.45; }
   </style>
 </head>
 <body>
@@ -156,7 +167,16 @@
           '<span class="row__meta">' + esc(meta) + '</span></div>';
       }
 
+      var TAB_LABEL = { xp: 'XP', lessons: 'Lessons', streak: 'Streak', daily: 'Daily' };
+
       function fmtVs(n) { return n == null ? '' : n === 0 ? 'E' : (n > 0 ? '+' + n : String(n)); }
+
+      /** The one header every board uses. title is optional. */
+      function bhead(eyebrow, title, sub) {
+        return '<div class="bhead"><p class="bhead__eyebrow">' + esc(eyebrow) + '</p>' +
+          (title ? '<div class="bhead__title">' + esc(title) + '</div>' : '') +
+          (sub ? '<div class="bhead__sub">' + esc(sub) + '</div>' : '') + '</div>';
+      }
 
       async function load() {
         board.className = 'loading'; board.textContent = 'Loading…';
@@ -184,8 +204,8 @@
             // These boards are over finished weeks only: a placing in a week
             // still being played is not a result yet, so it would be wrong to
             // count it as a win. Said plainly, or the totals look short.
-            var note = '<p class="row__sub" style="text-transform:none;letter-spacing:0;margin:0 0 10px">' +
-              'Completed ' + tb.nouns + ' only \u2014 ' + tb.period.toLowerCase() + ' counts ' + tb.closes + '.</p>';
+            var note = bhead(rec.metric_label || tb.period, '',
+              'Completed ' + tb.nouns + ' only \u2014 ' + tb.period.toLowerCase() + ' counts ' + tb.closes + '.');
             board.innerHTML = note + (rows ? '<div class="rows">' + rows + '</div>'
               : '<div class="loading">No one has a ' + esc(rec.metric_label.toLowerCase()) +
                 ' yet \u2014 the tournament resets ' + tb.resets + '.</div>');
@@ -202,15 +222,12 @@
             document.getElementById('period-pill').textContent = t.week_key;
             board.className = '';
             board.innerHTML =
-              '<div class="card" style="margin-bottom:12px"><p class="card__eyebrow">' + tb.period + '</p>' +
-                '<div class="row__title" style="font-size:18px;margin:4px 0 2px">' + esc(t.course.name) + '</div>' +
-                '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + t.holes +
-                  ' holes · ' + t.players + ' player' + (t.players === 1 ? '' : 's') +
-                  (me.used != null
-                    ? ' \u00b7 you have used ' + me.used + ' of ' + t.max_entries +
-                      (t.max_entries === 1 ? ' entry' : ' entries')
-                    : '') +
-                '</div></div>' +
+              bhead(tb.period, t.course.name,
+                t.holes + ' holes \u00b7 ' + t.players + ' player' + (t.players === 1 ? '' : 's') +
+                (me.used != null
+                  ? ' \u00b7 you have used ' + me.used + ' of ' + t.max_entries +
+                    (t.max_entries === 1 ? ' entry' : ' entries')
+                  : '')) +
               (rows ? '<div class="rows">' + rows + '</div>'
                     : '<div class="loading">No scores posted yet — play the tournament from the Play tab.</div>');
             return;
@@ -229,9 +246,11 @@
               return row(p.rank, p.display_name || p.username || 'Player', bits.join(' · '), value, p.is_me);
             }).join('');
             board.className = '';
-            board.innerHTML = rows ? '<div class="rows">' + rows + '</div>'
-              : '<div class="loading">No one has a ' + esc((g.metric_label || '').toLowerCase()) +
-                ' in this window yet.</div>';
+            board.innerHTML = bhead('Throw Lab \u00b7 ' + (g.metric_label || ''), '',
+                g.lower_is_better ? 'Lower is better.' : 'Ranked across every Throw Lab round.') +
+              (rows ? '<div class="rows">' + rows + '</div>'
+                : '<div class="loading">No one has a ' + esc((g.metric_label || '').toLowerCase()) +
+                  ' in this window yet.</div>');
             return;
           }
           {
@@ -243,9 +262,12 @@
             }).join('');
           }
           board.className = '';
-          board.innerHTML = rows ? '<div class="rows">' + rows + '</div>'
+          var tHead = state.board === 'game' ? '' : bhead(
+            'Training \u00b7 ' + (TAB_LABEL[state.tab] || state.tab), '',
+            'Earned from completed lessons.');
+          board.innerHTML = tHead + (rows ? '<div class="rows">' + rows + '</div>'
             : '<div class="loading">No rankings yet — ' +
-              (state.board === 'game' ? 'play a round to get on the board.' : 'complete a lesson to get on the board.') + '</div>';
+              (state.board === 'game' ? 'play a round to get on the board.' : 'complete a lesson to get on the board.') + '</div>');
         } catch (e) {
           board.className = 'screen'; board.innerHTML = '<div class="error">' + esc(e.message || 'Could not load ranks') + '</div>';
         }
