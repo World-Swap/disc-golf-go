@@ -31,7 +31,8 @@
     "ios:sync": "npx cap sync ios",
     "shots": "node scripts/store-screenshots.js",
     "art:categories": "node scripts/generate-category-art.js",
-    "sitemap": "node scripts/generate-sitemap.js"
+    "sitemap": "node scripts/generate-sitemap.js",
+    "art:reddit": "node scripts/generate-reddit-banner.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

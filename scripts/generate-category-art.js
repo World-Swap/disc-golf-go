@@ -43,39 +43,11 @@
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+// One shared basket, so this set and the Reddit banner draw the same object.
+const { basket, disc, ORANGE, PEACH } = require('./lib/logo-basket');
 
 const OUT = path.join(__dirname, '..', 'web', 'img', 'cards', 'cat');
 const W = 880, H = 495;
-
-// web/styles/tokens.css
-const ORANGE = '#fc6414';
-const PEACH = '#f7f4ef';   // the logo's basket white — the subject colour
-
-/**
- * The logo's basket. `s` scales the 256-unit source; (x, y) is its top-left.
- * Drawn from the measurements above, so it is the same object every time.
- */
-function basket(x, y, s, fill = PEACH) {
-  const u = (n) => n * s;
-  const bars = [[75.5, 84], [114.5, 117.5], [152, 149.5], [191, 182.5]];
-  const bw = 8;
-  return [
-    `<rect x="${x + u(54)}" y="${y + u(13)}" width="${u(158)}" height="${u(27)}"
-       rx="${u(13)}" fill="${fill}"/>`,
-    ...bars.map(([t, b]) =>
-      `<path d="M${x + u(t - bw / 2)} ${y + u(40)} L${x + u(t + bw / 2)} ${y + u(40)}
-                L${x + u(b + bw / 2)} ${y + u(157)} L${x + u(b - bw / 2)} ${y + u(157)} Z"
-         fill="${fill}"/>`),
-    `<path d="M${x + u(51)} ${y + u(157)} L${x + u(215)} ${y + u(157)}
-              L${x + u(208)} ${y + u(185)} L${x + u(58)} ${y + u(185)} Z" fill="${fill}"/>`,
-    `<path d="M${x + u(126)} ${y + u(185)} L${x + u(141)} ${y + u(185)}
-              L${x + u(138)} ${y + u(241)} L${x + u(129)} ${y + u(241)} Z" fill="${fill}"/>`,
-  ].join('');
-}
-
-/** A disc, always flat — on the ground, in flight, or as a mark. Never held. */
-const disc = (cx, cy, rx, fill = PEACH, ry = rx * 0.34) =>
-  `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}"/>`;
 
 const pine = (x, base, h, fill) => {
   const w = h * 0.46;
