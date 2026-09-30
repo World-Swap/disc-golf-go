@@ -60,15 +60,19 @@
       DGG.tabbar('profile');
       var esc = DGG.esc, API = DGG.API;
       var board = document.getElementById('board');
-      var state = { board: 'training', tab: 'overall', period: 'alltime' };
+      var state = { board: 'training', tab: 'overall', period: 'lifetime' };
       var STAT = { overall: 'total_xp', lessons: 'lessons_completed', streak: 'current_streak', challenges: 'challenges_won' };
       var UNIT = { overall: 'XP', lessons: '', streak: 'd', challenges: '' };
 
-      // Two boards, two vocabularies. Training ranks lessons, XP and streaks;
-      // Throw Lab ranks what you earn playing, which is comparable across
-      // 3-hole and 18-hole rounds in a way raw score is not.
+      // Training and Throw Lab now offer the SAME periods in the SAME order, and
+      // the server means the same thing by each: Today is since UTC midnight,
+      // Week runs from Monday, Month from the 1st. Training used to show
+      // All-time / Week / Month -- a different set, a different order, and a
+      // "Week" that was a rolling seven days rather than the game's Monday.
+      // Because the slugs match, the chosen period also survives switching
+      // boards instead of silently resetting.
       var PERIODS = {
-        training: [['alltime', 'All-time'], ['week', 'Week'], ['month', 'Month']],
+        training: [['daily', 'Today'], ['weekly', 'Week'], ['monthly', 'Month'], ['lifetime', 'All-time']],
         game: [['daily', 'Today'], ['weekly', 'Week'], ['monthly', 'Month'], ['lifetime', 'All-time']],
         // Tournament boards are either this week's or all-time; neither takes
         // a period, so the bar is hidden for them.
@@ -79,7 +83,7 @@
       // What each board can be ranked by. The keys are the API's metric names,
       // so a tab is a metric and nothing has to be translated.
       var TABS = {
-        training: [['overall', 'XP'], ['lessons', 'Lessons'], ['streak', 'Streak'], ['challenges', 'Daily']],
+        training: [['overall', 'XP'], ['lessons', 'Lessons'], ['streak', 'Streak'], ['challenges', 'Challenges']],
         game: [['xp', 'XP'], ['best_round', 'Best round'], ['best_18', 'Best 18'], ['aces', 'Aces'],
                ['full_rounds', '18-hole'], ['courses', 'Courses'], ['birdies', 'Birdies'],
                ['under_par', 'Under par']],
@@ -167,7 +171,15 @@
           '<span class="row__meta">' + esc(meta) + '</span></div>';
       }
 
-      var TAB_LABEL = { xp: 'XP', lessons: 'Lessons', streak: 'Streak', daily: 'Daily' };
+      // Keyed on the training board's real tab slugs. An earlier version used
+      // 'xp'/'daily', which this board never sets, so the eyebrow printed the
+      // raw slug ("Training - OVERALL") and every tab claimed the same subtitle.
+      var TRAINING_TAB = {
+        overall:    ['XP', 'XP earned from completed lessons.'],
+        lessons:    ['Lessons', 'Lessons completed.'],
+        streak:     ['Streak', 'Consecutive days training.'],
+        challenges: ['Challenges', 'Daily challenges completed.']
+      };
 
       function fmtVs(n) { return n == null ? '' : n === 0 ? 'E' : (n > 0 ? '+' + n : String(n)); }
 
@@ -186,8 +198,10 @@
           // endpoints, so the only thing that varies is the base and the noun.
           var isTourn = state.board === 'tournament' || state.board === 'daily';
           var tb = state.board === 'daily'
-            ? { base: '/tournament/daily', period: 'Today', noun: 'day', nouns: 'days', closes: 'at midnight UTC', resets: 'every day' }
-            : { base: '/tournament', period: 'This week', noun: 'week', nouns: 'weeks', closes: 'when it closes', resets: 'every Monday' };
+            ? { base: '/tournament/daily', name: 'Daily tournament', period: 'Today',
+                noun: 'day', nouns: 'days', closes: 'at midnight UTC', resets: 'every day' }
+            : { base: '/tournament', name: 'Weekly tournament', period: 'This week',
+                noun: 'week', nouns: 'weeks', closes: 'when it closes', resets: 'every Monday' };
 
           if (isTourn && state.tab !== 'week') {
             // All-time tournament boards: most wins, most podiums, and so on.
@@ -204,7 +218,7 @@
             // These boards are over finished weeks only: a placing in a week
             // still being played is not a result yet, so it would be wrong to
             // count it as a win. Said plainly, or the totals look short.
-            var note = bhead(rec.metric_label || tb.period, '',
+            var note = bhead(tb.name + ' \u00b7 ' + (rec.metric_label || tb.period), '',
               'Completed ' + tb.nouns + ' only \u2014 ' + tb.period.toLowerCase() + ' counts ' + tb.closes + '.');
             board.innerHTML = note + (rows ? '<div class="rows">' + rows + '</div>'
               : '<div class="loading">No one has a ' + esc(rec.metric_label.toLowerCase()) +
@@ -222,7 +236,7 @@
             document.getElementById('period-pill').textContent = t.week_key;
             board.className = '';
             board.innerHTML =
-              bhead(tb.period, t.course.name,
+              bhead(tb.name + ' \u00b7 ' + tb.period, t.course.name,
                 t.holes + ' holes \u00b7 ' + t.players + ' player' + (t.players === 1 ? '' : 's') +
                 (me.used != null
                   ? ' \u00b7 you have used ' + me.used + ' of ' + t.max_entries +
@@ -262,9 +276,8 @@
             }).join('');
           }
           board.className = '';
-          var tHead = state.board === 'game' ? '' : bhead(
-            'Training \u00b7 ' + (TAB_LABEL[state.tab] || state.tab), '',
-            'Earned from completed lessons.');
+          var tl = TRAINING_TAB[state.tab] || [state.tab, ''];
+          var tHead = state.board === 'game' ? '' : bhead('Training \u00b7 ' + tl[0], '', tl[1]);
           board.innerHTML = tHead + (rows ? '<div class="rows">' + rows + '</div>'
             : '<div class="loading">No rankings yet — ' +
               (state.board === 'game' ? 'play a round to get on the board.' : 'complete a lesson to get on the board.') + '</div>');
