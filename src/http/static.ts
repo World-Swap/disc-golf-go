@@ -50,6 +50,10 @@ const PAGES: Record<string, string> = {
   '/ranks': 'ranks.html',
   '/vault': 'vault.html',
   '/lounge': 'lounge.html',
+  // The 16 admin endpoints had no UI at all, so every one of them meant
+  // hand-written curl. Registering it here is the step that was missed for
+  // /lounge, which 404'd until someone noticed this table is explicit.
+  '/admin': 'admin.html',
   '/shop': 'shop.html',
   '/profile': 'profile.html',
   '/settings': 'settings.html',
