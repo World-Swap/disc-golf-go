@@ -13,43 +13,16 @@ on:
           - 'true'
           - 'false'
   # Also run on pushes to main when iOS-relevant files change
-  push:
-    branches: [main]
-    paths:
-      - 'capacitor.config.ts'
-      - 'web/**'
-      # Marketing assets are NOT in the native app. The apps load the live
-      # site, and these files are only ever served to a browser — the social
-      # post images, the link-preview card, the discgolfgo.com promo page and
-      # its SEO guides. Editing them used to ship a TestFlight build and an
-      # AAB: ten builds of 1.4.0 went up in one day that way, none of which
-      # changed a pixel of the app. A later "!" pattern overrides an earlier
-      # match, so 'web/**' still covers everything else under web/.
-      - '!web/img/social/**'
-      - '!web/img/og-cover.png'
-      - '!web/promo.html'
-      - '!web/guide-*.html'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.npmrc'
-      - 'ios/**'
-      - 'resources/**'
-      # NOT 'scripts/**'. Most of these are data and tooling — the lesson
-      # audit, the course importers, the screenshot capture — and none of
-      # them change a byte of the app. Adding scripts/store-screenshots.js
-      # alone kicked off a TestFlight build and an AAB. Only the scripts the
-      # native pipeline actually runs belong here; add a new one when it
-      # genuinely affects the built app.
-      - 'scripts/generate-ios-splash.js'
-      - 'scripts/write-android-styles.js'
-      - 'scripts/ensure-android-permissions.js'
-      - 'scripts/bump-android-version.js'
-      - 'scripts/generate-capacitor-assets-sources.js'
-      # The workflow runs these two directly, so a change to either
-      # really does change the built app.
-      - 'scripts/patch-ios-info-plist.sh'
-      - 'scripts/patch-ios-launch-storyboard.sh'
-      - '.github/workflows/ios-build.yml'
+  # No push trigger, deliberately. These builds used to fire on every push to
+  # main that touched web/**, scripts/** or package.json — and the native apps
+  # load the live site via server.url rather than bundled assets, so a web
+  # change reaches players through the Render deploy alone and the build
+  # produced nothing anyone could use. Ten builds of 1.4.0 went up in one day
+  # that way, and six more were cancelled by hand in a single afternoon.
+  #
+  # A build is now a deliberate act: Actions -> this workflow -> Run workflow.
+  # That is also when you want it, since shipping a release means bumping
+  # MARKETING_VERSION and writing release notes anyway.
 
 jobs:
   build-ios:

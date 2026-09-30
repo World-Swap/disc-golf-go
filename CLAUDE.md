@@ -122,6 +122,35 @@ Schema note: there is no `migrations/` folder in VCS — the live schema exists 
 - **Resend** — outbound email (RESEND_API_KEY; optional EMAIL_FROM sender); powers password-reset and admin email blasts
 - **Capacitor / GitHub Actions** — Android AAB + iOS IPA CI/CD; iOS uploads to TestFlight via App Store Connect API; see `IOS_BUILD.md`
 
+## Releasing the native apps — builds are MANUAL
+
+`ios-build.yml` and `build-android.yml` have **no push trigger**. They run only
+from Actions → the workflow → **Run workflow**. Do not add a `push:` trigger
+back, and do not "fix" their absence.
+
+Why: the native apps load the live site through `server.url` rather than
+bundled assets, so **a change under `web/` reaches players through the Render
+deploy alone** and a build produced nothing anyone could use. With the old
+triggers, editing a social post image or the promo page shipped a TestFlight
+build and an AAB — ten builds of 1.4.0 went up in one day that way, and six
+more were cancelled by hand in a single afternoon.
+
+A native build is only needed when the **shell** changes (`ios/`, `android/`,
+`resources/`, `capacitor.config.ts`, a dependency) or when a release is being
+cut — all deliberate acts that come with bumping the version anyway.
+
+To ship an iOS release:
+1. Bump `MARKETING_VERSION` in `ios/App/App.xcodeproj/project.pbxproj`. The
+   build number comes from `github.run_number`, so `CURRENT_PROJECT_VERSION`
+   is overwritten by CI and needs no change. **`Info.plist` hardcodes
+   `CFBundleShortVersionString`**, but the workflow now derives it from
+   `MARKETING_VERSION`, so the two cannot drift — that drift is what made 27
+   consecutive uploads fail with *"The train version is closed for new build
+   submissions"*.
+2. Actions → **Build iOS IPA & Upload to TestFlight** → Run workflow.
+
+`ci.yml` is unchanged and still runs on every PR and on `main`.
+
 ## Scheduled jobs
 Run in-process by `src/lib/scheduler.ts` (started after the server listens) — no external cron service. Each job runs in an isolated child process (`fork`) at a fixed UTC time, reusing the standalone `scripts/`:
 - `daily-challenge-assign.js` — 00:00 UTC (also ~10s after boot; idempotent) — assigns each player's rotating daily challenge
