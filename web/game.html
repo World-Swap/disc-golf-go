@@ -493,7 +493,13 @@
       bag.querySelectorAll('[data-act]').forEach(function (b) {
         b.addEventListener('click', function () {
           var act = this.dataset.act;
-          if (act === 'board') { location.href = '/ranks'; return; }
+          // Land on the board this entry was played on. A bare /ranks opens
+          // on Training, so "See the board" after a daily round used to show
+          // the lesson XP ranking instead of the round just posted.
+          if (act === 'board') {
+            location.href = '/ranks?board=' + (ENTRY.daily ? 'daily' : 'tournament');
+            return;
+          }
           if (act === 'leave') { location.href = '/checkin'; return; }
           replay();
         });

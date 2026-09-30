@@ -60,7 +60,18 @@
       DGG.tabbar('profile');
       var esc = DGG.esc, API = DGG.API;
       var board = document.getElementById('board');
-      var state = { board: 'training', tab: 'overall', period: 'lifetime' };
+      // Deep-linkable. The end of a tournament round offers "See the board",
+      // and that has to land on the board you just played -- it used to go to
+      // /ranks bare, which opens on Training, so finishing a daily entry showed
+      // you the lesson XP ranking. Only a known board is accepted, so a stale
+      // or hand-edited link falls back rather than rendering an empty page.
+      var BOARDS = ['training', 'game', 'tournament', 'daily'];
+      var wanted = new URLSearchParams(location.search).get('board');
+      var state = {
+        board: BOARDS.indexOf(wanted) >= 0 ? wanted : 'training',
+        tab: 'overall',
+        period: 'lifetime'
+      };
       var STAT = { overall: 'total_xp', lessons: 'lessons_completed', streak: 'current_streak', challenges: 'challenges_won' };
       var UNIT = { overall: 'XP', lessons: '', streak: 'd', challenges: '' };
 
@@ -285,6 +296,11 @@
           board.className = 'screen'; board.innerHTML = '<div class="error">' + esc(e.message || 'Could not load ranks') + '</div>';
         }
       }
+      // Reflect a deep-linked board in the bar, which is otherwise selected in
+      // the static markup and would keep showing Training as the active tab.
+      [].forEach.call(document.getElementById('boards').children, function (c) {
+        c.setAttribute('aria-selected', c.getAttribute('data-board') === state.board ? 'true' : 'false');
+      });
       paintTabs();
       paintPeriods();
       load();
