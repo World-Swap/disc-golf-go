@@ -150,5 +150,39 @@ test('search indexing', async (t) => {
     assert.deepEqual(absent, [], 'named on the promo page but not in the library');
   });
 
+  // discgolfgo.app has no mail of any kind -- Resend is verified for .com and
+  // only .com. Every address a human was told to write to had been on .app,
+  // including the account-deletion email that says "if you did not request
+  // this, contact us immediately" and gave an address that bounces.
+  //
+  // NO exception for a sender. An earlier version allowed a no-reply mailbox
+  // on that domain, reasoning that a domain can be verified for sending
+  // without receiving -- true in general, false here, and the exception would
+  // have protected exactly the value that breaks every outbound email if it
+  // reaches EMAIL_FROM.
+  //
+  // The comment deliberately spells no address out. This check walks its own
+  // source, so a literal one here fails the test that contains it -- which is
+  // how the first version of this comment was caught, and how the promo-number
+  // guard was caught before it.
+  await t.test('no address anywhere is on a domain with no mail', () => {
+    const roots = [path.join(__dirname, '..'), WEB];
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walk(full); continue; }
+        if (!/\.(ts|html|js)$/.test(entry.name)) continue;
+        const text = fs.readFileSync(full, 'utf8');
+        for (const m of text.matchAll(/[A-Za-z0-9._%+-]+@discgolfgo\.app/g)) {
+          offenders.push(`${path.relative(path.join(__dirname, '..', '..'), full)}: ${m[0]}`);
+        }
+      }
+    };
+    roots.forEach(walk);
+    assert.deepEqual(offenders, [], 'discgolfgo.app has no mail, sending or receiving — use discgolfgo.com');
+  });
+
   await new Promise<void>((r) => server.close(() => r()));
 });

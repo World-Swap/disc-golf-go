@@ -10,8 +10,8 @@ function deletionConfirmation(email: string, displayName: string | null) {
   return {
     to: email,
     subject: 'Your Disc Golf Go account deletion request',
-    text: `Hi ${name},\n\nWe received your request to delete your Disc Golf Go account.\n\nYour account and all associated data will be permanently deleted within 48 hours.\n\nThis action cannot be undone.\n\nIf you did not request this, contact us at contact@discgolfgo.app immediately.\n\n— The Disc Golf Go Team`,
-    html: `<p>Hi ${name},</p><p>We received your request to delete your Disc Golf Go account.</p><p>Your account and all associated data will be <strong>permanently deleted within 48 hours</strong>.</p><p>This action cannot be undone.</p><p>If you did not request this, contact us at <a href="mailto:contact@discgolfgo.app">contact@discgolfgo.app</a> immediately.</p><p>— The Disc Golf Go Team</p>`,
+    text: `Hi ${name},\n\nWe received your request to delete your Disc Golf Go account.\n\nYour account and all associated data will be permanently deleted within 48 hours.\n\nThis action cannot be undone.\n\nIf you did not request this, contact us at contact@discgolfgo.com immediately.\n\n— The Disc Golf Go Team`,
+    html: `<p>Hi ${name},</p><p>We received your request to delete your Disc Golf Go account.</p><p>Your account and all associated data will be <strong>permanently deleted within 48 hours</strong>.</p><p>This action cannot be undone.</p><p>If you did not request this, contact us at <a href="mailto:contact@discgolfgo.com">contact@discgolfgo.com</a> immediately.</p><p>— The Disc Golf Go Team</p>`,
   };
 }
 

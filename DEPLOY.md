@@ -35,7 +35,7 @@ npm run ts:start     # node dist/server.js
 | `APP_BASE_URL` | `https://discgolfgo.app` |
 | `NODE_ENV` | `production` |
 | `RESEND_API_KEY` | email (password reset, admin blasts) via Resend |
-| `EMAIL_FROM` | verified sender, e.g. `Disc Golf Go <no-reply@discgolfgo.app>` |
+| `EMAIL_FROM` | verified sender, e.g. `Disc Golf Go <no-reply@discgolfgo.com>` — Resend is verified for **.com only**; discgolfgo.app has no mail, and an unverified sender fails every send |
 | `ADMIN_PASSWORD` | admin dashboard login |
 | `ADMIN_JWT_SECRET` | optional; falls back to `JWT_SECRET` |
 

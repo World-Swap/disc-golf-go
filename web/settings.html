@@ -104,7 +104,13 @@
           '<div class="rows">' + rows + '</div>' +
           '<div><p class="section-label">Tip frequency</p><div class="segbar" id="freq">' +
             FREQ.map(function (f) { return '<button class="seg" data-freq="' + f + '" aria-selected="' + (s.tips_frequency === f ? 'true' : 'false') + '">' + f.replace(/_/g, ' ') + '</button>'; }).join('') +
-          '</div></div>';
+          '</div></div>' +
+          // The way to report a bug. The endpoint existed for months with no
+          // caller anywhere in web/, so there was no way to file one from the
+          // app at all.
+          '<div class="rows"><a class="row" href="/feedback">' +
+            '<div class="row__body"><div class="row__title">Report a problem →</div>' +
+            '<div class="row__sub">Bugs, suggestions, anything that looks wrong</div></div></a></div>';
 
         content.querySelectorAll('.toggle').forEach(function (btn) {
           btn.addEventListener('click', function () {
