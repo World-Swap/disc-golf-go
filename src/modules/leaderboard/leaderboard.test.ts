@@ -48,5 +48,46 @@ test('leaderboard endpoints', async (t) => {
     assert.equal(j.players[0]!.rank_tier, 'gold');
   });
 
+  // The all-time XP board used to rank by players.xp -- the grand total across
+  // Throw Lab, tournaments, quests, referrals and check-ins -- under a heading
+  // that said "earned from completed lessons". In production one player showed
+  // 9,920 there against a field whose next row was 295, and locally a player
+  // with 12 lessons and no game XP showed 0 while a player with 0 lessons led.
+  // These two pin the shape of the query rather than a number, because the
+  // regression is a column swap that no row count would catch.
+  await t.test('all-time XP is training XP, never the players.xp grand total', async () => {
+    let seen = '';
+    handler = (sql) => { if (/training_completions/.test(sql)) seen = sql; return { rows: [] }; };
+    await get('/api/leaderboard?tab=overall&period=lifetime');
+    assert.match(seen, /SUM\(l\.xp_reward\)/, 'all-time XP must be summed from lesson rewards');
+    assert.doesNotMatch(seen, /p\.xp AS total_xp/, 'all-time XP must not be the players.xp counter');
+    assert.doesNotMatch(seen, /\bp\.xp > 0\b/, 'game-only XP must not put a player on the training board');
+  });
+
+  await t.test('periods are calendar boundaries shared with the game board', async () => {
+    const params: unknown[][] = [];
+    const spy = {
+      query: async (sql: string, p?: unknown[]) => { if (p) params.push(p); return handler(sql) as never; },
+      connect: async () => ({}) as never,
+    } as unknown as Database;
+    const app2 = createApp(spy);
+    const srv = app2.listen(0);
+    await new Promise<void>((r) => srv.once('listening', r));
+    const { port: p2 } = srv.address() as AddressInfo;
+    handler = () => ({ rows: [] });
+
+    await fetch(`http://127.0.0.1:${p2}/api/leaderboard?tab=overall&period=weekly`);
+    const since = params[0]![0] as Date;
+    assert.ok(since instanceof Date, 'the period boundary is a bound Date, not an interpolated interval');
+    assert.equal(since.getUTCDay(), 1, 'Week runs from Monday, matching the Throw Lab board');
+    assert.equal(since.getUTCHours(), 0);
+
+    // A page cached before this deploy still sends the old slugs.
+    params.length = 0;
+    await fetch(`http://127.0.0.1:${p2}/api/leaderboard?tab=overall&period=week`);
+    assert.equal((params[0]![0] as Date).getTime(), since.getTime(), 'old slug week -> weekly');
+    await new Promise<void>((r) => srv.close(() => r()));
+  });
+
   await new Promise<void>((r) => server.close(() => r()));
 });

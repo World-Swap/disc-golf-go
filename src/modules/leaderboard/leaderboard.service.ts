@@ -3,13 +3,27 @@
 // player's own row when they fall outside the top slice.
 
 import { getSkillTier } from '../progression';
-import { createLeaderboardRepo, type LeaderboardRepo, type SortCol, type Interval } from './leaderboard.repo';
+import { periodStart, type Period as GamePeriod } from '../game/game.catalog';
+import { createLeaderboardRepo, type LeaderboardRepo, type SortCol } from './leaderboard.repo';
 import type { Queryable } from '../../db/types';
 
 const TABS = ['overall', 'lessons', 'streak', 'challenges'] as const;
-const PERIODS = ['alltime', 'week', 'month'] as const;
 type Tab = (typeof TABS)[number];
-type Period = (typeof PERIODS)[number];
+
+/**
+ * Training now speaks the same period vocabulary as the Throw Lab board, and
+ * means the same thing by it. Both were showing a "Week" tab, but training's was
+ * a ROLLING seven days (NOW() - INTERVAL '7 days') while the game's ran from
+ * Monday, so the two boards answered different questions under one label.
+ * periodStart() is the game's own boundary function, so there is one definition.
+ *
+ * The old slugs stay accepted: ranks.html is the only caller, but a page cached
+ * before this deploy would otherwise silently fall back to the default period.
+ */
+const PERIOD_ALIASES: Record<string, GamePeriod> = {
+  daily: 'daily', weekly: 'weekly', monthly: 'monthly', lifetime: 'lifetime',
+  today: 'daily', week: 'weekly', month: 'monthly', alltime: 'lifetime',
+};
 
 const SORT_COL: Record<Tab, SortCol> = {
   overall: 'total_xp',
@@ -66,11 +80,11 @@ export function createLeaderboardService(db: Queryable, repo: LeaderboardRepo = 
 
     async leaderboard(tabRaw: unknown, periodRaw: unknown, currentPlayerId: number | null) {
       const tab: Tab = TABS.includes(tabRaw as Tab) ? (tabRaw as Tab) : 'overall';
-      const period: Period = PERIODS.includes(periodRaw as Period) ? (periodRaw as Period) : 'alltime';
+      const period: GamePeriod = PERIOD_ALIASES[String(periodRaw)] ?? 'lifetime';
       const sortCol = SORT_COL[tab];
-      const interval: Interval = period === 'week' ? '7 days' : '30 days';
+      const since = periodStart(period);
 
-      const rows = period === 'alltime' ? await repo.alltimeEntries(sortCol) : await repo.periodEntries(interval, sortCol);
+      const rows = since == null ? await repo.alltimeEntries(sortCol) : await repo.periodEntries(since, sortCol);
 
       const ranked = rows.map((r, i) => ({
         ...r,
@@ -81,11 +95,11 @@ export function createLeaderboardService(db: Queryable, repo: LeaderboardRepo = 
 
       if (currentPlayerId && !ranked.some((r) => r.is_me)) {
         const myRow =
-          period === 'alltime'
+          since == null
             ? await repo.alltimePlayerEntry(currentPlayerId, sortCol)
-            : await repo.periodPlayerEntry(currentPlayerId, interval, sortCol);
+            : await repo.periodPlayerEntry(currentPlayerId, since, sortCol);
         if (myRow) {
-          const rank = period === 'alltime' ? await repo.alltimeRank(sortCol, myRow.stat_value || 0) : ranked.length + 1;
+          const rank = since == null ? await repo.alltimeRank(sortCol, myRow.stat_value || 0) : ranked.length + 1;
           ranked.push({ ...myRow, rank, rank_tier: rankTier(rank), is_me: true, out_of_top: true } as (typeof ranked)[number]);
         }
       }
