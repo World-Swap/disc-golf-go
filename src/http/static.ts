@@ -8,7 +8,7 @@ const WEB_DIR = path.join(__dirname, '..', '..', 'web');
 
 // The marketing domain. discgolfgo.app is the app; discgolfgo.com is the promo
 // site. Both currently resolve to this same service, so we split by host.
-const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
+export const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
 
 // On the .com marketing domain: serve the promo page at '/', let static assets
 // (files with an extension) fall through so the promo's CSS/images load, and
@@ -20,6 +20,53 @@ const PROMO_PAGES: Record<string, string> = {
   '/guides/how-to-putt-disc-golf': 'guide-putting.html',
   '/guides/best-beginner-disc-golf-discs': 'guide-beginner-discs.html',
 };
+
+/**
+ * robots.txt, which has to differ by host because the two domains want opposite
+ * things from a crawler.
+ *
+ * It used to be one static file served on BOTH, saying `Allow: /` and pointing
+ * at the .com sitemap -- so discgolfgo.app was inviting Google to crawl ~20
+ * client-rendered app pages that answer a crawler with an empty shell, under a
+ * sitemap that does not describe them.
+ *
+ * .app also gets `Allow: /` rather than `Disallow: /`, which looks backwards
+ * until you want something REMOVED: a disallowed URL cannot be re-crawled, so
+ * Google never sees the noindex that would drop it and a stale entry can sit in
+ * the index indefinitely. The app pages carry `noindex, follow` instead, and
+ * crawling stays open so that tag is readable. Only /api and /admin, which are
+ * not pages at all, are closed outright.
+ *
+ * Mounted before comHostSplit and the static middleware, both of which would
+ * otherwise answer first.
+ */
+export function robotsTxt(): RequestHandler {
+  const promo = [
+    'User-agent: *',
+    'Allow: /',
+    '',
+    'Sitemap: https://discgolfgo.com/sitemap.xml',
+    '',
+  ].join('\n');
+
+  const appDomain = [
+    '# discgolfgo.app is the application. The marketing site is discgolfgo.com,',
+    '# and its pages are the ones meant to be found. Everything here carries a',
+    '# noindex meta tag; crawling stays open so crawlers can read it.',
+    'User-agent: *',
+    'Allow: /',
+    'Disallow: /api/',
+    'Disallow: /admin',
+    '',
+  ].join('\n');
+
+  return (req, res, next) => {
+    if (req.path !== '/robots.txt') return next();
+    res.type('text/plain').send(
+      PROMO_HOSTS.has((req.hostname || '').toLowerCase()) ? promo : appDomain
+    );
+  };
+}
 
 export function comHostSplit(): RequestHandler {
   const promoFile = path.join(WEB_DIR, 'promo.html');

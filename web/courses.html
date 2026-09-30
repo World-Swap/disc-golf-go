@@ -3,6 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- App UI on discgolfgo.app. Not search content: these render as an empty
+       shell to a crawler (the page is built client-side after an auth check),
+       and the marketing story lives on discgolfgo.com. noindex rather than a
+       robots.txt Disallow, because a disallowed page that is ALREADY indexed
+       can never be re-crawled to discover it should be dropped. follow is kept
+       so link equity still flows. -->
+  <meta name="robots" content="noindex, follow" />
   <title>Pick a course · Disc Golf Go</title>
   <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
