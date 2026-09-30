@@ -96,8 +96,12 @@
         <div><label for="q">Search name, username or email</label>
           <input id="q" placeholder="e.g. guest" /></div>
         <div class="narrow"><button type="submit">Search</button></div>
-        <div class="narrow"><button type="button" class="ghost" id="showGuests">Guests only</button></div>
       </form>
+      <div class="tabs" id="filters" style="margin-bottom:12px">
+        <button type="button" data-filter="all" aria-selected="true">All players</button>
+        <button type="button" data-filter="guest" aria-selected="false">Guests</button>
+        <button type="button" data-filter="named" aria-selected="false">Registered</button>
+      </div>
       <div class="scroll"><table>
         <thead><tr><th>ID</th><th>Player</th><th>Email</th><th class="num">XP</th>
           <th>Created</th><th style="width:1%"></th></tr></thead>
@@ -240,19 +244,25 @@
 
   // ── players ──
   var lastSearch = '';
+  var lastPayload = { users: [], total: 0 };
   async function loadUsers(search) {
     lastSearch = search;
     $('userRows').innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
     try {
-      var d = await api('/admin/users?limit=100&search=' + encodeURIComponent(search));
-      render(d);
+      lastPayload = await api('/admin/users?limit=100&search=' + encodeURIComponent(search));
+      render(lastPayload);
     } catch (err) {
       $('userRows').innerHTML = '<tr><td colspan="6" class="muted">' + esc(err.message) + '</td></tr>';
     }
   }
 
+  var isGuest = function (u) { return !u.email && /^guest_/.test(u.username || ''); };
+
   function render(d) {
-    var users = d.users || [];
+    var all = (d && d.users) || [];
+    var users = filter === 'guest' ? all.filter(isGuest)
+      : filter === 'named' ? all.filter(function (u) { return !isGuest(u); })
+      : all;
     if (!users.length) {
       $('userRows').innerHTML = '<tr><td colspan="6" class="muted">No players match that.</td></tr>';
       $('userCount').textContent = '';
@@ -260,7 +270,7 @@
     }
     $('userRows').innerHTML = users.map(function (u) {
       // A guest has no email and the username the guest signup generates.
-      var guest = !u.email && /^guest_/.test(u.username || '');
+      var guest = isGuest(u);
       return '<tr>' +
         '<td class="muted">' + u.id + '</td>' +
         '<td><b>' + esc(u.display_name || '—') + '</b><br>' +
@@ -276,11 +286,20 @@
           '" data-name="' + esc(u.display_name || '') + '">Delete</button></td>' +
       '</tr>';
     }).join('');
-    $('userCount').textContent = users.length + ' shown of ' + d.total + ' total';
+    $('userCount').textContent = users.length + ' shown' +
+      (filter === 'all' ? ' of ' + d.total + ' total' : ' (' + filter + ', from ' + all.length + ' loaded of ' + d.total + ')');
   }
 
   $('searchForm').addEventListener('submit', function (e) { e.preventDefault(); loadUsers($('q').value.trim()); });
-  $('showGuests').addEventListener('click', function () { $('q').value = 'guest_'; loadUsers('guest_'); });
+
+  var filter = 'all';
+  $('filters').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-filter]');
+    if (!b) return;
+    filter = b.dataset.filter;
+    [].forEach.call($('filters').children, function (x) { x.setAttribute('aria-selected', String(x === b)); });
+    render(lastPayload);
+  });
 
   $('userRows').addEventListener('click', async function (e) {
     // Open or close the per-player panel.
