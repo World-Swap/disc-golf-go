@@ -165,5 +165,61 @@
     }).catch(function () {});
   }
 
-  window.DGG = { API: API, requireAuth: requireAuth, signedIn: signedIn, logout: logout, esc: esc, tabbar: tabbar, loungeSub: loungeSub };
+  // ── Sharing ────────────────────────────────────────────────────────────
+  // Share links replaced the referral system, which paid 200 gold for bringing
+  // a friend -- gold that buys a 60-minute XP boost, in an app whose XP stopped
+  // meaning much when it pivoted from the RPG to training. People share things
+  // that are useful, not invite codes that pay in a currency with nothing to buy.
+  //
+  // ALWAYS a discgolfgo.com URL, never this app's own. The app is behind an auth
+  // check and noindex; a friend who taps a /training link hits a login wall,
+  // which is the opposite of sharing. The .com library is public, free and needs
+  // no account, so it is the only honest thing to put in a text message.
+  var PUBLIC_SITE = 'https://discgolfgo.com';
+
+  /** The public page for a training category, optionally at one lesson. */
+  function learnUrl(categorySlug, lessonSlug) {
+    if (!categorySlug) return PUBLIC_SITE + '/learn';
+    return PUBLIC_SITE + '/learn/' + categorySlug + (lessonSlug ? '#' + lessonSlug : '');
+  }
+
+  /**
+   * Share a URL. Uses the OS share sheet where there is one, which on the
+   * phones that are essentially the whole audience is what people expect.
+   * Falls back to the clipboard, and then to selecting the text, because a
+   * share button that silently does nothing is worse than no button.
+   *
+   * `btn` is restyled to confirm, since neither fallback shows any UI of its own.
+   */
+  async function share(opts) {
+    var url = opts.url, btn = opts.btn;
+    var done = function (label) {
+      if (!btn) return;
+      var original = btn.textContent;
+      btn.textContent = label;
+      setTimeout(function () { btn.textContent = original; }, 1800);
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: opts.title || 'Disc Golf Go', text: opts.text || '', url: url });
+        return 'shared';
+      } catch (e) {
+        // A cancelled share sheet throws AbortError. That is not a failure and
+        // must not fall through to copying a link the person chose not to send.
+        if (e && e.name === 'AbortError') return 'cancelled';
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      done('Link copied');
+      return 'copied';
+    } catch (e) { /* clipboard blocked (insecure context, or denied) */ }
+
+    window.prompt('Copy this link:', url);
+    return 'prompted';
+  }
+
+  window.DGG = { API: API, requireAuth: requireAuth, signedIn: signedIn, logout: logout, esc: esc, tabbar: tabbar, loungeSub: loungeSub, share: share, learnUrl: learnUrl };
 })();

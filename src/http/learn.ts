@@ -130,11 +130,42 @@ ${opts.ld}
     .catlist li{margin-bottom:14px;}
     .catlist a{color:var(--color-ink);font-weight:700;text-decoration:none;font-size:18px;}
     .catlist span{display:block;font-size:15px;opacity:.72;font-weight:400;}
+    .sharerow{margin:18px 0 0;text-align:center;}
+    .sharebtn{font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--color-orange);
+      background:none;border:none;padding:10px 4px;cursor:pointer;}
   </style>
 </head>
 <body>
 ${NAV}`;
 }
+
+/**
+ * The share button. Standalone rather than using DGG.share from the app's
+ * app.js, because these pages are on the marketing domain and load none of the
+ * app's JavaScript -- pulling it in for one button would be a worse trade.
+ */
+const SHARE_SCRIPT = `  <script>
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-share]'); if (!b) return;
+      var url = b.getAttribute('data-share');
+      var ok = function (label) {
+        var original = b.textContent; b.textContent = label;
+        setTimeout(function () { b.textContent = original; }, 1800);
+      };
+      if (navigator.share) {
+        navigator.share({ title: document.title, url: url }).catch(function (err) {
+          // A cancelled share sheet is not a failure; do not then copy a link
+          // the person chose not to send.
+          if (err && err.name === 'AbortError') return;
+          navigator.clipboard.writeText(url).then(function () { ok('Link copied'); });
+        });
+        return;
+      }
+      navigator.clipboard.writeText(url)
+        .then(function () { ok('Link copied'); })
+        .catch(function () { window.prompt('Copy this link:', url); });
+    });
+  </script>`;
 
 const CTA = `    <div class="cta-box">
       <h3>Every lesson here is free in the app</h3>
@@ -152,7 +183,11 @@ function categoryPage(c: SeedCategory): string {
     const video = l.youtube_url && l.youtube_title
       ? `      <p class="vid">Watch: <a href="${esc(l.youtube_url)}" rel="noopener">${esc(displayTitle(l.youtube_title))}</a>${l.youtube_channel ? ` — ${esc(l.youtube_channel)}` : ''}</p>`
       : '';
-    return `      <h3>${esc(l.title)}</h3>
+    // Anchored so a share from inside the app can land on the lesson somebody
+    // meant, rather than the top of a 16-lesson page. There are deliberately no
+    // per-lesson URLs (134 pages of ~28 words would be thin content), so the
+    // anchor is how lesson-level sharing stays honest.
+    return `      <h3 id="${esc(l.slug)}">${esc(l.title)}</h3>
       <p>${esc(l.description)}</p>
       <ul>
 ${tips}
@@ -194,11 +229,14 @@ ${video}`;
 ${body}
 ${links.length ? `\n    <h2>Further reading</h2>\n    <ul>\n${links.join('\n')}\n    </ul>` : ''}
 ${CTA}
+    <p class="sharerow"><button class="sharebtn" type="button"
+      data-share="${ORIGIN}/learn/${esc(c.slug)}">Share these lessons</button></p>
     <div class="relguide">
       <p>More paths: ${others}</p>
     </div>
   </article>
 ${FOOT}
+${SHARE_SCRIPT}
 </body>
 </html>
 `;
