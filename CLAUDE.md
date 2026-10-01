@@ -124,6 +124,14 @@ Schema note: there is no `migrations/` folder in VCS — the live schema exists 
 
 ## Releasing the native apps — builds are MANUAL
 
+**Live as of 2026-10-01: iOS 1.4.1 · Android 2.5 (versionCode 40), both in
+production.** Keep this line current rather than reading a release number out
+of a dated changelog entry below — those were true when written and are not
+updated, which is how "Android v2.4 / versionCode 38" came to be quoted two
+weeks after 2.5 shipped. The repo's own numbers are the other check:
+`MARKETING_VERSION` in `ios/App/App.xcodeproj/project.pbxproj` and
+`versionCode` / `versionName` in `android/app/build.gradle`.
+
 `ios-build.yml` and `build-android.yml` have **no push trigger**. They run only
 from Actions → the workflow → **Run workflow**. Do not add a `push:` trigger
 back, and do not "fix" their absence.
