@@ -184,5 +184,36 @@ test('search indexing', async (t) => {
     assert.deepEqual(offenders, [], 'discgolfgo.app has no mail, sending or receiving — use discgolfgo.com');
   });
 
+  // Share links replaced the referral system. The one rule that makes them work
+  // is that a shared URL must be openable by someone with no account: the app is
+  // behind an auth check and noindex, so a /training link is a login wall.
+  await t.test('shared links point at the public library, with lesson anchors', async () => {
+    const html = await (await get('/learn/putting', 'discgolfgo.com')).text();
+
+    const shared = [...html.matchAll(/data-share="([^"]+)"/g)].map((m) => m[1]!);
+    assert.ok(shared.length > 0, 'the category page should offer a share link');
+    for (const url of shared) {
+      assert.ok(url.startsWith('https://discgolfgo.com/'),
+        `${url} is not openable without an account`);
+      assert.equal((await get(new URL(url).pathname, 'discgolfgo.com')).status, 200);
+    }
+
+    // Every lesson is anchored, which is what lets a share land on the lesson
+    // somebody meant rather than the top of a 16-lesson page.
+    const putting = LESSONS.filter((l) => l.category_slug === 'putting');
+    const missing = putting.filter((l) => !html.includes(`id="${l.slug}"`)).map((l) => l.slug);
+    assert.deepEqual(missing, [], 'these lessons cannot be linked to');
+  });
+
+  await t.test('the app builds share URLs on the marketing domain, never its own', () => {
+    const appJs = fs.readFileSync(path.join(WEB, 'js', 'app.js'), 'utf8');
+    assert.match(appJs, /PUBLIC_SITE\s*=\s*'https:\/\/discgolfgo\.com'/,
+      'shares must target the public site');
+    // learnUrl is the only thing that builds a shared URL; if it ever took the
+    // current origin, every share would become a login wall.
+    assert.doesNotMatch(appJs, /function learnUrl[\s\S]{0,200}location\.origin/,
+      'learnUrl must not build links from the app origin');
+  });
+
   await new Promise<void>((r) => server.close(() => r()));
 });
