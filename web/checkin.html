@@ -22,32 +22,48 @@
     /* The line that tells you what this page offers before you tap anything. */
     .play-intro { margin: -4px 0 2px; font-size: 13px; line-height: 1.5; color: #6d655c; }
     .play-intro b { color: #202020; }
-    /* Weekly tournament. Dark like the artcards so it reads as an event
-       rather than another row, with the entries spent shown as pips. */
-    .trn { background: #16130f; color: #f7f4ef; border-radius: 16px; padding: 14px 15px; }
-    .trn__top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-    .trn__eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #fc6414; font-weight: 700; }
-    .trn__ends { font-size: 11px; color: rgba(247,244,239,.6); }
-    .trn__course { font-family: var(--font-display, system-ui); font-weight: 800; font-size: 17px;
-      line-height: 1.2; margin: 5px 0 3px; letter-spacing: -0.01em; }
-    .trn__sub { font-size: 12.5px; color: rgba(247,244,239,.72); line-height: 1.5; }
-    .trn__stats { display: flex; gap: 16px; margin: 11px 0 2px; }
-    .trn__stat b { display: flex; align-items: center; height: 21px;
-                   font-family: var(--font-display, system-ui); font-size: 19px; }
-    .trn__stat span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(247,244,239,.55); }
-    /* The pips sit where a stat's number goes, so they take that line's height
-       and the label below stays on the same baseline as the other stats. */
-    .trn__pips { display: flex; align-items: center; gap: 5px; height: 21px; }
-    .trn__pip { display: block; width: 20px; height: 6px; border-radius: 3px; background: rgba(247,244,239,.22); }
+    /* The two tournaments sit SIDE BY SIDE as one block the height of an
+       artcard. They used to be two full-width cards stacked, which put the
+       page's two most repetitive things above everything worth tapping and
+       pushed Throw Lab below the fold. Everything that made them tall — the
+       top-three board, the rules paragraph, the four-stat row — came out: the
+       board lives on /ranks, which this page already links to, and the rule
+       about an entry being spent on tee-off is said once under the pair and
+       again in the confirm, instead of twice in the cards. */
+    .trn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    /* The slots the painter fills. Stretching them makes both cards the height
+       of the taller one, so the pair stays a clean rectangle whatever the
+       course names are. */
+    .trn-pair > div { display: flex; }
+    .trn { flex: 1; display: flex; flex-direction: column; min-width: 0;
+      background: #16130f; color: #f7f4ef; border-radius: 16px; padding: 10px 12px;
+      min-height: 126px; /* matches .artcard, so the pair reads as one card */ }
+    .trn__top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+    .trn__eyebrow { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+      color: #fc6414; font-weight: 700; white-space: nowrap; }
+    .trn__ends { font-size: 10.5px; color: rgba(247,244,239,.6); white-space: nowrap; }
+    /* Exactly two lines: clamped so a long name cannot grow the card, and
+       min-height so a short one ("Maple Hill") cannot shrink it either. A
+       course name is the one thing here of unknown length, and without both
+       halves the pair's height follows whichever course got drawn that day —
+       measured at 129px on short names against 147px on long ones. */
+    .trn__course { font-family: var(--font-display, system-ui); font-weight: 800;
+      font-size: 14.5px; line-height: 1.22; margin: 5px 0 0; letter-spacing: -0.01em;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      min-height: 2.44em; }
+    /* Pushed to the bottom so the button sits on the same line in both squares
+       however many lines the course name took. */
+    .trn__stats { display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-top: auto; padding-top: 8px; }
+    .trn__best { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+    .trn__best b { font-family: var(--font-display, system-ui); font-size: 18px; line-height: 1; }
+    .trn__best i { font-style: normal; font-size: 11px; color: rgba(247,244,239,.6); }
+    .trn__pips { display: flex; align-items: center; gap: 4px; }
+    .trn__pip { display: block; width: 16px; height: 5px; border-radius: 3px; background: rgba(247,244,239,.22); }
     .trn__pip[data-used="1"] { background: #fc6414; }
-    .trn__warn { font-size: 11px; color: rgba(247,244,239,.55); margin-top: 8px; line-height: 1.45; }
-    .trn__board { margin-top: 11px; border-top: 1px solid rgba(247,244,239,.14); padding-top: 7px; }
-    .trn__row { display: flex; align-items: center; gap: 10px; padding: 3px 0; font-size: 12.5px; }
-    .trn__row[data-me="1"] { color: #fc6414; font-weight: 700; }
-    .trn__rank { width: 20px; color: rgba(247,244,239,.5); font-size: 12px; }
-    .trn__row[data-me="1"] .trn__rank { color: #fc6414; }
-    .trn__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .trn__score { font-family: var(--font-display, system-ui); font-weight: 700; }
+    /* A compact button, because two of them share a phone's width. */
+    .trn .btn { margin-top: 6px; padding: 8px; font-size: 12.5px; min-height: 0; }
+    .trn__note { font-size: 11px; line-height: 1.45; color: #6d655c; margin: 2px 0 0; }
   </style>
 </head>
 <body>
@@ -62,8 +78,12 @@
       <p class="play-intro">Two ways to play — a <b>throwing game</b> you play here on
         your phone, or a <b>scorecard</b> for a round you're playing for real.</p>
 
-      <div id="tournament-daily"></div>
-      <div id="tournament"></div>
+      <div class="trn-pair">
+        <div id="tournament-daily"></div>
+        <div id="tournament"></div>
+      </div>
+      <p class="trn__note" id="trn-note" hidden>An entry is used the moment a round
+        starts — leave part-way and it still counts.</p>
 
       <a class="artcard" href="/game" style="--art:url('/img/cards/throw-lab.webp')">
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
@@ -140,19 +160,15 @@
       // an entry -- is the same card, so it would be a mistake to copy it.
       var KINDS = {
         weekly: {
-          slot: 'tournament', base: '/tournament', eyebrow: 'Weekly tournament',
-          sub: function (t) { return t.holes + ' holes · everyone plays the same course this week'; },
-          spent: 'Both entries used — resets Monday',
-          warn: 'Two entries a week. An entry is used the moment the round starts — ' +
-                'if you quit part-way it still counts, so play it out.',
+          slot: 'tournament', base: '/tournament', eyebrow: 'Weekly',
+          spent: 'Entries used',
+          cta: function (me, max) { return 'Start ' + (me.used + 1) + '/' + max + ' →'; },
           gameArg: '',
         },
         daily: {
-          slot: 'tournament-daily', base: '/tournament/daily', eyebrow: 'Daily tournament',
-          sub: function (t) { return t.holes + ' holes · a new course every day'; },
-          spent: 'Entry used — a new daily at midnight UTC',
-          warn: 'One entry a day, and it is used the moment the round starts. ' +
-                'Today\u2019s board closes at midnight UTC.',
+          slot: 'tournament-daily', base: '/tournament/daily', eyebrow: 'Daily',
+          spent: 'Entry used',
+          cta: function () { return 'Play today →'; },
           gameArg: '&kind=daily',
         },
       };
@@ -169,43 +185,32 @@
 
         var action;
         if (me.open_entry_id) {
-          action = '<a class="btn btn--block" href="/game?entry=' + me.open_entry_id + cfg.gameArg + '">Finish your round →</a>';
+          action = '<a class="btn btn--block" href="/game?entry=' + me.open_entry_id + cfg.gameArg + '">Finish round →</a>';
         } else if (me.remaining > 0) {
           action = '<button class="btn btn--block" id="trn-start-' + cfg.slot + '">' +
-                   (t.max_entries > 1 ? 'Start entry ' + (me.used + 1) + ' of ' + t.max_entries : 'Play today\u2019s round') +
-                   ' →</button>';
+                   cfg.cta(me, t.max_entries) + '</button>';
         } else {
           action = '<button class="btn btn--block" disabled>' + cfg.spent + '</button>';
         }
 
-        var board = '';
-        if (t.leaderboard && t.leaderboard.length) {
-          board = '<div class="trn__board">' + t.leaderboard.slice(0, 3).map(function (r) {
-            return '<div class="trn__row" data-me="' + (me.place && r.rank === me.place ? 1 : 0) + '">' +
-              '<span class="trn__rank">' + r.rank + '</span>' +
-              '<span class="trn__name">' + esc(r.name) + '</span>' +
-              '<span class="trn__score">' + fmtVs(r.vs_par) + '</span></div>';
-          }).join('') + '</div>';
-        }
-
+        // Your score and your entries are what you come back to check. Place is
+        // kept small beside the score rather than given a column of its own,
+        // and the field size dropped — it is on /ranks, which this page links
+        // to, and it never changed what anyone did next.
         box.innerHTML =
           '<div class="trn">' +
             '<div class="trn__top"><span class="trn__eyebrow">' + cfg.eyebrow + '</span>' +
               '<span class="trn__ends">' + esc(endsIn(t.ends_at)) + '</span></div>' +
             '<div class="trn__course">' + esc(t.course.name) + '</div>' +
-            '<div class="trn__sub">' + cfg.sub(t) + '</div>' +
             '<div class="trn__stats">' +
-              '<div class="trn__stat"><b>' + (me.best ? fmtVs(me.best.vs_par) : '—') + '</b><span>Your best</span></div>' +
-              '<div class="trn__stat"><b>' + (me.place ? '#' + me.place : '—') + '</b><span>Place</span></div>' +
-              '<div class="trn__stat"><b>' + t.players + '</b><span>Players</span></div>' +
-              '<div class="trn__stat"><span class="trn__pips">' + pips + '</span><span>Entries</span></div>' +
+              '<span class="trn__best"><b>' + (me.best ? fmtVs(me.best.vs_par) : '—') + '</b>' +
+                (me.place ? '<i>#' + me.place + '</i>' : '') + '</span>' +
+              '<span class="trn__pips">' + pips + '</span>' +
             '</div>' +
-            board +
-            '<div style="margin-top:10px">' + action + '</div>' +
-            // The rules line is only worth the space before you have played.
-            // Once the entry is spent the button itself says what happened.
-            (me.used >= t.max_entries ? '' : '<p class="trn__warn">' + cfg.warn + '</p>') +
+            action +
           '</div>';
+        var note = document.getElementById('trn-note');
+        if (note) note.hidden = false;
 
         var start = document.getElementById('trn-start-' + cfg.slot);
         if (start) {
@@ -219,7 +224,7 @@
             API.post(cfg.base + '/entries').then(function (r) {
               location.href = '/game?entry=' + r.entry.id + cfg.gameArg;
             }).catch(function (e) {
-              start.disabled = false; start.textContent = 'Start entry →';
+              start.disabled = false; start.textContent = cfg.cta(me, t.max_entries);
               box.insertAdjacentHTML('afterbegin', '<div class="error">' + esc(e.message || 'Could not start') + '</div>');
               loadTournament(cfg);
             });
