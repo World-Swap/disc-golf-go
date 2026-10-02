@@ -115,13 +115,39 @@ const PAGES: Record<string, string> = {
   '/privacy-policy': 'privacy.html',
 };
 
+/** A year. The longest value anything should be cached for. */
+const IMMUTABLE = 'public, max-age=31536000, immutable';
+
 export function mountFrontend(app: Express): void {
-  // Static assets (styles/, js/, images). index:false so page routes own '/'.
+  // A versioned asset can be cached forever, and that is the whole navigation
+  // cost on a phone.
+  //
+  // express.static defaults to max-age=0, which does NOT mean "do not cache" —
+  // it means "revalidate every time". Only images carried an override, so every
+  // tab tap re-checked tokens.css, app.css, app-ui.css and app.js: four
+  // blocking round trips that return 304 and transfer nothing, before the page
+  // could start rendering. At a phone's 100-300ms RTT that is 0.4-1.2s of dead
+  // wait per navigation.
+  //
+  // The pages already request these with `?v=w13`, and the repo bumps that
+  // buster whenever the file changes — which is exactly the precondition
+  // `immutable` needs. So the long cache is keyed on the version being PRESENT:
+  // a request without one is still revalidated, so an asset referenced without
+  // a buster can never be pinned to a stale copy for a year.
+  app.use((req, res, next) => {
+    if (/^\/(styles|js|img)\//.test(req.path) && typeof req.query.v === 'string' && req.query.v) {
+      res.setHeader('Cache-Control', IMMUTABLE);
+    }
+    next();
+  });
+
   app.use(
     express.static(WEB_DIR, {
       index: false,
       setHeaders: (res, filePath) => {
-        if (/\.(png|jpe?g|gif|ico|svg|webp|woff2?)$/i.test(filePath)) {
+        // Unversioned media: the artcard art is referenced from CSS without a
+        // buster, so it keeps the shorter, revalidating cache it always had.
+        if (!res.getHeader('Cache-Control') && /\.(png|jpe?g|gif|ico|svg|webp|woff2?)$/i.test(filePath)) {
           res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
         }
       },
