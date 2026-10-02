@@ -75,29 +75,35 @@ npx cap sync android
 # 3. Restore the splash theme + Android-12 icon (cap sync resets styles.xml)
 node scripts/write-android-styles.js
 
-# 4. Bump versionCode (only if the committed one is already on Play)
-node scripts/bump-android-version.js
-
-# 5. Build a SIGNED bundle — pass the keystore straight to Gradle
-cd android
-./gradlew clean bundleRelease \
-  -Pandroid.injected.signing.store.file=/absolute/path/to/disc-golf-go.jks \
-  -Pandroid.injected.signing.store.password='YOUR_STORE_PASSWORD' \
-  -Pandroid.injected.signing.key.alias=discgolfgo \
-  -Pandroid.injected.signing.key.password='YOUR_KEY_PASSWORD'
+# 4. Build the release bundle — UNSIGNED, you sign it yourself in step 5
+npm run android:release
+# → bumps versionCode in android/app/build.gradle
+# → ensures Android permissions
+# → runs ./gradlew clean bundleRelease
 # Output: android/app/build/outputs/bundle/release/app-release.aab
 
-# 6. After successful upload — commit the version bump
+# 5. Sign the bundle. Use jarsigner, not apksigner — apksigner handles APKs
+#    only and will refuse an .aab.
+jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+  -keystore /path/to/disc-golf-go.jks \
+  android/app/build/outputs/bundle/release/app-release.aab \
+  discgolfgo
+
+# 6. Confirm it took before uploading
+jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+
+# 7. Upload to Play Console, then commit the version bump
 git add android/app/build.gradle && git commit -m "build(android): bump versionCode to XX"
 ```
 
-> **`bundleRelease` on its own produces an UNSIGNED bundle, and Play rejects it.**
-> There is no `signingConfigs` block in `android/app/build.gradle` on purpose —
-> the keystore is never in the repo. The four `-Pandroid.injected.signing.*`
-> properties above are exactly what `build-android.yml` passes, so a local
-> artifact matches the workflow's. `npm run android:release` bumps and builds in
-> one step but passes no signing properties, so use it for a local smoke test,
-> not for a Play upload.
+> **`bundleRelease` emits an unsigned bundle by design.** There is no
+> `signingConfigs` block in `android/app/build.gradle` and there should not be —
+> the keystore never belongs in the repo. Signing is a separate, manual step.
+>
+> The GitHub workflow is the exception: it signs during the build by passing
+> `-Pandroid.injected.signing.*` properties from repository secrets, because
+> nobody is at a terminal to sign the artifact afterwards. That is a CI
+> convenience, not the local flow.
 
 **Toolchain:** JDK 17 and Android SDK 36 (`platforms;android-36`,
 `build-tools;36.0.0`) — the same versions CI installs. Gradle comes from the
