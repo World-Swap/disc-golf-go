@@ -143,6 +143,30 @@ triggers, editing a social post image or the promo page shipped a TestFlight
 build and an AAB — ten builds of 1.4.0 went up in one day that way, and six
 more were cancelled by hand in a single afternoon.
 
+**How an Android release is actually cut — locally, and signed by hand.** Do not
+propose the GitHub workflow or Gradle-side signing for a release; this is the
+process, and it has had to be restated more than once:
+
+```bash
+git checkout main && git pull
+npm install
+npx cap sync android
+node scripts/write-android-styles.js       # cap sync resets styles.xml — restores it,
+                                           # and refits drawable/icon_only.png to the
+                                           # splash crop (prints the scale it used)
+npm run android:release                    # bumps versionCode, clean bundleRelease
+# → android/app/build/outputs/bundle/release/app-release.aab  — UNSIGNED
+```
+
+The AAB is then **signed manually** with `jarsigner` (not `apksigner`, which
+refuses a bundle), verified with `jarsigner -verify`, and uploaded to Play by
+hand. There is deliberately no `signingConfigs` block in
+`android/app/build.gradle` — the keystore never goes in the repo.
+`build-android.yml` and its `ANDROID_KEYSTORE_*` secrets still exist and sign
+during the build via `-Pandroid.injected.signing.*`, but that is a CI
+convenience for when nobody is at a terminal; it is **not** how releases ship.
+Full steps in `ANDROID_BUILD.md`.
+
 A native build is only needed when the **shell** changes (`ios/`, `android/`,
 `resources/`, `capacitor.config.ts`, a dependency) or when a release is being
 cut — all deliberate acts that come with bumping the version anyway.
