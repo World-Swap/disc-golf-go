@@ -148,6 +148,17 @@ triggers, editing a social post image or the promo page shipped a TestFlight
 build and an AAB — ten builds of 1.4.0 went up in one day that way, and six
 more were cancelled by hand in a single afternoon.
 
+**Play Console's two optimization actions, and what is actually open.** The R8
+one is half done: `android.r8.optimizedResourceShrinking=true` is set in
+`android/gradle.properties` with **AGP 8.13** (Gradle wrapper already 8.13, which
+is what 8.13 requires). Still open is its second half — **AGP 9.0+**, which needs
+**Gradle 9.1** and carries API changes Capacitor 6.2.0 predates, so it waits for
+a Capacitor upgrade rather than a release. The **bitmap downsampling** action is
+**not ours to fix**: the flagged `v.d.c` is obfuscated third-party code, and the
+only Android source in this repo is `MainActivity.java`, which never calls
+`BitmapFactory`. It is almost certainly `@capacitor/splash-screen`; it clears
+when Capacitor is upgraded, not before.
+
 **How an Android release is actually cut — locally, and signed by hand.** Do not
 propose the GitHub workflow or Gradle-side signing for a release; this is the
 process, and it has had to be restated more than once:
