@@ -20,10 +20,13 @@
         <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
-    <!-- Launch theme: Android 12+ system splash with branded background + icon -->
+    <!-- Launch theme: Android 12+ system splash with branded background + icon.
+         The icon points straight at @drawable/icon_only, which this script
+         writes already padded to the mask's safe zone — there is no inset
+         wrapper, so the padding lives in exactly one place. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#202020</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_splash</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/icon_only</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 
