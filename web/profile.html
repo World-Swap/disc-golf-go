@@ -57,10 +57,15 @@
             meter(tierPct) +
           '</div>' +
 
+          // Level, then the two training numbers that were stranded in a second
+          // row far down the page. Gold, Badges and Check-ins are gone: gold is
+          // spent nowhere, badges are RPG-era, and check-ins are not something
+          // this app asks anyone to do. The economy still exists in the shop and
+          // the vault — it is just not what Profile should lead with.
           '<div class="stats">' +
             '<div class="stat"><div class="stat__num">' + (p.level || 1) + '</div><div class="stat__label">Level</div></div>' +
-            '<div class="stat"><div class="stat__num">' + (p.gold || 0) + '</div><div class="stat__label">Gold</div></div>' +
-            '<div class="stat"><div class="stat__num">' + (p.badge_count || 0) + '</div><div class="stat__label">Badges</div></div>' +
+            '<div class="stat"><div class="stat__num">' + (ts.training_streak_days || 0) + '</div><div class="stat__label">Streak</div></div>' +
+            '<div class="stat"><div class="stat__num">' + (p.best_streak || 0) + '</div><div class="stat__label">Best</div></div>' +
           '</div>' +
 
           '<div>' +
@@ -100,17 +105,15 @@
             '</div>' +
           '</div>' +
 
-          '<div class="stats">' +
-            '<div class="stat"><div class="stat__num">' + (ts.training_streak_days || 0) + '</div><div class="stat__label">Streak</div></div>' +
-            '<div class="stat"><div class="stat__num">' + (p.best_streak || 0) + '</div><div class="stat__label">Best</div></div>' +
-            '<div class="stat"><div class="stat__num">' + ((p.stats && p.stats.total_checkins) || 0) + '</div><div class="stat__label">Check-ins</div></div>' +
-          '</div>' +
-
           '<div>' +
             '<p class="section-label">Account</p>' +
             '<div class="rows">' +
               '<a class="row" href="/settings"><span class="row__glyph">⚙</span><div class="row__body"><div class="row__title">Account &amp; settings</div></div><span class="row__meta">›</span></a>' +
-              '<a class="row" href="/vault"><span class="row__glyph">◈</span><div class="row__body"><div class="row__title">Vault &amp; inventory</div></div><span class="row__meta">›</span></a>' +
+              // "Inventory" is RPG-era and there is none: the vault's two tabs are My
+              // Library (lessons) and Creators (their videos). The glyph follows the
+              // tab bar's film clapper for the same reason the tab stopped being a
+              // diamond — the vault holds videos.
+              '<a class="row" href="/vault"><span class="row__glyph">🎬</span><div class="row__body"><div class="row__title">Vault &amp; creators</div></div><span class="row__meta">›</span></a>' +
               '<a class="row" href="/delete-account"><span class="row__glyph">⊘</span><div class="row__body"><div class="row__title">Delete account</div></div><span class="row__meta">›</span></a>' +
             '</div>' +
           '</div>';
