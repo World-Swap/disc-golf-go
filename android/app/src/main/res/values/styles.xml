@@ -20,13 +20,29 @@
         <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
-    <!-- Launch theme: Android 12+ system splash with branded background + icon.
-         The icon points straight at @drawable/icon_only, which this script
-         writes already padded to the mask's safe zone — there is no inset
-         wrapper, so the padding lives in exactly one place. -->
+    <!-- Launch theme: Android 12+ system splash, branded background, and NO icon
+         override — deliberately.
+
+         Pointing windowSplashScreenAnimatedIcon at our own drawable is what
+         clipped the logo. The system does not scale that drawable to a fixed
+         slot: measured on a device, shrinking the artwork inside its canvas by
+         x0.917 made it render 23% LARGER (610px -> 750px), so padding the
+         canvas cut MORE of the logo rather than less. The sizing rule was not
+         derivable from screenshots and each guess costs a signed build.
+
+         With no override Android uses the adaptive launcher icon, which is
+         already built for masking: mipmap-anydpi-v26/ic_launcher.xml insets the
+         foreground 16.7%, putting its farthest pixel at 0.266 of the canvas
+         against a mask that cuts at 0.500 — uncut, which is why it has always
+         looked right on the home screen. Its background layer is #202020, the
+         same as windowSplashScreenBackground, so no tile shows.
+
+         To go back, restore this line:
+             <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_splash</item>
+         drawable/ic_launcher_splash.xml and drawable/icon_only.png are kept for
+         exactly that reason. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#202020</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/icon_only</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 
