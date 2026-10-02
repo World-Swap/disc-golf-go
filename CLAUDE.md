@@ -124,13 +124,8 @@ Schema note: there is no `migrations/` folder in VCS — the live schema exists 
 
 ## Releasing the native apps — builds are MANUAL
 
-**Live in production as of 2026-10-02: iOS 1.4.1 · Android 2.5 (versionCode
-40).** **In flight: Android 2.6 (versionCode 41 in the repo) — the splash-icon
-fix, built but NOT yet promoted.** Move it up to the live line only once it is
-actually rolled out in Play, and note that `npm run android:release` bumps the
-code as it builds, so the number that ships may be one higher than the one
-committed here; commit `android/app/build.gradle` after a successful upload so
-the two agree. Keep this line current rather than reading a release number out
+**Live in production as of 2026-10-02: iOS 1.4.1 · Android 2.6 (versionCode
+43).** Keep this line current rather than reading a release number out
 of a dated changelog entry below — those were true when written and are not
 updated, which is how "Android v2.4 / versionCode 38" came to be quoted two
 weeks after 2.5 shipped. The repo's own numbers are the other check:
@@ -162,6 +157,11 @@ when Capacitor is upgraded, not before.
 **How an Android release is actually cut — locally, and signed by hand.** Do not
 propose the GitHub workflow or Gradle-side signing for a release; this is the
 process, and it has had to be restated more than once:
+
+`npm run android:release` bumps `versionCode` on every run, so the number that
+ships is whatever the build produced, not what was committed — 2.6 went out as
+**43** against the 41 in the repo. Commit `android/app/build.gradle` after a
+successful upload so the two agree.
 
 ```bash
 git checkout main && git pull
