@@ -125,10 +125,15 @@ Schema note: there is no `migrations/` folder in VCS — the live schema exists 
 ## Releasing the native apps — builds are MANUAL
 
 **Live in production as of 2026-10-02: iOS 1.4.1 · Android 2.6 (versionCode
-43).** Keep this line current rather than reading a release number out
-of a dated changelog entry below — those were true when written and are not
-updated, which is how "Android v2.4 / versionCode 38" came to be quoted two
-weeks after 2.5 shipped. The repo's own numbers are the other check:
+43).** **In review: Android 2.6.1 (versionCode 47)** — the splash icon fix; move
+it up to the live line once Play shows it rolled out.
+
+**Keep this line current as part of the change that moves it — do not wait to be
+asked.** Cutting a build, syncing `versionCode` after an upload, or a release
+going live are all edits to this line, and it is the first thing anyone reads
+for the current state — never a release number read out of a dated changelog
+entry below, which were true when written and are not updated. That is how
+"Android v2.4 / versionCode 38" came to be quoted two weeks after 2.5 shipped. The repo's own numbers are the other check:
 `MARKETING_VERSION` in `ios/App/App.xcodeproj/project.pbxproj` and
 `versionCode` / `versionName` in `android/app/build.gradle`.
 
