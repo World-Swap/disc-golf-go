@@ -33,15 +33,16 @@ export interface PeriodMetrics {
  * by a name, so the value that arrives over HTTP only ever selects an entry —
  * it is never concatenated into a query.
  */
+// Board metrics only. `birdies` is still a CHALLENGE metric in game.catalog.ts
+// and best_18 is still in the /stats career record — neither is affected by
+// what the leaderboard offers to rank by.
 export const GAME_METRICS = {
   xp:          { expr: 'COALESCE(SUM(g.xp_awarded), 0)',                    dir: 'DESC', having: 'COALESCE(SUM(g.xp_awarded), 0) > 0',   label: 'XP', unit: 'XP' },
   best_round:  { expr: 'MIN(g.vs_par)',                                     dir: 'ASC',  having: 'MIN(g.vs_par) IS NOT NULL',            label: 'Best round', unit: 'vs par' },
-  best_18:     { expr: 'MIN(g.vs_par) FILTER (WHERE g.holes = 18)',         dir: 'ASC',  having: 'MIN(g.vs_par) FILTER (WHERE g.holes = 18) IS NOT NULL', label: 'Best 18', unit: 'vs par' },
   aces:        { expr: 'COALESCE(SUM(g.aces), 0)',                          dir: 'DESC', having: 'COALESCE(SUM(g.aces), 0) > 0',         label: 'Aces', unit: '' },
   full_rounds: { expr: "COUNT(*) FILTER (WHERE g.holes = 18)",              dir: 'DESC', having: "COUNT(*) FILTER (WHERE g.holes = 18) > 0", label: '18-hole rounds', unit: '' },
   courses:     { expr: 'COUNT(DISTINCT g.course_id) FILTER (WHERE g.course_id IS NOT NULL)', dir: 'DESC', having: 'COUNT(DISTINCT g.course_id) FILTER (WHERE g.course_id IS NOT NULL) > 0', label: 'Courses played', unit: '' },
   rounds:      { expr: 'COUNT(*)',                                          dir: 'DESC', having: 'COUNT(*) > 0',                          label: 'Rounds', unit: '' },
-  birdies:     { expr: 'COALESCE(SUM(g.birdies), 0)',                       dir: 'DESC', having: 'COALESCE(SUM(g.birdies), 0) > 0',       label: 'Birdies', unit: '' },
   under_par:   { expr: 'COUNT(*) FILTER (WHERE g.vs_par < 0)',              dir: 'DESC', having: 'COUNT(*) FILTER (WHERE g.vs_par < 0) > 0', label: 'Rounds under par', unit: '' },
 } as const;
 

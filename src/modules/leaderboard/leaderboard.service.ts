@@ -7,7 +7,7 @@ import { periodStart, type Period as GamePeriod } from '../game/game.catalog';
 import { createLeaderboardRepo, type LeaderboardRepo, type SortCol } from './leaderboard.repo';
 import type { Queryable } from '../../db/types';
 
-const TABS = ['overall', 'lessons', 'streak', 'challenges'] as const;
+const TABS = ['overall', 'lessons', 'streak', 'challenges', 'videos'] as const;
 type Tab = (typeof TABS)[number];
 
 /**
@@ -30,6 +30,7 @@ const SORT_COL: Record<Tab, SortCol> = {
   lessons: 'lessons_completed',
   streak: 'current_streak',
   challenges: 'challenges_won',
+  videos: 'videos_unlocked',
 };
 
 function rankTier(rank: number): 'gold' | 'silver' | 'bronze' | null {
