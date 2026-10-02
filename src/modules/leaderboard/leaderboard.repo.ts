@@ -5,7 +5,7 @@
 
 import type { Queryable } from '../../db/types';
 
-export type SortCol = 'total_xp' | 'lessons_completed' | 'current_streak' | 'challenges_won';
+export type SortCol = 'total_xp' | 'lessons_completed' | 'current_streak' | 'challenges_won' | 'videos_unlocked';
 
 export interface Top5Row {
   id: number;
@@ -23,6 +23,7 @@ export interface EntryRow {
   lessons_completed: number;
   current_streak: number;
   challenges_won: number;
+  videos_unlocked: number;
   last_active_at: Date | null;
   stat_value: number;
 }
@@ -32,7 +33,29 @@ const PERIOD_STAT: Record<SortCol, string> = {
   lessons_completed: 'tc.lessons_completed',
   current_streak: 'p.login_streak',
   challenges_won: 'dc.challenges_won',
+  videos_unlocked: 'vc.videos_unlocked',
 };
+
+// The videos a player has unlocked, counted exactly the way the Vault's Creators
+// tab counts them: a lesson's primary video PLUS any video in lesson_resources.
+// That is what keeps this from being lessons_completed under another name — a
+// lesson can carry more than one video, and ~half of the library does.
+//
+// Nothing in the app records that a video was *watched*; there are no watch
+// events. Unlocking is the only real signal, which is why the board says
+// "unlocked by completing lessons" rather than claiming a view count.
+const VIDEO_ROWS = `
+    SELECT tc.player_id, l.youtube_url AS url, tc.completed_at
+    FROM training_completions tc
+    JOIN training_lessons l ON l.id = tc.lesson_id
+    WHERE l.is_active = true AND l.youtube_url IS NOT NULL AND l.youtube_url <> ''
+    UNION ALL
+    SELECT tc.player_id, lr.url, tc.completed_at
+    FROM training_completions tc
+    JOIN training_lessons l ON l.id = tc.lesson_id
+    JOIN lesson_resources lr ON lr.lesson_id = l.id
+    WHERE l.is_active = true AND lr.resource_type = 'video'
+      AND lr.url IS NOT NULL AND lr.url <> ''`;
 
 // All-time board is computed live from durable tables, NOT the leaderboard_entries
 // snapshot (which nothing populates, so it always read as zero).
@@ -62,13 +85,17 @@ const ALLTIME_FROM = `
   LEFT JOIN (
     SELECT player_id, COUNT(*)::int AS challenges_won, MAX(completed_at) AS last_challenge_at
     FROM player_daily_challenges WHERE completed = TRUE GROUP BY player_id
-  ) cc ON cc.player_id = p.id`;
+  ) cc ON cc.player_id = p.id
+  LEFT JOIN (
+    SELECT player_id, COUNT(*)::int AS videos_unlocked FROM (${VIDEO_ROWS}) v GROUP BY player_id
+  ) vc ON vc.player_id = p.id`;
 
 const ALLTIME_STAT: Record<SortCol, string> = {
   total_xp: 'COALESCE(tx.training_xp, 0)',
   lessons_completed: 'COALESCE(lc.lessons_completed, 0)',
   current_streak: 'COALESCE(p.login_streak, 0)',
   challenges_won: 'COALESCE(cc.challenges_won, 0)',
+  videos_unlocked: 'COALESCE(vc.videos_unlocked, 0)',
 };
 
 const ALLTIME_SELECT = `
@@ -78,6 +105,7 @@ const ALLTIME_SELECT = `
          COALESCE(lc.lessons_completed, 0) AS lessons_completed,
          COALESCE(p.login_streak, 0) AS current_streak,
          COALESCE(cc.challenges_won, 0) AS challenges_won,
+         COALESCE(vc.videos_unlocked, 0) AS videos_unlocked,
          GREATEST(lc.last_lesson_at, cc.last_challenge_at) AS last_active_at`;
 
 export function createLeaderboardRepo(db: Queryable) {
@@ -118,13 +146,18 @@ export function createLeaderboardRepo(db: Queryable) {
          ), dc AS (
            SELECT player_id, COUNT(*)::int AS challenges_won, MAX(completed_at) AS last_challenge_at
            FROM player_daily_challenges WHERE completed = TRUE AND completed_at >= $1 GROUP BY player_id
+         ), vc AS (
+           SELECT player_id, COUNT(*)::int AS videos_unlocked
+           FROM (${VIDEO_ROWS}) v WHERE v.completed_at >= $1 GROUP BY player_id
          )
          SELECT p.id, COALESCE(p.display_name, p.username, 'Player') AS display_name, p.profile_photo_url,
                 COALESCE(tc.training_xp, 0) AS total_xp, COALESCE(tc.lessons_completed, 0) AS lessons_completed,
                 COALESCE(p.login_streak, 0) AS current_streak, COALESCE(dc.challenges_won, 0) AS challenges_won,
+                COALESCE(vc.videos_unlocked, 0) AS videos_unlocked,
                 GREATEST(tc.last_lesson_at, dc.last_challenge_at) AS last_active_at,
                 COALESCE(${PERIOD_STAT[sortCol]}, 0) AS stat_value
          FROM players p LEFT JOIN tc ON tc.player_id = p.id LEFT JOIN dc ON dc.player_id = p.id
+              LEFT JOIN vc ON vc.player_id = p.id
          WHERE (COALESCE(tc.lessons_completed, 0) > 0 OR COALESCE(dc.challenges_won, 0) > 0)
          ORDER BY stat_value DESC, p.id ASC LIMIT 50`,
         [since]
@@ -151,12 +184,17 @@ export function createLeaderboardRepo(db: Queryable) {
          ), dc AS (
            SELECT player_id, COUNT(*)::int AS challenges_won FROM player_daily_challenges
            WHERE completed = TRUE AND completed_at >= $1 AND player_id = $2 GROUP BY player_id
+         ), vc AS (
+           SELECT player_id, COUNT(*)::int AS videos_unlocked
+           FROM (${VIDEO_ROWS}) v WHERE v.completed_at >= $1 AND v.player_id = $2 GROUP BY player_id
          )
          SELECT p.id, COALESCE(p.display_name, p.username, 'Player') AS display_name, p.profile_photo_url,
                 COALESCE(tc.training_xp, 0) AS total_xp, COALESCE(tc.lessons_completed, 0) AS lessons_completed,
                 COALESCE(p.login_streak, 0) AS current_streak, COALESCE(dc.challenges_won, 0) AS challenges_won,
+                COALESCE(vc.videos_unlocked, 0) AS videos_unlocked,
                 NULL::timestamptz AS last_active_at, COALESCE(${PERIOD_STAT[sortCol]}, 0) AS stat_value
-         FROM players p LEFT JOIN tc ON tc.player_id = p.id LEFT JOIN dc ON dc.player_id = p.id WHERE p.id = $2`,
+         FROM players p LEFT JOIN tc ON tc.player_id = p.id LEFT JOIN dc ON dc.player_id = p.id
+              LEFT JOIN vc ON vc.player_id = p.id WHERE p.id = $2`,
         [since, id]
       );
       return r.rows[0] ?? null;

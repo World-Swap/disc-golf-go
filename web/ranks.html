@@ -17,7 +17,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w12" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w13" />
   <style>
     .rank { width:26px; font-family:var(--font-mono); font-size:13px; color:var(--color-ash); text-align:right; flex:none; }
     .row--me { background:var(--color-peach); }
@@ -101,14 +101,14 @@
       // What each board can be ranked by. The keys are the API's metric names,
       // so a tab is a metric and nothing has to be translated.
       var TABS = {
-        training: [['overall', 'XP'], ['lessons', 'Lessons'], ['streak', 'Streak'], ['challenges', 'Challenges']],
-        game: [['xp', 'XP'], ['best_round', 'Best round'], ['best_18', 'Best 18'], ['aces', 'Aces'],
-               ['full_rounds', '18-hole'], ['courses', 'Courses'], ['birdies', 'Birdies'],
-               ['under_par', 'Under par']],
+        training: [['overall', 'XP'], ['lessons', 'Lessons'], ['videos', 'Videos'],
+                   ['streak', 'Streak'], ['challenges', 'Challenges']],
+        game: [['xp', 'XP'], ['best_round', 'Best'], ['aces', 'Aces'],
+               ['full_rounds', '18s'], ['courses', 'Courses'], ['under_par', 'Sub-par']],
         daily: [['week', 'Today'], ['wins', 'Wins'], ['podiums', 'Podiums'],
-                ['played', 'Days'], ['best_score', 'Best round']],
+                ['played', 'Days'], ['best_score', 'Best']],
         tournament: [['week', 'This week'], ['wins', 'Wins'], ['podiums', 'Podiums'],
-                     ['played', 'Weeks played'], ['best_score', 'Best score']]
+                     ['played', 'Weeks'], ['best_score', 'Best']]
       };
 
       function paintTabs() {
@@ -195,6 +195,10 @@
       var TRAINING_TAB = {
         overall:    ['XP', 'XP earned from completed lessons.'],
         lessons:    ['Lessons', 'Lessons completed.'],
+        // Unlocked, not watched: nothing in the app records a view. A lesson's
+        // primary video plus any extra videos it carries, counted the way the
+        // Vault's Creators tab counts them.
+        videos:     ['Videos', 'Videos unlocked by completing lessons.'],
         streak:     ['Streak', 'Consecutive days training.'],
         challenges: ['Challenges', 'Daily challenges completed.']
       };

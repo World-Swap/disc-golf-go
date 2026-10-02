@@ -50,7 +50,7 @@ export const TOURNAMENT_METRICS = {
   wins:       { expr: 'y.wins',       dir: 'DESC', having: 'y.wins > 0',       label: 'Wins', unit: '' },
   podiums:    { expr: 'y.podiums',    dir: 'DESC', having: 'y.podiums > 0',    label: 'Podiums', unit: '' },
   played:     { expr: 'y.played',     dir: 'DESC', having: 'y.played > 0',     label: 'Weeks played', unit: '' },
-  best_score: { expr: 'y.best_score', dir: 'ASC',  having: 'y.best_score IS NOT NULL', label: 'Best score', unit: 'vs par' },
+  best_score: { expr: 'y.best_score', dir: 'ASC',  having: 'y.best_score IS NOT NULL', label: 'Best round', unit: 'vs par' },
 } as const;
 
 export type TournamentMetric = keyof typeof TOURNAMENT_METRICS;

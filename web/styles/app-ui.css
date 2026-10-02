@@ -152,9 +152,14 @@
 .seg { flex: 1; text-align: center; white-space: nowrap; font-family: var(--font-display); font-size: 13px; font-weight: var(--weight-medium); color: var(--color-ash); padding: 9px 10px; border: none; border-radius: var(--radius-pill); background: transparent; transition: background 140ms ease, color 140ms ease; }
 /* A bar with more than four choices cannot give each one a fair share of a
    phone's width, so it scrolls instead of shrinking the labels to nothing. */
-.segbar--scroll { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+/* `safe center` is the whole point: centre the metrics when they fit, but fall
+   back to start when they overflow. A plain `center` would centre the overflow
+   too, putting the first metric off the left edge where no scroll can reach it. */
+.segbar--scroll { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  justify-content: safe center; }
 .segbar--scroll::-webkit-scrollbar { display: none; }
-.segbar--scroll .seg { flex: 0 0 auto; padding-left: 13px; padding-right: 13px; white-space: nowrap; }
+.segbar--scroll .seg { flex: 0 0 auto; padding-left: 9px; padding-right: 9px;
+  font-size: 12px; white-space: nowrap; }
 /* Whether there is more to the right is otherwise only visible when a tab
    happens to straddle the edge: eight metrics peek, five can land flush and
    read as the whole set. The fade says there is more either way, and is
