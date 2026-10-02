@@ -75,18 +75,45 @@ npx cap sync android
 # 3. Restore the splash theme + Android-12 icon (cap sync resets styles.xml)
 node scripts/write-android-styles.js
 
-# 4. Bump versionCode + build (one command)
-npm run android:release
-# → increments versionCode directly in android/app/build.gradle
-# → ensures Android permissions
-# → runs ./gradlew clean bundleRelease
-# Output: android/app/build/outputs/bundle/release/app-release.aab
+# 4. Bump versionCode (only if the committed one is already on Play)
+node scripts/bump-android-version.js
 
-# 5. Sign with jarsigner, then upload to Play Console
+# 5. Build a SIGNED bundle — pass the keystore straight to Gradle
+cd android
+./gradlew clean bundleRelease \
+  -Pandroid.injected.signing.store.file=/absolute/path/to/disc-golf-go.jks \
+  -Pandroid.injected.signing.store.password='YOUR_STORE_PASSWORD' \
+  -Pandroid.injected.signing.key.alias=discgolfgo \
+  -Pandroid.injected.signing.key.password='YOUR_KEY_PASSWORD'
+# Output: android/app/build/outputs/bundle/release/app-release.aab
 
 # 6. After successful upload — commit the version bump
 git add android/app/build.gradle && git commit -m "build(android): bump versionCode to XX"
 ```
+
+> **`bundleRelease` on its own produces an UNSIGNED bundle, and Play rejects it.**
+> There is no `signingConfigs` block in `android/app/build.gradle` on purpose —
+> the keystore is never in the repo. The four `-Pandroid.injected.signing.*`
+> properties above are exactly what `build-android.yml` passes, so a local
+> artifact matches the workflow's. `npm run android:release` bumps and builds in
+> one step but passes no signing properties, so use it for a local smoke test,
+> not for a Play upload.
+
+**Toolchain:** JDK 17 and Android SDK 36 (`platforms;android-36`,
+`build-tools;36.0.0`) — the same versions CI installs. Gradle comes from the
+wrapper, so no system Gradle is needed.
+
+**Check the splash before you upload.** `scripts/write-android-styles.js` (step 3)
+regenerates `drawable/icon_only.png` by fitting the artwork inside the crop the
+system applies to the splash icon, and prints the scale it used:
+
+```
+✓ drawable/icon_only.png fitted to the splash crop (artwork 0.447 → 0.409 of canvas, scale 0.917)
+```
+
+It needs `sharp`, so run `npm install` first. If the source artwork is ever
+re-cut off-centre, this step **fails the build** rather than shipping a lopsided
+icon.
 
 **versionCode lives in `android/app/build.gradle`** (`versionCode NN`). `scripts/bump-android-version.js` increments it in place — `cap sync` does not regenerate `build.gradle`, so the counter persists. Let the script own the bump rather than editing the number by hand.
 
