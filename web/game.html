@@ -214,7 +214,7 @@
     var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
     var IN_THE_CHAINS = 10;    // feet: close enough to have holed out
 
-    // Nine aerial hole templates. Each is a fairway running bottom to top with
+    // 21 aerial hole templates. Each is a fairway running bottom to top with
     // the top centre left clear, so the basket and the flight draw over it.
     var HOLE_ART = [
       'open', 'dogleg-left', 'dogleg-right', 'tunnel', 'water',
@@ -222,10 +222,10 @@
       'creek', 'desert', 'autumn', 'lakeside', 'bunkers',
       'split', 'canyon', 's-curve', 'glade', 'crest', 'winter'
     ];
-    // A shuffled bag rather than a plain random pick: 20 holes drawn at random
+    // A shuffled bag rather than a plain random pick: 21 holes drawn at random
     // still repeat within a round surprisingly often, and playing the same
     // hole twice in a row reads as a bug. The bag empties before refilling,
-    // so a round never shows a repeat until all 20 have been seen.
+    // so a round never shows a repeat until all 21 have been seen.
     var artBag = [];
     function drawFromBag() {
       if (!artBag.length) {
@@ -252,16 +252,25 @@
       img.src = '/img/holes/' + name + '.webp';
     }
 
-    // Which template a hole gets. A real course is deterministic — hole 4 at a
-    // given course always looks the same — while a quick round varies.
+    // Which template a hole gets: the next one out of the shuffled bag, for a
+    // real course exactly as for a quick round.
+    //
+    // A real course used to be deterministic — `HOLE_ART[(COURSE.id * 7 +
+    // S.hole * 3) % 21]`, so hole 4 at a course always looked the same. That
+    // was not worth having and did not even work: stepping by 3 in a modulus
+    // of 21 cycles with period 21/gcd(3,21) = 7, so **hole 8 drew hole 1's
+    // template** and only 7 of the 21 were reachable; and the id times 7
+    // shifted the start by gcd(7,21) = 7, leaving three distinct sequences in
+    // the whole course table. Reported from a real daily: the maps came back
+    // after 8 holes.
+    //
+    // The bag has no arithmetic to get wrong. It is dealt without replacement,
+    // so no round can show a duplicate, and it is reshuffled per round, so the
+    // same course plays different art each time — which is what we want. The
+    // art is decorative: hole length and par come from the course's own
+    // `hole_details`, so what a tournament field shares is the holes, not the
+    // backgrounds.
     function pickArt() {
-      // A real course stays deterministic — hole 4 at a given course should
-      // look the same every visit — and draws from the same 20. A quick round
-      // pulls from the shuffled bag.
-      if (COURSE && COURSE.id) {
-        loadArt(HOLE_ART[(COURSE.id * 7 + S.hole * 3) % HOLE_ART.length]);
-        return;
-      }
       loadArt(drawFromBag());
     }
     var disc = DISCS[2];
@@ -351,6 +360,11 @@
     }
 
     function newHole() {
+      // A fresh bag per round. Without this the bag carries over, and a round
+      // starting with 3 left in it refills mid-way and can repeat a template
+      // it has already shown — the one case dealing without replacement does
+      // not cover on its own.
+      if (S.hole === 1) artBag = [];
       var how = document.getElementById('how');
       if (how && !how.hidden) { how.hidden = true; setTimeout(resize, 0); }
       var h = COURSE ? COURSE.holes[S.hole - 1] : null;
@@ -516,8 +530,8 @@
 
     /** Start a fresh round of the same shape -- only ever from the button. */
     function replay() {
-      S.hole = 1; S.total = 0; CARD = []; SUBMITTED = false; artBag = [];
-      newHole();   // paintBag() puts the discs back over these buttons
+      S.hole = 1; S.total = 0; CARD = []; SUBMITTED = false;
+      newHole();   // resets the art bag, since the round restarts at hole 1   // paintBag() puts the discs back over these buttons
     }
 
     // Send the card up and report what it earned. The round is only ever sent
