@@ -159,9 +159,17 @@ propose the GitHub workflow or Gradle-side signing for a release; this is the
 process, and it has had to be restated more than once:
 
 `npm run android:release` bumps `versionCode` on every run, so the number that
-ships is whatever the build produced, not what was committed — 2.6 went out as
-**43** against the 41 in the repo. Commit `android/app/build.gradle` after a
-successful upload so the two agree.
+ships is whatever the build produced, not what was committed. **Commit
+`android/app/build.gradle` after a successful upload** — this is not tidiness:
+left uncommitted it aborts the next `git pull`, and the build then runs against
+a stale tree without saying so. That cost three builds (43, 44, 45), each
+missing the fix it was cut for. `scripts/preflight-release.js` now refuses to
+build from a branch behind its upstream.
+
+**The version name on the Play listing is the receipt.** If it is not what the
+repo says, the bundle came from the wrong tree — check that before anything
+else. Signing runs from `android/`, so the AAB is at
+`app/build/outputs/bundle/release/app-release.aab` from there.
 
 ```bash
 git checkout main && git pull
