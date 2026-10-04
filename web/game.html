@@ -63,6 +63,8 @@
     .g-disc--act:first-child { border-color: #fc6414; background: #fc6414; }
     .g-disc--act:first-child .g-disc__n { color: #fff; font-size: 14px; }
     .g-disc--act:first-child .g-disc__f { color: rgba(255,255,255,0.8); }
+    /* Only ever while the card is still posting. */
+    .g-disc--act[disabled] { opacity: .5; cursor: default; }
 
     /* Prompt / result banner under the field.
        The height is FIXED, not fitted to the text. Every tap changes this
@@ -227,29 +229,73 @@
     // hole twice in a row reads as a bug. The bag empties before refilling,
     // so a round never shows a repeat until all 21 have been seen.
     var artBag = [];
-    function drawFromBag() {
-      if (!artBag.length) {
-        artBag = HOLE_ART.slice();
-        for (var i = artBag.length - 1; i > 0; i--) {     // Fisher-Yates
-          var j = Math.floor(Math.random() * (i + 1));
-          var t = artBag[i]; artBag[i] = artBag[j]; artBag[j] = t;
-        }
+    function fillBag() {
+      artBag = HOLE_ART.slice();
+      for (var i = artBag.length - 1; i > 0; i--) {     // Fisher-Yates
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = artBag[i]; artBag[i] = artBag[j]; artBag[j] = t;
       }
+    }
+    function drawFromBag() {
+      if (!artBag.length) fillBag();
       return artBag.pop();
     }
-    var artCache = {};
-    var art = null;            // the image for the hole being played, once loaded
 
-    // Loads on demand and only paints once ready, so a slow or failed image
-    // never blocks the hole — the drawn field below is the fallback.
-    function loadArt(name) {
-      art = null;
-      if (artCache[name] === 'failed') return;
-      if (artCache[name]) { art = artCache[name]; return; }
+    var artCache = {};
+    var artWaiting = {};       // name -> callbacks, while a fetch is in flight
+    var art = null;            // the image painted behind the hole being played
+    var artSeq = 0;            // so a slow hole's image cannot land on a later one
+
+    // Fetches into the cache and reports when the image can actually be
+    // PAINTED, which is not when it loads: an <img> fires `load` before its
+    // pixels are decoded, and drawImage on an undecoded image blocks the frame.
+    // decode() moves that work off the first paint of the hole.
+    function fetchArt(name, ready) {
+      if (!name) return;
+      var hit = artCache[name];
+      if (hit === 'failed') return;
+      if (hit) { if (ready) ready(hit); return; }
+      // One request per template. On a slow connection the hole you reach is
+      // the one still downloading, and without this it would be asked for a
+      // second time — on exactly the connection that can least afford it.
+      if (artWaiting[name]) { if (ready) artWaiting[name].push(ready); return; }
+      var waiting = artWaiting[name] = ready ? [ready] : [];
       var img = new Image();
-      img.onload = function () { artCache[name] = img; art = img; };
-      img.onerror = function () { artCache[name] = 'failed'; };
+      img.onload = function () {
+        var ok = function () {
+          artCache[name] = img; delete artWaiting[name];
+          waiting.forEach(function (fn) { fn(img); });
+        };
+        if (img.decode) img.decode().then(ok, ok); else ok();
+      };
+      img.onerror = function () { artCache[name] = 'failed'; delete artWaiting[name]; };
       img.src = '/img/holes/' + name + '.webp';
+    }
+
+    // The hole AFTER this one, drawn from the bag early and fetched while the
+    // current hole is being played. Walking to the next tee then paints from
+    // the cache, so there is nothing to wait for and nothing to flash.
+    var nextArt = null;
+    var artPrimed = false;     // nextArt holds an unused hole-1 template
+
+    /** Refill the bag and queue hole 1. Called once on load, so the first
+     *  hole is already warm by the time a length or a course is chosen. */
+    function primeArt() {
+      if (artPrimed) return;   // the one queued on load has not been spent yet
+      fillBag();
+      nextArt = artBag.pop();
+      fetchArt(nextArt);
+      artPrimed = true;
+    }
+
+    /** Paint the template queued for hole 1 WITHOUT spending it. The length
+     *  picker is a preview of the round about to start, so the hole you sit
+     *  looking at while choosing is the one you then play — and it has had
+     *  the whole of that choice to load. */
+    function previewArt() {
+      primeArt();
+      var seq = ++artSeq;
+      fetchArt(nextArt, function (img) { if (seq === artSeq) art = img; });
     }
 
     // Which template a hole gets: the next one out of the shuffled bag, for a
@@ -271,8 +317,21 @@
     // `hole_details`, so what a tournament field shares is the holes, not the
     // backgrounds.
     function pickArt() {
-      loadArt(drawFromBag());
+      var name = nextArt || drawFromBag();
+      artPrimed = false;
+      nextArt = drawFromBag();
+      fetchArt(nextArt);                 // warm the next tee while this one is played
+
+      var seq = ++artSeq;
+      var hit = artCache[name];
+      if (hit && hit !== 'failed') { art = hit; return; }
+      // Not cached yet. Hold the hole being LEFT on screen rather than
+      // clearing to the bare fallback — a half-second of the previous
+      // fairway reads as nothing at all, where a flash of empty background
+      // reads as a glitch. Swap only once the new one can paint.
+      fetchArt(name, function (img) { if (seq === artSeq) art = img; });
     }
+
     var disc = DISCS[2];
 
     // -------------------------------------------------------------- state
@@ -364,7 +423,7 @@
       // starting with 3 left in it refills mid-way and can repeat a template
       // it has already shown — the one case dealing without replacement does
       // not cover on its own.
-      if (S.hole === 1) artBag = [];
+      if (S.hole === 1) primeArt();
       var how = document.getElementById('how');
       if (how && !how.hidden) { how.hidden = true; setTimeout(resize, 0); }
       var h = COURSE ? COURSE.holes[S.hole - 1] : null;
@@ -493,8 +552,11 @@
       var t = S.total;
       var headline = 'Round complete: ' + (t === 0 ? 'even par' : (t > 0 ? '+' + t : t));
       say(headline, 'Saving your round\u2026');
-      endOptions();
+      // Posted BEFORE the buttons are drawn, so endOptions() has a promise to
+      // hold them on. Drawn first, they were tappable while the POST was
+      // still in flight.
       submitRound(headline);
+      endOptions();
     }
 
     /** The ways out of a finished round, in the bag strip under the card. */
@@ -507,11 +569,28 @@
         ? [['board', 'See the board', ENTRY.daily ? 'today' : 'this week'], ['leave', 'Done', 'back to Play']]
         : [['again', 'Play again', 'new round'], ['leave', 'Done', 'back to Play']];
       bag.innerHTML = buttons.map(function (b) {
-        return '<button class="g-disc g-disc--act" data-act="' + b[0] + '">' +
+        return '<button class="g-disc g-disc--act" data-act="' + b[0] + '" disabled>' +
                '<div class="g-disc__n">' + b[1] + '</div>' +
                '<div class="g-disc__f">' + b[2] + '</div></button>';
       }).join('');
-      bag.querySelectorAll('[data-act]').forEach(function (b) {
+      var acts = bag.querySelectorAll('[data-act]');
+      // Held until the card has actually posted — the sub-line says "Saving
+      // your round…" while they are.
+      //
+      // Leaving a finished round takes the page down with the POST still in
+      // flight. The server completes the write either way, so the round was
+      // never lost; what was lost was every read that followed it. Done
+      // landed on a Play tab whose /api/tournament call overtook the finish
+      // and so still offered "Finish round →" on an entry the server was in
+      // the middle of scoring — and pressing that reached the game with
+      // "That entry already has a score". See the board raced the same
+      // write and showed a leaderboard without the round it was opened to
+      // show, right until it was reloaded. The window is not small: counted
+      // against a real Postgres, one tournament finish is 43 database round
+      // trips — the whole game submit (scoring, XP, challenges, badges)
+      // and four more queries before it answers — and against Neon every
+      // one of those is a network hop.
+      acts.forEach(function (b) {
         b.addEventListener('click', function () {
           var act = this.dataset.act;
           // Land on the board this entry was played on. A bare /ranks opens
@@ -525,6 +604,10 @@
           replay();
         });
       });
+      var release = function () { acts.forEach(function (b) { b.disabled = false; }); };
+      // A post that FAILED releases them too: the player must still be able to
+      // leave, and submitRound() has already said so on the sub-line.
+      if (POSTED) POSTED.then(release, release); else release();
       setTimeout(resize, 0);
     }
 
@@ -536,6 +619,7 @@
 
     // Send the card up and report what it earned. The round is only ever sent
     // once, and a failure is never fatal — the player can keep playing.
+    var POSTED = null;         // this round's post, while it is in flight
     function submitRound(headline) {
       if (SUBMITTED || !CARD.length) return;
       SUBMITTED = true;
@@ -547,7 +631,7 @@
         body.mode = COURSE ? 'course' : 'quick';
         if (COURSE && COURSE.id) body.course_id = COURSE.id;
       }
-      DGG.API.post(path, body).then(function (r) {
+      POSTED = DGG.API.post(path, body).then(function (r) {
         var bits = [];
         if (r.xp_earned) bits.push('+' + r.xp_earned + ' XP');
         (r.challenges_completed || []).forEach(function (c) { bits.push('✅ ' + c.title); });
@@ -866,7 +950,7 @@
       // straight into a throw, on a hole that had never been set up — which
       // is why the round started on an empty field at the default length.
       S.phase = 'choose';
-      pickArt();          // show the hole you are about to play, not a blank field
+      previewArt();       // show the hole you are about to play, not a blank field
       hud();
       var how = document.getElementById('how');
       if (how) how.hidden = false;
@@ -960,7 +1044,7 @@
       COURSE.holes = out;
     }
 
-    resize(); boot(); requestAnimationFrame(frame);
+    resize(); primeArt(); boot(); requestAnimationFrame(frame);
   })();
   </script>
 </body>
