@@ -254,31 +254,27 @@
     // is allowed anywhere near a leaderboard.
 
     /**
-     * How fast the disc was thrown relative to what IT wants, where 1 is
-     * exactly right.
+     * A disc always flies the way its own numbers say. 1 is that.
      *
-     * The power bar is read against the disc in your hand. Its chip says
-     * "300 ft", so three quarters of the bar means a 225ft throw with that
-     * disc -- a controlled shot, and it must behave like one. An earlier
-     * version read the bar as absolute arm speed and then asked whether that
-     * exceeded the disc's rating, which made the same bar position mean 1.23
-     * on a putter and 0.75 on a driver, and told a player throwing 75% of a
-     * fairway driver that the disc was too slow for their arm. The control
-     * does not offer that choice, so the model must not punish it.
+     * The bar selects a DISTANCE with the disc in your hand -- its chip says
+     * "115 ft", so 60% of the bar is a 69ft throw and nothing else. Two
+     * earlier versions read something else into it: first absolute arm speed,
+     * which made the same bar position mean 1.23 on a putter and 0.75 on a
+     * driver; then the fraction itself, which still called a 60% putt
+     * "feathered". Both were inventing an effort the control never asked the
+     * player for.
      *
-     * So the bar alone can never throw a disc past its own rating. What still
-     * can is a HEADWIND, which raises the disc's airspeed without the player
-     * doing anything -- which is exactly how a disc turns over on a real
-     * course, and the one case worth teaching.
+     * The ONLY thing that moves a disc off its rating now is a headwind,
+     * which raises its airspeed without the player doing anything -- the real
+     * reason a disc turns over, and the one worth keeping.
      *
-     * Under-throwing is still a real mistake and still bites: a disc thrown
-     * below its rating flies more overstable and fades early, so reaching for
-     * more disc than the shot needs drops it left of the target. Choosing the
-     * right disc is still the skill; being punished for using the bar is not.
+     * Disc choice still matters, and matters by the right mechanism: fade
+     * scales with the disc's own fade number and with the length of the
+     * flight, so a driver asked for a short shot hooks far harder than a
+     * putter asked for the same one. That is a property of the disc, not a
+     * penalty for touching the bar.
      */
-    function speedRatio(power) {
-      return power;
-    }
+    function speedRatio() { return 1; }
 
     /**
      * How hard the throw actually was, as a fraction of what this disc can do.
@@ -290,7 +286,7 @@
      * three times too hard, and charging it both a carry penalty and a scatter
      * penalty. A 21ft putt at half power travelled 11.8ft.
      */
-    function effortOf(o) { return o.power; }
+    function effortOf() { return 1; }
 
     /**
      * Wind acts on the disc's airspeed, not on the player's arm, so a
@@ -341,16 +337,30 @@
       // 17% of the bar, where no amount of skill lands it. The meter is
       // scaled to the putt instead, so a good putt sits mid-meter.
       var reach = o.reach || d.max;
-      var ratio = speedRatio(effortOf(o));
+      // THE BAR IS A DISTANCE DIAL. 60% of a disc that carries 115ft is a
+      // 69ft throw, and that is all it is -- the bar never decides whether a
+      // disc flies over or under its rating, because the player is choosing
+      // a distance with it, not an effort.
+      var ratio = speedRatio();
       var eff = windRatio(ratio, o.windHead);
 
       // Carry. Glide stretches it, a headwind eats it, a bad lie costs the
       // run-up, and overpowering bleeds distance because the disc is turning
       // instead of carrying.
       var over = Math.max(0, eff - 1);
+      // Full bar IS the disc's rated distance. No glide term scaling it down:
+      // the disc's range already is what that disc carries, and a putter
+      // reading 106ft at the top of its own 115ft bar is the dial lying.
+      //
+      // Glide still does something, and something truer: it is lift, so it
+      // decides how much the WIND has to work with. A high-glide disc loses
+      // more into a headwind and rides further downwind than a low-glide one.
+      // A tailwind gives back less than a headwind takes, which is both how
+      // it feels on a course and what stops a full tailwind turning a 385ft
+      // driver into a 527ft one.
+      var w = o.windHead >= 0 ? o.windHead : o.windHead * 0.5;
       var carry = reach * o.power
-        * (0.80 + d.glide * 0.04)
-        * (1 - 0.30 * o.windHead)
+        * (1 - (0.20 + 0.034 * d.glide) * w)
         * o.liePower
         * (1 - 0.18 * Math.min(1.6, over))
         * (o.hand === -1 ? 0.93 : 1);
@@ -1051,7 +1061,6 @@
       if (f.from.y < 95 && S.lie && S.lie.name === 'trees') return 'Out of the <b>trees</b> and back in play.';
       if (spat)  return '<b>Spat out!</b> Too much heat on a putt from in close.';
       if (f.eff > 1.25) return 'The <b>headwind</b> lifted it past what that disc wants — it turned over instead of carrying.';
-      if (f.eff < 0.55) return 'You <b>feathered</b> it. Under its rating a disc flies overstable and fades early — take less disc and throw it properly.';
       if (S.wind.head > 0.45 && rest.x > 45) return 'The <b>headwind</b> made it act understable. More hyzer, or a stabler disc.';
       if (S.wind.head < -0.45 && rest.y > 90) return '<b>Tailwind</b> killed the lift — it dropped out of the air early.';
       if (Math.abs(S.wind.cross) > 0.5 && Math.abs(rest.x) > 50) return 'The <b>crosswind</b> carried it. Aim into the wind, not at the basket.';
@@ -1322,9 +1331,16 @@
       if (!h || S.phase === 'choose') return;
       var y = bottom - (bottom - top) * (1 - Math.max(0, h.y) / fieldLen());
       var x = cx + h.x * PX_PER_FT;
-      var r = Math.max(14, h.r * PX_PER_FT);
+      // The field is not drawn to one scale: it is about 0.67px per foot
+      // across and three times that up the hole. Drawing a 30ft hazard as a
+      // circle of r*PX_PER_FT therefore made it roughly a third of its real
+      // size VERTICALLY, which is how a disc could sit plainly outside the
+      // blue and still be told it was in the water. An ellipse on both scales
+      // is the same shape the penalty test uses.
+      var rx = Math.max(10, h.r * PX_PER_FT);
+      var ry = Math.max(10, h.r * (bottom - top) / fieldLen());
       ctx.save();
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(20,74,130,0.42)'; ctx.fill();
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(247,244,239,0.9)'; ctx.stroke();
       ctx.setLineDash([6, 5]); ctx.lineWidth = 2;
@@ -1596,7 +1612,11 @@
         if (S.angle <= -1) { S.angle = -1; S.dir = 1; }
       } else if (S.phase === 'flight') {
         S.t += dt * 0.75;
-        if (S.t >= 1) { S.t = 1; land(); }
+        // A disc that is going to hit a tree stops AT the tree. It used to
+        // fly the whole line and then snap back, which read as getting
+        // through and being dragged back for no reason.
+        var stop = S.hit ? S.hit.t : 1;
+        if (S.t >= stop) { S.t = stop; land(); }
       }
       draw(); requestAnimationFrame(frame);
     }
