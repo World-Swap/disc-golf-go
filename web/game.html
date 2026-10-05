@@ -577,12 +577,136 @@
       return { x: lateralAt(1, f) + f.scatter, y: f.from.y - f.carry };
     }
 
+    /** Where the disc is at time t, scatter included -- the path restOf ends. */
+    function pointAt(f, t) {
+      return { x: lateralAt(t, f) + f.scatter * t, y: f.from.y - f.carry * t };
+    }
+
+    /**
+     * The closest the FLIGHT PATH comes to the basket, and when.
+     *
+     * This is the thing the model was missing. Holing out was decided by
+     * comparing the basket with where the disc came to REST, so a putt thrown
+     * ten feet too hard flew clean through the pole and was scored as a
+     * ten-foot miss -- and the player then had a ten-foot comeback for a shot
+     * that, on an actual course, hit the cage. You cannot overthrow a basket
+     * you hit. It is a steel basket on a pole with chains in it, and a disc
+     * arriving on line either sticks or drops at its feet.
+     *
+     * Sampling the path rather than solving it because the path is a sum of
+     * two smoothsteps and a quadratic, and 48 samples over a flight that is
+     * never more than 900ft is finer than the basket by a wide margin.
+     *
+     * A disc that stops short has its closest approach at t = 1, so the
+     * came-to-rest case falls out of the same function.
+     */
+    function basketPass(f) {
+      var best = null;
+      for (var i = 0; i <= 48; i++) {
+        var t = i / 48;
+        var p = pointAt(f, t);
+        var d = Math.sqrt(p.x * p.x + p.y * p.y);
+        if (!best || d < best.d) best = { d: d, t: t };
+      }
+      return best;
+    }
+
+    /**
+     * Did the flight actually run into the basket?
+     *
+     * It is the closest approach against a radius that depends on how fast
+     * the disc is going, and nothing else. A height term was tried here --
+     * the path model is a map, with no height in it, so in principle a drive
+     * can sail over the basket and be scored as hitting it -- and it was
+     * removed: keyed on remaining carry it fired on no normal shot at all,
+     * and the one shot it did fire on was a 20ft putt nuked at full bar,
+     * where it sent 68% of them sailing past the basket. That is the exact
+     * shot this whole mechanism exists to stop. Remaining carry turned out to
+     * be a proxy for height only on a lofted throw, and a putter flat out is
+     * a line drive, not a lob. The speed-shrinking radius below does the job
+     * it was there for, and does it on the quantity that actually decides it.
+     *
+     * Shared with land() rather than inlined there, because the last function
+     * in this file that decided whether a throw holed out and lived somewhere
+     * nothing called was `holedOut`, and it sat dead through a 15% ace rate.
+     */
+    function hitsBasket(f, pass) {
+      return pass.d < catchRadius(f);
+    }
+
+    /**
+     * How big a target the basket presents to THIS flight, in feet.
+     *
+     * The faster a disc arrives the smaller the part of the basket that can
+     * actually stop it: a floating putt is caught by the cage, the pole or
+     * the outside of the chains, while a disc arriving at speed glances off
+     * anything but the middle. One fixed radius had a 215ft tee shot hitting
+     * the basket a third of the time, because the generous radius that makes
+     * putting forgiving was also being offered to a disc travelling five
+     * times as fast.
+     */
+    function catchRadius(f) {
+      var speed = f.carry * f.carry / 1400;
+      return CHAINS_R + (BASKET_R - CHAINS_R) * Math.exp(-speed / SPEED_SHRINK);
+    }
+
+    /**
+     * It reached the basket. Does it stay in?
+     *
+     * What decides it is how HOT the disc arrives, not how far the throw was
+     * -- which is why a putt dribbling into the chains sticks and the end of
+     * a 300ft drive skips out of them. Heat is what was left of the throw
+     * when it got there, plus a share of the throw's own size, because a disc
+     * at the end of a long flight is still moving far faster than one at the
+     * end of a short one. Clipping the edge of the cage is worth less than
+     * going through the middle of the chains.
+     *
+     * Either way it STOPS at the basket. That is the whole point: a throw
+     * that is too strong but on line is a tap-in at worst, never a comeback.
+     */
+    function staysIn(f, pass, rand) {
+      // Through the middle of the chains is worth more than clipping the rim.
+      // There is a CORE that is worth full value rather than a slope all the
+      // way to the centre -- a putt two feet off centre goes in, and scoring
+      // it as a glancing blow put a dead-on 40ft putt at 78%.
+      var r = catchRadius(f), core = Math.min(CHAINS_R, r * 0.55);
+      var centred = r <= core ? 1
+        : 1 - 0.6 * Math.max(0, (pass.d - core) / (r - core));
+      // Heat: what was left of the throw when it arrived, plus a term that
+      // grows with the SQUARE of the throw, because speed is what decides
+      // whether chains hold a disc and a 300ft drive arrives at its target
+      // far faster than a 40ft putt arrives at its. Linear in carry could not
+      // separate the two -- a putt and a drive came out only sevenfold apart
+      // when they need to be nearer thirty.
+      // Two parts, weighted differently because they are different things. A
+      // putt dribbling twenty feet PAST the basket is still a slow disc and
+      // the chains will mostly hold it; a drive arriving at its target is
+      // fast whatever is left of it. Lumping them together meant that making
+      // aces rare also made an over-cooked putt bounce out, which is the
+      // opposite of what the basket is for.
+      var spare = f.carry * (1 - pass.t);
+      var speed = f.carry * f.carry / 1400;
+      return rand() < centred * Math.exp(-(spare * SPARE_WEIGHT + speed) / HEAT_SCALE);
+    }
+
     var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
     // How much of the previewed flight the aim ray actually draws. The whole
     // curve ran the length of the hole and sat on top of the thing being
     // aimed at; the opening fraction still shows the line and the way it is
     // starting to bend.
     var AIM_SHOWN = 0.3;
+    // Feet. The pole, the cage and the chains, with a little grace on top for
+    // a control scheme that is two taps on a sweeping bar. Within this of the
+    // flight path, the disc has hit the basket and is going no further.
+    var BASKET_R = 5.5;
+    // Feet. The part of it that actually catches: the chains and the tray.
+    var CHAINS_R = 2.6;
+    // Feet of "heat" that cuts the chance of staying in by 1/e.
+    var HEAT_SCALE = 19;
+    // How much a foot of overshoot counts against a foot of arrival speed.
+    var SPARE_WEIGHT = 0.35;
+    // Feet of arrival speed that shrink the catchable rim towards the chains.
+    var SPEED_SHRINK = 18;
     var CHAIN_WINDOW = 7.3;    // feet: how far off line a short PUTT can hole from
     var FLYING_WINDOW = 3.2;   // feet: and an approach still in the air
 
@@ -1027,7 +1151,21 @@
     function land() {
       var f = S.flight, rest, spat = false;
 
-      if (S.hit) {
+      // Did the flight run into the basket? A tree only beats it to the punch
+      // if the tree came first; otherwise the basket stops the disc wherever
+      // on its path it was hit.
+      var pass = basketPass(f);
+      var struck = hitsBasket(f, pass) && (!S.hit || pass.t <= S.hit.t);
+      if (struck) {
+        if (staysIn(f, pass, Math.random)) return holed();
+        // Hit it and dropped. It comes to rest AT the basket -- which is the
+        // behaviour the endpoint test could never produce, because it had the
+        // disc carrying on to wherever the throw would have finished.
+        var ang = Math.random() * Math.PI * 2, off = 2.5 + Math.random() * 4.5;
+        rest = { x: Math.cos(ang) * off, y: Math.sin(ang) * off };
+        spat = true;
+        S.hit = null;                      // the basket stopped it, not a tree
+      } else if (S.hit) {
         // Into a tree. It drops short of where it hit and off to one side --
         // and it is pushed clear of the canopy, because a disc resting
         // against the trunk it just hit is both wrong to look at and, before
@@ -1048,18 +1186,12 @@
 
       var miss = Math.sqrt(rest.x * rest.x + rest.y * rest.y);
 
-      if (!S.hit && inHazard(rest)) {
-        // Deliberately checked before the chains: a disc that finds the
-        // hazard has not found the basket, however close the two are.
-      } else if (!S.hit && holedOut(f, miss, Math.random)) {
-        // Chains spit a hot putt straight back out. It is a real and
-        // thoroughly demoralising event, and it is the reason nobody who
-        // knows what they are doing rips a putt from inside the circle.
-        var hot = f.power > 0.72 && f.from.y < 72;
-        if (!(hot && Math.random() < 0.3)) return holed();
-        rest = { x: (Math.random() - 0.5) * 28, y: 13 + Math.random() * 18 };
-        miss = Math.sqrt(rest.x * rest.x + rest.y * rest.y);
-        spat = true;
+      // A disc that never reached the basket can still have finished near
+      // enough to drop -- the short side of the putt, which the path test
+      // says nothing about because the path simply stopped before it got
+      // there. A disc in the hazard has not holed, however close the two are.
+      if (!struck && !S.hit && !inHazard(rest) && holedOut(f, miss, Math.random)) {
+        return holed();
       }
 
       // A hazard costs a stroke and you play on from where it finished. It
@@ -1102,7 +1234,10 @@
     function coach(f, rest, spat) {
       if (S.hit) return 'Into the <b>trees</b>. There was no line there — shape it round, or take the gap.';
       if (f.from.y < 95 && S.lie && S.lie.name === 'trees') return 'Out of the <b>trees</b> and back in play.';
-      if (spat)  return '<b>Spat out!</b> Too much heat on a putt from in close.';
+      // Any throw can hit the basket now, not just a putt ripped from in
+      // close, so this says what happened rather than scolding a putt that
+      // may have been a 200ft approach.
+      if (spat)  return 'Off the <b>basket</b> — it hit and dropped rather than staying in the chains.';
       if (f.eff > 1.25) return 'The <b>headwind</b> lifted it past what that disc wants — it turned over instead of carrying.';
       if (S.wind.head > 0.45 && rest.x > 45) return 'The <b>headwind</b> made it act understable. More hyzer, or a stabler disc.';
       if (S.wind.head < -0.45 && rest.y > 90) return '<b>Tailwind</b> killed the lift — it dropped out of the air early.';
