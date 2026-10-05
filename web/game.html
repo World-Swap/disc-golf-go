@@ -578,6 +578,11 @@
     }
 
     var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
+    // How much of the previewed flight the aim ray actually draws. The whole
+    // curve ran the length of the hole and sat on top of the thing being
+    // aimed at; the opening fraction still shows the line and the way it is
+    // starting to bend.
+    var AIM_SHOWN = 0.3;
     var CHAIN_WINDOW = 7.3;    // feet: how far off line a short PUTT can hole from
     var FLYING_WINDOW = 3.2;   // feet: and an approach still in the air
 
@@ -1443,15 +1448,16 @@
       ctx.setLineDash([5, 5]); ctx.lineWidth = 2; ctx.lineJoin = 'round';
       ctx.beginPath();
       for (var i = 0; i <= 24; i++) {
-        var pt = pathPoint(f, cx, top, bottom, i / 24);
+        var pt = pathPoint(f, cx, top, bottom, AIM_SHOWN * i / 24);
         if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
-      // Where it would finish, so the aim has a landing spot and not just a
-      // direction.
-      var end = pathPoint(f, cx, top, bottom, 1);
+      // The dot sits at the end of what is drawn, so it marks where the ray
+      // stops rather than where the disc lands -- the full-length version
+      // reached the basket and covered the hole you are aiming at.
+      var end = pathPoint(f, cx, top, bottom, AIM_SHOWN);
       ctx.setLineDash([]); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(end.x, end.y, 4, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
 
@@ -1605,28 +1611,14 @@
         ctx.beginPath(); ctx.moveTo(x + 5, qy); ctx.lineTo(x + w - 5, qy); ctx.stroke();
       }
 
-      // THE BASKET, MARKED ON THE BAR. Without it the player is asked to
-      // divide the distance in the HUD by a number the game never shows, and
-      // then hit that fraction of a sweeping bar. With it they have something
-      // to aim at, which is the only thing a power meter is for. It marks the
-      // plain distance -- wind and the lie are shown separately and are still
-      // theirs to read.
-      var need = dialNeed();
-      if (need <= 1.02) {
-        var ty = y + h * (1 - Math.min(1, need));
-        // Green, and labelled with the distance. The fill already carries a
-        // white rule at the level it has reached, and two white lines a
-        // thumb apart on the same bar are one line too many -- the one you
-        // are aiming AT has to be the one that does not look like the other.
-        ctx.strokeStyle = '#5bd07a'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(x - 6, ty); ctx.lineTo(x + w + 6, ty); ctx.stroke();
-        ctx.fillStyle = '#5bd07a';
-        ctx.beginPath(); ctx.moveTo(x + w + 6, ty); ctx.lineTo(x + w + 14, ty - 6);
-        ctx.lineTo(x + w + 14, ty + 6); ctx.closePath(); ctx.fill();
-        chip(Math.round(S.ballY) + ' ft', x + w + 40, ty, 11);
-      } else {
-        // Out of this disc's range: say so rather than leaving the mark off
-        // the top of a bar that cannot get there.
+      // No target mark on the track. The two numbers it was drawn to connect
+      // are both still on screen and both in feet -- the HUD's "to basket"
+      // and the meter's own reading -- so the shot can be aimed by matching
+      // them, which is the part that was actually missing. `dialNeed` stays:
+      // it still sets the sweep rate.
+      if (dialNeed() > 1.02) {
+        // Out of this disc's range, which the meter cannot show on its own
+        // because it simply stops at the top.
         chip('out of range', x + w / 2, y - 30, 9);
       }
 
