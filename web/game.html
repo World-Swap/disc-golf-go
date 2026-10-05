@@ -756,18 +756,44 @@
         ctx.closePath(); ctx.fill();
       }
 
-      // Distance bands, so the throw has a sense of scale. Over the dark
-      // aerial art they have to be light to read at all.
+      // Distance bands, so the throw has a sense of scale.
+      //
+      // These used to be plain white over the art, which assumed the art is
+      // dark. Half of it is not: on `winter` and `desert` a white line at 0.22
+      // and a white label at 0.65 are all but invisible against snow and sand.
+      // Nor can one flat colour be picked per hole, because a single template
+      // runs from bright fairway to black treeline and the bands cross both.
+      //
+      // So each band carries its own contrast rather than borrowing it: a dark
+      // line under a light one, and a label filled white over a dark outline.
+      // The glyph is then always light against dark whatever is behind it, and
+      // the outline is what you read where the background is pale.
       var overArt = !!(art || artSoft);
-      ctx.strokeStyle = overArt ? 'rgba(255,255,255,0.22)' : 'rgba(32,32,32,0.10)';
-      ctx.lineWidth = 1;
-      ctx.fillStyle = overArt ? 'rgba(255,255,255,0.65)' : 'rgba(32,32,32,0.30)';
+      ctx.save();
       ctx.font = '10px system-ui';
+      ctx.lineJoin = 'round';
       for (var m = 100; m < fieldLen(); m += 100) {
         var y = bottom - (bottom - top) * (m / fieldLen());
-        ctx.beginPath(); ctx.moveTo(cx - 110, y); ctx.lineTo(cx + 110, y); ctx.stroke();
-        ctx.fillText(m + ' ft', cx + 114, y + 3);
+        var label = m + ' ft';
+        if (overArt) {
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(0,0,0,0.32)';
+          ctx.beginPath(); ctx.moveTo(cx - 110, y + 1); ctx.lineTo(cx + 110, y + 1); ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.beginPath(); ctx.moveTo(cx - 110, y); ctx.lineTo(cx + 110, y); ctx.stroke();
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+          ctx.strokeText(label, cx + 114, y + 3);
+          ctx.fillStyle = '#fff';
+        } else {
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(32,32,32,0.10)';
+          ctx.beginPath(); ctx.moveTo(cx - 110, y); ctx.lineTo(cx + 110, y); ctx.stroke();
+          ctx.fillStyle = 'rgba(32,32,32,0.30)';
+        }
+        ctx.fillText(label, cx + 114, y + 3);
       }
+      ctx.restore();
 
       basket(cx, top);
       if (S.phase !== 'flight' && S.phase !== 'choose') lie(cx, bottom);
