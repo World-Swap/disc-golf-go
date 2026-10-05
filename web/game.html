@@ -49,6 +49,14 @@
     .g-hud__lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
                   color: #8a8279; margin-top: 3px; }
 
+    /* Which way you are throwing. A forehand mirrors every curve the disc
+       makes, so this is a real choice and not a cosmetic one. */
+    .g-hand { display: flex; gap: 6px; padding: 0 14px 7px; }
+    .g-hand button { flex: 1; border: 1px solid #ddd5c9; background: #fff; border-radius: 9px;
+                     padding: 6px 4px; font: inherit; font-size: 11.5px; font-weight: 700;
+                     color: #8a8279; cursor: pointer; }
+    .g-hand button[aria-pressed="true"] { border-color: #fc6414; background: #fff3ec; color: #202020; }
+
     /* Disc picker */
     .g-bag { display: flex; gap: 8px; padding: 0 14px 10px; }
     .g-disc { flex: 1; min-width: 0; border: 1px solid #ddd5c9; background: #fff;
@@ -112,6 +120,10 @@
         <div class="g-hud__block"><div class="g-hud__num" id="h-total">E</div><div class="g-hud__lbl">Total</div></div>
       </div>
 
+      <div class="g-hand" id="hand">
+        <button type="button" data-hand="1" aria-pressed="true">Backhand</button>
+        <button type="button" data-hand="-1" aria-pressed="false">Forehand</button>
+      </div>
       <div class="g-bag" id="bag"></div>
 
       <canvas id="g-canvas" width="520" height="700" aria-label="Disc golf hole"></canvas>
@@ -183,7 +195,9 @@
       var msg = document.querySelector('.g-msg');
       var bar = document.querySelector('.g-top');
       var how = document.getElementById('how');
-      var chrome = (hud ? hud.offsetHeight : 60) + (bag ? bag.offsetHeight : 60) +
+      var hand = document.getElementById('hand');
+      var chrome = (hand ? hand.offsetHeight : 0) +
+                   (hud ? hud.offsetHeight : 60) + (bag ? bag.offsetHeight : 60) +
                    (msg ? msg.offsetHeight : 58) + (bar ? bar.offsetHeight : 44) +
                    (how && !how.hidden ? how.offsetHeight : 0) + 14;
       // The system navigation overlaps the bottom of the viewport on Android,
@@ -291,7 +305,12 @@
       // ramps is what draws the S.
       var v = Math.max(0, (t - 0.45) / 0.55);
       var ls = v * v * (3 - 2 * v);
-      return tilt + f.turnForce * hs - f.fadeForce * ls + f.crossForce * t * t;
+      // A forehand is the same disc thrown with the opposite spin, so every
+      // shape it makes is mirrored: it turns LEFT while it is fast and fades
+      // RIGHT as it slows. `hand` is +1 backhand, -1 forehand. The release
+      // tilt is NOT mirrored -- that is the player aiming, and left on the
+      // screen has to stay left whichever way they are throwing.
+      return tilt + f.hand * (f.turnForce * hs - f.fadeForce * ls) + f.crossForce * t * t;
     }
 
     /**
@@ -316,7 +335,8 @@
         * (0.80 + d.glide * 0.04)
         * (1 - 0.30 * o.windHead)
         * o.liePower
-        * (1 - 0.18 * Math.min(1.6, over));
+        * (1 - 0.18 * Math.min(1.6, over))
+        * (o.hand === -1 ? 0.93 : 1);
       // Dispersion grows with the throw. A 20ft putt is repeatable; a 350ft
       // bomb is not, which is where the risk in reaching for the big disc has
       // to come from — otherwise the longest disc is always the right answer.
@@ -336,7 +356,8 @@
       var fadeForce = air * d.fade * 0.075 * span * (1 + 0.85 * Math.max(0, Math.min(0.7, 1 - eff)));
 
       var f = {
-        angle: o.angle, turnForce: turnForce, fadeForce: fadeForce,
+        angle: o.angle, hand: o.hand === -1 ? -1 : 1,
+        turnForce: turnForce, fadeForce: fadeForce,
         tiltForce: 0.26 * span,
         crossForce: o.windCross * 0.17 * span,
         carry: carry, ratio: ratio, eff: eff, power: o.power,
@@ -345,7 +366,7 @@
       // Scatter: a bad lie and a disc being muscled are both less repeatable.
       // Scaled to the throw rather than flat: a fixed 7ft of scatter is
       // nothing on a drive and most of a twenty-foot putt.
-      f.scatter = (rand() - 0.5) *
+      f.scatter = (rand() - 0.5) * (o.hand === -1 ? 1.18 : 1) *
         (carry * 0.075 + 3 + 26 * (1 - o.liePower) + 11 * Math.min(1.6, over));
       return f;
     }
@@ -373,19 +394,44 @@
 
     /** Trees between the lie and the basket, in the throw's own frame. */
     function treesFor(key, distance) {
-      var tight = unit(key + ':tight');
       if (distance < 95) return [];                     // nothing to shape around on a putt
-      var n = tight < 0.45 ? 0 : tight < 0.82 ? 1 : 2;
+      var n = 1 + Math.floor(unit(key + ':n') * 4);     // 1-4, evenly likely
+      var span = Math.min(150, distance * 0.46);
       var out = [];
       for (var i = 0; i < n; i++) {
         var k = key + ':t' + i;
+        // Each tree gets its own band of the hole, so four of them cannot
+        // stack into a wall across the only line there is.
+        var band = (i + unit(k + 'b') * 0.9) / n;
         out.push({
-          y: distance * (0.28 + unit(k + 'y') * 0.46),  // how far out it stands
-          x: (unit(k + 'x') - 0.5) * Math.min(150, distance * 0.46),
+          y: distance * (0.26 + band * 0.48),
+          x: (unit(k + 'x') - 0.5) * 2 * span,
           r: 15 + unit(k + 'r') * 11
         });
       }
       return out;
+    }
+
+    var HAZARD_RADIUS = 30;      // feet
+
+    /**
+     * A penalty area by the green, on a quarter of holes. Landing in it costs
+     * a stroke and you play on from where it finished -- it is a hazard, not
+     * an out-of-bounds re-throw, so it punishes the approach without ever
+     * sending anyone back down the fairway.
+     */
+    function hazardFor(key) {
+      if (unit(key + ':haz') >= 0.25) return null;
+      var ring = 35 + unit(key + ':hr') * 75;
+      var bearing = (unit(key + ':hb') - 0.5) * 2.4;
+      return { y: ring * Math.cos(bearing), x: ring * Math.sin(bearing), r: HAZARD_RADIUS };
+    }
+
+    /** Did the throw finish inside the hazard? */
+    function inHazard(rest) {
+      if (!S.hazard) return false;
+      var dx = rest.x - S.hazard.x, dy = rest.y - S.hazard.y;
+      return Math.sqrt(dx * dx + dy * dy) < S.hazard.r;
     }
 
     /**
@@ -635,7 +681,9 @@
     var S = { hole: 1, par: 3, throws: 0, total: 0, holeLen: 0, ballX: 0, ballY: 0,
               phase: 'ready', power: 0, angle: 0, t: 0, dir: 1, flight: null, done: false,
               seed: 'q', holeKey: 'q:h1', wind: { head: 0, cross: 0, strength: 0 },
-              trees: [], lie: { name: 'tee', power: 1 }, hit: null };
+              trees: [], lie: { name: 'tee', power: 1 }, hit: null,
+              hand: 1, hazard: null, penalty: 0 };
+    var LAYOUT = null;         // a tournament's stored holes, when it has them
     var HOLES = 3;
     var COURSE = null;   // { name, holes: [{ par, feet }] } when playing a real course
     var CARD = [];       // { par, strokes } per finished hole — what the server scores
@@ -754,14 +802,20 @@
       S.throws = 0; S.ballX = 0; S.ballY = S.holeLen;
       S.phase = 'ready'; S.flight = null; S.hit = null;
       S.holeKey = S.seed + ':h' + S.hole;
-      S.wind = conditionsFor(S.holeKey);
+      // A tournament plays the holes its row was created with, so a deploy in
+      // the middle of a week cannot move a tree under a field already playing.
+      // Everything else draws its own, fresh every quick round.
+      var fixed = LAYOUT && LAYOUT[S.hole - 1];
+      S.wind = fixed ? fixed.wind : conditionsFor(S.holeKey);
+      S.trees = fixed ? fixed.trees.slice() : treesFor(S.holeKey + ':shot0', S.ballY);
+      S.hazard = fixed ? (fixed.hazard || null) : hazardFor(S.holeKey);
       S.lie = { name: 'tee', power: 1 };
-      S.trees = treesFor(S.holeKey + ':shot0', S.ballY);
+      S.penalty = 0;
       pickArt();
       autoDisc(); paintBag(); hud();
       say('Tap to start your power',
           (COURSE ? COURSE.name + ' · ' : '') + 'Hole ' + S.hole + ' — ' + S.holeLen +
-          ' ft, par ' + S.par + treeWord() + windWord());
+          ' ft, par ' + S.par + treeWord() + hazardWord() + windWord());
     }
 
     // Pick the sensible disc for the distance left, the way a player would.
@@ -780,6 +834,9 @@
       var n = S.trees ? S.trees.length : 0;
       return n ? ' · ' + n + (n === 1 ? ' tree' : ' trees') + ' to miss' : '';
     }
+
+    /** The hazard, named — a penalty you cannot see coming is just a tax. */
+    function hazardWord() { return S.hazard ? ' · hazard by the green (+1)' : ''; }
 
     /** How the wind reads in words, for the line under the prompt. */
     function windWord() {
@@ -821,7 +878,7 @@
       // can read off the screen. Everything else uses the disc's own range.
       var reach = (disc.key === 'putter' && S.ballY < 95) ? Math.max(34, S.ballY * 2.35) : 0;
       var f = resolveThrow({
-        disc: disc, power: S.power, angle: S.angle,
+        disc: disc, power: S.power, angle: S.angle, hand: S.hand,
         windHead: S.wind.head, windCross: S.wind.cross,
         liePower: lie.power, distance: S.ballY, reach: reach
       });
@@ -846,7 +903,10 @@
 
       var miss = Math.sqrt(rest.x * rest.x + rest.y * rest.y);
 
-      if (!S.hit && miss < IN_THE_CHAINS) {
+      if (!S.hit && inHazard(rest)) {
+        // Deliberately checked before the chains: a disc that finds the
+        // hazard has not found the basket, however close the two are.
+      } else if (!S.hit && miss < IN_THE_CHAINS) {
         // Chains spit a hot putt straight back out. It is a real and
         // thoroughly demoralising event, and it is the reason nobody who
         // knows what they are doing rips a putt from inside the circle.
@@ -857,6 +917,12 @@
         spat = true;
       }
 
+      // A hazard costs a stroke and you play on from where it finished. It
+      // is not an out-of-bounds re-throw: the penalty should punish a loose
+      // approach, not send anyone back down the fairway to do it again.
+      var wet = inHazard(rest);
+      if (wet) { S.throws++; S.penalty++; }
+
       // The next throw is played from wherever it stopped, aimed at the
       // basket again — so the state is simply "how far away am I now", and
       // how playable the spot it finished in is.
@@ -865,7 +931,9 @@
       S.trees = treesFor(S.holeKey + ':shot' + S.throws, S.ballY);
 
       autoDisc(); paintBag(); S.phase = 'result';
-      say(Math.round(miss) + ' ft to the basket  ·  ' + S.lie.name, coach(f, rest, spat));
+      say(Math.round(miss) + ' ft to the basket  ·  ' + (wet ? 'hazard' : S.lie.name),
+          wet ? 'In the <b>hazard</b> — one stroke, and you play it from there.'
+              : coach(f, rest, spat));
       hud();
 
       // Mercy rule: nobody should be stuck on one hole forever.
@@ -1095,6 +1163,7 @@
       }
       ctx.restore();
 
+      hazardShape(cx, top, bottom);
       treeShapes(cx, top, bottom);
       basket(cx, top);
       windArrow();
@@ -1131,6 +1200,26 @@
         canopy(x, y, r, '#1f3b2a');
         canopy(x - r * 0.26, y - r * 0.28, r * 0.34, 'rgba(247,244,239,0.18)');
       }
+    }
+
+    /**
+     * The penalty area by the green. Drawn under the trees and the basket but
+     * over the art, with a bone rim and a dashed edge so it reads as ground
+     * you must not land on rather than as part of the photograph.
+     */
+    function hazardShape(cx, top, bottom) {
+      var h = S.hazard;
+      if (!h || S.phase === 'choose') return;
+      var y = bottom - (bottom - top) * (1 - Math.max(0, h.y) / fieldLen());
+      var x = cx + h.x * PX_PER_FT;
+      var r = Math.max(14, h.r * PX_PER_FT);
+      ctx.save();
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(20,74,130,0.42)'; ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(247,244,239,0.9)'; ctx.stroke();
+      ctx.setLineDash([6, 5]); ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(20,74,130,0.95)'; ctx.stroke();
+      ctx.restore();
     }
 
     /**
@@ -1437,6 +1526,17 @@
       }).join('');
     }
 
+    document.getElementById('hand').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hand]'); if (!b) return;
+      S.hand = Number(b.dataset.hand) === -1 ? -1 : 1;
+      paintHand();
+    });
+    function paintHand() {
+      document.querySelectorAll('#hand [data-hand]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(Number(b.dataset.hand) === S.hand));
+      });
+    }
+
     document.getElementById('bag').addEventListener('click', function (e) {
       var b = e.target.closest('.g-disc'); if (!b) return;
       if (S.phase !== 'ready' && S.phase !== 'result') return;   // no swapping mid-throw
@@ -1524,6 +1624,10 @@
         }
         ENTRY = { id: entry.id, attempt: entry.attempt, week: t.week_key,
                   daily: daily, of: t.max_entries || 2 };
+        // The holes this tournament was created with. Older tournaments have
+        // none, and those fall back to generating their own — which is what
+        // the game did before layouts were stored.
+        LAYOUT = Array.isArray(t.layout) && t.layout.length ? t.layout : null;
         if (!t.course || !t.course.id) {
           throw new Error(daily ? 'Today has no course yet.' : 'This week has no course yet.');
         }
@@ -1550,7 +1654,7 @@
       COURSE.holes = out;
     }
 
-    resize(); primeArt(); boot(); requestAnimationFrame(frame);
+    resize(); paintHand(); primeArt(); boot(); requestAnimationFrame(frame);
   })();
   </script>
 </body>

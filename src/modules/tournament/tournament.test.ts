@@ -15,8 +15,8 @@ const db = {
 /** An in-memory stand-in for the tables, so the rules can be tested directly. */
 function fakeRepo(opts: { courses?: { id: number; name: string }[] } = {}) {
   const courses = opts.courses ?? [
-    { id: 11, name: 'Brock Park DGC' },
-    { id: 22, name: 'Idlewild' },
+    { id: 11, name: 'Brock Park DGC', hole_details: null },
+    { id: 22, name: 'Idlewild', hole_details: null },
   ];
   const tournaments: TournamentRow[] = [];
   const asked: string[] = [];
@@ -27,7 +27,7 @@ function fakeRepo(opts: { courses?: { id: number; name: string }[] } = {}) {
   const repo: TournamentRepo = {
     async find(_e, weekKey, kind = 'weekly') { return tournaments.find((t) => t.week_key === weekKey && t.kind === kind) ?? null; },
     async randomCourse() { return courses[draws++ % courses.length] ?? null; },
-    async create(_c, weekKey, course, holes, startsAt, endsAt, kind = 'weekly') {
+    async create(_c, weekKey, course, holes, startsAt, endsAt, kind = 'weekly', layout = null) {
       const found = tournaments.find((t) => t.week_key === weekKey && t.kind === kind);
       if (found) return found;                       // ON CONFLICT DO NOTHING
       const row: TournamentRow = {

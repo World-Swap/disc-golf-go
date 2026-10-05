@@ -19,6 +19,8 @@ export interface TournamentRow {
   holes: number;
   starts_at: string;
   ends_at: string;
+  /** Fixed at creation; null on tournaments drawn before layouts existed. */
+  layout?: unknown;
 }
 
 export interface EntryRow {
@@ -69,7 +71,7 @@ export function createTournamentRepo(_db: Queryable) {
   return {
     async find(exec: Queryable, weekKey: string, kind = 'weekly'): Promise<TournamentRow | null> {
       const r = await exec.query<TournamentRow>(
-        `SELECT id, kind, week_key, course_id, course_name, holes, starts_at, ends_at
+        `SELECT id, kind, week_key, course_id, course_name, holes, starts_at, ends_at, layout
          FROM tournaments WHERE kind = $2 AND week_key = $1`,
         [weekKey, kind]
       );
@@ -82,10 +84,12 @@ export function createTournamentRepo(_db: Queryable) {
      * poorer test and reads as a bug. Falls back to any course with enough
      * holes to build a round from, so a thin database still gets a tournament.
      */
-    async randomCourse(exec: Queryable): Promise<{ id: number; name: string } | null> {
+    async randomCourse(
+      exec: Queryable
+    ): Promise<{ id: number; name: string; hole_details?: unknown } | null> {
       for (const min of [18, 9, 1]) {
-        const r = await exec.query<{ id: number; name: string }>(
-          `SELECT id, name FROM courses
+        const r = await exec.query<{ id: number; name: string; hole_details?: unknown }>(
+          `SELECT id, name, hole_details FROM courses
            WHERE is_active IS NOT FALSE AND COALESCE(holes, 0) >= $1
            ORDER BY random() LIMIT 1`,
           [min]
@@ -120,7 +124,7 @@ export function createTournamentRepo(_db: Queryable) {
       const r = await exec.query<TournamentRow>(
         `UPDATE tournaments SET course_id = $2, course_name = $3
           WHERE id = $1 AND course_id IS NULL
-      RETURNING id, kind, week_key, course_id, course_name, holes, starts_at, ends_at`,
+      RETURNING id, kind, week_key, course_id, course_name, holes, starts_at, ends_at, layout`,
         [tournamentId, course.id, course.name]
       );
       return r.rows[0] ?? null;
@@ -138,16 +142,22 @@ export function createTournamentRepo(_db: Queryable) {
       holes: number,
       startsAt: Date,
       endsAt: Date,
-      kind = 'weekly'
+      kind = 'weekly',
+      layout: unknown = null
     ): Promise<TournamentRow> {
+      // The layout rides the same INSERT as everything else, so the player who
+      // wins the ON CONFLICT race writes it and every later reader gets that
+      // one. It is never updated: a tournament's holes are what they were when
+      // the first player asked for them.
       await client.query(
-        `INSERT INTO tournaments (kind, week_key, course_id, course_name, holes, starts_at, ends_at)
-         VALUES ($7,$1,$2,$3,$4,$5,$6)
+        `INSERT INTO tournaments (kind, week_key, course_id, course_name, holes, starts_at, ends_at, layout)
+         VALUES ($7,$1,$2,$3,$4,$5,$6,$8)
          ON CONFLICT (kind, week_key) DO NOTHING`,
-        [weekKey, course.id, course.name, holes, startsAt, endsAt, kind]
+        [weekKey, course.id, course.name, holes, startsAt, endsAt, kind,
+         layout == null ? null : JSON.stringify(layout)]
       );
       const r = await client.query<TournamentRow>(
-        `SELECT id, kind, week_key, course_id, course_name, holes, starts_at, ends_at
+        `SELECT id, kind, week_key, course_id, course_name, holes, starts_at, ends_at, layout
          FROM tournaments WHERE kind = $2 AND week_key = $1`,
         [weekKey, kind]
       );

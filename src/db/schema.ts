@@ -693,6 +693,10 @@ CREATE TABLE IF NOT EXISTS tournaments (
 -- because this schema is applied on every boot and has to be able to move a
 -- live table forward. Every statement is a no-op the second time it runs.
 ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'weekly';
+-- The hole layout -- wind, the trees off the tee, the hazard by the green --
+-- drawn once when the tournament row is created and never again. Derived on
+-- the client it would change under the field whenever the code deployed.
+ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS layout JSONB;
 DO $$
 BEGIN
   -- The old single-column unique would reject the daily that shares a key

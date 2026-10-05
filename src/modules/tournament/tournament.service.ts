@@ -16,6 +16,7 @@ import { withTransaction } from '../../db/pool';
 import type { Database } from '../../db/types';
 import { periodKey, periodStart } from '../game/game.catalog';
 import { TOURNAMENT_METRICS, type TournamentMetric } from './tournament.repo';
+import { buildTournamentLayout } from './hole-layout';
 import type { TournamentRepo, TournamentRow, EntryRow } from './tournament.repo';
 
 /**
@@ -127,7 +128,17 @@ export function createTournamentService(deps: TournamentDeps) {
       const start = periodStart(cfg.period, now)!;
       const days = cfg.period === 'daily' ? 1 : 7;
       const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
-      return repo.create(client, weekKey, course, HOLES, start, end, KIND);
+      // Drawn here, once, and stored. Every player who opens this tournament
+      // from now on reads the same holes out of the row -- a later deploy
+      // cannot move a tree under a field that is already playing.
+      const card = Array.isArray(course.hole_details) ? course.hole_details : [];
+      const distances = Array.from({ length: HOLES }, (_, i) => {
+        const d = card[i % Math.max(1, card.length)] as Record<string, unknown> | undefined;
+        const ft = d ? Number(d.distance_ft ?? d.distance ?? d.length) : NaN;
+        return ft >= 80 && ft <= 1100 ? ft : 320;
+      });
+      const layout = buildTournamentLayout(KIND, weekKey, course.id, HOLES, distances);
+      return repo.create(client, weekKey, course, HOLES, start, end, KIND, layout);
     });
   }
 
@@ -181,6 +192,10 @@ export function createTournamentService(deps: TournamentDeps) {
         week_key: t.week_key,
         holes: t.holes,
         course: { id: t.course_id, name: t.course_name },
+        // The holes themselves, as drawn when this tournament was created.
+        // Null on tournaments from before layouts existed; the game falls
+        // back to generating its own, which is what it has always done.
+        layout: t.layout ?? null,
         starts_at: t.starts_at,
         ends_at: t.ends_at,
         max_entries: MAX,
