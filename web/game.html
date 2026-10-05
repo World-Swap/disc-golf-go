@@ -290,8 +290,13 @@
 
     /** Where the disc is, across the line to the basket, at time t of flight. */
     function lateralAt(t, f) {
-      // The release angle is a constant drift: tilt it left and it goes left
-      // the whole way.
+      // Release BANK is a direction in space: a disc banked with its left
+      // edge down drifts left, and that is true whichever way it is spinning.
+      // So this term does not mirror with the hand -- what mirrors is which
+      // bank you call a hyzer, because hyzer is defined by the ungripped edge
+      // being the low one, and the grip is on the other side of the disc for
+      // a forehand. Backhand hyzer banks left and finishes left; forehand
+      // hyzer banks right and finishes right.
       var tilt = f.angle * f.tiltForce * t;
       // High-speed turn ARRIVES EARLY AND STAYS. It is a displacement, not a
       // wobble: a disc that turns right is further right for the rest of its
@@ -305,11 +310,11 @@
       // ramps is what draws the S.
       var v = Math.max(0, (t - 0.45) / 0.55);
       var ls = v * v * (3 - 2 * v);
-      // A forehand is the same disc thrown with the opposite spin, so every
-      // shape it makes is mirrored: it turns LEFT while it is fast and fades
-      // RIGHT as it slows. `hand` is +1 backhand, -1 forehand. The release
-      // tilt is NOT mirrored -- that is the player aiming, and left on the
-      // screen has to stay left whichever way they are throwing.
+      // Turn and fade ARE responses to spin, and a forehand spins the other
+      // way -- RHBH is clockwise seen from above and turns right then fades
+      // left; RHFH is counter-clockwise and turns left then fades right. So
+      // these two mirror and the bank does not. `hand` is +1 backhand, -1
+      // forehand.
       return tilt + f.hand * (f.turnForce * hs - f.fadeForce * ls) + f.crossForce * t * t;
     }
 
@@ -829,6 +834,17 @@
       disc = d <= 95 ? DISCS[0] : d <= 200 ? DISCS[1] : d <= 290 ? DISCS[2] : DISCS[3];
     }
 
+    /**
+     * The angle bar in words, for the hand being thrown. A hyzer finishes the
+     * way the disc fades — left off a backhand, right off a forehand — so the
+     * two ends of the bar swap names when the hand does.
+     */
+    function angleWord() {
+      return S.hand === -1
+        ? 'Middle is flat — left is anhyzer, right is hyzer (forehand finishes right)'
+        : 'Middle is flat — left is hyzer, right is anhyzer (backhand finishes left)';
+    }
+
     /** Trees, named rather than left to be guessed at. */
     function treeWord() {
       var n = S.trees ? S.trees.length : 0;
@@ -858,7 +874,7 @@
       if (S.phase === 'choose') return;
       if (S.phase === 'ready')       { S.phase = 'power';  S.power = 0; S.dir = 1; say('Tap to lock power', ''); }
       else if (S.phase === 'power')  { S.phase = 'angle';  S.angle = -1; S.dir = 1;
-                                       say('Tap to set your angle', 'Middle is flat — the edges are hyzer and anhyzer'); }
+                                       say('Tap to set your angle', angleWord()); }
       else if (S.phase === 'angle')  { release(); }
       else if (S.phase === 'result') { nextThrow(); }
       else if (S.phase === 'holeEnd'){ S.hole++; if (S.hole > HOLES) endGame(); else newHole(); }
@@ -1454,10 +1470,14 @@
       ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(x + w / 2, y + 3); ctx.lineTo(x + w / 2, y + h - 3); ctx.stroke();
 
+      // Which end is the hyzer swaps with the hand. The bar stays spatial --
+      // left on it is always a disc banked left -- but for a forehand that
+      // bank is the ANHYZER, so labelling the left end "hyzer" for both hands
+      // was telling the player the opposite of what they were doing.
       ctx.font = '700 9px system-ui'; ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.fillText('HYZER', x + 2, y - 8);
+      ctx.fillText(S.hand === -1 ? 'ANHYZER' : 'HYZER', x + 2, y - 8);
       ctx.textAlign = 'center'; ctx.fillText('FLAT', x + w / 2, y - 8);
-      ctx.textAlign = 'right'; ctx.fillText('ANHYZER', x + w - 2, y - 8);
+      ctx.textAlign = 'right'; ctx.fillText(S.hand === -1 ? 'HYZER' : 'ANHYZER', x + w - 2, y - 8);
       ctx.textAlign = 'left';
 
       // The marker, outlined so it reads against track, panel and artwork.
