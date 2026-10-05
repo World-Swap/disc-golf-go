@@ -421,10 +421,35 @@
       return { x: f.from.x + shapeAt(1, f), y: f.from.y - f.carry };
     }
 
+    /**
+     * The closest the flight PATH comes to the basket, in feet.
+     *
+     * This is the whole of the basket being an object rather than a point to
+     * be compared with. Judging a putt by where it came to REST means a putt
+     * thrown ten feet too hard flies clean through the pole and is scored as
+     * a ten-foot miss -- and you then have a ten-foot comeback for a shot
+     * that, on a course, hit the cage. You cannot overthrow a basket you hit.
+     *
+     * A disc that stops short has its closest approach at the end of its
+     * flight, so the came-to-rest case falls out of the same function and
+     * nothing is lost on the short side.
+     */
+    function nearestPass(f) {
+      var best = Infinity;
+      for (var i = 0; i <= 32; i++) {
+        var t = i / 32;
+        var x = f.from.x + shapeAt(t, f), y = f.from.y - f.carry * t;
+        best = Math.min(best, Math.sqrt(x * x + y * y));
+      }
+      return best;
+    }
+
     var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
     var IN_THE_CHAINS = 10;    // feet: close enough to have holed out
     var PUTT_RANGE = 90;       // feet: throwing from inside this is a putt
     var ACE_RANGE = 3;         // feet: and from outside it, what an ace takes
+    var BASKET_R = 2.5;        // feet: the basket itself, for a putt flying through
+    var OVER_LIMIT = 35;       // feet past the hole it can still be caught from
 
     // How far down the line the aim ray draws, in FEET. A fixed distance
     // rather than a share of the flight, so a putt -- which is shorter than
@@ -865,18 +890,43 @@
 
       var miss = Math.sqrt(rest.x * rest.x + rest.y * rest.y);
 
-      // Version one's rule, and the reason it played well: anything that
-      // finishes within ten feet of the basket is in. No arrival speed, no
-      // chains radius, no luck roll.
+      // Version one's ten feet, with the two corrections it needs.
       //
-      // With ONE condition on top, which is the only thing v1 got badly
-      // wrong here: it applied that from any distance, so a drive that
-      // finished nine feet away was an ace, and v1 aced 5-7% of holes --
-      // better than one in fifteen. Ten feet is what a PUTT is allowed; from
-      // out on the fairway the disc has to actually find the basket. A disc
-      // that found the hazard has not found anything, however close it is.
-      if (!S.hit && !inHazard(rest) && miss < IN_THE_CHAINS &&
-          (f.from.y <= PUTT_RANGE || miss < ACE_RANGE)) return holed();
+      // A PUTT is judged on its PATH, so it cannot be overthrown: the basket
+      // is in the way and a disc on line hits it however hard it was struck.
+      // Over-cooking a putt is still punished, just by the right thing --
+      // drift grows with power, so a putter at full bar pulls about fifteen
+      // feet off line and misses on the line rather than on the length.
+      //
+      // Anything thrown from outside PUTT_RANGE is judged on where it came to
+      // REST, and needs to be much closer. v1 gave a drive the same ten feet
+      // from anywhere, so one finishing nine feet away was an ace and v1 aced
+      // 5-7% of holes -- better than one in fifteen. Judging a drive on its
+      // path instead would be far worse, not better: a tee shot crossing
+      // within three feet of the basket is common, and it would ace 7-19% of
+      // holes. A disc still flying past at two feet is a near miss.
+      //
+      // A disc that found the hazard has not found anything, however close.
+      // The two windows are different sizes because they are different
+      // events. Ten feet is what a disc that has STOPPED gets -- v1's
+      // forgiveness, untouched. A disc flying THROUGH has to actually hit the
+      // basket, which is a couple of feet, not ten: at ten the path test
+      // holed every overthrow from every distance, because the aim ray lets
+      // the player cancel the drift and the line then always crosses the
+      // basket.
+      // The overshoot limit is what keeps a decision in the shot. Without it
+      // hammering every putt is strictly best, and for a reason worth
+      // knowing: the harder a putt is thrown the EARLIER on its path it
+      // reaches the basket, and drift has barely accumulated that early --
+      // at a 105ft dial on a 40ft putt only about a fifth of the drift has
+      // happened by the time it gets there, so it crossed dead straight and
+      // holed 99.6% of the time. A basket catches a putt; it does not catch
+      // one thrown three times too hard.
+      var holes = f.from.y <= PUTT_RANGE
+        ? (miss < IN_THE_CHAINS ||
+           (f.carry - f.from.y < OVER_LIMIT && nearestPass(f) < BASKET_R))
+        : miss < ACE_RANGE;
+      if (!S.hit && !inHazard(rest) && holes) return holed();
 
       // A hazard costs a stroke and you play on from where it finished. It
       // is not an out-of-bounds re-throw: the penalty should punish a loose
