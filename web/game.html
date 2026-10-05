@@ -482,6 +482,15 @@
      * parametric, so this is a lookup rather than a simulation: find the
      * moment the disc is level with the tree and ask how far across it is.
      */
+    // A tree close enough to touch is not an obstacle, it is scenery: you
+    // take a step to the side and throw past the trunk, which is what every
+    // real player does. Without this the game has no way to get round one,
+    // because the only control is BANK, and bank builds its sideways
+    // displacement far too slowly to clear a wide canopy at short range --
+    // measured, a tree 10-30ft ahead blocked 100% of throws, from a lie that
+    // hitting a tree put you in. That is a hole you cannot finish.
+    var STEP_AROUND = 55;      // feet
+
     function hitTree(f, trees) {
       if (!trees || !trees.length || f.carry <= 0) return null;
       var best = null;
@@ -489,6 +498,8 @@
         var tr = trees[i];
         var t = (f.from.y - tr.y) / f.carry;
         if (t <= 0.04 || t >= 1) continue;               // behind you, or short of it
+        var gap = Math.sqrt(tr.x * tr.x + (f.from.y - tr.y) * (f.from.y - tr.y));
+        if (gap < STEP_AROUND) continue;                 // you just walk round it
         if (Math.abs(lateralAt(t, f) - tr.x) > tr.r) continue;
         if (!best || t < best.t) best = { t: t, tree: tr };
       }
@@ -952,11 +963,20 @@
       var f = S.flight, rest, spat = false;
 
       if (S.hit) {
-        // Into a tree. It drops roughly where it hit, which is the whole
-        // point of them: a line that does not exist costs a stroke.
-        var t = S.hit.t;
+        // Into a tree. It drops short of where it hit and off to one side --
+        // and it is pushed clear of the canopy, because a disc resting
+        // against the trunk it just hit is both wrong to look at and, before
+        // this, impossible to play out of.
+        var t = S.hit.t, tr = S.hit.tree;
         rest = { x: lateralAt(t, f) + (Math.random() - 0.5) * 26,
                  y: f.from.y - f.carry * t + 10 + Math.random() * 24 };
+        var dx = rest.x - tr.x, dy = rest.y - tr.y;
+        var away = Math.sqrt(dx * dx + dy * dy) || 1;
+        var clear = tr.r + 14;
+        if (away < clear) {
+          rest.x = tr.x + (dx / away) * clear;
+          rest.y = tr.y + (dy / away) * clear;
+        }
       } else {
         rest = restOf(f);
       }
@@ -1016,6 +1036,7 @@
      */
     function coach(f, rest, spat) {
       if (S.hit) return 'Into the <b>trees</b>. There was no line there — shape it round, or take the gap.';
+      if (f.from.y < 95 && S.lie && S.lie.name === 'trees') return 'Out of the <b>trees</b> and back in play.';
       if (spat)  return '<b>Spat out!</b> Too much heat on a putt from in close.';
       if (f.eff > 1.5)  return 'That disc is <b>too slow for that much arm</b> — it turned over instead of carrying.';
       if (f.eff < 0.62) return '<b>Not enough arm</b> for that disc, so it flew overstable and dumped left early.';
