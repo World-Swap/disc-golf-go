@@ -16,6 +16,7 @@
     "ts:start": "node dist/server.js",
     "ts:test": "node --test -r ts-node/register/transpile-only \"src/**/*.test.ts\"",
     "schema:dump": "node scripts/dump-schema.js",
+    "holes:previews": "node scripts/gen-hole-previews.js",
     "lessons:audit": "node scripts/audit-lessons.js",
     "courses:stats": "node scripts/refresh-courses.js --stats",
     "courses:refresh": "node scripts/refresh-courses.js --apply",
