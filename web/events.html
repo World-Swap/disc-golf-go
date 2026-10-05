@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Disc Golf Go Events — In-Person Disc Golf Tournaments | Disc Golf Go</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <meta name="description" content="Disc Golf Go events are in-person disc golf tournaments hosted by Disc Golf Go — a live round where you play the shots you have been training in the app. See what is coming up and how to enter." />
+  <link rel="canonical" href="https://discgolfgo.com/events" />
+  <meta property="og:site_name" content="Disc Golf Go" />
+  <meta property="og:title" content="Disc Golf Go Events — play it for real" />
+  <meta property="og:description" content="In-person disc golf tournaments hosted by Disc Golf Go. Train in the app, then come and apply it on a real course." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://discgolfgo.com/events" />
+  <meta property="og:image" content="https://discgolfgo.com/img/og-cover.png?v=3" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Disc Golf Go Events — play it for real" />
+  <meta name="twitter:description" content="In-person disc golf tournaments hosted by Disc Golf Go. Train in the app, then apply it on a real course." />
+  <meta name="twitter:image" content="https://discgolfgo.com/img/og-cover.png?v=3" />
+
+  <!-- NO Event structured data here on purpose.
+       Rich results for an event need a real name, a real start date and a real
+       location, and inventing any of those to make the markup validate would be
+       lying to a search engine about something people turn up to in person.
+       When the first event is posted, add one Event object per event alongside
+       its card below -- or say the word and this page can be rendered from a
+       data file the way the training library is, so the cards and the markup
+       cannot drift apart. -->
+
+  <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app.css?v=w10" />
+  <style>
+    .article{max-width:760px;margin:0 auto;padding:40px var(--edge-pad) 20px;}
+    .article .kicker{color:var(--color-orange);font-family:var(--font-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;}
+    .article h1{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;color:var(--color-ink);font-size:clamp(30px,6vw,44px);line-height:1.05;margin:12px 0 10px;}
+    .article .lede{font-size:19px;line-height:1.55;color:var(--color-ink);opacity:.82;margin:0 0 8px;}
+    .article h2{font-family:var(--font-display);font-weight:700;color:var(--color-ink);font-size:24px;letter-spacing:-.01em;margin:34px 0 10px;}
+    .article p{font-size:17px;line-height:1.7;color:var(--color-ink);opacity:.9;margin:0 0 16px;}
+    .article ul{margin:0 0 16px;padding-left:22px;}
+    .article li{font-size:17px;line-height:1.7;color:var(--color-ink);opacity:.9;margin-bottom:8px;}
+    .article strong{font-weight:700;}
+    .backlink{display:inline-block;margin-bottom:8px;color:var(--color-orange);font-weight:700;text-decoration:none;font-size:14px;}
+
+    /* One card per event. Stacks on a phone, two up from 640px. */
+    .events{display:grid;gap:16px;margin:0 0 8px;}
+    @media (min-width:640px){.events{grid-template-columns:1fr 1fr;}}
+    .ev{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:18px;padding:22px;box-shadow:0 6px 16px rgba(43,38,34,.05);display:flex;flex-direction:column;gap:8px;}
+    .ev__when{color:var(--color-orange);font-family:var(--font-display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:12px;}
+    .ev__name{font-family:var(--font-display);font-weight:700;color:var(--color-ink);font-size:20px;line-height:1.2;margin:0;}
+    .ev__where{font-size:15px;color:var(--color-ink);opacity:.72;margin:0;}
+    .ev__body{font-size:15px;line-height:1.6;color:var(--color-ink);opacity:.9;margin:0;}
+    .ev__go{margin-top:auto;padding-top:6px;}
+    .ev__go a{color:var(--color-orange);font-weight:700;text-decoration:none;font-size:15px;}
+    /* Links inside a card body inherit otherwise, so the mailto in the empty
+       state rendered as plain text and did not look pressable. */
+    .ev__body a{color:var(--color-orange);font-weight:700;text-decoration:none;}
+
+    /* Shown while there is nothing to list. Deliberately a real sentence rather
+       than an empty grid, because an empty grid reads as a page that broke. */
+    .ev--none{background:var(--color-cream,#faf7f1);border-style:dashed;grid-column:1/-1;}
+
+    .cta-box{background:var(--color-ink);border-radius:20px;padding:30px;margin:36px 0 8px;text-align:center;}
+    .cta-box h3{font-family:var(--font-display);font-weight:700;color:#fff;font-size:22px;margin:0 0 6px;}
+    .cta-box p{color:#fff;opacity:.78;font-size:15px;margin:0 0 16px;}
+    .cta-box .btn{margin:0 auto;}
+    .relguide{border-top:1px solid var(--hair,#eadfce);margin-top:36px;padding-top:22px;}
+    .relguide a{color:var(--color-orange);font-weight:700;text-decoration:none;}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="logo" href="/">
+      <span class="logo__glyph" aria-hidden="true"></span>
+      Disc Golf Go
+    </a>
+    <div class="nav__cta">
+      <a class="btn btn--sm" href="https://discgolfgo.app/register">Open App</a>
+    </div>
+  </nav>
+
+  <article class="article">
+    <a class="backlink" href="/">← Disc Golf Go</a>
+    <p class="kicker">Events</p>
+    <h1>Apply your training at a Disc Golf Go event</h1>
+    <p class="lede">A Disc Golf Go event is an in-person disc golf tournament hosted by us — a live
+      round, on a real course, against other players. The app is where you learn the shot; an event
+      is where you stand over it with something on the line.</p>
+
+    <h2>Coming up</h2>
+
+    <!-- ===================================================================
+         EVENTS GO HERE.
+
+         Each event is one <article class="ev"> block. Copy the template at the
+         bottom of this comment, fill it in, and delete the "nothing listed yet"
+         card below once there is at least one real event. The link is whatever
+         you are using to take entries -- a PDGA event page, a registration
+         form, a Facebook event, anything.
+
+         Keep the date in the <time datetime="..."> attribute in YYYY-MM-DD so
+         it stays machine-readable even while the visible text is written how a
+         person would say it.
+
+    <article class="ev">
+      <p class="ev__when"><time datetime="2026-11-14">Saturday 14 November 2026</time></p>
+      <h3 class="ev__name">NAME OF THE EVENT</h3>
+      <p class="ev__where">Course name · City, State</p>
+      <p class="ev__body">One or two lines on the format, the division, what is included.</p>
+      <p class="ev__go"><a href="https://REGISTRATION-LINK" target="_blank" rel="noopener">Enter this event →</a></p>
+    </article>
+
+         =================================================================== -->
+
+    <div class="events">
+      <article class="ev ev--none">
+        <p class="ev__when">Nothing listed yet</p>
+        <h3 class="ev__name">The next event has not been announced.</h3>
+        <p class="ev__body">Dates and entry links are posted here as soon as they are set. If you
+          would like to hear about the next one — or you run a course and want to host one —
+          <a href="mailto:contact@discgolfgo.com?subject=Disc%20Golf%20Go%20events">get in touch</a>.</p>
+      </article>
+    </div>
+
+    <h2>What to expect</h2>
+    <p>An event is a normal, in-person round of disc golf, run as a tournament: you turn up, you
+      play the course, and your card is scored against everyone else playing that day. Nothing about
+      it needs the app — bring your discs and a pencil if you like.</p>
+    <p>What the app gives you is the preparation. The training library breaks the game into 13 skill
+      paths taught by touring pros and the channels that coach them, so the shot a hole asks for is
+      one you have already been shown how to throw.</p>
+
+    <div class="cta-box">
+      <h3>Train for it first.</h3>
+      <p>134 coached lessons, free to start.</p>
+      <a class="btn btn--lg" href="https://discgolfgo.app/register">Start training — Free</a>
+    </div>
+
+    <div class="relguide">
+      <p>New to the game? Start with <a href="/guides/how-to-putt-disc-golf">How to Putt in Disc Golf →</a></p>
+    </div>
+  </article>
+
+  <footer class="foot">
+    <div class="foot__inner">
+      <span>Disc Golf Go</span>
+      <span><a href="https://discgolfgo.app/privacy" style="color:inherit">Privacy</a> <span class="dot">•</span> <a href="mailto:contact@discgolfgo.com" style="color:inherit">Contact</a></span>
+    </div>
+  </footer>
+</body>
+</html>

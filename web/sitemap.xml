@@ -7,6 +7,12 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://discgolfgo.com/events</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://discgolfgo.com/guides/how-to-putt-disc-golf</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
