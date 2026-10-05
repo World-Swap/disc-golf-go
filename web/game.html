@@ -254,39 +254,28 @@
     // is allowed anywhere near a leaderboard.
 
     /**
-     * A disc always flies the way its own numbers say. 1 is that.
+     * How much of THIS DISC'S range the shot is asking for. 1 is the disc
+     * flying exactly its rating; below that it is being thrown slower than it
+     * is built for, and it fades out early.
      *
-     * The bar selects a DISTANCE with the disc in your hand -- its chip says
-     * "115 ft", so 60% of the bar is a 69ft throw and nothing else. Two
-     * earlier versions read something else into it: first absolute arm speed,
-     * which made the same bar position mean 1.23 on a putter and 0.75 on a
-     * driver; then the fraction itself, which still called a 60% putt
-     * "feathered". Both were inventing an effort the control never asked the
-     * player for.
+     * The bar selects a distance -- its chip says "115 ft", so 60% of the bar
+     * is a 69ft throw and nothing else -- and this is that same fraction read
+     * for what it tells you about the FLIGHT rather than the length. Those are
+     * not in conflict: asking a speed-11 driver for 150ft is a real thing to
+     * do and it really does hook out early, which is why nobody drives a
+     * 150ft shot with one. The bar is not lying about the distance; the disc
+     * is responding to being under-thrown.
      *
-     * The ONLY thing that moves a disc off its rating now is a headwind,
-     * which raises its airspeed without the player doing anything -- the real
-     * reason a disc turns over, and the one worth keeping.
-     *
-     * Disc choice still matters, and matters by the right mechanism: fade
-     * scales with the disc's own fade number and with the length of the
-     * flight, so a driver asked for a short shot hooks far harder than a
-     * putter asked for the same one. That is a property of the disc, not a
-     * penalty for touching the bar.
+     * Two earlier versions got this wrong in both directions. First it read
+     * absolute arm speed, so the same bar position meant 1.23 on a putter and
+     * 0.75 on a driver and a 75% fairway drive turned over. Then it was
+     * flattened to a constant 1 to kill that -- which fixed the lie and threw
+     * away the model with it: turn and fade stopped responding to the throw
+     * at all, every disc flew the same shape, and choosing one stopped
+     * mattering. Full bar is still exactly the rating, because `over` is what
+     * bleeds carry and that is zero at a ratio of 1.
      */
-    function speedRatio() { return 1; }
-
-    /**
-     * How hard the throw actually was, as a fraction of what this disc can do.
-     *
-     * This is NOT the meter position, and the difference is the whole of the
-     * putting bug. Inside the circle the bar is rescaled to the putt in front
-     * of you, so half a bar is a gentle 20ft toss -- but the model was reading
-     * the bar directly, deciding that anything past 17% was a putter thrown
-     * three times too hard, and charging it both a carry penalty and a scatter
-     * penalty. A 21ft putt at half power travelled 11.8ft.
-     */
-    function effortOf() { return 1; }
+    function speedRatio(power) { return power; }
 
     /**
      * Wind acts on the disc's airspeed, not on the player's arm, so a
@@ -333,15 +322,20 @@
     function resolveThrow(o, rand) {
       rand = rand || Math.random;
       var d = o.disc;
-      // Inside the circle the putter's full 115ft would put a 20ft putt at
-      // 17% of the bar, where no amount of skill lands it. The meter is
-      // scaled to the putt instead, so a good putt sits mid-meter.
-      var reach = o.reach || d.max;
+      // THE METER SPANS THIS DISC'S RATING AND NOTHING ELSE. The putter used
+      // to be the exception -- its bar was secretly rescaled to 2.35x the putt
+      // in front of you -- and that is why putting felt impossible rather than
+      // merely hard. A player reasoning from the one number they are given
+      // ("a putter carries 115ft, I am 30ft out, so about a quarter of the
+      // bar") landed 12ft SHORT at 30ft and 23ft PAST at 66ft, because the
+      // bar's top moved on every putt and was never written anywhere. At 66ft
+      // it topped out at 155ft, which is more than the putter can throw.
+      var reach = d.max;
       // THE BAR IS A DISTANCE DIAL. 60% of a disc that carries 115ft is a
       // 69ft throw, and that is all it is -- the bar never decides whether a
       // disc flies over or under its rating, because the player is choosing
       // a distance with it, not an effort.
-      var ratio = speedRatio();
+      var ratio = speedRatio(o.power);
       var eff = windRatio(ratio, o.windHead);
 
       // Carry. Glide stretches it, a headwind eats it, a bad lie costs the
@@ -367,7 +361,7 @@
       // Dispersion grows with the throw. A 20ft putt is repeatable; a 350ft
       // bomb is not, which is where the risk in reaching for the big disc has
       // to come from — otherwise the longest disc is always the right answer.
-      carry *= 1 + (rand() - 0.5) * (0.07 + 0.13 * o.power);
+      carry *= 1 + (rand() - 0.5) * (LUCK_CARRY * (0.54 + o.power));
 
       // Turn only exists while the disc is fast, and grows hard once it is
       // thrown past its rating. Fade always arrives, and arrives harder the
@@ -393,8 +387,13 @@
       // Scatter: a bad lie and a disc being muscled are both less repeatable.
       // Scaled to the throw rather than flat: a fixed 7ft of scatter is
       // nothing on a drive and most of a twenty-foot putt.
+      // The flat term tapers away over the first eighty feet. It was a
+      // constant 3ft, tuned for drives, and on a 15ft tap-in that constant
+      // was most of the error -- so a putt from 15ft scattered almost as
+      // much as one from 50ft and the two felt the same to play.
       f.scatter = (rand() - 0.5) * (o.hand === -1 ? 1.18 : 1) *
-        (carry * 0.075 + 3 + 26 * (1 - o.liePower) + 11 * Math.min(1.6, over));
+        (carry * LUCK_LINE + 3 * Math.min(1, carry / 80)
+         + 26 * (1 - o.liePower) + 11 * Math.min(1.6, over));
       return f;
     }
 
@@ -548,18 +547,29 @@
      * actually find the chains and stay in them.
      */
     function holedOut(f, miss, rand) {
-      if (miss > IN_THE_CHAINS) return false;
-      if (f.from.y <= 70) {
-        // Inside the circle you are putting AT the chains, so the target is
-        // real — but it shrinks with the length of the putt, because from
-        // 60ft you are not picking a link. A flat ten-foot "close enough"
-        // made every putt a formality and flattened the whole skill curve.
-        // Inside ten feet almost everything drops; out at the edge of circle
-        // two it is a genuine coin-toss, which is where the difference
-        // between a good player and a lucky one actually lives.
-        return miss < Math.max(2.2, IN_THE_CHAINS * (1 - 0.82 * Math.min(1, f.from.y / 66)));
-      }
-      return miss < 4 && rand() < 0.35;                // still flying, and lucky
+      var from = f.from.y;
+      // How much of a window the basket offers, in feet.
+      //
+      // Wide for a short putt, and deliberately wider than a real basket: the
+      // controls are a bar swept in about a second, so even a very good tap is
+      // worth several feet of long-and-short. A realistic two-foot target
+      // would be measuring the frame rate rather than the player.
+      //
+      // It narrows all the way out to an approach, where the disc arrives fast
+      // and flat and spits out of chains a putt would have stuck in. ONE
+      // continuous function, because the two cases used to be separate
+      // branches either side of f.from.y === 70, and that made 66ft hole
+      // 99.9% of the time against 80ft's 15% -- not a difficulty curve but a
+      // cliff at an arbitrary number.
+      var win = CHAIN_WINDOW - (CHAIN_WINDOW - FLYING_WINDOW) * Math.min(1, from / 80);
+      if (miss >= win) return false;
+      // Inside a putt, on line is in. Further out it has to be lucky as well
+      // as on line, which is what stops a drive that happens to finish near
+      // the basket from acing: before this function was wired up at all, the
+      // game holed anything inside ten feet from any distance and aced better
+      // than one hole in eight.
+      if (from <= 50) return true;
+      return rand() < 1 - 0.75 * Math.min(1, (from - 50) / 110);
     }
 
     /** Where the flight finished, across and along the line to the basket. */
@@ -568,7 +578,24 @@
     }
 
     var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
-    var IN_THE_CHAINS = 10;    // feet: close enough to have holed out
+    var CHAIN_WINDOW = 7.3;    // feet: how far off line a short PUTT can hole from
+    var FLYING_WINDOW = 3.2;   // feet: and an approach still in the air
+
+    // How much of a throw is luck the player cannot influence, as a fraction
+    // of the carry: long-and-short, and off-line. Some is wanted -- discs are
+    // fickle and a game with none would feel like a machine -- but it was high
+    // enough to drown the thing it is competing with. On a 300ft drive it came
+    // to about 13ft of the miss, against 19ft from a beginner's tap and 3.5ft
+    // from an expert's, which is why four very different players all shot
+    // within a stroke of each other. Precision is the skill this game asks
+    // for, so precision has to be what decides the throw.
+    // Tried lowering these to let tap precision speak louder; it did not buy
+    // any separation (the four skills stayed within a stroke) and it lowered
+    // the beginner's score more than the expert's, so they keep the values
+    // they have always had. The names stay, because the next person to tune
+    // difficulty should be able to find them.
+    var LUCK_CARRY = 0.130;    // x (0.54 + power), so a full-bar throw is loosest
+    var LUCK_LINE  = 0.075;
 
     // 21 aerial hole templates. Each is a fairway running bottom to top with
     // the top centre left clear, so the basket and the flight draw over it.
@@ -963,18 +990,29 @@
       else if (S.phase === 'gameEnd'){ return; }
     }
 
+    /**
+     * The throw the player is currently setting up. The aim ray previews it
+     * and `release` throws it, from this one function -- so the curve drawn on
+     * the field is the curve that gets scored, by construction.
+     */
+    function pending(power, angle) {
+      var lie = S.lie || { name: 'tee', power: 1 };
+      return {
+        disc: disc, power: power, angle: angle, hand: S.hand,
+        windHead: S.wind.head, windCross: S.wind.cross,
+        liePower: lie.power, distance: S.ballY
+      };
+    }
+
+    /** What the meter is set to, in feet. The bar prints this. */
+    function dialFeet(power) { return power * disc.max; }
+
+    /** Where on the bar the basket is. Past the end of it means out of range. */
+    function dialNeed() { return S.ballY / disc.max; }
+
     function release() {
       S.throws++;
-      var lie = S.lie || { name: 'tee', power: 1 };
-      // The putter's meter is scaled to the putt in front of you, and anchored
-      // so that HALF THE BAR IS THE PUTT -- which is the only mapping a player
-      // can read off the screen. Everything else uses the disc's own range.
-      var reach = (disc.key === 'putter' && S.ballY < 95) ? Math.max(34, S.ballY * 2.35) : 0;
-      var f = resolveThrow({
-        disc: disc, power: S.power, angle: S.angle, hand: S.hand,
-        windHead: S.wind.head, windCross: S.wind.cross,
-        liePower: lie.power, distance: S.ballY, reach: reach
-      });
+      var f = resolveThrow(pending(S.power, S.angle));
       S.flight = f;
       S.hit = hitTree(f, S.trees);
       S.t = 0; S.phase = 'flight';
@@ -1008,7 +1046,7 @@
       if (!S.hit && inHazard(rest)) {
         // Deliberately checked before the chains: a disc that finds the
         // hazard has not found the basket, however close the two are.
-      } else if (!S.hit && miss < IN_THE_CHAINS) {
+      } else if (!S.hit && holedOut(f, miss, Math.random)) {
         // Chains spit a hot putt straight back out. It is a real and
         // thoroughly demoralising event, and it is the reason nobody who
         // knows what they are doing rips a putt from inside the circle.
@@ -1066,8 +1104,8 @@
       if (Math.abs(S.wind.cross) > 0.5 && Math.abs(rest.x) > 50) return 'The <b>crosswind</b> carried it. Aim into the wind, not at the basket.';
       if (rest.x < -48) return 'Big <b>fade</b> left. Start it further right, or throw something straighter.';
       if (rest.x > 48)  return 'It <b>turned over</b> right. Ease off, or add hyzer.';
-      if (rest.y < -16) return 'Flew <b>past</b> the basket — that disc had more in it than the hole needed.';
-      if (f.power < 0.45 && rest.y > 80) return 'Left it <b>short</b> — nothing wrong with the line.';
+      if (rest.y < -16) return 'Flew <b>past</b> the basket — that was above the mark on the meter.';
+      if (rest.y > 80) return 'Left it <b>short</b> — nothing wrong with the line, just under the mark.';
       if (S.lie && S.lie.name === 'rough')  return 'In the <b>rough</b> — no run-up from there, so take something you can control.';
       if (S.lie && S.lie.name === 'trees')  return 'Under the <b>trees</b>. Getting back to the fairway is the shot.';
       return 'Good line. Tap to throw again.';
@@ -1394,15 +1432,26 @@
      * would hand the player the answer, and reading the flight is the game.
      */
     function aimRay(cx, top, bottom) {
-      var fromY = S.ballY <= 0 ? top : bottom - (bottom - top) * (1 - S.ballY / fieldLen());
-      var fromX = cx + S.ballX * PX_PER_FT;
-      var reach = Math.min(130, (bottom - fromY) * 0.42 + 46);
+      // THE AIM RAY BENDS. It used to be a straight dashed line, which asked
+      // the player to cancel a curve the game never drew -- and on a putt the
+      // fade is the whole decision. This previews the flight the locked power
+      // and the current angle would actually produce, with the dispersion
+      // neutral, so what you aim is what you get minus the scatter.
+      var f = resolveThrow(pending(S.power, S.angle), function () { return 0.5; });
       ctx.save();
-      ctx.strokeStyle = 'rgba(252,100,20,0.5)';
-      ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(fromX, fromY);
-      ctx.lineTo(fromX + S.angle * reach * 0.5, fromY - reach);
+      ctx.strokeStyle = 'rgba(252,100,20,0.55)';
+      ctx.setLineDash([5, 5]); ctx.lineWidth = 2; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (var i = 0; i <= 24; i++) {
+        var pt = pathPoint(f, cx, top, bottom, i / 24);
+        if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+      }
       ctx.stroke();
+      // Where it would finish, so the aim has a landing spot and not just a
+      // direction.
+      var end = pathPoint(f, cx, top, bottom, 1);
+      ctx.setLineDash([]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
 
@@ -1470,14 +1519,18 @@
       discSprite(x, y, 1);
     }
 
-    /** Screen position of the disc at time t of the current flight. */
-    function flightPoint(cx, top, bottom, t) {
-      var f = S.flight;
+    /** Screen position of any flight at time t -- the preview and the real one. */
+    function pathPoint(f, cx, top, bottom, t) {
       var remaining = Math.max(0, f.from.y - f.carry * t);
       return {
         x: cx + (f.from.x + lateralAt(t, f)) * PX_PER_FT,
         y: bottom - (bottom - top) * (1 - remaining / fieldLen())
       };
+    }
+
+    /** Screen position of the disc at time t of the current flight. */
+    function flightPoint(cx, top, bottom, t) {
+      return pathPoint(S.flight, cx, top, bottom, t);
     }
 
     /**
@@ -1552,6 +1605,31 @@
         ctx.beginPath(); ctx.moveTo(x + 5, qy); ctx.lineTo(x + w - 5, qy); ctx.stroke();
       }
 
+      // THE BASKET, MARKED ON THE BAR. Without it the player is asked to
+      // divide the distance in the HUD by a number the game never shows, and
+      // then hit that fraction of a sweeping bar. With it they have something
+      // to aim at, which is the only thing a power meter is for. It marks the
+      // plain distance -- wind and the lie are shown separately and are still
+      // theirs to read.
+      var need = dialNeed();
+      if (need <= 1.02) {
+        var ty = y + h * (1 - Math.min(1, need));
+        // Green, and labelled with the distance. The fill already carries a
+        // white rule at the level it has reached, and two white lines a
+        // thumb apart on the same bar are one line too many -- the one you
+        // are aiming AT has to be the one that does not look like the other.
+        ctx.strokeStyle = '#5bd07a'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x - 6, ty); ctx.lineTo(x + w + 6, ty); ctx.stroke();
+        ctx.fillStyle = '#5bd07a';
+        ctx.beginPath(); ctx.moveTo(x + w + 6, ty); ctx.lineTo(x + w + 14, ty - 6);
+        ctx.lineTo(x + w + 14, ty + 6); ctx.closePath(); ctx.fill();
+        chip(Math.round(S.ballY) + ' ft', x + w + 40, ty, 11);
+      } else {
+        // Out of this disc's range: say so rather than leaving the mark off
+        // the top of a bar that cannot get there.
+        chip('out of range', x + w / 2, y - 30, 9);
+      }
+
       var fh = h * S.power;
       ctx.fillStyle = S.power > 0.86 ? '#d9500a' : ORANGE;
       ctx.beginPath(); ctx.roundRect(x, y + h - fh, w, fh, 14); ctx.fill();
@@ -1560,7 +1638,11 @@
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(x - 3, y + h - fh); ctx.lineTo(x + w + 3, y + h - fh); ctx.stroke();
 
-      chip(Math.round(S.power * 100) + '%', x + w / 2, y + h + 14, 12);
+      // THE BAR READS IN FEET. A percentage is unusable: it is only a
+      // distance once you know what the bar's top is, and the top is a
+      // property of the disc that was nowhere on screen. Both numbers are
+      // now in the same units as the distance in the HUD.
+      chip(Math.round(dialFeet(S.power)) + ' ft', x + w / 2, y + h + 14, 12);
     }
 
     function angleBar() {
@@ -1598,16 +1680,43 @@
       ctx.beginPath(); ctx.roundRect(mx - 5, y - 5, 10, h + 10, 5); ctx.stroke();
     }
 
+    // How fast the two bars sweep, in bar-units a second. These set what a tap
+    // is WORTH, and so they set the difficulty of every shot in the game.
+    var POWER_SWEEP = 0.95, ANGLE_SWEEP = 1.9;
+
+    /**
+     * The power bar's sweep rate, which is NOT constant.
+     *
+     * A fixed rate looks fair and is not. The bar spans the disc's whole
+     * rating, so a 15ft putt sits at 13% of a putter's bar and the mark
+     * arrives 0.14 seconds after the sweep starts -- before a hand can
+     * react -- while a full drive gives the better part of a second. The
+     * player was being asked for a precision the control could not express,
+     * and short putts were the shot it hurt most.
+     *
+     * Rate is set from the shot instead, so the mark always arrives at about
+     * the same moment whatever is in front of you. The consequence is the
+     * right one and worth stating plainly: tap slop then costs a FIXED
+     * FRACTION of the shot rather than a fixed number of feet, which is how
+     * a real throw misses -- a few percent, whether that is one foot on a
+     * tap-in or thirty on a drive. Clamped at both ends so a tap-in does not
+     * crawl and a drive is not a reflex test.
+     */
+    var SWEEP_REACH = 0.85;    // seconds the mark should take to arrive
+    function powerSweep() {
+      return Math.max(0.25, Math.min(1.5, dialNeed() / SWEEP_REACH));
+    }
+
     // -------------------------------------------------------------- loop
     var last = performance.now();
     function frame(now) {
       var dt = Math.min(0.05, (now - last) / 1000); last = now;
       if (S.phase === 'power') {
-        S.power += S.dir * dt * 1.25;
+        S.power += S.dir * dt * powerSweep();
         if (S.power >= 1) { S.power = 1; S.dir = -1; }
         if (S.power <= 0) { S.power = 0; S.dir = 1; }
       } else if (S.phase === 'angle') {
-        S.angle += S.dir * dt * 1.9;
+        S.angle += S.dir * dt * ANGLE_SWEEP;
         if (S.angle >= 1) { S.angle = 1; S.dir = -1; }
         if (S.angle <= -1) { S.angle = -1; S.dir = 1; }
       } else if (S.phase === 'flight') {
