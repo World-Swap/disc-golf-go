@@ -432,6 +432,44 @@
       return { y: ring * Math.cos(bearing), x: ring * Math.sin(bearing), r: HAZARD_RADIUS };
     }
 
+    // ------------------------------------------------- the hole as a place
+    // Trees and the hazard are features of the HOLE, not of the throw. They
+    // are held in world feet with the basket at the origin and the tee
+    // straight down the +y axis, and projected into each throw's own frame
+    // when it is drawn or tested.
+    //
+    // They used to be re-rolled after every single throw, which is what made
+    // a tree reappear somewhere else the moment you hit one. Worse for the
+    // tournament: the stored layout only covered the tee, so from the second
+    // shot on the whole field was back to generating its own.
+
+    /** The frame of the throw about to be made: along the line to the basket. */
+    function frameOf() {
+      var d = Math.sqrt(S.pos.x * S.pos.x + S.pos.y * S.pos.y) || 1;
+      var u = { x: S.pos.x / d, y: S.pos.y / d };     // basket -> player
+      return { d: d, u: u, right: { x: u.y, y: -u.x } };
+    }
+
+    /** A world point as the current throw sees it: y from the basket, x across. */
+    function toFrame(p, fr) {
+      return { x: p.x * fr.right.x + p.y * fr.right.y,
+               y: p.x * fr.u.x + p.y * fr.u.y, r: p.r };
+    }
+
+    /** And back again, once the disc has come to rest. */
+    function toWorld(p, fr) {
+      return { x: fr.u.x * p.y + fr.right.x * p.x,
+               y: fr.u.y * p.y + fr.right.y * p.x };
+    }
+
+    /** Re-project the hole's fixed furniture for wherever the player stands. */
+    function refreshFrame() {
+      var fr = frameOf();
+      S.trees = (S.holeTrees || []).map(function (t) { return toFrame(t, fr); });
+      S.hazard = S.holeHazard ? toFrame(S.holeHazard, fr) : null;
+      S.ballY = fr.d; S.ballX = 0;
+    }
+
     /** Did the throw finish inside the hazard? */
     function inHazard(rest) {
       if (!S.hazard) return false;
@@ -687,7 +725,8 @@
               phase: 'ready', power: 0, angle: 0, t: 0, dir: 1, flight: null, done: false,
               seed: 'q', holeKey: 'q:h1', wind: { head: 0, cross: 0, strength: 0 },
               trees: [], lie: { name: 'tee', power: 1 }, hit: null,
-              hand: 1, hazard: null, penalty: 0 };
+              hand: 1, hazard: null, penalty: 0,
+              pos: { x: 0, y: 0 }, holeTrees: [], holeHazard: null };
     var LAYOUT = null;         // a tournament's stored holes, when it has them
     var HOLES = 3;
     var COURSE = null;   // { name, holes: [{ par, feet }] } when playing a real course
@@ -812,8 +851,13 @@
       // Everything else draws its own, fresh every quick round.
       var fixed = LAYOUT && LAYOUT[S.hole - 1];
       S.wind = fixed ? fixed.wind : conditionsFor(S.holeKey);
-      S.trees = fixed ? fixed.trees.slice() : treesFor(S.holeKey + ':shot0', S.ballY);
-      S.hazard = fixed ? (fixed.hazard || null) : hazardFor(S.holeKey);
+      // Laid out ONCE, for the whole hole. A tournament takes the trees its
+      // row was created with and keeps them for every shot, not just the tee.
+      S.holeTrees = fixed ? fixed.trees.slice() : treesFor(S.holeKey, S.holeLen);
+      S.holeHazard = fixed ? (fixed.hazard || null) : hazardFor(S.holeKey);
+      S.pos = { x: 0, y: S.holeLen };
+      refreshFrame();
+      resetHand();
       S.lie = { name: 'tee', power: 1 };
       S.penalty = 0;
       pickArt();
@@ -939,12 +983,14 @@
       var wet = inHazard(rest);
       if (wet) { S.throws++; S.penalty++; }
 
-      // The next throw is played from wherever it stopped, aimed at the
-      // basket again — so the state is simply "how far away am I now", and
-      // how playable the spot it finished in is.
-      S.ballY = miss; S.ballX = 0;
+      // Where it stopped, carried back out into the world, so the next throw
+      // sees the SAME trees from wherever it now stands rather than a fresh
+      // set conjured for the occasion.
+      S.pos = toWorld(rest, frameOf());
       S.lie = lieFor(rest.x, false);
-      S.trees = treesFor(S.holeKey + ':shot' + S.throws, S.ballY);
+      refreshFrame();
+      resetHand();
+      miss = S.ballY;
 
       autoDisc(); paintBag(); S.phase = 'result';
       say(Math.round(miss) + ' ft to the basket  ·  ' + (wet ? 'hazard' : S.lie.name),
@@ -1099,7 +1145,17 @@
       });
     }
 
-    function nextThrow() { S.phase = 'ready'; say('Tap to start your power', ''); }
+    function nextThrow() {
+      S.phase = 'ready';
+      say('Tap to start your power', '');
+    }
+
+    /**
+     * Back to backhand. A forehand is a decision you make for the shot in
+     * front of you, not a mode you leave switched on — leaving it set is how
+     * a player ends up flicking a putt they meant to throw normally.
+     */
+    function resetHand() { if (S.hand !== 1) { S.hand = 1; paintHand(); } }
 
     function fmtVs(n) { return n === 0 ? 'even' : (n > 0 ? '+' + n : String(n)); }
     function ordinal(n) {
@@ -1156,8 +1212,13 @@
       ctx.save();
       ctx.font = '10px system-ui';
       ctx.lineJoin = 'round';
+      // Measured FROM THE BASKET, which is what the HUD counts and where the
+      // trees and the hazard are anchored. They used to be measured from the
+      // bottom of the field, so once you had moved up the hole a line marked
+      // "100 ft" was 100ft from the tee you had left rather than from the
+      // target you were throwing at.
       for (var m = 100; m < fieldLen(); m += 100) {
-        var y = bottom - (bottom - top) * (m / fieldLen());
+        var y = bottom - (bottom - top) * (1 - m / fieldLen());
         var label = m + ' ft';
         if (overArt) {
           ctx.lineWidth = 1;
