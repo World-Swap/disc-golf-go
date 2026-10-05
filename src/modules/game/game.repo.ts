@@ -5,6 +5,7 @@
 import type { PoolClient } from 'pg';
 import type { Queryable } from '../../db/types';
 import type { Period } from './game.catalog';
+import { GAME_SEASON, seasonFloor } from './game.season';
 
 export interface RoundInput {
   mode: 'quick' | 'course';
@@ -162,8 +163,8 @@ export function createGameRepo(db: Queryable) {
                 MIN(vs_par) FILTER (WHERE holes = 18)             AS best_full_round,
                 COUNT(DISTINCT date_trunc('day', created_at))     AS days_played,
                 MIN(created_at)                                   AS first_round_at
-         FROM game_rounds WHERE player_id = $1`,
-        [playerId]
+         FROM game_rounds WHERE player_id = $1 AND created_at >= $2`,
+        [playerId, GAME_SEASON.startsAt]
       );
       const row = r.rows[0] ?? {};
       const n = (k: string) => parseInt(row[k] ?? '0', 10) || 0;
@@ -184,10 +185,10 @@ export function createGameRepo(db: Queryable) {
         `SELECT g.vs_par, g.strokes, g.par, g.holes, g.created_at, c.name AS course_name
          FROM game_rounds g
          LEFT JOIN courses c ON c.id = g.course_id
-         WHERE g.player_id = $1
+         WHERE g.player_id = $1 AND g.created_at >= $2
          ORDER BY g.vs_par ASC, g.holes DESC, g.created_at ASC
          LIMIT 1`,
-        [playerId]
+        [playerId, GAME_SEASON.startsAt]
       );
       return r.rows[0] ?? null;
     },
@@ -198,11 +199,11 @@ export function createGameRepo(db: Queryable) {
         `SELECT c.id, c.name, c.state, COUNT(*)::int AS rounds, MIN(g.vs_par)::int AS best
          FROM game_rounds g
          JOIN courses c ON c.id = g.course_id
-         WHERE g.player_id = $1 AND g.course_id IS NOT NULL
+         WHERE g.player_id = $1 AND g.course_id IS NOT NULL AND g.created_at >= $3
          GROUP BY c.id, c.name, c.state
          ORDER BY rounds DESC, best ASC
          LIMIT $2`,
-        [playerId, limit]
+        [playerId, limit, GAME_SEASON.startsAt]
       );
       return r.rows;
     },
@@ -245,6 +246,9 @@ export function createGameRepo(db: Queryable) {
      */
     async leaderboard(since: Date | null, limit: number, metric: GameMetric = 'xp') {
       const m = GAME_METRICS[metric] ?? GAME_METRICS.xp;
+      // Floored here rather than at the caller, so no board can be written
+      // that quietly ranks a pre-season round against a post-season one.
+      since = seasonFloor(since);
       const r = await db.query(
         `SELECT p.id, p.player_uuid, p.username, p.display_name, p.level,
                 COALESCE(SUM(g.xp_awarded), 0)::int                       AS game_xp,

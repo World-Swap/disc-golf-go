@@ -14,6 +14,7 @@ import { badRequest } from '../../http/errors';
 import type { Database } from '../../db/types';
 import { grantXp, grantGold, evaluateBadges, type EarnedBadge, type XpEvent, type GoldEvent } from '../progression';
 import { GAME_CHALLENGES, PERIOD_REWARD, periodKey, periodStart, type Period, type GameChallenge } from './game.catalog';
+import { GAME_SEASON } from './game.season';
 import { GAME_METRICS, type GameMetric } from './game.repo';
 import type { GameRepo, PeriodMetrics } from './game.repo';
 
@@ -179,6 +180,8 @@ export function createGameService(deps: GameDeps) {
       const birdiesPerRound = career.rounds > 0 ? career.birdies / career.rounds : null;
 
       return {
+        season: { key: GAME_SEASON.key, label: GAME_SEASON.label,
+                  starts_at: GAME_SEASON.startsAt, note: GAME_SEASON.note },
         lifetime,
         today: daily,
         career: {
@@ -206,6 +209,8 @@ export function createGameService(deps: GameDeps) {
       const meta = GAME_METRICS[metric];
       return {
         board: 'game',
+        season: { key: GAME_SEASON.key, label: GAME_SEASON.label,
+                  starts_at: GAME_SEASON.startsAt, note: GAME_SEASON.note },
         period,
         metric,
         metric_label: meta.label,
