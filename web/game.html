@@ -51,15 +51,20 @@
 
     /* Disc picker */
     .g-bag { display: flex; gap: 8px; padding: 0 14px 10px; }
-    .g-disc { flex: 1; border: 1px solid #ddd5c9; background: #fff; border-radius: 10px;
-              padding: 8px 4px; text-align: center; cursor: pointer; }
+    .g-bag { gap: 5px; }
+    .g-disc { flex: 1; min-width: 0; border: 1px solid #ddd5c9; background: #fff;
+              border-radius: 10px; padding: 7px 2px; text-align: center; cursor: pointer; }
     .g-disc[aria-pressed="true"] { border-color: #fc6414; background: #fff3ec; }
-    .g-disc__n { font-weight: 800; font-size: 13px; color: #202020; }
-    .g-disc__f { font-size: 10px; color: #8a8279; margin-top: 2px; }
-    .g-disc__d { font-size: 10px; font-weight: 700; color: #fc6414; margin-top: 2px; }
+    .g-disc__n { font-weight: 800; font-size: 11.5px; color: #202020; line-height: 1.15;
+                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .g-disc__f { font-size: 8.5px; color: #8a8279; margin-top: 2px; white-space: nowrap;
+                 overflow: hidden; text-overflow: ellipsis; }
+    .g-disc__d { font-size: 9.5px; font-weight: 700; color: #fc6414; margin-top: 1px; }
     /* The two ways out of a finished round. Taller than a disc chip because
        they are the only thing to press on the screen. */
     .g-disc--act { padding: 12px 4px; }
+    .g-disc--act .g-disc__n { font-size: 14px; }
+    .g-disc--act .g-disc__f { font-size: 10px; }
     .g-disc--act:first-child { border-color: #fc6414; background: #fc6414; }
     .g-disc--act:first-child .g-disc__n { color: #fff; font-size: 14px; }
     .g-disc--act:first-child .g-disc__f { color: rgba(255,255,255,0.8); }
@@ -205,14 +210,222 @@
     // ----------------------------------------------------------- the discs
     // Every distance in this game is in FEET — that's how course data is
     // recorded and how disc golfers talk about a hole.
-    // Flight numbers, simplified: speed caps distance, turn drifts right at
-    // high power (RHBH), fade always pulls left at the end. Overpowering a
-    // fast disc is the classic beginner mistake, so the model punishes it.
+    //
+    // The four numbers are the real ones disc golf uses, in the usual order
+    // (speed · glide · turn · fade). They are not decoration: every one of
+    // them is read by the flight model below, and the bag is built so that no
+    // disc is strictly better than another.
+    //
+    //   speed  what arm speed the disc WANTS. Throw it slower and it flies
+    //          more overstable; throw it faster and it flies more understable.
+    //   glide  how far it carries for the power you put in.
+    //   turn   rightward drift while it is still fast (negative = turns more).
+    //   fade   leftward hook as it slows. Always arrives. RHBH throughout.
     var DISCS = [
-      { key: 'putter', name: 'Putter', max: 105, speed: 2, turn: 0.0, fade: 0.8, spread: 0.5, flight: '2 · 3 · 0 · 1' },
-      { key: 'mid',    name: 'Mid',    max: 205, speed: 5, turn: 0.6, fade: 1.6, spread: 1.0, flight: '5 · 5 · −1 · 1' },
-      { key: 'driver', name: 'Driver', max: 320, speed: 9, turn: 1.8, fade: 3.4, spread: 1.7, flight: '9 · 5 · −2 · 3' },
+      { key: 'putter',  name: 'Putter',  max: 115, speed: 2,  glide: 3, turn:  0, fade: 1 },
+      { key: 'approach',name: 'Approach',max: 175, speed: 4,  glide: 3, turn:  0, fade: 3 },
+      { key: 'mid',     name: 'Mid',     max: 230, speed: 5,  glide: 5, turn: -1, fade: 1 },
+      { key: 'fairway', name: 'Fairway', max: 285, speed: 7,  glide: 5, turn: -2, fade: 2 },
+      { key: 'control', name: 'Control', max: 330, speed: 9,  glide: 5, turn: -1, fade: 3 },
+      { key: 'bomber',  name: 'Bomber',  max: 385, speed: 12, glide: 5, turn: -1, fade: 3 }
     ];
+    DISCS.forEach(function (d) {
+      d.flight = d.speed + ' · ' + d.glide + ' · ' + d.turn + ' · ' + d.fade;
+    });
+    var FASTEST = 12;          // the speed rating a full-power throw matches
+
+    // ------------------------------------------------------- flight model
+    // Pure functions: no DOM, no canvas, no game state. Everything the throw
+    // needs is passed in, so the whole model can be run headlessly a few
+    // hundred thousand times to check what it does to a scorecard before it
+    // is allowed anywhere near a leaderboard.
+
+    /**
+     * How fast the disc was thrown relative to what it wants. 1 is exactly
+     * right. This is the heart of the model and the one thing the old one
+     * had backwards: it only punished throwing too HARD. Real discs are
+     * two-sided -- under its rated speed a disc flies MORE overstable and
+     * dumps left early, over it the disc flies MORE understable and burns
+     * right. Smashing a putter and feathering a bomber are both mistakes,
+     * and they are opposite mistakes.
+     */
+    function speedRatio(power, d) {
+      return power / Math.max(0.08, d.speed / FASTEST);
+    }
+
+    /**
+     * Wind acts on the disc's airspeed, not on the player's arm, so a
+     * headwind makes a disc behave as though it were thrown faster than it
+     * was -- more understable -- and a tailwind as though thrown slower.
+     * `head` is +1 straight into the player's face, -1 straight behind.
+     */
+    function windRatio(ratio, head) { return ratio * (1 + 0.45 * head); }
+
+    /** Where the disc is, across the line to the basket, at time t of flight. */
+    function lateralAt(t, f) {
+      // The release angle is a constant drift: tilt it left and it goes left
+      // the whole way.
+      var tilt = f.angle * f.tiltForce * t;
+      // High-speed turn ARRIVES EARLY AND STAYS. It is a displacement, not a
+      // wobble: a disc that turns right is further right for the rest of its
+      // flight. Modelling it as a peak that returned to zero — which is what
+      // this did first — left turn with no effect at all on where the disc
+      // finished, and no amount of tuning would have shown it, because the
+      // mid-flight bulge looked right on screen.
+      var u = Math.min(1, t / 0.55);
+      var hs = u * u * (3 - 2 * u);
+      // Fade arrives later, and always arrives. The gap between the two
+      // ramps is what draws the S.
+      var v = Math.max(0, (t - 0.45) / 0.55);
+      var ls = v * v * (3 - 2 * v);
+      return tilt + f.turnForce * hs - f.fadeForce * ls + f.crossForce * t * t;
+    }
+
+    /**
+     * Resolve one throw into a flight. `rand` is injected so a simulation can
+     * run it deterministically; the game passes Math.random.
+     */
+    function resolveThrow(o, rand) {
+      rand = rand || Math.random;
+      var d = o.disc;
+      // Inside the circle the putter's full 115ft would put a 20ft putt at
+      // 17% of the bar, where no amount of skill lands it. The meter is
+      // scaled to the putt instead, so a good putt sits mid-meter.
+      var reach = o.reach || d.max;
+      var ratio = speedRatio(o.power, d);
+      var eff = windRatio(ratio, o.windHead);
+
+      // Carry. Glide stretches it, a headwind eats it, a bad lie costs the
+      // run-up, and overpowering bleeds distance because the disc is turning
+      // instead of carrying.
+      var over = Math.max(0, eff - 1);
+      var carry = reach * o.power
+        * (0.80 + d.glide * 0.04)
+        * (1 - 0.30 * o.windHead)
+        * o.liePower
+        * (1 - 0.18 * Math.min(1.6, over));
+      // Dispersion grows with the throw. A 20ft putt is repeatable; a 350ft
+      // bomb is not, which is where the risk in reaching for the big disc has
+      // to come from — otherwise the longest disc is always the right answer.
+      carry *= 1 + (rand() - 0.5) * (0.07 + 0.13 * o.power);
+
+      // Turn only exists while the disc is fast, and grows hard once it is
+      // thrown past its rating. Fade always arrives, and arrives harder the
+      // slower the disc was thrown for what it is.
+      // Every lateral force is a FRACTION OF THE FLIGHT, not a number of
+      // feet. Drift accumulates over the distance the disc travels, so a
+      // 20ft putt cannot fade as far as a 300ft drive — which is exactly
+      // what a flat constant did, and it made putting from 30ft impossible
+      // because the putt hooked 21ft left of a 10ft target.
+      var span = Math.max(40, carry);
+      var turnForce = (-d.turn) * 0.105 * span * Math.max(0, Math.min(2.2, eff - 0.6));
+      var fadeForce = d.fade * 0.075 * span * (1 + 0.85 * Math.max(0, Math.min(0.7, 1 - eff)));
+
+      var f = {
+        angle: o.angle, turnForce: turnForce, fadeForce: fadeForce,
+        tiltForce: 0.26 * span,
+        crossForce: o.windCross * 0.17 * span,
+        carry: carry, ratio: ratio, eff: eff, power: o.power,
+        from: { x: 0, y: o.distance }
+      };
+      // Scatter: a bad lie and a disc being muscled are both less repeatable.
+      f.scatter = (rand() - 0.5) *
+        (carry * 0.075 + 7 + 30 * (1 - o.liePower) + 14 * Math.min(1.6, over));
+      return f;
+    }
+
+    /**
+     * The hole's wind, seeded from the hole itself rather than rolled fresh.
+     * This matters more than it looks: the weekly and daily tournaments put
+     * the whole field on one course, so if the wind were random every player
+     * would be ranked against a different hole. Seeded, everyone gets the
+     * same conditions and the board means something.
+     *
+     * About a third of holes are calm -- wind every hole would stop being a
+     * thing you read and start being noise.
+     */
+    function conditionsFor(key) {
+      var a = unit(key + ':wind'), b = unit(key + ':dir');
+      var strength = a < 0.34 ? 0 : (a - 0.34) / 0.66;
+      var theta = b * Math.PI * 2;
+      return {
+        head: Math.cos(theta) * strength,      // +1 in your face, -1 behind
+        cross: Math.sin(theta) * strength,     // +1 pushing right
+        strength: strength
+      };
+    }
+
+    /** Trees between the lie and the basket, in the throw's own frame. */
+    function treesFor(key, distance) {
+      var tight = unit(key + ':tight');
+      if (distance < 95) return [];                     // nothing to shape around on a putt
+      var n = tight < 0.45 ? 0 : tight < 0.82 ? 1 : 2;
+      var out = [];
+      for (var i = 0; i < n; i++) {
+        var k = key + ':t' + i;
+        out.push({
+          y: distance * (0.28 + unit(k + 'y') * 0.46),  // how far out it stands
+          x: (unit(k + 'x') - 0.5) * Math.min(150, distance * 0.46),
+          r: 15 + unit(k + 'r') * 11
+        });
+      }
+      return out;
+    }
+
+    /**
+     * The first tree the flight actually hits, or null. The path is already
+     * parametric, so this is a lookup rather than a simulation: find the
+     * moment the disc is level with the tree and ask how far across it is.
+     */
+    function hitTree(f, trees) {
+      if (!trees || !trees.length || f.carry <= 0) return null;
+      var best = null;
+      for (var i = 0; i < trees.length; i++) {
+        var tr = trees[i];
+        var t = (f.from.y - tr.y) / f.carry;
+        if (t <= 0.04 || t >= 1) continue;               // behind you, or short of it
+        if (Math.abs(lateralAt(t, f) - tr.x) > tr.r) continue;
+        if (!best || t < best.t) best = { t: t, tree: tr };
+      }
+      return best;
+    }
+
+    /** How much of a run-up the lie allows, and what to call it. */
+    function lieFor(offLine, teed) {
+      if (teed) return { name: 'tee', power: 1 };
+      var a = Math.abs(offLine);
+      if (a < 34) return { name: 'fairway', power: 0.95 };
+      if (a < 78) return { name: 'rough', power: 0.84 };
+      return { name: 'trees', power: 0.70 };
+    }
+
+    /**
+     * Did it actually go in?
+     *
+     * The old model holed anything that finished within ten feet, which
+     * conflated "close" with "in" — and is why a good player aced one hole
+     * in eight. From inside the circle you are putting AT the chains and
+     * most of those drop. From 250 feet out the disc is still flying, and
+     * landing near the basket is a tap-in birdie, not an ace: it has to
+     * actually find the chains and stay in them.
+     */
+    function holedOut(f, miss, rand) {
+      if (miss > IN_THE_CHAINS) return false;
+      if (f.from.y <= 70) {
+        // Inside the circle you are putting AT the chains, so the target is
+        // real — but it shrinks with the length of the putt, because from
+        // 60ft you are not picking a link. A flat ten-foot "close enough"
+        // made every putt a formality and flattened the whole skill curve.
+        return miss < Math.max(2.6, IN_THE_CHAINS * (1 - 0.62 * Math.min(1, f.from.y / 70)));
+      }
+      return miss < 4 && rand() < 0.35;                // still flying, and lucky
+    }
+
+    /** Where the flight finished, across and along the line to the basket. */
+    function restOf(f) {
+      return { x: lateralAt(1, f) + f.scatter, y: f.from.y - f.carry };
+    }
+
     var PX_PER_FT = 0.67;      // how far across the field a foot of drift reads
     var IN_THE_CHAINS = 10;    // feet: close enough to have holed out
 
@@ -401,7 +614,9 @@
 
     // -------------------------------------------------------------- state
     var S = { hole: 1, par: 3, throws: 0, total: 0, holeLen: 0, ballX: 0, ballY: 0,
-              phase: 'ready', power: 0, angle: 0, t: 0, dir: 1, flight: null, done: false };
+              phase: 'ready', power: 0, angle: 0, t: 0, dir: 1, flight: null, done: false,
+              seed: 'q', holeKey: 'q:h1', wind: { head: 0, cross: 0, strength: 0 },
+              trees: [], lie: { name: 'tee', power: 1 }, hit: null };
     var HOLES = 3;
     var COURSE = null;   // { name, holes: [{ par, feet }] } when playing a real course
     var CARD = [];       // { par, strokes } per finished hole — what the server scores
@@ -436,6 +651,17 @@
     }
 
     /** 0..1 from a string key, or random when there is no key to be stable to. */
+    /**
+     * A number in [0,1) from a string, the same every time.
+     *
+     * The FNV accumulation alone is uniform in aggregate but has almost no
+     * avalanche: two keys differing by one character came out within 0.08 of
+     * each other 97.5% of the time. Measured on what the game does with it,
+     * that meant a course whose holes fall back to generated lengths played
+     * eighteen nearly identical ones — 222, 223, 223, 224, 225, 226 ft — and
+     * it put two trees in the same spot. The finisher below is murmur3's
+     * fmix32, which is there for exactly this.
+     */
     function unit(key) {
       if (key == null) return Math.random();
       var h = 2166136261;
@@ -443,7 +669,10 @@
         h ^= key.charCodeAt(i);
         h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
       }
-      return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
+      h ^= h >>> 16; h = Math.imul(h, 2246822507) >>> 0;
+      h ^= h >>> 13; h = Math.imul(h, 3266489909) >>> 0;
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
     }
 
     // Build a playable round from whatever the course record actually has.
@@ -489,23 +718,54 @@
       // it has already shown — the one case dealing without replacement does
       // not cover on its own.
       if (S.hole === 1) primeArt();
+      if (S.hole === 1) {
+        // What the hole's conditions are seeded from. A tournament seeds off
+        // its own period, so the whole field meets the same wind and the same
+        // trees on the same hole — otherwise the board ranks players against
+        // different holes. A plain course round seeds off the course, so it
+        // keeps a prevailing character. A quick round rolls fresh each time.
+        S.seed = ENTRY ? 't' + ENTRY.week
+               : (COURSE && COURSE.id ? 'c' + COURSE.id : 'q' + Math.floor(Math.random() * 1e9));
+      }
       var how = document.getElementById('how');
       if (how && !how.hidden) { how.hidden = true; setTimeout(resize, 0); }
       var h = COURSE ? COURSE.holes[S.hole - 1] : null;
       S.holeLen = h ? h.feet : Math.round(230 + Math.random() * 200);
       S.par = h ? h.par : 3;
       S.throws = 0; S.ballX = 0; S.ballY = S.holeLen;
-      S.phase = 'ready'; S.flight = null;
+      S.phase = 'ready'; S.flight = null; S.hit = null;
+      S.holeKey = S.seed + ':h' + S.hole;
+      S.wind = conditionsFor(S.holeKey);
+      S.lie = { name: 'tee', power: 1 };
+      S.trees = treesFor(S.holeKey + ':shot0', S.ballY);
       pickArt();
       autoDisc(); paintBag(); hud();
       say('Tap to start your power',
-          (COURSE ? COURSE.name + ' · ' : '') + 'Hole ' + S.hole + ' — ' + S.holeLen + ' ft, par ' + S.par);
+          (COURSE ? COURSE.name + ' · ' : '') + 'Hole ' + S.hole + ' — ' + S.holeLen +
+          ' ft, par ' + S.par + windWord());
     }
 
     // Pick the sensible disc for the distance left, the way a player would.
+    /**
+     * Suggest the disc whose range suits the shot. Only a suggestion — the
+     * whole bag stays tappable, and the right answer is often not the longest
+     * disc that reaches, because a disc thrown under its speed fades early.
+     */
     function autoDisc() {
-      var d = Math.sqrt(S.ballX * S.ballX + S.ballY * S.ballY);
-      disc = d <= 100 ? DISCS[0] : d <= 200 ? DISCS[1] : DISCS[2];
+      var d = S.ballY;
+      disc = d <= 85 ? DISCS[0] : d <= 150 ? DISCS[1] : d <= 215 ? DISCS[2]
+           : d <= 275 ? DISCS[3] : d <= 330 ? DISCS[4] : DISCS[5];
+    }
+
+    /** How the wind reads in words, for the line under the prompt. */
+    function windWord() {
+      var w = S.wind;
+      if (!w || w.strength < 0.12) return ' · calm';
+      var mph = Math.round(4 + w.strength * 14);
+      var dir = Math.abs(w.head) > Math.abs(w.cross)
+        ? (w.head > 0 ? 'headwind' : 'tailwind')
+        : (w.cross > 0 ? 'crosswind →' : 'crosswind ←');
+      return ' · ' + mph + ' mph ' + dir;
     }
 
     // ------------------------------------------------------------ throwing
@@ -531,54 +791,56 @@
 
     function release() {
       S.throws++;
-      var power = S.power;                       // 0..1
-      var angle = S.angle;                       // -1 hyzer .. +1 anhyzer
-
-      // The meter maps to a range that suits the shot. A putter throttled to
-      // its full 32 m would put an 8 m putt at 25% power — the fast, twitchy
-      // bottom of the bar, where no amount of skill lands it. Putting scales
-      // the bar to the putt in front of you, so a good putt sits mid-meter.
-      var reach = disc.key === 'putter' ? Math.max(20, S.ballY * 1.7) : disc.max;
-      var ratio = power * reach / (disc.speed * 36);      // >1 means overpowered
-
-      // Distance: power drives it, but pushing past the disc's speed rating
-      // costs you — the disc turns over instead of carrying.
-      var carry = reach * power * (ratio > 1 ? (1 - (ratio - 1) * 0.55) : 1);
-      carry *= 0.92 + Math.random() * 0.16;      // human variance
-
-      // Lateral: angle sets the starting tilt, turn pushes right at high
-      // power, fade always hauls it back left at the end.
-      var turnPush = disc.turn * Math.max(0, ratio - 0.55) * 30;
-      var fadePull = disc.fade * 18;
-      var lateral  = angle * 46 + turnPush - fadePull * (0.55 + power * 0.5);
-      lateral += (Math.random() - 0.5) * disc.spread * 20;
-      // A disc only has time to drift if it's actually flying: soft touch
-      // shots and putts hold their line far better than full-power throws.
-      lateral *= Math.min(1, carry / (disc.max * 0.6));
-
-      S.flight = { from: { x: S.ballX, y: S.ballY }, carry: carry, lateral: lateral,
-                   ratio: ratio, power: power, angle: angle };
+      var lie = S.lie || { name: 'tee', power: 1 };
+      // The putter's meter is scaled to the putt in front of you; everything
+      // else uses the disc's own range.
+      var reach = (disc.key === 'putter' && S.ballY < 95) ? Math.max(38, S.ballY * 1.7) : 0;
+      var f = resolveThrow({
+        disc: disc, power: S.power, angle: S.angle,
+        windHead: S.wind.head, windCross: S.wind.cross,
+        liePower: lie.power, distance: S.ballY, reach: reach
+      });
+      S.flight = f;
+      S.hit = hitTree(f, S.trees);
       S.t = 0; S.phase = 'flight';
     }
 
     // Flight resolved: work out where it stopped and what to say about it.
     function land() {
-      var f = S.flight;
-      var restY = f.from.y - f.carry;    // negative means past the basket
-      var restX = f.from.x + f.lateral;
+      var f = S.flight, rest, spat = false;
 
-      var miss = Math.sqrt(restX * restX + restY * restY);
-      if (miss < IN_THE_CHAINS) return holed();          // in the chains
+      if (S.hit) {
+        // Into a tree. It drops roughly where it hit, which is the whole
+        // point of them: a line that does not exist costs a stroke.
+        var t = S.hit.t;
+        rest = { x: lateralAt(t, f) + (Math.random() - 0.5) * 26,
+                 y: f.from.y - f.carry * t + 10 + Math.random() * 24 };
+      } else {
+        rest = restOf(f);
+      }
+
+      var miss = Math.sqrt(rest.x * rest.x + rest.y * rest.y);
+
+      if (!S.hit && miss < IN_THE_CHAINS) {
+        // Chains spit a hot putt straight back out. It is a real and
+        // thoroughly demoralising event, and it is the reason nobody who
+        // knows what they are doing rips a putt from inside the circle.
+        var hot = f.power > 0.72 && f.from.y < 72;
+        if (!(hot && Math.random() < 0.3)) return holed();
+        rest = { x: (Math.random() - 0.5) * 28, y: 13 + Math.random() * 18 };
+        miss = Math.sqrt(rest.x * rest.x + rest.y * rest.y);
+        spat = true;
+      }
 
       // The next throw is played from wherever it stopped, aimed at the
-      // basket again — so the state is simply "how far away am I now".
-      // Without this, a disc that sailed past the basket kept being thrown
-      // in the same direction and the hole could never be finished.
+      // basket again — so the state is simply "how far away am I now", and
+      // how playable the spot it finished in is.
       S.ballY = miss; S.ballX = 0;
+      S.lie = lieFor(rest.x, false);
+      S.trees = treesFor(S.holeKey + ':shot' + S.throws, S.ballY);
 
       autoDisc(); paintBag(); S.phase = 'result';
-      var note = coach(f, restX, restY);
-      say(Math.round(miss) + ' ft to the basket', note);
+      say(Math.round(miss) + ' ft to the basket  ·  ' + S.lie.name, coach(f, rest, spat));
       hud();
 
       // Mercy rule: nobody should be stuck on one hole forever.
@@ -590,14 +852,27 @@
       }
     }
 
-    // One line on what that throw did — the seed of the coaching idea, kept
-    // crude for now: the loudest fault wins.
-    function coach(f, restX, restY) {
-      if (f.ratio > 1.12) return 'You <b>overpowered</b> it — past its speed the disc turns over instead of carrying.';
-      if (restX < -40)    return 'Big <b>fade</b> left. Aim further right, or throw a straighter disc.';
-      if (restX > 40)     return 'It <b>turned over</b> right. Ease off, or add hyzer.';
-      if (restY < -13) return 'Flew <b>past</b> the basket — that disc had more in it than the hole needed.';
-      if (f.power < 0.45 && restY > 80) return 'Left it <b>short</b> — nothing wrong with the line.';
+    /**
+     * One line on what that throw did. The loudest fault wins, and the order
+     * matters: a tree is what happened even if the disc was also overpowered.
+     *
+     * This is feedback on the shot you just made, not a coaching claim --
+     * Throw Lab is a game, and what it teaches is Throw Lab.
+     */
+    function coach(f, rest, spat) {
+      if (S.hit) return 'Into the <b>trees</b>. There was no line there — shape it round, or take the gap.';
+      if (spat)  return '<b>Spat out!</b> Too much heat on a putt from in close.';
+      if (f.eff > 1.5)  return 'That disc is <b>too slow for that much arm</b> — it turned over instead of carrying.';
+      if (f.eff < 0.62) return '<b>Not enough arm</b> for that disc, so it flew overstable and dumped left early.';
+      if (S.wind.head > 0.45 && rest.x > 45) return 'The <b>headwind</b> made it act understable. More hyzer, or a stabler disc.';
+      if (S.wind.head < -0.45 && rest.y > 90) return '<b>Tailwind</b> killed the lift — it dropped out of the air early.';
+      if (Math.abs(S.wind.cross) > 0.5 && Math.abs(rest.x) > 50) return 'The <b>crosswind</b> carried it. Aim into the wind, not at the basket.';
+      if (rest.x < -48) return 'Big <b>fade</b> left. Start it further right, or throw something straighter.';
+      if (rest.x > 48)  return 'It <b>turned over</b> right. Ease off, or add hyzer.';
+      if (rest.y < -16) return 'Flew <b>past</b> the basket — that disc had more in it than the hole needed.';
+      if (f.power < 0.45 && rest.y > 80) return 'Left it <b>short</b> — nothing wrong with the line.';
+      if (S.lie && S.lie.name === 'rough')  return 'In the <b>rough</b> — no run-up from there, so take something you can control.';
+      if (S.lie && S.lie.name === 'trees')  return 'Under the <b>trees</b>. Getting back to the fairway is the shot.';
       return 'Good line. Tap to throw again.';
     }
 
@@ -795,14 +1070,90 @@
       }
       ctx.restore();
 
+      treeShapes(cx, top, bottom);
       basket(cx, top);
+      windArrow();
       if (S.phase !== 'flight' && S.phase !== 'choose') lie(cx, bottom);
       if (S.phase === 'flight') flight(cx, top, bottom);
+      if (S.phase === 'angle') aimRay(cx, top, bottom);
       if (S.phase === 'power') powerBar();
       if (S.phase === 'angle') angleBar();
       // The finished round covers the hole: at the end you want your card,
       // not the fairway you have already played.
       if (S.phase === 'gameEnd') card();
+    }
+
+    /**
+     * The trees standing between the lie and the basket. They are drawn
+     * before the flight so the disc passes in front of them, and they are
+     * the same objects the collision test uses — if you can see a gap, the
+     * gap is really there.
+     */
+    function treeShapes(cx, top, bottom) {
+      if (!S.trees || !S.trees.length || S.phase === 'choose') return;
+      for (var i = 0; i < S.trees.length; i++) {
+        var tr = S.trees[i];
+        var y = bottom - (bottom - top) * (1 - Math.max(0, tr.y) / fieldLen());
+        var x = cx + tr.x * PX_PER_FT;
+        var r = Math.max(12, tr.r * PX_PER_FT);
+        // A tree the player cannot see is a stroke taken off them for nothing,
+        // and these sit on top of aerial art that is itself full of dark
+        // trees. So they carry their own contrast the same way the distance
+        // labels do: solid ink inside a bone ring, which reads on forest and
+        // on snow alike.
+        ctx.beginPath(); ctx.arc(x, y + 2, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = INK; ctx.fill();
+        ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(247,244,239,0.92)'; ctx.stroke();
+        // A notch of light inside, so it reads as a canopy rather than a hole
+        // punched in the page.
+        ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.32, r * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(247,244,239,0.3)'; ctx.fill();
+      }
+    }
+
+    /** Which way the wind is pushing, in the top corner of the field. */
+    function windArrow() {
+      var w = S.wind;
+      if (!w || w.strength < 0.12) return;
+      var x = W - 32, y = 32, len = 7 + w.strength * 9;
+      // Screen y runs down the page and the player throws up it, so a
+      // headwind -- blowing back at the player -- points DOWN.
+      var ang = Math.atan2(w.head, w.cross);
+      // On its own chip, because the corner it sits in is whatever the hole
+      // art happens to put there -- snow on one template, black rock on the
+      // next -- and a dark arrow on dark rock tells nobody anything.
+      ctx.save();
+      ctx.beginPath(); ctx.arc(x, y, 19, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(247,244,239,0.88)'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(32,32,32,0.35)'; ctx.stroke();
+      ctx.translate(x, y); ctx.rotate(ang);
+      ctx.strokeStyle = INK; ctx.fillStyle = INK;
+      ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-len, 0); ctx.lineTo(len * 0.45, 0); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(len, 0); ctx.lineTo(len * 0.35, -5.5); ctx.lineTo(len * 0.35, 5.5);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    /**
+     * Where the disc is pointed as the angle bar runs. Deliberately only the
+     * release direction and only a short way out — the whole predicted curve
+     * would hand the player the answer, and reading the flight is the game.
+     */
+    function aimRay(cx, top, bottom) {
+      var fromY = S.ballY <= 0 ? top : bottom - (bottom - top) * (1 - S.ballY / fieldLen());
+      var fromX = cx + S.ballX * PX_PER_FT;
+      var reach = Math.min(130, (bottom - fromY) * 0.42 + 46);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(252,100,20,0.5)';
+      ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(fromX, fromY);
+      ctx.lineTo(fromX + S.angle * reach * 0.5, fromY - reach);
+      ctx.stroke();
+      ctx.restore();
     }
 
     /** The round's card, hole by hole, over a scrim on the last hole's art. */
@@ -869,24 +1220,46 @@
       discSprite(x, y, 1);
     }
 
+    /** Screen position of the disc at time t of the current flight. */
+    function flightPoint(cx, top, bottom, t) {
+      var f = S.flight;
+      var remaining = Math.max(0, f.from.y - f.carry * t);
+      return {
+        x: cx + (f.from.x + lateralAt(t, f)) * PX_PER_FT,
+        y: bottom - (bottom - top) * (1 - remaining / fieldLen())
+      };
+    }
+
+    /**
+     * The flight, drawn as the curve it actually is.
+     *
+     * This used to be a straight line from the lie to the disc, which threw
+     * away the one shape disc golf is known for: out right as it turns, back
+     * left as it fades. The path is parametric, so the trail is just that
+     * same function sampled — what you watch is exactly what was scored.
+     */
     function flight(cx, top, bottom) {
       var f = S.flight, t = S.t;
-      var fromY = bottom - (bottom - top) * (1 - f.from.y / fieldLen());
-      var travelled = f.carry * t;
-      var remaining = Math.max(0, f.from.y - travelled);
-      var y = bottom - (bottom - top) * (1 - remaining / fieldLen());
-      // Lateral arrives progressively: turn early, fade late.
-      var shape = f.lateral * (0.35 * t + 0.65 * Math.pow(t, 2.2));
-      var x = cx + (f.from.x + shape) * PX_PER_FT;
-      var lift = 1 + 0.55 * Math.sin(Math.PI * t);         // height illusion
-      ctx.strokeStyle = 'rgba(252,100,20,0.28)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx + f.from.x * PX_PER_FT, fromY); ctx.lineTo(x, y); ctx.stroke();
-      discSprite(x, y, lift);
+      ctx.strokeStyle = 'rgba(252,100,20,0.45)';
+      ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (var i = 0; i <= 28; i++) {
+        var tt = t * i / 28;
+        var pt = flightPoint(cx, top, bottom, tt);
+        if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+      var now = flightPoint(cx, top, bottom, t);
+      // A height illusion, and the disc banks the way it was released.
+      var lift = 1 + 0.5 * Math.sin(Math.PI * t);
+      discSprite(now.x, now.y, lift, f.angle * 0.5 * (1 - t));
     }
 
     // The mark itself: orange ellipse with a light ring, as in the logo.
-    function discSprite(x, y, scale) {
-      ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+    function discSprite(x, y, scale, tilt) {
+      ctx.save(); ctx.translate(x, y);
+      if (tilt) ctx.rotate(tilt);
+      ctx.scale(scale, scale);
       ctx.fillStyle = ORANGE;
       ctx.beginPath(); ctx.ellipse(0, 0, 13, 6, 0, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = BONE; ctx.lineWidth = 1.6;
