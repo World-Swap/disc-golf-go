@@ -6,7 +6,10 @@ upload it. **This file deliberately sits at the repo root, not in that folder**:
 everything under `web/` is served by `express.static`, so the posting notes
 below would otherwise be public at `/img/social/POSTS.md`.
 
-Four posts, each with a Facebook and an Instagram version of the same idea.
+Six posts. **1-4 are app posts**, each with a Facebook and an Instagram
+version of the same idea. **5 and 6 are the Boulder Creek event** — 5 for
+Facebook and Instagram, 6 for Reddit — and they follow different rules,
+marked below and explained in the notes.
 Every number below was recounted from `src/db/data/lessons.ts` and the course
 seed, not taken from the marketing copy. That is how the last two errors were
 caught: "13 touring pros" outlived the figure by weeks, and "64 creators" was
@@ -22,16 +25,22 @@ number put on it was wrong in both directions.
 - App Store — https://apps.apple.com/us/app/disc-golf-go/id6768128686
 - Google Play — https://play.google.com/store/apps/details?id=the.discgolfgo.app
 
-**Every post links to https://discgolfgo.com**, never discgolfgo.app. The goal
-is installs: .com is the landing page that carries the store badges, while .app
-is the web app itself — sending people straight there is how you get a browser
-user instead of a download. The store links above are for the places that take
-a direct one (an Instagram link sticker, a Facebook app-install ad).
+**Every APP post links to https://discgolfgo.com**, never discgolfgo.app. The
+goal is installs: .com is the landing page that carries the store badges, while
+.app is the web app itself — sending people straight there is how you get a
+browser user instead of a download. The store links above are for the places
+that take a direct one (an Instagram link sticker, a Facebook app-install ad).
 
-**Every call to action says "download", in the copy and on the image.** "Free
-to start" and "link in bio" are not asks; they leave the reader to decide what
-to do next, and the thing we want them to do is install the app. The images
-carry it too, so the ask survives being reshared without the caption.
+**Every APP call to action says "download", in the copy and on the image.**
+"Free to start" and "link in bio" are not asks; they leave the reader to decide
+what to do next, and the thing we want them to do is install the app. The
+images carry it too, so the ask survives being reshared without the caption.
+
+**The two rules above are for posts 1-4.** An EVENT post sells the event, so
+the ask that matters is registration and that link is not ours. Post 5 keeps
+the download ask alongside it; post 6 drops it entirely, because Reddit
+punishes what Facebook tolerates. Both exceptions are deliberate and are
+explained in the notes — neither is a drafting slip to "fix" back.
 
 ---
 
@@ -179,7 +188,61 @@ renders it. See the note on shapes at the bottom.
 
 ---
 
+## 6 · Boulder Creek Re-Run  (Reddit)
+**Image:** none, deliberately — see the notes. This is a self-post (text post).
+If a sub wants an image, `event-assets/boulder-creek-re-run/social.png`.
+
+### Title
+> Boulder Creek Re-Run — PDGA C-tier in the Santa Cruz redwoods, Sat Dec 12. One round, 19 holes, on a ball golf course.
+
+### Body
+> If you're in Northern California and want one more sanctioned round before the year's out — I'm running a C-tier at Boulder Creek Golf and Country Club on **Saturday, December 12**.
+>
+> The format's a little unusual, which is half the appeal:
+>
+> - **One round, 19 holes** — starting on the front nine, finishing on a modified ten-hole layout on the back half.
+> - It's a **ball golf course set up disc golf friendly**. Nine holes, built in 1961, sitting in the redwoods in the Santa Cruz Mountains.
+> - Tee times from **7:30am**, check in at hole 1.
+> - **18 divisions**, pro and am, down to 60+ grades. Trophies for 1st, cash for pros, player pack for ams.
+> - **$65 pro / $50 am**, plus pass-through fees: $14 greens, $3 PDGA, $3 TD.
+>
+> **Registration opens Friday, October 9 at 7:00pm PDT** — discgolfscene.com/BCR
+>
+> I'm the TD, so ask me anything about the layout, the format, or logistics and I'll answer in the comments.
+>
+> (Disclosure, since it'd come out anyway: I also make a disc golf training app. That's not what this post is about.)
+
+---
+
 ## Posting notes
+
+- **Post 6 is Reddit, and Reddit is not Facebook with different hashtags.** It
+  is a **self-post with no image and no app pitch**, on purpose. An opening
+  line that sells an app is what gets a post buried or removed there, so the
+  event carries the whole post and the affiliation is a one-line disclosure at
+  the bottom instead. That disclosure is not politeness: anyone can click a
+  username, and being upfront is what protects the post when they do. It is
+  also why there is no "download" ask — adding one would turn a tournament
+  announcement into an ad and cost more than it gains.
+- **Check the sub's own rules before posting 6, every time.** Reddit was not
+  reachable from the machine this was written on, so the subreddit rules were
+  NOT verified and are not reproduced here — do not assume. A TD announcing
+  their own sanctioned event is usually fine, but mods vary: some want a flair,
+  some confine promo to a weekly thread, some ban link-bearing self-posts
+  outright. For a C-tier the regional sub will almost certainly out-perform the
+  big one. **Then answer the comments** — a post whose author replies is the
+  whole mechanism, and the body promises exactly that.
+- **Post 6 is first person and signed as the TD.** Posts 1-5 are the brand
+  speaking; this one is a person running a tournament, which is the only voice
+  that works there. Do not "brand" it.
+- **Post 6 claims nothing about how the course plays.** Only what the club and
+  the listing actually state — redwoods, Santa Cruz Mountains, nine holes,
+  1961, and the 19-hole format quoted off the listing. Whether the fairways are
+  open or tight is not known, so it is not said. Resist adding colour here; it
+  is the one thing in the post that could be contradicted by somebody who has
+  played it, in public, under your own name.
+- **Post 6 shares post 5's shelf life.** Same registration line, same
+  swap-or-drop once it opens, and spent after December 12.
 
 - **Post 5 has a shelf life, and one line in it rots.** "Registration opens
   Friday, October 9 at 7:00pm PDT" is true until it opens and merely stale
