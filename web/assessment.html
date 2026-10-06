@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- App UI on discgolfgo.app. Not search content: these render as an empty
+       shell to a crawler (the page is built client-side after an auth check),
+       and the marketing story lives on discgolfgo.com. noindex rather than a
+       robots.txt Disallow, because a disallowed page that is ALREADY indexed
+       can never be re-crawled to discover it should be dropped. follow is kept
+       so link equity still flows. -->
+  <meta name="robots" content="noindex, follow" />
+  <title>Build your path · Disc Golf Go</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w14" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title" id="crumb">Build your path</span>
+      <a class="pill" href="/training" id="quit">Not now</a>
+    </header>
+    <div id="content" class="loading">Loading…</div>
+  </main>
+
+  <script src="/js/app.js?v=w11"></script>
+  <script>
+    (function () {
+      if (!DGG.requireAuth()) return;
+      var API = DGG.API;
+      var content = document.getElementById('content');
+      var esc = DGG.esc;
+
+      // Where the player came from, so "Not now" and the finish both go
+      // somewhere sensible. Onboarding lands on /training either way: the whole
+      // point of the survey is the path, and sending someone to /home right
+      // after answering four questions about their game hides the answer.
+      var from = new URLSearchParams(location.search).get('from') || 'training';
+      var DONE = '/training';
+
+      // The questions are SERVED, never written here. Copying them into the
+      // page would be a second catalogue, and the mapping from an answer to the
+      // lessons it pulls in lives in src/modules/training/assessment.ts -- an
+      // option that exists only in this file would silently weigh nothing.
+      var Q = [];
+      var answers = { skill: null, goals: [], weakness: [], tournament: null };
+      var step = 0;
+
+      function fail(e) {
+        content.className = 'screen';
+        content.innerHTML = '<div class="error">' + esc(e.message || 'Error') + '</div>';
+      }
+
+      function picked(q, value) {
+        return q.multi ? answers[q.key].indexOf(value) !== -1 : answers[q.key] === value;
+      }
+
+      function toggle(q, value) {
+        if (!q.multi) { answers[q.key] = value; return; }
+        var at = answers[q.key].indexOf(value);
+        if (at === -1) answers[q.key].push(value); else answers[q.key].splice(at, 1);
+      }
+
+      // A single question can be answered and moved past, so a single-choice
+      // question advances on tap -- an extra Next press for a decision already
+      // made is friction with no purpose. Multi-select cannot: it has no way to
+      // know you are finished picking.
+      function render() {
+        var q = Q[step];
+        var pct = Math.round((step / Q.length) * 100);
+        var chosen = q.multi ? answers[q.key].length : (answers[q.key] ? 1 : 0);
+
+        content.className = 'screen stack';
+        content.innerHTML =
+          '<div>' +
+            '<div class="meter-row">' +
+              '<span class="caption">Question ' + (step + 1) + ' of ' + Q.length + '</span>' +
+              '<span class="caption">' + (q.multi ? 'Pick any that fit' : 'Pick one') + '</span>' +
+            '</div>' +
+            '<div class="meter"><div class="meter__fill" style="width:' + pct + '%"></div></div>' +
+          '</div>' +
+          '<h1 class="h-title">' + esc(q.prompt) + '</h1>' +
+          '<div id="opts">' + q.options.map(function (o) {
+            return '<button class="choice' + (picked(q, o.value) ? ' choice--on' : '') + '"' +
+              ' type="button" data-v="' + esc(o.value) + '"' +
+              ' aria-pressed="' + (picked(q, o.value) ? 'true' : 'false') + '">' +
+              '<span class="choice__box" aria-hidden="true">✓</span>' +
+              '<span><span class="choice__title">' + esc(o.label) + '</span>' +
+              (o.hint ? '<span class="choice__hint">' + esc(o.hint) + '</span>' : '') +
+              '</span></button>';
+          }).join('') + '</div>' +
+          '<div>' +
+            (q.multi || step === Q.length - 1
+              ? '<button class="btn btn--block" id="next"' + (chosen || q.optional ? '' : ' disabled') + '>' +
+                  (step === Q.length - 1 ? 'Build my path' : (chosen ? 'Next' : 'Skip this one')) + '</button>'
+              : '') +
+            (step > 0
+              ? '<p class="formnote"><a href="#" id="back">Back</a></p>'
+              : '') +
+          '</div>' +
+          '<div class="error" id="err"></div>';
+
+        content.querySelectorAll('.choice').forEach(function (b) {
+          b.addEventListener('click', function () {
+            toggle(q, b.getAttribute('data-v'));
+            if (!q.multi && step < Q.length - 1) { step++; render(); }
+            else render();
+          });
+        });
+        var nx = document.getElementById('next');
+        if (nx) nx.addEventListener('click', function () {
+          if (step === Q.length - 1) submit(); else { step++; render(); }
+        });
+        var bk = document.getElementById('back');
+        if (bk) bk.addEventListener('click', function (e) { e.preventDefault(); step--; render(); });
+      }
+
+      async function submit() {
+        var btn = document.getElementById('next');
+        var err = document.getElementById('err');
+        // Disabled until the POST settles, including when it fails -- the same
+        // rule the game's end screen follows. A second tap would otherwise save
+        // twice and race its own redirect.
+        if (btn) { btn.disabled = true; btn.textContent = 'Building your path…'; }
+        try {
+          await API.post('/training/assessment', answers);
+          location.replace(DONE);
+        } catch (ex) {
+          if (btn) { btn.disabled = false; btn.textContent = 'Build my path'; }
+          if (err) err.textContent = ex.message || 'Could not save that — try again';
+        }
+      }
+
+      (async function () {
+        try {
+          var d = await API.get('/training/assessment');
+          Q = d.questions || [];
+          if (!Q.length) throw new Error('No questions to ask');
+
+          // A retake starts from the last answers rather than a blank form: the
+          // point of retaking is usually to change ONE thing.
+          if (d.answers) {
+            answers.skill = d.answers.skill || null;
+            answers.goals = (d.answers.goals || []).slice();
+            answers.weakness = (d.answers.weakness || []).slice();
+            answers.tournament = d.answers.tournament || null;
+          } else if (from === 'onboard') {
+            // Onboarding has just asked "have you played?" and we do not ask it
+            // again in the same words. "I'm new" IS the beginner answer, so it
+            // is carried in; "I've played before" is NOT carried, because it
+            // does not distinguish the two levels above it and guessing would
+            // put a player on the wrong half of the library.
+            var exp = new URLSearchParams(location.search).get('exp');
+            if (exp === 'new') answers.skill = 'beginner';
+          }
+          document.getElementById('quit').setAttribute('href', DONE);
+          render();
+        } catch (e) { fail(e); }
+      })();
+    })();
+  </script>
+</body>
+</html>

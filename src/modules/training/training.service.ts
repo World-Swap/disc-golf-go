@@ -64,6 +64,7 @@ export interface TrainingServiceDeps {
 import { ASSESSMENT, parseAnswers, type Answers } from './assessment';
 import { buildPath, DEFAULT_ANSWERS } from './path';
 import { nextEvent } from '../../db/data/events';
+import { LESSONS } from '../../db/data/lessons';
 
 export function createTrainingService({ db, repo = createTrainingRepo(db), onLessonCompleted }: TrainingServiceDeps) {
   function levelParam(raw: unknown): SkillLevel | null {
@@ -103,13 +104,29 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
         }
       : DEFAULT_ANSWERS;
 
-    const completed = await repo.completedLessonSlugs(playerId);
-    const path = buildPath(answers, completed, { event: nextEvent() });
+    const [completed, live] = await Promise.all([
+      repo.completedLessonSlugs(playerId),
+      repo.activeLessonIds(),
+    ]);
+    const idBySlug = new Map(live.map((r) => [r.slug, r.id]));
+
+    // A lesson the database is not serving is excluded the same way a finished
+    // one is, rather than filtered out of the result: exclusion keeps the path
+    // its full length, where filtering afterwards would quietly hand back a
+    // short path that reads as the app running out of things to teach.
+    const unavailable = LESSONS.filter((l) => !idBySlug.has(l.slug)).map((l) => l.slug);
+    const path = buildPath(answers, [...completed, ...unavailable], { event: nextEvent() });
+    const withId = (l: { slug: string }) => ({ ...l, id: idBySlug.get(l.slug) ?? null });
     return {
       needs_assessment: !saved,
       taken_at: saved?.updated_at ?? null,
       answers: saved ? answers : null,
       ...path,
+      lessons: path.lessons.map(withId),
+      tournament: path.tournament && {
+        ...path.tournament,
+        weeks: path.tournament.weeks.map((w) => ({ ...w, lessons: w.lessons.map(withId) })),
+      },
       // Empty is the honest answer at 100%, not a bug -- the page says so
       // rather than the builder inventing filler.
       library_complete: path.lessons.length === 0,

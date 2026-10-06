@@ -116,6 +116,7 @@ const PAGES: Record<string, string> = {
   '/onboard': 'onboard.html',
   '/home': 'home.html',
   '/training': 'training.html',
+  '/assessment': 'assessment.html',
   '/missions': 'missions.html',
   '/ranks': 'ranks.html',
   '/vault': 'vault.html',

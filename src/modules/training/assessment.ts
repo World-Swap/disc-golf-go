@@ -210,7 +210,15 @@ export function categoryWeights(a: Answers): Map<string, number> {
 
   // Competition content is opt-in. Weighting it for everyone would push
   // tournament lessons at players who said plainly they are not interested.
-  if (a.tournament === 'registered') add(TOURNAMENT_CATEGORIES, WEAKNESS_WEIGHT);
+  //
+  // A player who IS signed up gets it at GOAL weight rather than WEAKNESS
+  // weight, and the difference is not a hedge -- it is because they also get a
+  // whole second block, the paced countdown to the event, drawn from these same
+  // three categories. At weakness weight the opt-in adds three categories all
+  // outranking everything the player actually asked for, and the main path
+  // came back with no driving lesson at all for someone whose stated goal was
+  // more distance. The event focus is carried by the block that exists for it.
+  if (a.tournament === 'registered') add(TOURNAMENT_CATEGORIES, GOAL_WEIGHT);
   else if (a.tournament === 'curious') add(TOURNAMENT_CATEGORIES, GOAL_WEIGHT / 2);
 
   return w;

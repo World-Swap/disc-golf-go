@@ -325,6 +325,21 @@ export function createTrainingRepo(db: Database) {
       );
     },
 
+    /**
+     * Every lesson the DATABASE is currently serving, by slug. The path is
+     * built from the static library in src/db/data, which is what gets seeded
+     * -- but `is_active` is set in the database, so a lesson pulled from the
+     * app would still be offered by the builder and dead-end when tapped. This
+     * is also where the lesson's id comes from: the training page navigates by
+     * id, and the static data has only slugs.
+     */
+    async activeLessonIds() {
+      const r = await db.query<{ id: number; slug: string }>(
+        'SELECT id, slug FROM training_lessons WHERE is_active = true'
+      );
+      return r.rows;
+    },
+
     /** Slugs the player has finished — what the builder removes from the path. */
     async completedLessonSlugs(playerId: number | null) {
       if (!playerId) return [];

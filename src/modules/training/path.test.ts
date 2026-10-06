@@ -95,6 +95,19 @@ test('the path answers the player rather than the library order', async (t) => {
     );
   });
 
+  // Found by playing the real survey through a browser: answering "more
+  // distance" and "I'm signed up" returned a path with no driving lesson in it,
+  // because the opt-in added three categories above the stated goal.
+  await t.test('opting into an event does not crowd out a stated goal', () => {
+    const p = buildPath(ans({ goals: ['distance'], weakness: ['three_putts'], tournament: 'registered' }));
+    const slugs = p.lessons.map((l) => l.category_slug);
+    assert.ok(
+      slugs.includes('driving') || slugs.includes('form-technique'),
+      'a player who asked for distance should see distance content: ' + slugs.join(', ')
+    );
+    assert.ok(slugs.includes('putting'), 'and their weakness should still lead');
+  });
+
   await t.test('a lesson already done never comes back', () => {
     const first = buildPath(ans()).lessons.map((l) => l.slug);
     const second = buildPath(ans(), first).lessons.map((l) => l.slug);

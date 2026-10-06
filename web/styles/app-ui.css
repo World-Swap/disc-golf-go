@@ -167,6 +167,27 @@
 .row__meta { font-family: var(--font-display); font-size: 14px; font-weight: var(--weight-medium); letter-spacing: 0; color: var(--color-orange); white-space: nowrap; }
 .row__glyph { width: 40px; height: 40px; display: grid; place-items: center; background: var(--color-peach); border-radius: 4px; font-size: 18px; flex: none; }
 
+/* Assessment choices — a tappable option that shows whether it is picked.
+   Selection is carried by a filled check box AND a border/background change,
+   never by colour alone, so it survives a colour-blind reader and a greyscale
+   screenshot. A <button>, not a div: it has to be reachable by keyboard and
+   announce itself as pressable. */
+.choice { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--color-white); border: 1px solid var(--hair-strong); border-radius: var(--radius-lg);
+  padding: 14px; font-family: var(--font-display); cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease; }
+.choice + .choice { margin-top: 10px; }
+.choice__box { width: 22px; height: 22px; flex: none; border-radius: 6px;
+  border: 2px solid var(--hair-strong); display: grid; place-items: center;
+  font-size: 13px; line-height: 1; color: transparent; }
+.choice--on { border-color: var(--color-orange); background: var(--color-peach); }
+.choice--on .choice__box { background: var(--color-orange); border-color: var(--color-orange); color: var(--color-white); }
+.choice__title { font-size: 15px; font-weight: var(--weight-medium); letter-spacing: -0.01em; color: var(--color-ink); }
+.choice__hint { font-size: 12px; color: var(--color-ash); margin-top: 2px; }
+
+/* A wrapped run of pills — the focus chips under a path heading. */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
 /* Pills / tags — soft, rounded */
 .pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 11px; font-weight: var(--weight-bold); letter-spacing: 0.02em; color: var(--color-ink); background: var(--color-cream); border: 1px solid var(--hair-strong); border-radius: var(--radius-pill); padding: 5px 12px; }
 .pill--done { color: var(--color-white); background: var(--color-green); border-color: var(--color-green); }

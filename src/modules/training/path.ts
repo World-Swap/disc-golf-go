@@ -20,6 +20,7 @@ export interface PathLesson {
   title: string;
   category_slug: string;
   category_name: string;
+  category_icon: string;
   skill_level: string;
   xp_reward: number;
   /** Why THIS lesson is in THIS player's path, in their own terms. */
@@ -49,6 +50,10 @@ const PATH_LENGTH = 8;
 const MAX_PER_CATEGORY = 3;
 
 const CATEGORY_NAME = new Map(CATEGORIES.map((c) => [c.slug, c.name]));
+/* The category's own glyph, so a path row says what KIND of lesson it is at a
+   glance. Without it every row carried the same generic mark, which on a list
+   of eight read as eight play buttons rather than eight different lessons. */
+const CATEGORY_ICON = new Map(CATEGORIES.map((c) => [c.slug, c.icon]));
 
 /** Why a lesson is here, phrased from the answer that pulled it in. */
 const REASON: Record<string, string> = {
@@ -123,6 +128,7 @@ const toPathLesson = (l: SeedLesson): PathLesson => ({
   title: l.title,
   category_slug: l.category_slug,
   category_name: CATEGORY_NAME.get(l.category_slug) ?? l.category_slug,
+  category_icon: CATEGORY_ICON.get(l.category_slug) ?? '▸',
   skill_level: l.skill_level,
   xp_reward: l.xp_reward,
   reason: reasonFor(l.category_slug),

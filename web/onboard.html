@@ -45,7 +45,12 @@
         try {
           if (exp) await API.put('/onboarding/experience', { experience_level: exp });
           await API.post('/onboarding/complete', {});
-          location.replace('/home');
+          // This screen promises "we'll tailor your training path", so it hands
+          // straight to the four questions that actually do it rather than
+          // dropping the player on /home with the promise unkept. `exp` rides
+          // along so the survey does not ask what was just answered. Skipping
+          // goes to /home: someone who skipped this has said no to questions.
+          location.replace(exp ? '/assessment?from=onboard&exp=' + encodeURIComponent(exp) : '/home');
         } catch (ex) { err.textContent = ex.message || 'Something went wrong'; }
       }
 
