@@ -17,7 +17,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w13" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w14" />
   <style>
     /* Pro video slideshow. 16:9 so a YouTube thumbnail fills it exactly. */
     .slides { position: relative; border-radius: var(--radius-lg, 14px); overflow: hidden;
@@ -84,7 +84,7 @@
         content.className = 'screen stack';
         content.innerHTML =
           '<div class="hbanner hbanner--quiet">' +
-            '<img src="/img/hero.jpg" alt="" />' +
+            '<img src="/img/hero.webp" alt="" />' +
             '<div class="hbanner__scrim"></div>' +
             '<div class="hbanner__body">' +
               '<div class="hbanner__eyebrow">' + esc(tier) + ' · Level ' + (p.level || 1) + '</div>' +
@@ -118,6 +118,21 @@
               '</span>' +
             '</a>'
           ) +
+
+          // Directly under Train now, because an event is what the training is
+          // FOR -- the one place the lessons get applied against a real card.
+          // Absolute URL: the app is on discgolfgo.app and the events page is
+          // marketing content on .com; target=_blank so a tap cannot navigate
+          // the native shell out of the app with no way back. Same card as the
+          // one on /checkin, deliberately -- the two should read as one thing.
+          '<a class="artcard" href="https://discgolfgo.com/events" target="_blank" rel="noopener" style="--art:url(\'/img/cards/event.webp\')">' +
+            '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+            '<span class="artcard__body">' +
+              '<span class="artcard__eyebrow">In person</span>' +
+              '<span class="artcard__title">Find an event →</span>' +
+              '<span class="artcard__sub">Events hosted by Disc Golf Go — a real course, a real card, PDGA sanctioned.</span>' +
+            '</span>' +
+          '</a>' +
 
           // Play sits where the daily challenge used to, directly under the
           // lesson card: it is a link, and the two links belong together. It
