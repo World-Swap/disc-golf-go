@@ -135,8 +135,78 @@ carry it too, so the ask survives being reshared without the caption.
 
 ---
 
+## 5 · We're hosting a tournament  (Boulder Creek Re-Run)
+**Image:** `web/img/events/boulder-creek-re-run-flyer.png` (2460×4527) — the event
+flyer, not one of the four square/portrait images above. See the note on its
+shape at the bottom. The art alone, without the flyer type, is
+`web/img/events/boulder-creek-re-run.webp` (1200×675) if you want a plain
+landscape image instead.
+
+### Facebook
+> **We're hosting a tournament.** 🥏
+>
+> The **Boulder Creek Re-Run** — Saturday, December 12, PDGA C-tier, at Boulder Creek Golf and Country Club, up in the Santa Cruz Mountains redwoods.
+>
+> 19 holes, one round: the front nine, then a modified ten on the back half of a ball golf course turned disc golf friendly. Tee times from 7:30am, check in at hole 1. 18 divisions, pro and amateur. $65 pro / $50 amateur, plus greens, PDGA and TD fees.
+>
+> Online registration opens **Friday, October 9 at 7:00pm PDT**:
+> https://www.discgolfscene.com/BCR
+>
+> Between now and December, Disc Golf Go is how you get ready for it — **134 coached video lessons** across 13 skill paths, from 62 creators: touring pros and the channels that coach them. Learn the shot before you stand over it.
+>
+> Download it free on iOS or Android. 👇
+> https://discgolfgo.com
+
+### Instagram
+> We're hosting a tournament. 🥏
+>
+> **Boulder Creek Re-Run** · Sat Dec 12 · PDGA C-tier
+> Boulder Creek Golf and Country Club — redwoods, Santa Cruz Mountains.
+>
+> 19 holes, one round. 18 divisions, pro and am.
+> Registration opens Fri Oct 9, 7pm PDT — discgolfscene.com/BCR
+>
+> Between now and December: 134 coached lessons from touring pros and the channels that coach them. Learn the shot before you stand over it.
+>
+> Download Disc Golf Go free on iOS & Android — link in bio.
+>
+> #discgolf #discgolftournament #pdga #bouldercreek #santacruz #norcaldiscgolf #discgolflife #discgolfeveryday #discgolfer #discgolfcommunity
+
+---
+
 ## Posting notes
 
+- **Post 5 has a shelf life, and one line in it rots.** "Registration opens
+  Friday, October 9 at 7:00pm PDT" is true until it opens and merely stale
+  after. Once it is open, swap that line for **"Registration is open:"** on
+  Facebook and **"Register now —"** on Instagram; the link text needs no edit
+  either way, which is why it reads `discgolfscene.com/BCR` rather than
+  "enter here". After **December 12** the whole post is spent — do not reshare
+  it, write the next event's.
+- **Post 5 deliberately breaks two rules above, both times because it is an
+  event and not an app post.** It carries **two** links rather than only
+  discgolfgo.com, because the ask that matters on the day is registration and
+  that lives on Disc Golf Scene; and its first call to action is *register*,
+  not *download* — the download ask is still there, still says "download", and
+  still points at .com. The event is the news; the training library is why the
+  app is in the post at all. Throw Lab and scorecards are deliberately absent.
+- **The link is the `www.discgolfscene.com` path, not the bare `dgscene.com`
+  shortener.** `dgscene.com/BCR` 301s to the **http** www host and that hop
+  returned Cloudflare 522 three times out of three. Same short code, one less
+  failing hop. If the TD re-points BCR, this link follows it.
+- **Post 5's image is the wrong shape for an Instagram feed post.** The flyer
+  is 2460×4527 — 1:1.84, taller than Instagram's 4:5 (1:1.25) limit — so a feed
+  post will crop it hard, probably through the fees table. It is almost exactly
+  Story shape (1:1.78), so **post it as a Story or Reel cover**, or use the
+  landscape art (`boulder-creek-re-run.webp`, 16:9) for the feed and keep the
+  flyer for Stories, print and Facebook, which takes tall images happily.
+- **Post 5's numbers were recounted** from `src/db/data/lessons.ts` at the time
+  of writing, same as the four above: 134 lessons, 13 skill paths, 62 creators.
+  The event's own figures (19 holes, 18 divisions, the fees, the 7:30am tee
+  times, TD Ian Sun) came off the event listing, not from memory — and the
+  event is **not** named after its URL slug, which says `Boulder_Creek_Re_Run`
+  while the listing's title has changed more than once. Re-read the listing
+  before reusing any of it.
 - **Post 2 needs one check first.** The daily tournament merged today and goes
   out with the next Render deploy. Open the Play tab and confirm the daily card
   is there before you post it — everything else in these posts has been live
