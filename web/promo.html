@@ -124,7 +124,25 @@
     .shot img{width:100%;height:auto;display:block;border:1px solid var(--color-hairline);border-radius:4px;background:#fff;}
     .shot__cap{font-size:14px;line-height:1.45;color:var(--color-ash);text-align:center;}
     .shot__cap b{color:var(--color-ink);font-weight:700;}
-    @media(max-width:780px){.shots{grid-template-columns:1fr;gap:34px;max-width:340px;}}
+    .shots__dots{display:none;}
+    /* On a phone the three shots used to stack, which is three full phone-heights
+       of scrolling past the same thing. Below 780px they become one swipeable
+       slide each, capped so a whole screenshot fits on screen without scrolling.
+       The desktop 3-up grid is unchanged — it never needed scrolling. */
+    @media(max-width:780px){
+      .shots{display:flex;grid-template-columns:none;max-width:none;gap:0;
+        overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+        scrollbar-width:none;margin-inline:calc(50% - 50vw);padding-inline:0;}
+      .shots::-webkit-scrollbar{display:none;}
+      .shot{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;
+        padding-inline:24px;box-sizing:border-box;justify-content:flex-start;}
+      .shot img{width:auto;max-width:100%;height:min(58vh,520px);object-fit:contain;}
+      .shot__cap{min-height:2.9em;}
+      .shots__dots{display:flex;justify-content:center;gap:10px;margin-top:22px;}
+      .shots__dot{width:9px;height:9px;padding:0;border:0;border-radius:50%;
+        background:var(--color-hairline);cursor:pointer;transition:background .18s,transform .18s;}
+      .shots__dot[aria-current="true"]{background:var(--color-orange);transform:scale(1.25);}
+    }
     /* Throw Lab: the in-app game — a phone shot beside what it actually does. */
     .glab{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:48px;
       align-items:center;max-width:940px;margin:0 auto;}
@@ -288,6 +306,7 @@
           <figcaption class="shot__cap"><b>Players Lounge</b> — the newest videos, every day</figcaption>
         </figure>
       </div>
+      <div class="shots__dots" id="shotDots" role="tablist" aria-label="Choose a screenshot"></div>
     </div>
   </section>
 
@@ -656,5 +675,53 @@
       <a href="https://www.reddit.com/r/DiscGolfGo/" target="_blank" rel="noopener me" style="color:inherit">r/DiscGolfGo</a>
     </div>
   </footer>
+  <!-- Screenshot slideshow dots. The scrolling itself is CSS scroll-snap, so a
+       swipe works with JavaScript off and the dots are simply absent; they are
+       built here rather than written into the markup so a fourth screenshot
+       cannot ship with only three dots. -->
+  <script>
+  (function () {
+    var rail = document.querySelector('.shots');
+    var dots = document.getElementById('shotDots');
+    if (!rail || !dots) return;
+    var slides = [].slice.call(rail.querySelectorAll('.shot'));
+    if (slides.length < 2) return;
+
+    slides.forEach(function (slide, i) {
+      var cap = slide.querySelector('.shot__cap b');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'shots__dot';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-label', cap ? cap.textContent : 'Screenshot ' + (i + 1));
+      b.addEventListener('click', function () {
+        rail.scrollTo({ left: slide.offsetLeft - rail.offsetLeft, behavior: 'smooth' });
+      });
+      dots.appendChild(b);
+    });
+
+    var buttons = [].slice.call(dots.children);
+    function sync() {
+      // Pick the slide whose centre is nearest the rail's centre rather than
+      // dividing scrollLeft by a slide width -- the last slide cannot be
+      // scrolled fully to the left edge, so that arithmetic never selects it.
+      var mid = rail.scrollLeft + rail.clientWidth / 2, best = 0, bestD = Infinity;
+      slides.forEach(function (s, i) {
+        var d = Math.abs((s.offsetLeft - rail.offsetLeft) + s.offsetWidth / 2 - mid);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      buttons.forEach(function (b, i) {
+        b.setAttribute('aria-current', i === best ? 'true' : 'false');
+      });
+    }
+    var tick;
+    rail.addEventListener('scroll', function () {
+      if (tick) return;
+      tick = requestAnimationFrame(function () { tick = 0; sync(); });
+    }, { passive: true });
+    window.addEventListener('resize', sync);
+    sync();
+  })();
+  </script>
 </body>
 </html>
