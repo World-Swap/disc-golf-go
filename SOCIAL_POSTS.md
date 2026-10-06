@@ -6,10 +6,12 @@ upload it. **This file deliberately sits at the repo root, not in that folder**:
 everything under `web/` is served by `express.static`, so the posting notes
 below would otherwise be public at `/img/social/POSTS.md`.
 
-Six posts. **1-4 are app posts**, each with a Facebook and an Instagram
-version of the same idea. **5 and 6 are the Boulder Creek event** — 5 for
-Facebook and Instagram, 6 for Reddit — and they follow different rules,
-marked below and explained in the notes.
+Nine posts, in three groups, and the groups follow different rules.
+**1-4 are app posts for Facebook and Instagram**, each with a version for
+each. **5 and 6 are the Boulder Creek event** — 5 for Facebook and
+Instagram, 6 for Reddit. **7-9 are the app on Reddit**, where 7 and 8
+deliberately carry no link at all. Every exception is explained in the
+notes; none of them is a drafting slip to be "fixed" back.
 Every number below was recounted from `src/db/data/lessons.ts` and the course
 seed, not taken from the marketing copy. That is how the last two errors were
 caught: "13 touring pros" outlived the figure by weeks, and "64 creators" was
@@ -214,7 +216,109 @@ If a sub wants an image, `event-assets/boulder-creek-re-run/social.png`.
 
 ---
 
+## 7 · What touring pros actually upload  (Reddit)
+**Image:** none — self-post. The table IS the post.
+
+### Title
+> I counted how much of what touring pros upload is actually instructional. It's less than you'd think, and one guy is carrying it.
+
+### Body
+> I keep seeing "just watch the pros" as advice for getting better, so I pulled the latest 15 uploads off four pros' YouTube channels and counted how many actually teach you to do something. Straight off each channel's RSS feed, titles only, no cherry-picking — just the most recent 15 as of today.
+>
+> | Channel | What the last 15 actually are | Teaching |
+> |---|---|---|
+> | Simon Lizotte | course-build vlogs, challenges, bag videos | **0** |
+> | Ricky Wysocki | practice rounds (F9/B9), a documentary | **0** |
+> | Paul McBeth | disc reviews, a stream, 8× *The Blueprint* course strategy | **1** |
+> | Gannon Buhr | rounds and challenges, but also real tutorials | **3** |
+>
+> Gannon's the outlier: "How to Putt in the Wind", "10 Things I Wish I Knew When I Started", "How to Find the Best Runs of Discs" are all in his last 15. McBeth's *Blueprint* series is course strategy rather than mechanics — I didn't count it as teaching, though you could argue it, and 8 of his 15 are that.
+>
+> None of this is a dig. Vlogs and practice rounds are what people watch, and touring is their job, not pedagogy. But it does mean the actual teaching mostly comes from coaching channels — Overthrow, Danny Lindahl, Disc Golf Strong, JustDisc, BlitzDG — not from the names you'd expect.
+>
+> Curious whether others have found pro channels that genuinely teach, because I'd like to be wrong about this.
+>
+> (Disclosure: I build a disc golf training app, which is why I was counting. Not linking it, the numbers are the point.)
+
+---
+
+## 8 · Searching "disc golf <topic>" on YouTube is a trap  (Reddit)
+**Image:** none — self-post.
+
+### Title
+> PSA after auditing 200 "disc golf" instructional videos: three of mine turned out to be ball golf.
+
+### Body
+> I maintain a library of disc golf lessons, each built around a video. A while back I went through every one of them — 204 video references, 199 distinct — and checked what they actually were rather than what the title implied.
+>
+> All of them still played. Nothing had rotted. What had gone wrong was relevance, and the pattern was worse than I expected:
+>
+> - A lesson on water hazards led with a **USGA ruling on penalty areas**. Ball golf.
+> - Two mental-game lessons led with ball golf mindset channels.
+> - One wind lesson led with a channel whose recent uploads were wedge shots and a 4th-grade social studies lesson. A schoolteacher who plays ball golf.
+>
+> All four pass a "disc golf [topic]" search. That's how they got in. A plausible title is not evidence, and the search ranking will hand you ball golf for anything about rules, wind, or the mental game, because those words overlap almost perfectly between the two sports.
+>
+> What fixed it was judging a channel on **what it actually uploads** — pull its feed, read the last 15 titles — instead of on the one video the search surfaced. Took about an hour and I'd recommend it to anyone building their own watch list.
+>
+> The other thing worth knowing: the bad ones clustered hard in mental game, tournament prep and course strategy. The mechanics topics — grip, drives, putting — were nearly all fine. Those are the searches where disc golf has its own vocabulary.
+>
+> (Disclosure: the library is part of an app I build. Not linking it; the method is the useful part.)
+
+---
+
+## 9 · The plain one  (Reddit, self-promo thread only)
+**Image:** optional — a screenshot of the training library, never a graphic with type on it.
+
+### Title
+> I built a free disc golf training app: 134 coached lessons from pros and coaching channels, organised into skill paths.
+
+### Body
+> Free, no account needed to look around. The idea is that "watch more disc golf" is bad practice advice — you end up with 40 open tabs and no plan — so the app sorts the good instruction into 13 skill paths (putting, driving, forehand, course strategy, mental game, and so on) and tells you what to work on next.
+>
+> 134 lessons, 199 videos, 62 creators. Every video is checked by hand before it goes in, and I re-audit the lot periodically — last pass I pulled 19 of them for being off-topic or the wrong sport entirely.
+>
+> It's on iOS, Android and the web: discgolfgo.com
+>
+> Happy to take feedback, including the harsh kind. The thing I most want to know is which skill path is thinnest.
+
+---
+
 ## Posting notes
+
+- **Posts 7-9 are the app on Reddit, and 7 and 8 deliberately do not link it.**
+  That is not modesty, it is what makes them postable: both carry a finding
+  that stands on its own, and the disclosure line says who is counting. A
+  reader who wants the app can click the username. Adding a link turns either
+  one into an ad and invites removal. **Post 9 is the only one that links**,
+  and it belongs in a sub's self-promotion or "what are you working on" thread,
+  not the main feed.
+- **Post 7's numbers are a dated snapshot and WILL go stale.** They were pulled
+  from each channel's own YouTube RSS feed on **2026-10-06**, titles only,
+  most recent 15, judged by hand: Lizotte 0, Wysocki 0, McBeth 1, Buhr 3.
+  Re-pull before posting — a pro who drops a tutorial next week makes the table
+  wrong, in public, and somebody will check. The feed URL is
+  `https://www.youtube.com/feeds/videos.xml?channel_id=<id>` and the ids are in
+  `scripts/video-channels.json`.
+- **Post 7 concedes the argument against itself on purpose.** McBeth's
+  *Blueprint* series is course strategy and was NOT counted as teaching, which
+  is a judgement someone will dispute — so the post says so, gives the number
+  (8 of 15), and invites correction. Gannon Buhr is named as a genuine
+  exception for the same reason. A blanket "pros don't teach" would be both
+  wrong and easy to disprove with one link, and that is how a post dies.
+- **Post 8 is about our own library's mistakes.** Keep it that way. It works
+  because it is a confession with a method attached, not a warning about other
+  people's content, and the specifics (a USGA penalty-area ruling, a
+  schoolteacher's wedge shots) are what make it credible. Do not sand them off.
+- **Post 9 states no count it cannot back.** 134 lessons, 199 videos, 62
+  creators are recounted from `src/db/data/lessons.ts`; "19 pulled" is the real
+  figure from the audit. It asks which skill path is thinnest because that is a
+  question we actually want answered, not a rhetorical one — be ready to act on
+  the replies.
+- **Same unverified-rules caveat as post 6:** Reddit was unreachable from the
+  machine these were written on, so no sub's rules were checked. Read the
+  sidebar. Several disc golf subs confine anything app-shaped to a weekly
+  thread regardless of how useful it is.
 
 - **Post 6 is Reddit, and Reddit is not Facebook with different hashtags.** It
   is a **self-post with no image and no app pitch**, on purpose. An opening
