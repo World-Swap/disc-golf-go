@@ -81,6 +81,18 @@
     .events{display:grid;gap:16px;margin:0 0 8px;}
     @media (min-width:640px){.events{grid-template-columns:1fr 1fr;}}
     .ev{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:18px;padding:22px;box-shadow:0 6px 16px rgba(43,38,34,.05);display:flex;flex-direction:column;gap:8px;}
+    /* The art bleeds to the card's edges, so it is pulled out by the card's own
+       22px padding. max-width/height are overridden because app.css sets
+       `img{max-width:100%}`, which caps the bleed, and the width/height
+       attributes would otherwise beat aspect-ratio (which only applies when one
+       dimension is auto). The band matches the file's own 16:9, so nothing is
+       cropped here -- the crop is baked into the asset instead, because
+       object-position cannot do it: `cover` on a box WIDER than the source
+       scales to fit the width and then crops only vertically, so a horizontal
+       value has no effect at all. */
+    .ev__art{display:block;width:calc(100% + 44px);max-width:none;height:auto;
+      margin:-22px -22px 6px;aspect-ratio:16/9;
+      border-radius:18px 18px 0 0;background:var(--color-peach,#f7f4ef);}
     .ev__when{color:var(--color-orange);font-family:var(--font-display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:12px;}
     .ev__name{font-family:var(--font-display);font-weight:700;color:var(--color-ink);font-size:20px;line-height:1.2;margin:0;}
     .ev__where{font-size:15px;color:var(--color-ink);opacity:.72;margin:0;}
@@ -152,6 +164,8 @@
 
     <div class="events">
       <article class="ev">
+        <img class="ev__art" src="/img/events/boulder-creek-re-run.webp" width="1200" height="675"
+             alt="A disc golf basket on a mown green among giant coast redwoods, the Santa Cruz Mountains and a band of coastal fog behind it." />
         <p class="ev__when"><time datetime="2026-12-12">Saturday, December 12, 2026</time> · PDGA C-tier</p>
         <h3 class="ev__name">Boulder Creek Re-Run</h3>
         <p class="ev__where">Boulder Creek Golf and Country Club · Boulder Creek, CA</p>
