@@ -79,8 +79,11 @@
         tab: 'overall',
         period: 'lifetime'
       };
-      var STAT = { overall: 'total_xp', lessons: 'lessons_completed', streak: 'current_streak', challenges: 'challenges_won' };
-      var UNIT = { overall: 'XP', lessons: '', streak: 'd', challenges: '' };
+      // Only a FALLBACK now, and only for the suffix. The value comes from the
+      // server's own stat_value -- see the render below for why.
+      var STAT = { overall: 'total_xp', lessons: 'lessons_completed', streak: 'current_streak',
+                   challenges: 'challenges_won', videos: 'videos_unlocked' };
+      var UNIT = { overall: 'XP', lessons: '', streak: 'd', challenges: '', videos: '' };
 
       // Training and Throw Lab now offer the SAME periods in the SAME order, and
       // the server means the same thing by each: Today is since UTC midnight,
@@ -293,7 +296,15 @@
             var data = await API.get('/leaderboard?tab=' + state.tab + '&period=' + state.period);
             var stat = STAT[state.tab], unit = UNIT[state.tab];
             rows = (data.players || []).map(function (p) {
-              var val = p[stat] != null ? p[stat] : 0;
+              // stat_value is the server's own answer for "the number this board
+              // is sorted by", so it is right for every tab by construction.
+              // The old code looked the field up in STAT, which never got a
+              // `videos` entry when that metric was added -- so p[undefined] was
+              // undefined and every player on the Videos board read 0, while the
+              // API was returning 38, 34, 26 all along. Reading the sorted value
+              // means the next metric cannot repeat it.
+              var val = p.stat_value != null ? p.stat_value
+                      : (stat && p[stat] != null ? p[stat] : 0);
               return row(p.rank, p.display_name || 'Player', p.rank_tier || '', val + (unit ? ' ' + unit : ''), p.is_me);
             }).join('');
           }

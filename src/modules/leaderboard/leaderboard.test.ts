@@ -91,3 +91,51 @@ test('leaderboard endpoints', async (t) => {
 
   await new Promise<void>((r) => server.close(() => r()));
 });
+
+// The Videos board read 0 for every player while the API was returning 38, 34,
+// 26. ranks.html looked each metric's field up in its own STAT map, and that map
+// never got a `videos` entry when the metric was added -- so p[undefined] was
+// undefined and the row fell through to 0. Nothing failed; a real board just
+// quietly showed nothing. Two guards, because the page and the server each hold
+// half of this.
+test('the ranks page and the leaderboard agree on the training metrics', async (t) => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const html = fs.readFileSync(path.join(process.cwd(), 'web', 'ranks.html'), 'utf8');
+
+  // The tabs the page offers for the training board, read out of its TABS table.
+  // Anchored on `var TABS = {`, not on `training:` alone: the PERIODS table a
+  // few lines above has a `training:` key too, and matching that read the four
+  // PERIODS back as if they were metrics. Caught by printing the capture
+  // instead of trusting that a matching regex matched the right thing.
+  const block = /var TABS = \{\s*training:\s*\[([\s\S]*?)\]\s*,\s*\n\s*game:/.exec(html);
+  assert.ok(block, 'could not find the training tab list in ranks.html');
+  const offered = [...block[1]!.matchAll(/\['([a-z_]+)',/g)].map((m) => m[1]!);
+
+  await t.test('every tab the page offers is one the server serves', () => {
+    // Mirrors TABS in leaderboard.service.ts. Kept as a literal rather than
+    // imported so that deleting a server tab fails here loudly instead of
+    // silently agreeing with itself.
+    const served = ['overall', 'lessons', 'streak', 'challenges', 'videos'];
+    assert.deepEqual(
+      offered.filter((t2) => !served.includes(t2)),
+      [],
+      'ranks.html offers a training tab the leaderboard API would reject'
+    );
+    assert.deepEqual(
+      served.filter((t2) => !offered.includes(t2)),
+      [],
+      'the API serves a training tab the page never shows'
+    );
+  });
+
+  // The actual fix: the row reads the server's sorted value, so a metric the
+  // page has no local mapping for still renders its real number.
+  await t.test('the row renders the value the server sorted by', () => {
+    assert.match(
+      html,
+      /p\.stat_value != null \? p\.stat_value/,
+      'ranks.html should read stat_value, not a per-metric field map'
+    );
+  });
+});
