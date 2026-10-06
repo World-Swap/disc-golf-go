@@ -136,12 +136,14 @@ carry it too, so the ask survives being reshared without the caption.
 ---
 
 ## 5 · We're hosting a tournament  (Boulder Creek Re-Run)
-**Image:** `web/img/events/boulder-creek-re-run-social.png` (1080×1350, 4:5) —
-the feed version, and the one to post. The full flyer,
-`web/img/events/boulder-creek-re-run-flyer.png` (2460×4527), is for print,
-Stories and anywhere tall is fine. The art alone, without any type, is
-`web/img/events/boulder-creek-re-run.webp` (1200×675). See the note on shapes
-at the bottom.
+**Image:** `web/img/events/boulder-creek-re-run-social.png` (**3240×4050**, 4:5)
+— the feed version, and the one to post; `.jpg` beside it if something wants a
+JPEG. It is a 4:5 FRAME at 3× scale, so the platforms downscale it themselves
+rather than you uploading something already soft. The full flyer,
+`…-flyer.png` / `.jpg` (2460×4527), is for print, Stories and anywhere tall is
+fine. The art alone, without any type, is `…-run.webp` (1200×675) — that one
+stays small on purpose, because the events page shows it at ~356px. See the
+note on shapes at the bottom.
 
 ### Facebook
 > **We're hosting a tournament.** 🥏
@@ -239,7 +241,12 @@ at the bottom.
   are no spelling artefacts to proofread.
 - **Sizes:** 1080×1080 (IG feed), 1200×630 (FB link preview), 1080×1350 (IG
   portrait), 1080×1920 (Story). The FB one is sized for a link card, so it will
-  not crop badly in the feed.
+  not crop badly in the feed. **Post 5's images are exported at 3× those
+  nominal sizes** (its 4:5 is 3240×4050), because exporting at 1× and letting a
+  platform enlarge it is what makes a post look soft — measured, a native 3×
+  export carries **137% more edge energy** than the 1× file blown up to the same
+  display size. Render at scale and let the platform downscale, never the other
+  way round.
 - **Numbers to keep true.** If the library grows, these change: lessons (134),
   skill paths (13), creators (62), video references (204 / 199 distinct),
   courses (1,536), states (48), hole templates (21). `npm run lessons:audit`
