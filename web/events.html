@@ -23,6 +23,12 @@
 
   <!-- One SportsEvent per event on the page. Every value below was read off
        the event's own listing, not paraphrased.
+       The link is the SHORT PATH on www.discgolfscene.com rather than the bare
+       dgscene.com shortener: dgscene.com/BCR 301s to the *http* (not https)
+       www host, and that hop returned Cloudflare 522 on three attempts out of
+       three, while https://www.discgolfscene.com/BCR returns 200 and lands on
+       the tournament. Same short code, so re-pointing BCR still moves this
+       link; it just skips a hop that is currently failing.
        NO `offers`, deliberately: entry is $65 pro / $50 amateur but greens,
        PDGA and TD fees are charged on top, so any single price here would be a
        number nobody actually pays. The card says both parts in words instead.
@@ -32,13 +38,13 @@
   {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
-    "name": "Boulder Creek Mixer",
+    "name": "Boulder Creek Re-Run",
     "description": "A PDGA C-tier disc golf tournament hosted by Disc Golf Go: one round of 19 holes at Boulder Creek Golf and Country Club.",
     "sport": "Disc golf",
     "startDate": "2026-12-12T07:30:00-08:00",
     "eventStatus": "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-    "url": "https://www.discgolfscene.com/tournament/Boulder_Creek_Re_Run_2026",
+    "url": "https://www.discgolfscene.com/BCR",
     "location": {
       "@type": "Place",
       "name": "Boulder Creek Golf and Country Club",
@@ -147,7 +153,7 @@
     <div class="events">
       <article class="ev">
         <p class="ev__when"><time datetime="2026-12-12">Saturday, December 12, 2026</time> · PDGA C-tier</p>
-        <h3 class="ev__name">Boulder Creek Mixer</h3>
+        <h3 class="ev__name">Boulder Creek Re-Run</h3>
         <p class="ev__where">Boulder Creek Golf and Country Club · Boulder Creek, CA</p>
         <p class="ev__body">One round of 19 holes — the front nine, then a modified ten on the back
           half of a ball golf course turned disc golf friendly. Tee times from 7:30am, check in at
@@ -157,7 +163,7 @@
              merely stale after, which is why the link text below says
              "registration" rather than "enter" and needs no edit either way. -->
         <p class="ev__body"><b>Online registration opens October 9 at 7:00pm PDT.</b></p>
-        <p class="ev__go"><a href="https://www.discgolfscene.com/tournament/Boulder_Creek_Re_Run_2026" target="_blank" rel="noopener">Event details and registration →</a></p>
+        <p class="ev__go"><a href="https://www.discgolfscene.com/BCR" target="_blank" rel="noopener">Event details and registration →</a></p>
       </article>
     </div>
 
