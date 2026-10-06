@@ -136,11 +136,12 @@ carry it too, so the ask survives being reshared without the caption.
 ---
 
 ## 5 · We're hosting a tournament  (Boulder Creek Re-Run)
-**Image:** `web/img/events/boulder-creek-re-run-flyer.png` (2460×4527) — the event
-flyer, not one of the four square/portrait images above. See the note on its
-shape at the bottom. The art alone, without the flyer type, is
-`web/img/events/boulder-creek-re-run.webp` (1200×675) if you want a plain
-landscape image instead.
+**Image:** `web/img/events/boulder-creek-re-run-social.png` (1080×1350, 4:5) —
+the feed version, and the one to post. The full flyer,
+`web/img/events/boulder-creek-re-run-flyer.png` (2460×4527), is for print,
+Stories and anywhere tall is fine. The art alone, without any type, is
+`web/img/events/boulder-creek-re-run.webp` (1200×675). See the note on shapes
+at the bottom.
 
 ### Facebook
 > **We're hosting a tournament.** 🥏
@@ -194,12 +195,17 @@ landscape image instead.
   shortener.** `dgscene.com/BCR` 301s to the **http** www host and that hop
   returned Cloudflare 522 three times out of three. Same short code, one less
   failing hop. If the TD re-points BCR, this link follows it.
-- **Post 5's image is the wrong shape for an Instagram feed post.** The flyer
-  is 2460×4527 — 1:1.84, taller than Instagram's 4:5 (1:1.25) limit — so a feed
-  post will crop it hard, probably through the fees table. It is almost exactly
-  Story shape (1:1.78), so **post it as a Story or Reel cover**, or use the
-  landscape art (`boulder-creek-re-run.webp`, 16:9) for the feed and keep the
-  flyer for Stories, print and Facebook, which takes tall images happily.
+- **Post 5 has two images, and the shapes are not interchangeable.** The full
+  flyer is 2460×4527 — **1:1.84**, taller than Instagram's 4:5 (1:1.25) feed
+  limit — so posting it to a feed crops it hard, through the fees. It is almost
+  exactly Story shape (1:1.78), so it belongs in a **Story or Reel cover, in
+  print, or on Facebook**, which takes tall images happily.
+  `boulder-creek-re-run-social.png` is the **feed** version: a genuine 4:5
+  layout rather than a crop of the tall one, carrying only what survives being
+  read at thumb size — the name, the date, the venue, three numbers, and the
+  registration line. Everything it leaves out (tee times, the division list,
+  the fee breakdown, the TD) is on the event page the link goes to, which is
+  the point of a feed image.
 - **Post 5's numbers were recounted** from `src/db/data/lessons.ts` at the time
   of writing, same as the four above: 134 lessons, 13 skill paths, 62 creators.
   The event's own figures (19 holes, 18 divisions, the fees, the 7:30am tee
