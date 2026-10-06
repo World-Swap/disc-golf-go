@@ -487,29 +487,6 @@
   </section>
 
   <!-- Free guides -->
-  <!-- The funding ask. Placed after the product sections (#compete is the last
-       of them) and BEFORE the guides and FAQ, because asking someone to pay for
-       something they have not been shown yet is premature, and asking next to
-       the final "Ready to train like a pro?" would compete with the download,
-       which is still the page's primary job. sect--ink after sect--peach keeps
-       the background alternation and gives the band real weight -- the ask was
-       previously a footer link, which nobody reads. -->
-  <section class="sect sect--ink" id="back">
-    <div class="sect__inner">
-      <div class="sect__head">
-        <p class="sect__eyebrow">Back the project</p>
-        <h2 class="sect__title">Running this costs money. Help fund it.</h2>
-        <p class="sect__lede">Disc Golf Go is an independent project. Backing it pays for the
-          servers the app runs on, the people building and improving it, and putting on the
-          in-person events. Backers get no advantage in the app — a leaderboard you can buy a place
-          on is not a leaderboard.</p>
-      </div>
-      <div class="sect__cta">
-        <a class="btn btn--lg" href="/support">Back Disc Golf Go&nbsp;→</a>
-      </div>
-    </div>
-  </section>
-
   <section class="sect" id="guides">
     <div class="sect__inner">
       <div class="sect__head">
@@ -543,6 +520,30 @@
   </section>
 
   <!-- FAQ -->
+  <!-- The funding ask. After the product sections AND after the free guides, so
+       the last thing before it is something given away rather than something
+       sold, which is the better place to ask. Still well clear of the closing
+       "Ready to train like a pro?", because an ask for money beside the download
+       CTA competes with the thing the page is actually for.
+       The order also repairs an alternation the Throw-Lab/Compete merge broke:
+       #play and #back are both sect--ink and had ended up adjacent, and the
+       plain #guides between them separates the two dark bands again. -->
+  <section class="sect sect--ink" id="back">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">Back the project</p>
+        <h2 class="sect__title">Running this costs money. Help fund it.</h2>
+        <p class="sect__lede">Disc Golf Go is an independent project. Backing it pays for the
+          servers the app runs on, the people building and improving it, and putting on the
+          in-person events. Backers get no advantage in the app — a leaderboard you can buy a place
+          on is not a leaderboard.</p>
+      </div>
+      <div class="sect__cta">
+        <a class="btn btn--lg" href="/support">Back Disc Golf Go&nbsp;→</a>
+      </div>
+    </div>
+  </section>
+
   <!-- Community, directly before the FAQ. The subreddit leads and the three
        follow accounts sit under it, because a place to ask a question is worth
        more than a feed to watch — and the FAQ immediately below is the same
