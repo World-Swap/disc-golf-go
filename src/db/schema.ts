@@ -192,6 +192,24 @@ CREATE TABLE IF NOT EXISTS training_milestones (
 -- validated against the question catalogue before it is written (parseAnswers),
 -- so the column never needs to constrain membership -- and JSONB is what the
 -- rest of this schema already uses for lists.
+-- The profile photo / club logo, stored as BYTES IN POSTGRES rather than in
+-- object storage. That is a deliberate trade, not a shortcut: the old avatar
+-- upload went to Polsia R2 and was dropped in the rebuild, so this app has no
+-- bucket and no credentials for one, and adding a storage provider to ship a
+-- 256px avatar is the larger change. Images are resized and re-encoded by the
+-- browser before they are sent, so a row here is tens of kilobytes.
+--
+-- Its own table, not a column on players: that table is SELECTed with * in
+-- several places and on every leaderboard read, and a BYTEA column would then
+-- be dragged into every one of those queries. Nothing joins this table -- the
+-- bytes are only ever fetched by the one endpoint that serves them.
+CREATE TABLE IF NOT EXISTS player_photos (
+  player_id INTEGER PRIMARY KEY,
+  mime TEXT NOT NULL,
+  bytes BYTEA NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS player_training_profile (
   player_id INTEGER PRIMARY KEY,
   skill_level TEXT NOT NULL,

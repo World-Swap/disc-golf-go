@@ -17,7 +17,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w14" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w15" />
   <style>
     .toggle { width:44px; height:24px; border:1px solid var(--hair-strong); border-radius:12px; position:relative; flex:none; background:var(--color-void); transition:border-color 120ms,background 120ms; }
     .toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--color-ash); transition:transform 140ms,background 140ms; }
@@ -57,34 +57,126 @@
       function flash() { saved.hidden = false; clearTimeout(flash.t); flash.t = setTimeout(function () { saved.hidden = true; }, 1200); }
       async function save(patch) { try { await API.put('/training/notifications/settings', patch); flash(); } catch (e) {} }
 
+      // ── Profile photo / club logo ──
+      // The browser does the resizing. A phone camera photo is 3-5MB and 4000px
+      // wide; what is wanted here is a 256px square, so it is drawn to a canvas
+      // and re-encoded before it is ever sent. That keeps the request small,
+      // keeps the stored row to tens of kilobytes, and means the server never
+      // has to decode an arbitrary image to find out how big it is.
+      var PHOTO_PX = 256;
+
+      function photoBlock(p) {
+        var src = p.profile_photo_url || '';
+        return '<div class="pf">' +
+            '<div class="pf__shot" id="pfShot">' +
+              (src ? '<img src="' + esc(src) + '" alt="" />' : '<span class="pf__empty">No photo</span>') +
+            '</div>' +
+            '<div class="pf__side">' +
+              '<div class="field__label">Photo or logo</div>' +
+              '<div class="pf__btns">' +
+                '<button class="btn btn--ghost btn--sm" id="pfPick" type="button">Choose image</button>' +
+                '<button class="btn btn--ghost btn--sm" id="pfClear" type="button"' + (src ? '' : ' hidden') + '>Remove</button>' +
+              '</div>' +
+              '<p class="pf__hint" id="pfHint">Square works best. PNG, JPEG or WebP.</p>' +
+            '</div>' +
+            '<input type="file" id="pfFile" accept="image/png,image/jpeg,image/webp" hidden />' +
+          '</div>';
+      }
+
+      // Draw the image into a square canvas, cropping the long side from the
+      // CENTRE rather than squashing it -- a stretched logo looks broken in a
+      // way a cropped one does not.
+      function squareDataUrl(file) {
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          var url = URL.createObjectURL(file);
+          img.onload = function () {
+            URL.revokeObjectURL(url);
+            var side = Math.min(img.width, img.height);
+            var c = document.createElement('canvas');
+            c.width = c.height = PHOTO_PX;
+            var g = c.getContext('2d');
+            g.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, PHOTO_PX, PHOTO_PX);
+            // WebP where it is supported, JPEG otherwise. toDataURL returns a
+            // PNG when it does not recognise the type, so the result is checked
+            // rather than assumed -- a 256px PNG is ~4x the bytes of the WebP.
+            var out = c.toDataURL('image/webp', 0.85);
+            if (out.indexOf('data:image/webp') !== 0) out = c.toDataURL('image/jpeg', 0.85);
+            resolve(out);
+          };
+          img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('That file is not an image we can read')); };
+          img.src = url;
+        });
+      }
+
+      function wirePhoto(p) {
+        var file = document.getElementById('pfFile'), shot = document.getElementById('pfShot');
+        var hint = document.getElementById('pfHint'), clear = document.getElementById('pfClear');
+        document.getElementById('pfPick').addEventListener('click', function () { file.click(); });
+
+        file.addEventListener('change', async function () {
+          var f = this.files && this.files[0];
+          this.value = '';            // so picking the same file twice still fires
+          if (!f) return;
+          hint.textContent = 'Preparing…';
+          try {
+            var data = await squareDataUrl(f);
+            hint.textContent = 'Uploading…';
+            var res = await API.post('/players/me/photo', { image: data });
+            // The returned URL carries the save time, so this cannot show a
+            // cached copy of the photo being replaced.
+            shot.innerHTML = '<img src="' + esc(res.profile_photo_url) + '" alt="" />';
+            p.profile_photo_url = res.profile_photo_url;
+            clear.hidden = false;
+            hint.textContent = 'Saved';
+            flash();
+          } catch (e) {
+            hint.textContent = e.message || 'That image could not be saved';
+          }
+        });
+
+        clear.addEventListener('click', async function () {
+          hint.textContent = 'Removing…';
+          try {
+            await API.del('/players/me/photo');
+            shot.innerHTML = '<span class="pf__empty">No photo</span>';
+            p.profile_photo_url = null;
+            clear.hidden = true;
+            hint.textContent = 'Square works best. PNG, JPEG or WebP.';
+            flash();
+          } catch (e) { hint.textContent = e.message || 'Could not remove that'; }
+        });
+      }
+
       // ── Account: edit display name + username ──
       var account = document.getElementById('account');
       API.get('/players/me').then(function (p) {
         account.className = 'card';
         account.innerHTML =
-          '<label class="field"><span class="field__label">Display name</span>' +
-            '<input class="input" id="dn" maxlength="30" value="' + esc(p.display_name || '') + '" placeholder="Sky Hyzer" /></label>' +
+          photoBlock(p) +
+          // One name, not two. There was a Display name AND a Username here,
+          // which meant maintaining two of them and deciding which one a board
+          // should show. The username IS the name now; the server keeps the
+          // display_name column in step with it, because 30-odd files read that
+          // column and none of them should have to care.
           '<label class="field"><span class="field__label">Username</span>' +
             '<input class="input" id="un" maxlength="20" autocapitalize="none" autocomplete="off" value="' + esc(p.username || '') + '" placeholder="skyhyzer" /></label>' +
           '<p class="field__label" style="font-weight:400;color:var(--color-ash);margin:-8px 0 12px">3–20 characters · letters, numbers, underscores</p>' +
           '<div id="acctMsg" class="error" hidden style="margin-bottom:12px"></div>' +
           '<button class="btn btn--block" id="acctSave">Save changes</button>';
 
-        var dn = document.getElementById('dn'), un = document.getElementById('un');
+        wirePhoto(p);
+        var un = document.getElementById('un');
         var msg = document.getElementById('acctMsg'), btn = document.getElementById('acctSave');
         function showErr(t) { msg.textContent = t; msg.hidden = false; }
         btn.addEventListener('click', async function () {
           msg.hidden = true;
-          var name = dn.value.trim(), user = un.value.trim();
-          if (name.length < 2 || name.length > 30) return showErr('Display name must be 2–30 characters.');
+          var user = un.value.trim();
           if (!/^[a-zA-Z0-9_]{3,20}$/.test(user)) return showErr('Username must be 3–20 characters: letters, numbers, underscores only.');
-          var patch = {};
-          if (name !== (p.display_name || '')) patch.display_name = name;
-          if (user.toLowerCase() !== (p.username || '')) patch.username = user;
-          if (!Object.keys(patch).length) { flash(); return; }
+          if (user.toLowerCase() === (p.username || '')) { flash(); return; }
           btn.disabled = true; btn.textContent = 'Saving…';
           try {
-            var updated = await API.put('/players/me', patch);
+            var updated = await API.put('/players/me', { username: user });
             p.display_name = updated.display_name; p.username = updated.username;
             un.value = updated.username || user;
             flash();
@@ -108,9 +200,19 @@
           // The way to report a bug. The endpoint existed for months with no
           // caller anywhere in web/, so there was no way to file one from the
           // app at all.
-          '<div class="rows"><a class="row" href="/feedback">' +
-            '<div class="row__body"><div class="row__title">Report a problem →</div>' +
-            '<div class="row__sub">Bugs, suggestions, anything that looks wrong</div></div></a></div>';
+          // Report a problem, and the privacy policy. The policy page has
+          // existed all along and NOTHING in the app linked to it -- it was
+          // reachable only from the marketing site's footer, so a player inside
+          // the app had no way to read what is collected about them. Settings is
+          // where someone looks for it.
+          '<div class="rows">' +
+            '<a class="row" href="/feedback">' +
+              '<div class="row__body"><div class="row__title">Report a problem →</div>' +
+              '<div class="row__sub">Bugs, suggestions, anything that looks wrong</div></div></a>' +
+            '<a class="row" href="/privacy">' +
+              '<div class="row__body"><div class="row__title">Privacy policy →</div>' +
+              '<div class="row__sub">What we collect, and the choices you have</div></div></a>' +
+          '</div>';
 
         content.querySelectorAll('.toggle').forEach(function (btn) {
           btn.addEventListener('click', function () {

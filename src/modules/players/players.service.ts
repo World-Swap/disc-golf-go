@@ -1,6 +1,7 @@
 // src/modules/players/players.service.ts — players business logic. Orchestrates
 // the repo, login-streak service, and views; owns transactions via the injected db.
 
+import { decodePhoto, photoUrl } from './photo';
 import { notFound, conflict } from '../../http/errors';
 import { withTransaction } from '../../db/pool';
 import type { Database } from '../../db/types';
@@ -97,6 +98,33 @@ export function createPlayersService({ db, repo = createPlayersRepo(db) }: Playe
         weekly_xp,
         skill_progress: getSkillTierProgress(xp),
       };
+    },
+
+    // ── profile photo ────────────────────────────────────────────────────
+
+    /**
+     * Store a photo and point the player's profile_photo_url at the endpoint
+     * that serves it. The URL carries the save time, so a replaced photo is a
+     * different URL and the long cache on the GET cannot serve the old one.
+     */
+    async savePhoto(playerId: number, raw: unknown) {
+      const { mime, bytes } = decodePhoto(raw);
+      const updatedAt = await repo.savePhoto(playerId, mime, bytes);
+      const url = photoUrl(playerId, updatedAt);
+      await repo.setPhotoUrl(playerId, url);
+      return { profile_photo_url: url, bytes: bytes.length };
+    },
+
+    async getPhoto(playerId: number) {
+      return repo.getPhoto(playerId);
+    },
+
+    async deletePhoto(playerId: number) {
+      const had = await repo.deletePhoto(playerId);
+      // Cleared whether or not a row existed: a stale pointer with no bytes
+      // behind it is exactly the 404-on-every-board state worth avoiding.
+      await repo.setPhotoUrl(playerId, null);
+      return { removed: had };
     },
 
     async updateProfile(playerId: number, input: ProfileUpdate) {

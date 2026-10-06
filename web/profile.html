@@ -17,7 +17,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w14" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w15" />
 </head>
 <body>
   <main class="app">
@@ -46,10 +46,20 @@
         var ts = p.training_stats || {};
         content.className = 'screen stack';
         content.innerHTML =
-          '<div>' +
-            '<p class="section-label">' + esc(tier) + ' · ' + esc(p.level_title || '') + '</p>' +
-            '<h1 class="h-display">' + esc((p.display_name || 'Player').toUpperCase()) + '<span class="mark" style="width:40%"></span></h1>' +
-            (p.username ? '<p class="row__sub" style="margin-top:8px">@' + esc(p.username) + '</p>' : '') +
+          // The photo, and the name ONCE. There used to be a display name as the
+          // heading and @username underneath; now that the account form asks
+          // for a username alone the two are the same string, and printing it
+          // twice reads as a bug. Falls back to the display name for an account
+          // created before the change that has not been saved since.
+          '<div class="idrow">' +
+            (p.profile_photo_url
+              ? '<img class="idrow__shot" src="' + esc(p.profile_photo_url) + '" alt="" />'
+              : '') +
+            '<div class="idrow__body">' +
+              '<p class="section-label">' + esc(tier) + ' · ' + esc(p.level_title || '') + '</p>' +
+              '<h1 class="h-display">' + esc((p.username || p.display_name || 'Player').toUpperCase()) +
+                '<span class="mark" style="width:40%"></span></h1>' +
+            '</div>' +
           '</div>' +
 
           '<div>' +

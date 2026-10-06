@@ -25,6 +25,13 @@ export function parseProfileUpdate(body: unknown): ProfileUpdate {
       throw badRequest('Username must be 3-20 characters: letters, numbers, underscores only');
     }
     update.username = username.toLowerCase();
+    // There is one name now. The account form asks for the username alone, but
+    // display_name is the column read by the leaderboards, the tournament
+    // boards, reviews, check-ins and the admin tools -- thirty-odd files -- so
+    // it is kept in step here rather than removed from all of them. A caller
+    // that sends BOTH still wins on display_name (the line above), which is what
+    // keeps the admin tools able to correct a name.
+    if (b.display_name === undefined) update.display_name = update.username;
   }
 
   if (update.display_name === undefined && update.username === undefined) {

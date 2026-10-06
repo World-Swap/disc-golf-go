@@ -254,6 +254,40 @@ export function createPlayersRepo(db: Database) {
       return parseInt(r.rows[0]!.count, 10);
     },
 
+    // ── profile photo ────────────────────────────────────────────────────
+    // The bytes live in their own table so that no other query drags them
+    // along; see the note on player_photos in src/db/schema.ts.
+
+    async savePhoto(playerId: number, mime: string, bytes: Buffer) {
+      const r = await db.query<{ updated_at: Date }>(
+        `INSERT INTO player_photos (player_id, mime, bytes, updated_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (player_id) DO UPDATE
+           SET mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, updated_at = NOW()
+         RETURNING updated_at`,
+        [playerId, mime, bytes]
+      );
+      return r.rows[0]!.updated_at;
+    },
+
+    async getPhoto(playerId: number) {
+      const r = await db.query<{ mime: string; bytes: Buffer; updated_at: Date }>(
+        'SELECT mime, bytes, updated_at FROM player_photos WHERE player_id = $1',
+        [playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    async deletePhoto(playerId: number) {
+      const r = await db.query('DELETE FROM player_photos WHERE player_id = $1', [playerId]);
+      return (r.rowCount ?? 0) > 0;
+    },
+
+    /** The pointer the rest of the app reads. Null clears it. */
+    async setPhotoUrl(playerId: number, url: string | null) {
+      await db.query('UPDATE players SET profile_photo_url = $2 WHERE id = $1', [playerId, url]);
+    },
+
     async deleteFromTable(client: PoolClient, table: string, id: number) {
       await client.query(`DELETE FROM ${table} WHERE player_id = $1`, [id]);
     },

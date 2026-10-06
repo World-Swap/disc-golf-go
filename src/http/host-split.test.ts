@@ -111,6 +111,19 @@ test('discgolfgo.com host split', async (t) => {
     }
   });
 
+  // The policy existed for months and NOTHING inside the app linked to it -- it
+  // was reachable only from the marketing site, so a player had no way to read
+  // what is collected about them without leaving for the other domain.
+  await t.test('the app links to its own privacy policy', () => {
+    const webDir = path.join(process.cwd(), 'web');
+    const marketing = new Set(['promo.html', 'events.html', 'support.html', 'guide-putting.html', 'guide-beginner-discs.html', 'privacy.html']);
+    const appPagesLinking = fs
+      .readdirSync(webDir)
+      .filter((f) => f.endsWith('.html') && !marketing.has(f))
+      .filter((f) => /href="\/privacy"/.test(fs.readFileSync(path.join(webDir, f), 'utf8')));
+    assert.ok(appPagesLinking.length > 0, 'no app page links to /privacy');
+  });
+
   // The footers used to hardcode https://discgolfgo.app/privacy, which left the
   // marketing domain even once .com could serve the page itself.
   await t.test('no marketing page sends a reader to the app for the policy', () => {

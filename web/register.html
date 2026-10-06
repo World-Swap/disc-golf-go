@@ -17,7 +17,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
-  <link rel="stylesheet" href="/styles/app-ui.css?v=w14" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w15" />
 </head>
 <body>
   <main class="app">
@@ -28,10 +28,9 @@
       <div class="error" id="err"></div>
 
       <form id="form" autocomplete="on">
-        <label class="field">
-          <span class="field__label">Display name</span>
-          <input class="input" name="display_name" required maxlength="30" placeholder="Sky Hyzer" />
-        </label>
+        <!-- One name. Signup used to ask for a display name AND a username
+             before anyone had seen the app, which is two decisions at the point
+             of highest drop-off for a distinction the app no longer makes. -->
         <label class="field">
           <span class="field__label">Username</span>
           <input class="input" name="username" required pattern="[a-zA-Z0-9_]{3,20}" placeholder="skyhyzer" autocapitalize="none" />
@@ -83,7 +82,9 @@
         try {
           var fd = new FormData(form);
           var body = {
-            display_name: fd.get('display_name'),
+            // The username is the name; the server stores it as the display
+            // name too, so the boards keep reading one column.
+            display_name: fd.get('username'),
             username: fd.get('username'),
             email: fd.get('email'),
             password: fd.get('password'),

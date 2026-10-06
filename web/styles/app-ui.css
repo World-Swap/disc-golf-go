@@ -185,6 +185,37 @@
 .choice__title { font-size: 15px; font-weight: var(--weight-medium); letter-spacing: -0.01em; color: var(--color-ink); }
 .choice__hint { font-size: 12px; color: var(--color-ash); margin-top: 2px; }
 
+/* Profile photo / club logo. The shot is a fixed square so the row does not
+   jump between the empty state and a loaded image, and object-fit keeps a
+   non-square upload from stretching (the upload is cropped square before it is
+   sent, but a photo stored before that rule existed would otherwise squash). */
+.pf { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.pf__shot { width: 72px; height: 72px; flex: none; border-radius: 50%; overflow: hidden;
+  background: var(--color-cream); border: 1px solid var(--hair-strong);
+  display: grid; place-items: center; }
+.pf__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pf__empty { font-family: var(--font-display); font-size: 10px; color: var(--color-ash); text-align: center; line-height: 1.2; }
+.pf__side { min-width: 0; flex: 1; }
+.pf__btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+.pf__hint { font-family: var(--font-display); font-size: 12px; color: var(--color-ash); margin: 0; }
+/* A smaller button for the two actions beside the photo, so they read as
+   secondary to the Save below them. */
+.btn--sm { padding: 7px 12px; font-size: 13px; width: auto; }
+
+/* The identity row at the top of Profile: photo beside the name. The photo is
+   omitted entirely rather than shown as an empty circle when there is none, so
+   a player who has not set one sees the heading exactly where it always was. */
+.idrow { display: flex; align-items: center; gap: 14px; }
+.idrow__shot { width: 64px; height: 64px; flex: none; border-radius: 50%;
+  object-fit: cover; background: var(--color-cream); border: 1px solid var(--hair-strong); }
+.idrow__body { min-width: 0; flex: 1; }
+/* A username is a single unbroken token, so it does not wrap on its own: beside
+   a 64px photo, GUEST_FA8EB128 at the display size pushed the page into
+   horizontal scroll (measured, not guessed). `anywhere` lets it break mid-word
+   rather than overflow, and the clamp floor comes down a little in this one
+   context so a long name breaks later. */
+.idrow .h-display { overflow-wrap: anywhere; font-size: clamp(26px, 8vw, 42px); }
+
 /* A wrapped run of pills — the focus chips under a path heading. */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
