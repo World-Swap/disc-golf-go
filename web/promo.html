@@ -81,6 +81,23 @@
       padding:9px 16px;font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--color-ink,#2b2622);
       box-shadow:0 6px 16px rgba(43,38,34,.05);}
     .pro-chip b{color:var(--color-orange,#fa5e0f);}
+    /* The skill paths. Same chip as the pros above, left-aligned rather than
+       centred because this run sits under a left-aligned head, and with the
+       lesson count carried inside the chip. */
+    .paths{display:flex;flex-wrap:wrap;gap:8px 10px;margin:4px 0 0;}
+    .path-chip{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:var(--radius-pill,9999px);
+      padding:7px 14px;font-family:var(--font-display);font-weight:700;font-size:14px;
+      color:var(--color-ink,#2b2622);display:inline-flex;align-items:baseline;gap:7px;}
+    .path-chip b{color:var(--color-orange,#fa5e0f);font-size:13px;font-variant-numeric:tabular-nums;}
+    /* On a narrow phone the long names ("Tournament & Competition") make a chip
+       nearly full width, so thirteen of them are thirteen lines and nothing is
+       gained over the list they replaced. Smaller type and tighter padding gets
+       two to a line, which is the whole point of a chip run. */
+    @media (max-width:520px){
+      .paths{gap:6px 7px;}
+      .path-chip{padding:5px 10px;font-size:12px;gap:5px;}
+      .path-chip b{font-size:11px;}
+    }
     .stores{display:flex;gap:14px 18px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:24px;}
     .badge{display:block;height:54px;width:auto;}
     /* In the hero the badges follow a left-aligned CTA, so they start at the
@@ -127,37 +144,7 @@
        that would then have to be bumped on all 21 pages that load it, for one
        rule used once. */
     .sect__cta{margin-top:30px;}
-    /* The curriculum list. app.css styles it as thirteen separate cards — 20/22px
-       padding, a shadow each, a 10px gap between — which reads as a stack of
-       buttons, and nothing on this page links out of one. It is one card with
-       hairline-separated rows instead, and two columns once there is width for
-       them: thirteen full-width rows is a long scroll on a phone and a very tall
-       column of wasted space on a desktop.
-       Tightened here rather than in app.css, which is shared with the app behind
-       the ?v= cache-buster — and promo.html is the only page using .numrow. */
-    .numlist{gap:0;background:var(--color-white);border:1px solid var(--hair,#eadfce);
-      border-radius:var(--radius-lg);overflow:hidden;}
-    .numrow{padding:9px 16px;gap:12px;box-shadow:none;background:transparent;border-radius:0;
-      border-top:1px solid var(--hair,#eadfce);}
-    /* no rule above the first row — or above the first row of EACH column once
-       the grid splits in two, which is items 1 and 2 in row-major order */
-    .numrow:first-child{border-top:none;}
-    .numrow__name{font-size:clamp(15px,2vw,16px);}
-    .numrow__meta{font-size:12px;margin-top:1px;}
-    .numrow__num{font-size:12px;}
-    /* On a phone the row is name + count and nothing else. The description of
-       each path is real information, but it is the line a thumb scrolls past,
-       and carrying it costs 13 two-line rows: with it the list is 859px, without
-       it 520px. It comes back at 760px, where the two-column layout has the room
-       for it. It stays in the DOM either way, so the page still says what is in
-       each path to anything reading the markup. */
-    @media (max-width:759px){ .numrow__meta{display:none;} }
-    @media (min-width:760px){
-      .numlist{grid-template-columns:1fr 1fr;}
-      .numrow:nth-child(2){border-top:none;}
-      /* a hairline between the two columns, on the right-hand cells only */
-      .numrow:nth-child(odd){border-right:1px solid var(--hair,#eadfce);}
-    }
+
     /* The secondary follow line under the community CTA. Inline, like the rest
        of this page's rules, because app.css is shared with the app behind the
        ?v= cache-buster and a rule there means bumping it on all 22 pages. */
@@ -353,22 +340,33 @@
       <div class="sect__head">
         <p class="sect__eyebrow">The curriculum</p>
         <h2 class="sect__title">13 skill paths. 134 coached lessons.</h2>
-        <p class="sect__lede">Every lesson pairs a pro instructional video with the key takeaways and a companion guide — from your first grip to tournament nerves. New coaching videos land beside them as the channels post them, filtered down to the ones that actually teach.</p>
+        <p class="sect__lede">Every lesson pairs a pro video with the key takeaways and a companion guide — from your first grip to tournament nerves.</p>
       </div>
-      <div class="numlist">
-        <div class="numrow"><div><div class="numrow__name">New to Disc Golf</div><div class="numrow__meta">Never played? The rules, your first discs, your first round</div></div><span class="numrow__num">7 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Form &amp; Technique</div><div class="numrow__meta">Grip, stance, reach-back, release</div></div><span class="numrow__num">12 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Putting</div><div class="numrow__meta">Circle 1 &amp; 2, routine, drills, nerves</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Driving &amp; Distance</div><div class="numrow__meta">Run-up, timing, power, control</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Approach &amp; Upshots</div><div class="numrow__meta">The 50–150 ft scoring zone</div></div><span class="numrow__num">8 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Forehand / Sidearm</div><div class="numrow__meta">Grip, mechanics, distance, utility</div></div><span class="numrow__num">7 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Disc Selection</div><div class="numrow__meta">Flight numbers, stability, plastics, weight</div></div><span class="numrow__num">13 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Course Strategy</div><div class="numrow__meta">Management, risk/reward, reading wind</div></div><span class="numrow__num">16 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Mental Game</div><div class="numrow__meta">Routine, focus, composure under pressure</div></div><span class="numrow__num">12 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Fitness &amp; Warmup</div><div class="numrow__meta">Mobility, core, power, injury prevention</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Rules &amp; Etiquette</div><div class="numrow__meta">OB, relief, mando, pace of play</div></div><span class="numrow__num">12 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Tournament &amp; Competition</div><div class="numrow__meta">Prep, formats, nerves, bag setup</div></div><span class="numrow__num">10 lessons</span></div>
-        <div class="numrow"><div><div class="numrow__name">Practice &amp; Drills</div><div class="numrow__meta">Field work, drills, filming, pressure</div></div><span class="numrow__num">7 lessons</span></div>
+      <!-- The thirteen paths as a chip run, not a list of rows. Two passes at
+           making the rows denser did not fix it, because the problem was never
+           the padding: thirteen rows of anything is a menu, and nobody reads a
+           menu on a marketing page. As chips it still names every path and
+           every count — nothing was cut — but it reads as one fact about the
+           library rather than fourteen things to get past.
+           The per-path description moves to the chip's title attribute: it was
+           already hidden on phones, and it was never the reason anyone reads
+           this section. Same .pro-chip treatment as the thirteen pros further
+           up the page, so the two runs read as the same kind of statement. -->
+      <div class="paths">
+        <span class="path-chip" title="Never played? The rules, your first discs, your first round">New to Disc Golf<b>7</b></span>
+        <span class="path-chip" title="Grip, stance, reach-back, release">Form &amp; Technique<b>12</b></span>
+        <span class="path-chip" title="Circle 1 &amp; 2, routine, drills, nerves">Putting<b>10</b></span>
+        <span class="path-chip" title="Run-up, timing, power, control">Driving &amp; Distance<b>10</b></span>
+        <span class="path-chip" title="The 50–150 ft scoring zone">Approach &amp; Upshots<b>8</b></span>
+        <span class="path-chip" title="Grip, mechanics, distance, utility">Forehand / Sidearm<b>7</b></span>
+        <span class="path-chip" title="Flight numbers, stability, plastics, weight">Disc Selection<b>13</b></span>
+        <span class="path-chip" title="Management, risk/reward, reading wind">Course Strategy<b>16</b></span>
+        <span class="path-chip" title="Routine, focus, composure under pressure">Mental Game<b>12</b></span>
+        <span class="path-chip" title="Mobility, core, power, injury prevention">Fitness &amp; Warmup<b>10</b></span>
+        <span class="path-chip" title="OB, relief, mando, pace of play">Rules &amp; Etiquette<b>12</b></span>
+        <span class="path-chip" title="Prep, formats, nerves, bag setup">Tournament &amp; Competition<b>10</b></span>
+        <span class="path-chip" title="Field work, drills, filming, pressure">Practice &amp; Drills<b>7</b></span>
+      </div>
       </div>
     </div>
   </section>

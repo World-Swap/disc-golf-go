@@ -247,11 +247,25 @@ test('search indexing', async (t) => {
   // hand-maintained orders cannot be kept in step by intention alone.
   await t.test('the library order matches the one the promo page advertises', () => {
     const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
-    const advertised = [...html.matchAll(/numrow__name">([^<]+)</g)].map((m) =>
-      m[1]!.replace(/&amp;/g, '&').trim()
-    );
+    // Reads the chip run. The paths were a list of .numrow cards until the
+    // section was condensed; this guard caught that change the moment the
+    // markup moved, which is the whole point of it. The count inside each chip
+    // is asserted too, so a path can no longer advertise the wrong size.
+    const chips = [...html.matchAll(/<span class="path-chip"[^>]*>([^<]+)<b>(\d+)<\/b>/g)];
+    const advertised = chips.map((m) => m[1]!.replace(/&amp;/g, '&').trim());
+    const advertisedCounts = chips.map((m) => Number(m[2]));
     const inApp = [...CATEGORIES].sort((a, b) => a.sort_order - b.sort_order).map((c) => c.name);
     assert.deepEqual(advertised, inApp, 'promo.html and CATEGORIES disagree on order or naming');
+
+    const realCounts = [...CATEGORIES]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((c) => LESSONS.filter((l) => l.category_slug === c.slug).length);
+    assert.deepEqual(advertisedCounts, realCounts, 'a chip advertises the wrong lesson count');
+    assert.equal(
+      advertisedCounts.reduce((a, b) => a + b, 0),
+      LESSONS.length,
+      'the chips should account for every lesson'
+    );
   });
 
   await t.test('sort_order is a dense 1..n, so "append at 100" cannot recur', () => {
