@@ -35,7 +35,7 @@
 <body>
   <nav class="nav">
     <a class="logo" href="/"><span class="logo__glyph" aria-hidden="true"></span> Disc Golf Go</a>
-    <a class="btn btn--ghost" href="/">Back to app</a>
+    <a class="btn btn--ghost" href="/" id="back">Back to app</a>
   </nav>
 
   <main class="doc">
@@ -89,7 +89,26 @@
     <h2>Contact us</h2>
     <p>Questions about this policy or your data? Email <a href="mailto:contact@discgolfgo.com">contact@discgolfgo.com</a>.</p>
 
-    <div class="doc__foot">© Disc Golf Go · <a href="/">discgolfgo.app</a></div>
+    <div class="doc__foot">© Disc Golf Go · <a href="/" id="home">discgolfgo.app</a></div>
   </main>
+
+  <!-- This one page is served on BOTH hosts: discgolfgo.app, where it is reached
+       from Settings inside the app, and discgolfgo.com, where it is reached from
+       the footer of every marketing page. href="/" is already correct on both --
+       it lands on whichever site you came from -- but the WORDING was not: a
+       reader who tapped Privacy on the promo site was told to go "Back to app",
+       which is the one place they had not been. The label and the footer's
+       domain are therefore set from the host.
+       The markup keeps the .app wording as its default, so with JavaScript off
+       the common case still reads correctly and the link still works. -->
+  <script>
+    (function () {
+      if (location.hostname.indexOf('discgolfgo.com') === -1) return;
+      var b = document.getElementById('back');
+      if (b) b.textContent = 'Back to site';
+      var h = document.getElementById('home');
+      if (h) h.textContent = 'discgolfgo.com';
+    })();
+  </script>
 </body>
 </html>

@@ -20,6 +20,13 @@ export const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
 const PROMO_PAGES: Record<string, string> = {
   '/events': 'events.html',
   '/support': 'support.html',
+  // Served on .com as well as .app, rather than redirected to .app. A visitor
+  // reading the promo site who taps Privacy was being thrown onto the app
+  // domain, where the only way back was a button marked "Back to app" that
+  // leads into the product -- a dead end for someone who was reading about it.
+  // Both spellings, because PAGES carries both and a link could use either.
+  '/privacy': 'privacy.html',
+  '/privacy-policy': 'privacy.html',
   '/guides/how-to-putt-disc-golf': 'guide-putting.html',
   '/guides/best-beginner-disc-golf-discs': 'guide-beginner-discs.html',
 };

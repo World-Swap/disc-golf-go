@@ -97,6 +97,31 @@ test('discgolfgo.com host split', async (t) => {
     assert.deepEqual(missing, [], 'these are linked from web/ but 404 on both hosts');
   });
 
+  // Reported from the live site: tapping Privacy in the promo footer threw the
+  // reader onto discgolfgo.app, where the only way out was a button marked
+  // "Back to app" -- into the product they were still reading about. The policy
+  // is the same document on both hosts, so .com serves it rather than handing
+  // the visitor to the other domain.
+  await t.test('the privacy policy is served on .com, not redirected to .app', async () => {
+    for (const route of ['/privacy', '/privacy-policy']) {
+      const com = await req(port, route, 'discgolfgo.com');
+      assert.equal(com.status, 200, `${route} should be served on .com`);
+      const app = await req(port, route, 'discgolfgo.app');
+      assert.equal(app.status, 200, `${route} must still work on .app (store listings use it)`);
+    }
+  });
+
+  // The footers used to hardcode https://discgolfgo.app/privacy, which left the
+  // marketing domain even once .com could serve the page itself.
+  await t.test('no marketing page sends a reader to the app for the policy', () => {
+    const offenders: string[] = [];
+    for (const file of ['promo.html', 'events.html', 'support.html', 'guide-putting.html', 'guide-beginner-discs.html']) {
+      const html = fs.readFileSync(path.join(process.cwd(), 'web', file), 'utf8');
+      if (html.includes('discgolfgo.app/privacy')) offenders.push(file);
+    }
+    assert.deepEqual(offenders, []);
+  });
+
   await t.test('.app app route is untouched (served, no redirect)', async () => {
     const r = await req(port, '/training', 'discgolfgo.app');
     assert.equal(r.status, 200);
