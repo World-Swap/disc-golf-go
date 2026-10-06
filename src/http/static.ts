@@ -17,6 +17,7 @@ export const PROMO_HOSTS = new Set(['discgolfgo.com', 'www.discgolfgo.com']);
 // Clean marketing URLs that live on the .com promo site (extensionless → served
 // here instead of being redirected to the app).
 const PROMO_PAGES: Record<string, string> = {
+  '/events': 'events.html',
   '/guides/how-to-putt-disc-golf': 'guide-putting.html',
   '/guides/best-beginner-disc-golf-discs': 'guide-beginner-discs.html',
 };
