@@ -136,14 +136,16 @@ carry it too, so the ask survives being reshared without the caption.
 ---
 
 ## 5 · We're hosting a tournament  (Boulder Creek Re-Run)
-**Image:** `web/img/events/boulder-creek-re-run-social.png` (**3240×4050**, 4:5)
-— the feed version, and the one to post; `.jpg` beside it if something wants a
-JPEG. It is a 4:5 FRAME at 3× scale, so the platforms downscale it themselves
-rather than you uploading something already soft. The full flyer,
-`…-flyer.png` / `.jpg` (2460×4527), is for print, Stories and anywhere tall is
-fine. The art alone, without any type, is `…-run.webp` (1200×675) — that one
-stays small on purpose, because the events page shows it at ~356px. See the
-note on shapes at the bottom.
+**Image:** `event-assets/boulder-creek-re-run/social.png` (**3240×4050**, 4:5)
+— the feed version, and the one to post; `social.jpg` beside it if something
+wants a JPEG. It is a 4:5 FRAME at 3× scale, so the platforms downscale it
+themselves rather than you uploading something already soft. `flyer.png` /
+`flyer.jpg` (2460×4527) in the same folder is for print, Stories and anywhere
+tall is fine. **These live in `event-assets/`, not `web/`** — everything under
+`web/` is served, and these are files to download and post, with no page behind
+them. The art alone, without any type, is still
+`web/img/events/boulder-creek-re-run.webp` (1200×675), because `events.html`
+renders it. See the note on shapes at the bottom.
 
 ### Facebook
 > **We're hosting a tournament.** 🥏
