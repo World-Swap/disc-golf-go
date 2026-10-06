@@ -197,23 +197,30 @@ test('search indexing', async (t) => {
   // same entity. Two hand-maintained lists of the same thing is the drift this
   // file keeps catching, so they are asserted equal: adding an account to the
   // footer and forgetting the schema costs the SEO benefit silently.
-  await t.test('the footer social links and the schema sameAs agree', () => {
+  await t.test('every social link on the page is in the schema sameAs', () => {
     const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
 
-    const footer = /<span style="opacity:.6">Follow<\/span>([\s\S]*?)<\/div>/.exec(html);
-    assert.ok(footer, 'could not find the social row in promo.html');
-    const linked = [...footer[1]!.matchAll(/href="(https:\/\/[^"]+)"/g)].map((m) => m[1]!);
-    assert.ok(linked.length >= 3, `expected the social accounts, found ${linked.length}`);
+    // Scanned over the WHOLE page, not just the footer row: the community band
+    // added a second place these links live, and a guard that only knew about
+    // the footer would have let an account be added there and silently miss
+    // sameAs. Matched on the social hosts specifically, so the App Store and
+    // Play badges -- which are outbound but not profiles -- are not dragged in.
+    const SOCIAL_HOSTS = /^https:\/\/(www\.)?(instagram\.com|facebook\.com|x\.com|twitter\.com|reddit\.com|youtube\.com|tiktok\.com)\//;
+    const onPage = [...new Set([...html.matchAll(/href="(https:\/\/[^"]+)"/g)].map((m) => m[1]!))]
+      .filter((u) => SOCIAL_HOSTS.test(u));
+    assert.ok(onPage.length >= 4, `expected the social accounts, found ${onPage.length}`);
 
-    const ld = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
-    const org = ld
+    const org = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
       .map((m) => JSON.parse(m[1]!))
       .flatMap((d) => (d['@graph'] as Record<string, unknown>[]) ?? [d])
       .find((n) => n['@type'] === 'Organization') as { sameAs?: string[] } | undefined;
     assert.ok(org?.sameAs?.length, 'the Organization schema has no sameAs');
 
-    const missing = linked.filter((u) => !org!.sameAs!.includes(u));
-    assert.deepEqual(missing, [], 'these are in the footer but not in sameAs');
+    assert.deepEqual(
+      onPage.filter((u) => !org!.sameAs!.includes(u)),
+      [],
+      'these social links are on the page but not in sameAs'
+    );
   });
 
   // External links opened from our pages must not hand the opener over.
@@ -221,10 +228,11 @@ test('search indexing', async (t) => {
     const offenders: string[] = [];
     for (const file of ['promo.html', 'events.html', 'support.html', 'guide-putting.html', 'guide-beginner-discs.html']) {
       const html = fs.readFileSync(path.join(WEB, file), 'utf8');
-      const row = /<span style="opacity:.6">Follow<\/span>([\s\S]*?)<\/div>/.exec(html);
-      if (!row) { offenders.push(`${file}: no social row`); continue; }
-      for (const a of row[1]!.match(/<a [^>]*>/g) ?? []) {
-        if (!a.includes('target="_blank"') || !a.includes('noopener')) offenders.push(`${file}: ${a.slice(0, 60)}`);
+      // every anchor to a social host on the page, wherever it sits
+      for (const a of html.match(/<a [^>]*>/g) ?? []) {
+        const href = /href="([^"]+)"/.exec(a)?.[1] ?? '';
+        if (!/^https:\/\/(www\.)?(instagram|facebook|x|twitter|reddit)\.com\//.test(href)) continue;
+        if (!a.includes('target="_blank"') || !a.includes('noopener')) offenders.push(`${file}: ${a.slice(0, 70)}`);
       }
     }
     assert.deepEqual(offenders, []);

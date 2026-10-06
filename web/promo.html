@@ -127,6 +127,12 @@
        that would then have to be bumped on all 21 pages that load it, for one
        rule used once. */
     .sect__cta{margin-top:30px;}
+    /* The secondary follow line under the community CTA. Inline, like the rest
+       of this page's rules, because app.css is shared with the app behind the
+       ?v= cache-buster and a rule there means bumping it on all 22 pages. */
+    .sect__follow{margin:18px 0 0;font-size:15px;color:var(--color-ink);opacity:.75;
+      display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;}
+    .sect__follow a{color:var(--color-orange);font-weight:700;text-decoration:none;}
     /* app.css hides the whole nav link row under 640px. Events is the one that
        has to survive that, because it is the only link in there pointing at a
        page rather than an anchor further down this one -- so the row comes
@@ -493,6 +499,36 @@
   </section>
 
   <!-- FAQ -->
+  <!-- Community, directly before the FAQ. The subreddit leads and the three
+       follow accounts sit under it, because a place to ask a question is worth
+       more than a feed to watch — and the FAQ immediately below is the same
+       instinct (someone with a question), so the two read as one idea.
+       sect--peach keeps the alternation: #back is ink, #guides is plain, this
+       is peach, the FAQ is cream.
+       Deliberately claims NO size. The community is new, and "join thousands of
+       players" is the kind of number that is false on the day it is written and
+       cannot be checked by anyone reading it. What it can honestly say is what
+       the place is for. -->
+  <section class="sect sect--peach" id="community">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">Community</p>
+        <h2 class="sect__title">Somewhere to ask the daft question.</h2>
+        <p class="sect__lede">r/DiscGolfGo is the place to ask what you are doing wrong, post a
+          form video, work out which disc to put down, or tell us the app is broken. New players
+          and people who have thrown for years, in the same place.</p>
+      </div>
+      <div class="sect__cta">
+        <a class="btn btn--lg" href="https://www.reddit.com/r/DiscGolfGo/" target="_blank" rel="noopener me">Join r/DiscGolfGo&nbsp;→</a>
+      </div>
+      <p class="sect__follow">Or follow along:
+        <a href="https://www.instagram.com/discgolfgo/" target="_blank" rel="noopener me">Instagram</a>
+        <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener me">Facebook</a>
+        <a href="https://x.com/DiscGolfGo" target="_blank" rel="noopener me">X</a>
+      </p>
+    </div>
+  </section>
+
   <section class="sect sect--cream" id="faq">
     <div class="sect__inner">
       <div class="sect__head">
