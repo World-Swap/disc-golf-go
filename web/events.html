@@ -21,14 +21,41 @@
   <meta name="twitter:description" content="In-person disc golf tournaments hosted by Disc Golf Go. Train in the app, then apply it on a real course." />
   <meta name="twitter:image" content="https://discgolfgo.com/img/og-cover.png?v=3" />
 
-  <!-- NO Event structured data here on purpose.
-       Rich results for an event need a real name, a real start date and a real
-       location, and inventing any of those to make the markup validate would be
-       lying to a search engine about something people turn up to in person.
-       When the first event is posted, add one Event object per event alongside
-       its card below -- or say the word and this page can be rendered from a
-       data file the way the training library is, so the cards and the markup
-       cannot drift apart. -->
+  <!-- One SportsEvent per event on the page. Every value below was read off
+       the event's own listing, not paraphrased.
+       NO `offers`, deliberately: entry is $65 pro / $50 amateur but greens,
+       PDGA and TD fees are charged on top, so any single price here would be a
+       number nobody actually pays. The card says both parts in words instead.
+       -12-12T07:30 is PST (-08:00), not PDT -- the clocks go back in November,
+       and the registration time below is in October and really is PDT. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    "name": "Boulder Creek Mixer",
+    "description": "A PDGA C-tier disc golf tournament hosted by Disc Golf Go: one round of 19 holes at Boulder Creek Golf and Country Club.",
+    "sport": "Disc golf",
+    "startDate": "2026-12-12T07:30:00-08:00",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "url": "https://www.discgolfscene.com/tournament/Boulder_Creek_Re_Run_2026",
+    "location": {
+      "@type": "Place",
+      "name": "Boulder Creek Golf and Country Club",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Boulder Creek",
+        "addressRegion": "CA",
+        "addressCountry": "US"
+      }
+    },
+    "organizer": {
+      "@type": "Organization",
+      "name": "Disc Golf Go",
+      "url": "https://discgolfgo.com"
+    }
+  }
+  </script>
 
   <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
   <link rel="stylesheet" href="/styles/app.css?v=w10" />
@@ -57,6 +84,9 @@
     /* Links inside a card body inherit otherwise, so the mailto in the empty
        state rendered as plain text and did not look pressable. */
     .ev__body a{color:var(--color-orange);font-weight:700;text-decoration:none;}
+    /* Direct child only, so this cannot reach into a card and restyle the
+       links already handled above. */
+    .article > p a{color:var(--color-orange);font-weight:700;text-decoration:none;}
 
     /* Shown while there is nothing to list. Deliberately a real sentence rather
        than an empty grid, because an empty grid reads as a page that broke. */
@@ -115,14 +145,24 @@
          =================================================================== -->
 
     <div class="events">
-      <article class="ev ev--none">
-        <p class="ev__when">Nothing listed yet</p>
-        <h3 class="ev__name">The next event has not been announced.</h3>
-        <p class="ev__body">Dates and entry links are posted here as soon as they are set. If you
-          would like to hear about the next one — or you run a course and want to host one —
-          <a href="mailto:contact@discgolfgo.com?subject=Disc%20Golf%20Go%20events">get in touch</a>.</p>
+      <article class="ev">
+        <p class="ev__when"><time datetime="2026-12-12">Saturday, December 12, 2026</time> · PDGA C-tier</p>
+        <h3 class="ev__name">Boulder Creek Mixer</h3>
+        <p class="ev__where">Boulder Creek Golf and Country Club · Boulder Creek, CA</p>
+        <p class="ev__body">One round of 19 holes — the front nine, then a modified ten on the back
+          half of a ball golf course turned disc golf friendly. Tee times from 7:30am, check in at
+          hole 1. $65 pro, $50 amateur, plus greens, PDGA and TD fees. Tournament Director:
+          Ian&nbsp;Sun.</p>
+        <!-- Drop this line once registration is open; it is true until then and
+             merely stale after, which is why the link text below says
+             "registration" rather than "enter" and needs no edit either way. -->
+        <p class="ev__body"><b>Online registration opens October 9 at 7:00pm PDT.</b></p>
+        <p class="ev__go"><a href="https://www.discgolfscene.com/tournament/Boulder_Creek_Re_Run_2026" target="_blank" rel="noopener">Event details and registration →</a></p>
       </article>
     </div>
+
+    <p>Want to hear about the next one, or run a course and want to host one?
+      <a href="mailto:contact@discgolfgo.com?subject=Disc%20Golf%20Go%20events">Get in touch</a>.</p>
 
     <h2>What to expect</h2>
     <p>An event is a normal, in-person round of disc golf, run as a tournament: you turn up, you
