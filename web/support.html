@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Back Disc Golf Go — Help Keep It Free | Disc Golf Go</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <meta name="description" content="Disc Golf Go is free — 134 coached lessons, no ads, no paid tier, no locked content. Chip in to keep it that way and to help put on the in-person events." />
+  <link rel="canonical" href="https://discgolfgo.com/support" />
+  <meta property="og:site_name" content="Disc Golf Go" />
+  <meta property="og:title" content="Back Disc Golf Go" />
+  <meta property="og:description" content="134 coached lessons, free, no ads. Chip in to keep it free and to help put on the in-person events." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://discgolfgo.com/support" />
+  <meta property="og:image" content="https://discgolfgo.com/img/og-cover.png?v=3" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Back Disc Golf Go" />
+  <meta name="twitter:description" content="134 coached lessons, free, no ads. Chip in to keep it free and to help put on the in-person events." />
+  <meta name="twitter:image" content="https://discgolfgo.com/img/og-cover.png?v=3" />
+
+  <!-- No DonateAction / fundraising structured data, deliberately. Google's
+       donation markup is for verified nonprofits, and Disc Golf Go is not one:
+       claiming it would be a false statement about what this money is. The page
+       says in words what it is instead -- support for a free app, not a
+       tax-deductible donation. -->
+
+  <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app.css?v=w10" />
+  <style>
+    .article{max-width:760px;margin:0 auto;padding:40px var(--edge-pad) 20px;}
+    .article .kicker{color:var(--color-orange);font-family:var(--font-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;}
+    .article h1{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;color:var(--color-ink);font-size:clamp(30px,6vw,44px);line-height:1.05;margin:12px 0 10px;}
+    .article .lede{font-size:19px;line-height:1.55;color:var(--color-ink);opacity:.82;margin:0 0 8px;}
+    .article h2{font-family:var(--font-display);font-weight:700;color:var(--color-ink);font-size:24px;letter-spacing:-.01em;margin:34px 0 10px;}
+    .article p{font-size:17px;line-height:1.7;color:var(--color-ink);opacity:.9;margin:0 0 16px;}
+    .article ul{margin:0 0 16px;padding-left:22px;}
+    .article li{font-size:17px;line-height:1.7;color:var(--color-ink);opacity:.9;margin-bottom:8px;}
+    .article strong{font-weight:700;}
+    .backlink{display:inline-block;margin-bottom:8px;color:var(--color-orange);font-weight:700;text-decoration:none;font-size:14px;}
+    .article > p a{color:var(--color-orange);font-weight:700;text-decoration:none;}
+
+    /* The give box. Dark, like the CTA boxes on the other .com pages, so the
+       one action on the page is the loudest thing on it. */
+    .give{background:var(--color-ink);border-radius:20px;padding:30px;margin:28px 0 10px;text-align:center;}
+    .give h3{font-family:var(--font-display);font-weight:700;color:#fff;font-size:22px;margin:0 0 6px;}
+    .give p{color:#fff;opacity:.78;font-size:15px;margin:0 0 18px;}
+    .give .btn{margin:0 auto;}
+    /* The destination, written out under the button. A payment link is the one
+       place a reader is entitled to see where they are being sent BEFORE they
+       press it, and "paypal.biz" is an unfamiliar domain that reads like a
+       phishing attempt even when it is genuine. */
+    /* The URL sits on its own line and is NOT broken mid-token: break-all split
+       it as "...discgolfg / o" at 390px, and a payment address chopped in half
+       is exactly the thing that makes a careful reader distrust a link. */
+    .give__where{display:block;margin-top:14px;color:#fff;opacity:.6;font-size:13px;line-height:1.5;}
+    .give__url{display:block;font-weight:700;opacity:.85;}
+
+    /* What the money does. Two cards, because there are two answers and
+       pretending there is one would be vaguer than the truth. */
+    .uses{display:grid;gap:16px;margin:0 0 8px;}
+    @media (min-width:640px){.uses{grid-template-columns:1fr 1fr;}}
+    .use{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:18px;padding:22px;box-shadow:0 6px 16px rgba(43,38,34,.05);}
+    .use h3{font-family:var(--font-display);font-weight:700;color:var(--color-ink);font-size:19px;margin:0 0 6px;}
+    .use p{font-size:15px;line-height:1.6;margin:0;}
+
+    /* The free list — what is free today and stays free. */
+    .free{background:var(--color-cream,#faf7f1);border:1px solid var(--hair,#eadfce);border-radius:18px;padding:22px 26px;margin:0 0 8px;}
+    .free ul{margin:0;padding-left:20px;}
+    .free li{font-size:16px;margin-bottom:6px;}
+
+    .foot-note{border-top:1px solid var(--hair,#eadfce);margin-top:36px;padding-top:22px;}
+    .foot-note p{font-size:14px;opacity:.7;}
+    .foot-note a{color:var(--color-orange);font-weight:700;text-decoration:none;}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="logo" href="/">
+      <span class="logo__glyph" aria-hidden="true"></span>
+      Disc Golf Go
+    </a>
+    <div class="nav__cta">
+      <a class="btn btn--sm" href="https://discgolfgo.app/register">Open App</a>
+    </div>
+  </nav>
+
+  <article class="article">
+    <a class="backlink" href="/">← Disc Golf Go</a>
+    <p class="kicker">Back the project</p>
+    <h1>Disc Golf Go is free. Help keep it that way.</h1>
+    <p class="lede">134 coached lessons from touring pros and the channels that coach them. No ads,
+      no paid tier, nothing locked behind a subscription. If it has helped your game, you can chip
+      in — and it goes to two things.</p>
+
+    <div class="give">
+      <h3>Chip in through PayPal</h3>
+      <p>Any amount. One-off — there is no subscription to cancel.</p>
+      <a class="btn btn--lg" href="https://www.paypal.com/biz/profile/discgolfgo" target="_blank" rel="noopener">Back us on PayPal&nbsp;→</a>
+      <span class="give__where">You'll land on
+        <span class="give__url">paypal.com/biz/profile/discgolfgo</span></span>
+    </div>
+
+    <h2>Where it goes</h2>
+    <div class="uses">
+      <article class="use">
+        <h3>Keeping the app free</h3>
+        <p>Servers, the database, email and the domain are a real monthly bill, and the training
+          library is real work — every lesson is matched to a video that teaches that specific
+          thing, and re-checked when videos move or go stale. Chipping in is what pays for that
+          instead of ads or a paywall.</p>
+      </article>
+      <article class="use">
+        <h3>Putting on the events</h3>
+        <p>Disc Golf Go runs in-person tournaments — the first is the
+          <a href="/events">Boulder Creek Re-Run</a>, a PDGA C-tier on 12 December 2026. Entry fees
+          cover the round itself; what they do not cover is everything around it. Backing helps put
+          the next one on.</p>
+      </article>
+    </div>
+
+    <h2>What stays free</h2>
+    <p>This is not a pitch for early access or a supporter tier. Everything below is free today and
+      is not going behind a paywall:</p>
+    <div class="free">
+      <ul>
+        <li><strong>134 coached lessons</strong> across 13 skill paths, with 199 videos</li>
+        <li><strong>1,532 courses</strong> across 48 states</li>
+        <li>The weekly and daily tournaments, and the leaderboards</li>
+        <li>Throw Lab, the throwing game</li>
+      </ul>
+    </div>
+    <p>Backers get no advantage over anyone else in the app. That is deliberate — a training library
+      that teaches the paying players more is not a training library worth having, and a
+      leaderboard you can buy a place on is not a leaderboard.</p>
+
+    <h2>Other ways to help, that cost nothing</h2>
+    <ul>
+      <li><strong>Tell someone.</strong> A player who would use it is worth more than a tenner.</li>
+      <li><strong>Turn up to an event.</strong> <a href="/events">The next one is here</a>.</li>
+      <li><strong>Tell us what is wrong with it.</strong> Bugs, a lesson that does not land, a
+        course with the wrong details — <a href="https://discgolfgo.app/feedback">send it over</a>.</li>
+    </ul>
+
+    <div class="foot-note">
+      <p>Disc Golf Go is an independent project, not a registered charity — contributions are
+        support, not tax-deductible donations, and they buy no stake in the business. Payments are
+        handled entirely by PayPal; we never see your card details. Questions:
+        <a href="mailto:contact@discgolfgo.com?subject=Backing%20Disc%20Golf%20Go">contact@discgolfgo.com</a>.</p>
+    </div>
+  </article>
+
+  <footer class="foot">
+    <div class="foot__inner">
+      <span>Disc Golf Go</span>
+      <span><a href="https://discgolfgo.app/privacy" style="color:inherit">Privacy</a> <span class="dot">•</span> <a href="mailto:contact@discgolfgo.com" style="color:inherit">Contact</a> <span class="dot">•</span> <a href="/events" style="color:inherit">Events</a></span>
+    </div>
+  </footer>
+</body>
+</html>

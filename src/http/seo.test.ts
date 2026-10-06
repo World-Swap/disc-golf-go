@@ -19,7 +19,7 @@ const WEB = path.join(__dirname, '..', '..', 'web');
 
 // The only pages meant to be found in a search result. Everything else under
 // web/ is app UI served on discgolfgo.app.
-const INDEXABLE = new Set(['promo.html', 'events.html', 'guide-putting.html', 'guide-beginner-discs.html']);
+const INDEXABLE = new Set(['promo.html', 'events.html', 'support.html', 'guide-putting.html', 'guide-beginner-discs.html']);
 
 test('search indexing', async (t) => {
   const app = createApp(db);
