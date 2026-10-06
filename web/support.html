@@ -160,6 +160,22 @@
       <span>Disc Golf Go</span>
       <span><a href="/privacy" style="color:inherit">Privacy</a> <span class="dot">•</span> <a href="mailto:contact@discgolfgo.com" style="color:inherit">Contact</a> <span class="dot">•</span> <a href="/events" style="color:inherit">Events</a></span>
     </div>
+    <!-- Social, as a second footer row rather than more items on the first:
+         that line already carries Privacy / Contact / Back us and four more
+         links would wrap into a mess on a phone. Styled with the footer's own
+         classes and inline rules on purpose -- app.css is shared with the app
+         behind a ?v= cache-buster, so a rule added there would mean bumping the
+         buster on all 22 pages to change a footer row.
+         The community sits last and is labelled r/DiscGolfGo rather than
+         "Reddit", because it is a place to join rather than an account to
+         follow, and the handle is the useful part. -->
+    <div class="foot__inner" style="padding-top:0;justify-content:flex-start;flex-wrap:wrap;gap:8px 12px">
+      <span style="opacity:.6">Follow</span>
+      <a href="https://www.instagram.com/discgolfgo/" target="_blank" rel="noopener me" style="color:inherit">Instagram</a>
+      <a href="https://www.facebook.com/discgolfgo" target="_blank" rel="noopener me" style="color:inherit">Facebook</a>
+      <a href="https://x.com/DiscGolfGo" target="_blank" rel="noopener me" style="color:inherit">X</a>
+      <a href="https://www.reddit.com/r/DiscGolfGo/" target="_blank" rel="noopener me" style="color:inherit">r/DiscGolfGo</a>
+    </div>
   </footer>
 </body>
 </html>

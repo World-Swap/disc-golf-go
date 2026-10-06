@@ -192,6 +192,44 @@ test('search indexing', async (t) => {
   // the stats panel. A day later the page still said 13, alongside 77 and 200
   // that had gone stale when 19 videos were replaced. A list of places to check
   // is not a guard; counting is.
+  // The footer lists the social accounts and the Organization JSON-LD lists the
+  // same ones under sameAs, which is what tells Google the profiles are the
+  // same entity. Two hand-maintained lists of the same thing is the drift this
+  // file keeps catching, so they are asserted equal: adding an account to the
+  // footer and forgetting the schema costs the SEO benefit silently.
+  await t.test('the footer social links and the schema sameAs agree', () => {
+    const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
+
+    const footer = /<span style="opacity:.6">Follow<\/span>([\s\S]*?)<\/div>/.exec(html);
+    assert.ok(footer, 'could not find the social row in promo.html');
+    const linked = [...footer[1]!.matchAll(/href="(https:\/\/[^"]+)"/g)].map((m) => m[1]!);
+    assert.ok(linked.length >= 3, `expected the social accounts, found ${linked.length}`);
+
+    const ld = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    const org = ld
+      .map((m) => JSON.parse(m[1]!))
+      .flatMap((d) => (d['@graph'] as Record<string, unknown>[]) ?? [d])
+      .find((n) => n['@type'] === 'Organization') as { sameAs?: string[] } | undefined;
+    assert.ok(org?.sameAs?.length, 'the Organization schema has no sameAs');
+
+    const missing = linked.filter((u) => !org!.sameAs!.includes(u));
+    assert.deepEqual(missing, [], 'these are in the footer but not in sameAs');
+  });
+
+  // External links opened from our pages must not hand the opener over.
+  await t.test('every outbound social link is safe to open', () => {
+    const offenders: string[] = [];
+    for (const file of ['promo.html', 'events.html', 'support.html', 'guide-putting.html', 'guide-beginner-discs.html']) {
+      const html = fs.readFileSync(path.join(WEB, file), 'utf8');
+      const row = /<span style="opacity:.6">Follow<\/span>([\s\S]*?)<\/div>/.exec(html);
+      if (!row) { offenders.push(`${file}: no social row`); continue; }
+      for (const a of row[1]!.match(/<a [^>]*>/g) ?? []) {
+        if (!a.includes('target="_blank"') || !a.includes('noopener')) offenders.push(`${file}: ${a.slice(0, 60)}`);
+      }
+    }
+    assert.deepEqual(offenders, []);
+  });
+
   // The app's /training orders categories by sort_order; promo.html lists them
   // by hand. They had silently diverged: the promo page led with Getting
   // Started, while in the app it sat at sort_order 104 -- LAST, below all 126
