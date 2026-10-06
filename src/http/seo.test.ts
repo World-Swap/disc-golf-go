@@ -30,6 +30,14 @@ test('search indexing', async (t) => {
   // `trust proxy` is set, which is exactly how Render delivers it in production.
   const get = (p: string, host: string) =>
     fetch(`http://127.0.0.1:${port}${p}`, { headers: { 'X-Forwarded-Host': host } });
+  // The same request with redirects left UNFOLLOWED. fetch follows by default,
+  // so asserting on `get` would read the status of wherever it landed -- a
+  // redirect test written against it passes on a 200 from the wrong page.
+  const hop = (p: string, host: string) =>
+    fetch(`http://127.0.0.1:${port}${p}`, {
+      headers: { 'X-Forwarded-Host': host },
+      redirect: 'manual',
+    });
 
   await t.test('robots.txt differs by host', async () => {
     const com = await (await get('/robots.txt', 'discgolfgo.com')).text();
@@ -53,6 +61,63 @@ test('search indexing', async (t) => {
       if (!INDEXABLE.has(file) && !hasNoindex) offenders.push(`${file} is app UI but is missing noindex`);
     }
     assert.deepEqual(offenders, []);
+  });
+
+  // The training library used to be at /training/<category>. Google still holds
+  // those URLs -- five of thirteen were visible in Search Console, split across
+  // "Not found (404)" and "Page with redirect" -- and the .com catch-all sent
+  // every one of them to the app, where /training/<category> 404s. That is a
+  // dead end pointing away from the pages that replaced them.
+  await t.test('an old /training/<category> URL lands on the page that replaced it', async () => {
+    const slugs = learnUrls()
+      .map((u) => u.slice('/learn/'.length))
+      .filter((slug) => slug && !slug.includes('/'));
+    assert.ok(slugs.length >= 13, 'expected every category to be covered');
+
+    for (const slug of slugs) {
+      const res = await hop(`/training/${slug}`, 'discgolfgo.com');
+      assert.equal(res.status, 301, `/training/${slug} should redirect`);
+      assert.equal(
+        res.headers.get('location'),
+        `https://discgolfgo.com/learn/${slug}`,
+        `/training/${slug} must reach its replacement, not the app`
+      );
+    }
+  });
+
+  // The other half of that rule: only the real categories are claimed. Anything
+  // else under /training/ is an app route or an API path and must keep falling
+  // through -- /training/recommendations is an API endpoint, not a category.
+  await t.test('/training paths that are not categories still go to the app', async () => {
+    for (const p of ['/training', '/training/recommendations', '/training/not-a-category']) {
+      const res = await hop(p, 'discgolfgo.com');
+      assert.equal(res.status, 301, `${p} should still redirect`);
+      assert.equal(
+        res.headers.get('location'),
+        `https://discgolfgo.app${p}`,
+        `${p} is not a category and must not be captured`
+      );
+    }
+  });
+
+  // Google crawled https://discgolfgo.com/training/${catSlug}/${l.slug} and
+  // .../training/${esc(c.slug)} -- literal, un-interpolated template strings
+  // that reached the served HTML and then the index. A template literal written
+  // inside a quoted string does not interpolate, and this repo builds HTML by
+  // concatenation, so it is a live hazard rather than a one-off.
+  //
+  // Script bodies legitimately contain `${`, so they are stripped first: what is
+  // left is markup, where a `${` can only be a leak.
+  await t.test('no served page leaks an un-interpolated template string', async () => {
+    const pages = ['/', '/events', '/guides/how-to-putt-disc-golf',
+                   '/guides/best-beginner-disc-golf-discs', ...learnUrls()];
+    const offenders: string[] = [];
+    for (const p of pages) {
+      const html = await (await get(p, 'discgolfgo.com')).text();
+      const markup = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+      for (const m of markup.matchAll(/\$\{[^}]{0,60}\}/g)) offenders.push(`${p}: ${m[0]}`);
+    }
+    assert.deepEqual(offenders, [], 'a ${...} outside a script tag reached the HTML');
   });
 
   await t.test('the sitemap lists only .com URLs, and each one resolves there', async () => {

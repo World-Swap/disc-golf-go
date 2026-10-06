@@ -3,6 +3,7 @@
 
 import path from 'node:path';
 import express, { type Express, type RequestHandler } from 'express';
+import { learnUrls } from './learn';
 
 const WEB_DIR = path.join(__dirname, '..', '..', 'web');
 
@@ -21,6 +22,21 @@ const PROMO_PAGES: Record<string, string> = {
   '/guides/how-to-putt-disc-golf': 'guide-putting.html',
   '/guides/best-beginner-disc-golf-discs': 'guide-beginner-discs.html',
 };
+
+// The training library used to live at /training/<category> on .com, and Google
+// still holds those URLs with real crawl history -- five of the thirteen were
+// visible in Search Console, split across "Not found (404)" and "Page with
+// redirect". Without this, the catch-all below sends them to the app, where
+// /training/<category> 404s: a dead end pointing AWAY from the pages that
+// replaced them, which are live, indexable and the ones we want ranked.
+//
+// Derived from learnUrls() rather than written out, so adding a category cannot
+// silently leave its old URL stranded.
+const LEARN_SLUGS = new Set(
+  learnUrls()
+    .map((u) => u.slice('/learn/'.length))
+    .filter((slug) => slug && !slug.includes('/'))
+);
 
 /**
  * robots.txt, which has to differ by host because the two domains want opposite
@@ -79,6 +95,12 @@ export function comHostSplit(): RequestHandler {
     const promoPage = PROMO_PAGES[p.replace(/\/$/, '')];
     if (promoPage) return res.sendFile(path.join(WEB_DIR, promoPage)); // marketing content page
     if (/\.[a-z0-9]{2,5}$/i.test(p)) return next(); // static asset — serve for the promo page
+    // Old category URL → the page that replaced it, on this same domain. Must come
+    // BEFORE the catch-all, which would otherwise hand it to the app and a 404.
+    const oldCategory = /^\/training\/([a-z0-9-]+)\/?$/.exec(p);
+    if (oldCategory && LEARN_SLUGS.has(oldCategory[1]!)) {
+      return res.redirect(301, 'https://discgolfgo.com/learn/' + oldCategory[1]);
+    }
     // App page or API on .com → same path on the app domain (308 keeps method for /api).
     return res.redirect(p.startsWith('/api/') ? 308 : 301, 'https://discgolfgo.app' + req.originalUrl);
   };
