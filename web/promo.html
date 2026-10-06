@@ -120,6 +120,14 @@
        that would then have to be bumped on all 21 pages that load it, for one
        rule used once. */
     .sect__cta{margin-top:30px;}
+    /* app.css hides the whole nav link row under 640px. Events is the one that
+       has to survive that, because it is the only link in there pointing at a
+       page rather than an anchor further down this one -- so the row comes
+       back on a phone with everything except Events hidden. */
+    @media(max-width:640px){
+      .nav__links{display:flex;}
+      .nav__links .nav__link:not(.nav__link--events){display:none;}
+    }
     /* FAQ accordion + guide cards */
     .faqlist{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
     .faq{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:16px;padding:0 22px;box-shadow:0 6px 16px rgba(43,38,34,.05);}
@@ -156,7 +164,7 @@
       <a class="nav__link" href="#levelup">How it works</a>
       <a class="nav__link" href="#game">Throw Lab</a>
       <a class="nav__link" href="#compete">Compete</a>
-      <a class="nav__link" href="/events">Events</a>
+      <a class="nav__link nav__link--events" href="/events">Events</a>
     </div>
     <a class="btn btn--ghost" href="https://discgolfgo.app/login">Log in</a>
   </nav>
@@ -207,6 +215,26 @@
       </div>
     </div>
   </header>
+
+  <!-- Events sits SECOND, straight under the hero. It is the only part of
+       Disc Golf Go that happens off the screen and the only thing on this page
+       with a date attached, so it earns the position above the screenshots and
+       the pro list. It is its own band rather than a card under Compete, which
+       is about the in-app weekly tournament. -->
+  <section class="sect sect--ink" id="events">
+    <div class="sect__inner">
+      <div class="sect__head">
+        <p class="sect__eyebrow">In person</p>
+        <h2 class="sect__title">Apply your training at a Disc Golf Go event.</h2>
+        <p class="sect__lede">A Disc Golf Go event is a live, in-person disc golf tournament hosted
+          by us — a real course, a real card, other players stood next to you. The app is where you
+          learn the shot; an event is where you stand over it with something on the line.</p>
+      </div>
+      <div class="sect__cta">
+        <a class="btn btn--lg" href="/events">See upcoming events →</a>
+      </div>
+    </div>
+  </section>
 
   <!-- App screenshots -->
   <section class="sect sect--peach" id="inside">
@@ -397,25 +425,6 @@
             round, average against par, tournament weeks, wins and podiums — every figure
             counted from the rounds themselves, so none of it can drift.</p>
         </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- Events: the only part of Disc Golf Go that happens off the screen, so it
-       gets its own band rather than a fourth card under Compete, which is about
-       the in-app tournament. The page it links to lists whatever events are
-       actually posted; nothing here claims one is bookable today. -->
-  <section class="sect sect--ink" id="events">
-    <div class="sect__inner">
-      <div class="sect__head">
-        <p class="sect__eyebrow">In person</p>
-        <h2 class="sect__title">Apply your training at a Disc Golf Go event.</h2>
-        <p class="sect__lede">A Disc Golf Go event is a live, in-person disc golf tournament hosted
-          by us — a real course, a real card, other players stood next to you. The app is where you
-          learn the shot; an event is where you stand over it with something on the line.</p>
-      </div>
-      <div class="sect__cta">
-        <a class="btn btn--lg" href="/events">See upcoming events →</a>
       </div>
     </div>
   </section>
