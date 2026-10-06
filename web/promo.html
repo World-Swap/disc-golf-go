@@ -127,6 +127,17 @@
        that would then have to be bumped on all 21 pages that load it, for one
        rule used once. */
     .sect__cta{margin-top:30px;}
+    /* The curriculum list. app.css styles .numrow as a generous card — 20/22px
+       padding, a title up to 22px — which reads as thirteen buttons stacked up,
+       and they are not buttons: nothing on this page links out of them. Tightened
+       here rather than in app.css, which is shared with the app behind the ?v=
+       cache-buster (and promo.html is the only page using .numrow at all).
+       The row keeps its card background so the list still has structure; it is
+       the weight that comes down, not the shape. */
+    .numrow{padding:12px 16px;gap:12px;box-shadow:none;border:1px solid var(--hair,#eadfce);}
+    .numrow__name{font-size:clamp(15px,2vw,17px);}
+    .numrow__meta{font-size:12px;margin-top:2px;}
+    .numrow__num{font-size:13px;}
     /* The secondary follow line under the community CTA. Inline, like the rest
        of this page's rules, because app.css is shared with the app behind the
        ?v= cache-buster and a rule there means bumping it on all 22 pages. */
@@ -175,8 +186,7 @@
       <a class="nav__link" href="#pros">The Pros</a>
       <a class="nav__link" href="#learn">Training</a>
       <a class="nav__link" href="#levelup">How it works</a>
-      <a class="nav__link" href="#game">Throw Lab</a>
-      <a class="nav__link" href="#compete">Compete</a>
+      <a class="nav__link" href="#play">Play</a>
       <a class="nav__link nav__link--events" href="/events">Events</a>
     </div>
     <a class="btn btn--ghost" href="https://discgolfgo.app/login">Log in</a>
@@ -344,48 +354,95 @@
   </section>
 
   <!-- How it works -->
+  <!-- How it works. Six cards, which is what the 3-column grid wants: at four
+       the last one sat alone on a second row and the section read as unfinished.
+       They are the order a player actually meets the app, not a feature list.
+       "Apply it on course" is GONE, and not because it was stale: it led on
+       checking in at real courses, and the standing positioning rule is that
+       check-in is not a selling point — every disc golf app has a course list,
+       and leading with ours invites a comparison we gain nothing from winning.
+       Playing a real course is still on the page, in #play, framed as the game.
+       The old title, "A game that rewards getting better", is gone for the other
+       standing rule: Throw Lab is the game, and a headline pairing "game" with
+       "getting better" reads as the claim we never make. -->
   <section class="sect sect--cream" id="levelup">
     <div class="sect__inner">
       <div class="sect__head">
         <p class="sect__eyebrow">How it works</p>
-        <h2 class="sect__title">A game that rewards getting better.</h2>
+        <h2 class="sect__title">What the app actually does.</h2>
       </div>
       <div class="fgrid">
         <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">◧</div>
+          <h3 class="fcard__title">Tell it where you are</h3>
+          <p class="fcard__body">Four questions: what you can already do, what you want to get
+            better at, where the strokes actually go, and whether you have an event booked. The
+            library puts itself in order around the answers instead of starting everyone at
+            lesson one.</p>
+        </article>
+        <article class="fcard">
           <div class="fcard__ic" aria-hidden="true">▶</div>
           <h3 class="fcard__title">Watch &amp; learn</h3>
-          <p class="fcard__body">Real coaching from disc golf's best. Every lesson plays the pro video right in the app, with the core tips and a guide to go deeper.</p>
+          <p class="fcard__body">Real coaching from disc golf's best. Every lesson plays the pro
+            video right in the app, with the core tips and a guide to go deeper.</p>
         </article>
         <article class="fcard">
           <div class="fcard__ic" aria-hidden="true">▲</div>
           <h3 class="fcard__title">Earn XP &amp; missions</h3>
-          <p class="fcard__body">Complete lessons and daily challenges to earn XP, rise through skill tiers, and unlock your creator vault.</p>
+          <p class="fcard__body">Complete lessons and the daily challenge to earn XP, rise through
+            the skill tiers, and unlock the creator vault — every video your finished lessons have
+            opened up, grouped by who taught it.</p>
         </article>
         <article class="fcard">
           <div class="fcard__ic" aria-hidden="true">◎</div>
-          <h3 class="fcard__title">Apply it on course</h3>
-          <p class="fcard__body">Check in at 1,500+ real courses across the country and put your training to work where it counts.</p>
+          <h3 class="fcard__title">Get ready for an event</h3>
+          <p class="fcard__body">Say you are signed up for one and you get a second plan, paced
+            week by week and counting down to the date — what a tournament round asks that a
+            casual one does not, and the rules you will be held to on a card.</p>
         </article>
         <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">▷</div>
+          <div class="fcard__ic" aria-hidden="true">▦</div>
           <h3 class="fcard__title">The Players Lounge</h3>
           <p class="fcard__body">The newest videos from 27 disc golf channels, pulled in every
             day — rounds, reviews, vlogs and coaching, all in one place, with the rest of each
             creator's uploads a tap away.</p>
+        </article>
+        <article class="fcard">
+          <div class="fcard__ic" aria-hidden="true">◷</div>
+          <h3 class="fcard__title">It keeps you coming back</h3>
+          <p class="fcard__body">A tip each day, a streak that counts the days you turn up, and
+            reminders when you stop — all of which you can switch off, because a training app you
+            have muted is not training anybody.</p>
         </article>
       </div>
     </div>
   </section>
 
   <!-- Throw Lab — the game built into the app -->
-  <section class="sect sect--ink" id="game">
+  <!-- Play: Throw Lab and the tournament built on it, as ONE section.
+       They were two (#game, ink, and #compete, peach) and they are one idea --
+       the tournament IS a Throw Lab round that lands on a shared board, so
+       splitting them made the page state the game's premise twice.
+       The eyebrow dropped "New ·": both carried it, two New badges in a row
+       reads as a changelog rather than a pitch, and "new" is a claim that goes
+       stale on its own.
+       The .glab layout (screenshot + list) is kept over .fgrid because it
+       carries the real in-game screenshot, which is the strongest thing either
+       section had. .fgrid stays in use by #levelup, so none of its CSS is dead.
+       NOTE the standing positioning rule: Throw Lab is a GAME and must never be
+       claimed to improve anyone's game. The old bullet "It counts toward your
+       game" is gone for exactly that reason -- it reads as a claim about
+       improvement when it only ever meant XP. -->
+  <section class="sect sect--ink" id="play">
     <div class="sect__inner">
       <div class="sect__head">
-        <p class="sect__eyebrow">New · Throw Lab</p>
-        <h2 class="sect__title">There's a disc golf game inside the app.</h2>
+        <p class="sect__eyebrow">Play</p>
+        <h2 class="sect__title">There's a game inside the app, and a tournament on top of it.</h2>
         <p class="sect__lede">Throw Lab is a throwing game you play on your phone. Tap once to start
           the power bar, tap to lock it, tap to set your angle — then watch the fade bring the disc
-          back, the way a real one does. No course, no GPS, no waiting for the weather.</p>
+          back, the way a real one does. No course, no GPS, no waiting for the weather. Every Monday
+          a course is drawn at random and it becomes a tournament: the same eighteen holes for every
+          player in the app.</p>
       </div>
       <div class="glab">
         <figure class="glab__shot">
@@ -399,45 +456,14 @@
             shuffled bag, so a round never shows you the same hole twice.</li>
           <li><b>Or play a real course</b>Pick any of 1,500+ courses and the round is built from its
             actual holes and lengths — 3, 6, 9, or all 18.</li>
-          <li><b>It counts toward your game</b>Rounds earn XP, drive daily, weekly, monthly and
-            lifetime challenges, and rank you on a Throw Lab leaderboard of its own.</li>
+          <li><b>Two shots at the week</b>An attempt is spent the moment you tee off, so walking away
+            from a bad start costs you one. Best of the two counts, and ties go to whoever posted
+            first — there is a reason to play early.</li>
+          <li><b>Boards, and a record that can't drift</b>Rounds earn XP and drive daily, weekly,
+            monthly and lifetime challenges. Training, Throw Lab and the tournament each have a
+            leaderboard of their own, and every figure in your record — rounds, aces, birdies a
+            round, average against par, wins, podiums — is counted from the rounds themselves.</li>
         </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- Compete: the weekly tournament and the boards it feeds -->
-  <section class="sect sect--peach" id="compete">
-    <div class="sect__inner">
-      <div class="sect__head">
-        <p class="sect__eyebrow">New · Compete</p>
-        <h2 class="sect__title">One course. Everyone. Two shots at it.</h2>
-        <p class="sect__lede">Every Monday a course is drawn at random and it is the same
-          eighteen holes for every player in the app. You get two attempts at it — and an
-          attempt is spent the moment you tee off, so walking away from a bad start costs you
-          one. Best of the two counts.</p>
-      </div>
-      <div class="fgrid">
-        <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">△</div>
-          <h3 class="fcard__title">The weekly tournament</h3>
-          <p class="fcard__body">The same 18 holes for everyone, a fresh course each week. Ties
-            go to whoever posted first, so there is a reason to play early.</p>
-        </article>
-        <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">≡</div>
-          <h3 class="fcard__title">Boards for everything</h3>
-          <p class="fcard__body">Training, Throw Lab and the tournament each get their own
-            leaderboard — ranked by XP, best round, best 18, aces, courses played, wins and
-            podiums, with your own row marked wherever you land.</p>
-        </article>
-        <article class="fcard">
-          <div class="fcard__ic" aria-hidden="true">▦</div>
-          <h3 class="fcard__title">Your record</h3>
-          <p class="fcard__body">Rounds played, holes, courses, best round, aces, birdies a
-            round, average against par, tournament weeks, wins and podiums — every figure
-            counted from the rounds themselves, so none of it can drift.</p>
-        </article>
       </div>
     </div>
   </section>
