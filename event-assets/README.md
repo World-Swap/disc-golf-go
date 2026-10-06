@@ -18,6 +18,10 @@ event-assets/
   graphics/
     hero.png                  2304x1296. The marketing hero from promo.html.
     event-card.png            2304x1296. The GENERIC events card (any event).
+    course.png                1792x1008. Course selector.
+    daily.png  lounge.png  ranks.png  throw-lab.png  training.png
+                              1760x990. The rest of the feature cards.
+    categories/               1760x990. All 13 training category cards.
   boulder-creek-re-run/
     card.png                  2400x1350. This event's own card art.
     social.png / social.jpg   1080x1350 frame at 3x -> 3240x4050. The FEED post.
@@ -33,11 +37,25 @@ pictures are what the site actually serves, as webp:
 | `graphics/event-card.png` | `web/img/cards/event.webp` (880x495) |
 | `boulder-creek-re-run/card.png` | `web/img/events/boulder-creek-re-run.webp` (1200x675) |
 
+...and every other PNG in `graphics/` mirrors the card of the same name under
+`web/img/cards/` (the `categories/` ones under `web/img/cards/cat/`).
+
 The **webp is canonical** — changing a PNG here changes nothing anyone sees.
 These are bigger (rendered from the 2304x1296 originals, not upscaled from the
 web copies) so they survive being printed or posted; the webps stay small
 because pages show them at a few hundred pixels. If the art is ever redrawn,
 re-export both or delete the stale PNG rather than leaving the two disagreeing.
+
+**Do not "fix" these to the brand palette.** Only `hero`, `event-card` and the
+Boulder Creek art are the strict four-colour set. The feature and category
+cards are NOT: `cat/putting` is 87% teal `rgb(8,104,104)`, `cat/approach` is
+95% brown `rgb(160,104,24)`, `throw-lab` uses a darker ink than `#202020`, and
+each category card has its own hue by design. An early export snapped them all
+onto the brand four and turned putting green and approach orange; it was caught
+because those images then differed from the shipped card by 10-12 where the
+others differed by under 3. Where these were enlarged, the edges are
+re-hardened against **each image's own** palette, read out of that image, never
+an assumed one.
 
 PNG and JPG are the same image; take whichever the upload wants. The JPGs are
 q95 with **no chroma subsampling** (4:4:4), so the orange does not smear at the
