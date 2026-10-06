@@ -95,6 +95,21 @@ export function createTrainingRouter(service: TrainingService, resolve: RequestH
     res.json(await service.featuredVideos(parseInt(String(req.query.limit ?? '8'), 10) || 8));
   }));
 
+  // The assessment that replaced "everyone starts at lesson one". GET serves the
+  // questions and whatever they answered last time (so a retake is pre-filled);
+  // POST saves and hands back the resulting path in the same response.
+  router.get('/training/assessment', resolve, asyncHandler(async (req, res) => {
+    res.json(await service.getAssessment(req.player?.id ?? null));
+  }));
+
+  router.post('/training/assessment', resolve, asyncHandler(async (req, res) => {
+    res.json(await service.saveAssessment(requirePlayerId(req), req.body));
+  }));
+
+  router.get('/training/path', resolve, asyncHandler(async (req, res) => {
+    res.json(await service.getPath(req.player?.id ?? null));
+  }));
+
   router.get('/training/recommendations', resolve, asyncHandler(async (req, res) => {
     res.json(await service.getRecommendations(requirePlayerId(req)));
   }));

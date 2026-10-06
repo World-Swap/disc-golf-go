@@ -39,7 +39,7 @@ const SHARE_BONUS_XP = 10;
 
 export const MILESTONE_DEFS = [
   { key: 'first_lesson', title: 'First Lesson', desc: 'Completed your first training lesson', trigger: 1, gold: 0 },
-  { key: 'getting_started', title: 'Getting Started', desc: 'Completed 5 lessons — way to go!', trigger: 5, gold: 25 },
+  { key: 'getting_started', title: 'Finding Your Feet', desc: 'Completed 5 lessons — way to go!', trigger: 5, gold: 25 },
   { key: 'half_way_there', title: 'Half Way There', desc: 'Completed 10 lessons — serious commitment', trigger: 10, gold: 50 },
   { key: 'training_machine', title: 'Training Machine', desc: 'Completed 25 lessons — unstoppable!', trigger: 25, gold: 100 },
   { key: 'legend', title: 'Legend', desc: 'Completed 50 lessons — disc golf scholar', trigger: 50, gold: 250 },
@@ -61,6 +61,10 @@ export interface TrainingServiceDeps {
   onLessonCompleted?: LessonCompletedHook;
 }
 
+import { ASSESSMENT, parseAnswers, type Answers } from './assessment';
+import { buildPath, DEFAULT_ANSWERS } from './path';
+import { nextEvent } from '../../db/data/events';
+
 export function createTrainingService({ db, repo = createTrainingRepo(db), onLessonCompleted }: TrainingServiceDeps) {
   function levelParam(raw: unknown): SkillLevel | null {
     return typeof raw === 'string' && VALID_LEVELS.includes(raw as SkillLevel) ? (raw as SkillLevel) : null;
@@ -73,6 +77,43 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
       /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
     );
     return m ? m[1]! : null;
+  }
+
+  /**
+   * The path. Built fresh on every read rather than stored: a completed lesson
+   * or a library change is reflected immediately, and a stored path could only
+   * ever go stale.
+   *
+   * A player who has not taken the assessment still gets a path -- the same
+   * builder on the least-informed answer -- so the page has one shape to render
+   * rather than two. `needs_assessment` is what the page uses to ask.
+   *
+   * A plain function rather than a method on the returned object, because
+   * saveAssessment also needs it: `this.getPath(...)` reads fine and breaks the
+   * moment the service is destructured, which nothing stops a caller doing.
+   */
+  async function pathFor(playerId: number | null) {
+    const saved = await repo.trainingProfile(playerId);
+    const answers: Answers = saved
+      ? {
+          skill: saved.skill_level as Answers['skill'],
+          goals: saved.goals ?? [],
+          weakness: saved.weakness ?? [],
+          tournament: saved.tournament as Answers['tournament'],
+        }
+      : DEFAULT_ANSWERS;
+
+    const completed = await repo.completedLessonSlugs(playerId);
+    const path = buildPath(answers, completed, { event: nextEvent() });
+    return {
+      needs_assessment: !saved,
+      taken_at: saved?.updated_at ?? null,
+      answers: saved ? answers : null,
+      ...path,
+      // Empty is the honest answer at 100%, not a bug -- the page says so
+      // rather than the builder inventing filler.
+      library_complete: path.lessons.length === 0,
+    };
   }
 
   return {
@@ -446,6 +487,48 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
         })),
       };
     },
+
+    // ── the training assessment ──────────────────────────────────────────
+
+    /** The questions, plus whatever this player answered last time. */
+    async getAssessment(playerId: number | null) {
+      const saved = await repo.trainingProfile(playerId);
+      return {
+        questions: ASSESSMENT,
+        answers: saved
+          ? {
+              skill: saved.skill_level,
+              goals: saved.goals ?? [],
+              weakness: saved.weakness ?? [],
+              tournament: saved.tournament,
+            }
+          : null,
+        taken_at: saved?.updated_at ?? null,
+      };
+    },
+
+    /**
+     * Save a set of answers and hand back the path they produce, so the client
+     * does not have to make a second request to show the result of the survey
+     * it just submitted.
+     */
+    async saveAssessment(playerId: number, raw: unknown) {
+      const answers = parseAnswers(raw);
+      if (!answers) throw badRequest('Answer the questions before we can build a path');
+      await repo.saveTrainingProfile(playerId, answers);
+      return pathFor(playerId);
+    },
+
+    /**
+     * The path. Built fresh on every read rather than stored: a completed
+     * lesson or a library change is reflected immediately, and a stored path
+     * could only ever go stale.
+     *
+     * A player who has not taken the assessment still gets a path -- the same
+     * builder on the least-informed answer -- so the page has one shape to
+     * render rather than two. `needs_assessment` is what the page uses to ask.
+     */
+    getPath: pathFor,
 
     async getHomeState(playerId: number | null) {
       if (!playerId) return { authenticated: false };

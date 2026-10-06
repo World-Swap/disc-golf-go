@@ -6,6 +6,8 @@ import type { AddressInfo } from 'node:net';
 import { createApp } from './app';
 import { learnUrls } from './learn';
 import { LESSONS, CATEGORIES } from '../db/data/lessons';
+import { EVENTS } from '../db/data/events';
+import { MILESTONE_DEFS } from '../modules/training/training.service';
 import type { Database } from '../db/types';
 
 const db = {
@@ -120,6 +122,34 @@ test('search indexing', async (t) => {
     assert.deepEqual(offenders, [], 'a ${...} outside a script tag reached the HTML');
   });
 
+  // The event is written in two places on purpose -- web/events.html for people,
+  // src/db/data/events.ts for the training plan that counts down to it, because
+  // a static page cannot be read by the path builder. Two copies are only safe
+  // if they cannot silently disagree, so this is the lock. CLAUDE.md calls
+  // drifting duplicates the failure mode this repo documents more than any
+  // other; change one of the two and this test names the other.
+  await t.test('every event in the data file matches the page', () => {
+    const html = fs.readFileSync(path.join(WEB, 'events.html'), 'utf8');
+    for (const e of EVENTS) {
+      assert.ok(
+        html.includes(e.name),
+        `events.html does not mention "${e.name}" — the page and src/db/data/events.ts have drifted`
+      );
+      // The page carries the machine-readable date twice: a <time datetime> and
+      // the SportsEvent startDate. Both must agree with the data file's day.
+      const day = e.startsAt.slice(0, 10);
+      assert.ok(
+        html.includes(`datetime="${day}"`),
+        `events.html has no <time datetime="${day}"> for ${e.name}`
+      );
+      assert.ok(
+        html.includes(`"startDate": "${e.startsAt}"`),
+        `the JSON-LD startDate for ${e.name} is not ${e.startsAt}`
+      );
+      assert.ok(html.includes(e.url), `events.html does not link ${e.url}`);
+    }
+  });
+
   await t.test('the sitemap lists only .com URLs, and each one resolves there', async () => {
     const xml = fs.readFileSync(path.join(WEB, 'sitemap.xml'), 'utf8');
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
@@ -162,6 +192,40 @@ test('search indexing', async (t) => {
   // the stats panel. A day later the page still said 13, alongside 77 and 200
   // that had gone stale when 19 videos were replaced. A list of places to check
   // is not a guard; counting is.
+  // The app's /training orders categories by sort_order; promo.html lists them
+  // by hand. They had silently diverged: the promo page led with Getting
+  // Started, while in the app it sat at sort_order 104 -- LAST, below all 126
+  // other lessons -- because the later content batches were appended with 100+
+  // to park them at the end and nobody renumbered. A "start here" category at
+  // the bottom of the page is the opposite of what its name promises, and two
+  // hand-maintained orders cannot be kept in step by intention alone.
+  await t.test('the library order matches the one the promo page advertises', () => {
+    const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
+    const advertised = [...html.matchAll(/numrow__name">([^<]+)</g)].map((m) =>
+      m[1]!.replace(/&amp;/g, '&').trim()
+    );
+    const inApp = [...CATEGORIES].sort((a, b) => a.sort_order - b.sort_order).map((c) => c.name);
+    assert.deepEqual(advertised, inApp, 'promo.html and CATEGORIES disagree on order or naming');
+  });
+
+  await t.test('sort_order is a dense 1..n, so "append at 100" cannot recur', () => {
+    const orders = CATEGORIES.map((c) => c.sort_order).sort((a, b) => a - b);
+    assert.deepEqual(
+      orders,
+      CATEGORIES.map((_, i) => i + 1),
+      'every category needs its own place in one unbroken run'
+    );
+  });
+
+  // The category and a milestone badge were BOTH called "Getting Started",
+  // which is where the ambiguity came from: one meant the sport, the other
+  // meant five lessons done.
+  await t.test('no category shares a name with a training milestone', () => {
+    const milestones = new Set(MILESTONE_DEFS.map((m) => m.title.toLowerCase()));
+    const clash = CATEGORIES.filter((c) => milestones.has(c.name.toLowerCase())).map((c) => c.name);
+    assert.deepEqual(clash, []);
+  });
+
   await t.test('the promo page states only numbers the library supports', async () => {
     const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
     const stat = (label: string): number | null => {

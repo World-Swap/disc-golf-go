@@ -285,6 +285,58 @@ export function createTrainingRepo(db: Database) {
       return r.rows[0] ?? null;
     },
 
+    // ── the training assessment ──────────────────────────────────────────
+    //
+    // The profile is what the player told us; the path is rebuilt from it on
+    // every read rather than stored, so a library change or a newly completed
+    // lesson is reflected immediately and a stored path can never go stale.
+
+    async trainingProfile(playerId: number | null) {
+      if (!playerId) return null;
+      const r = await db.query<{
+        skill_level: string; goals: string[]; weakness: string[]; tournament: string; updated_at: Date;
+      }>(
+        `SELECT skill_level, goals, weakness, tournament, updated_at
+         FROM player_training_profile WHERE player_id = $1`,
+        [playerId]
+      );
+      return r.rows[0] ?? null;
+    },
+
+    /**
+     * A retake REPLACES the answers. ON CONFLICT rather than an insert, because
+     * the path is built from who the player is now; keeping old answers would
+     * only invite reading the wrong row.
+     */
+    async saveTrainingProfile(
+      playerId: number,
+      a: { skill: string; goals: string[]; weakness: string[]; tournament: string }
+    ) {
+      await db.query(
+        `INSERT INTO player_training_profile (player_id, skill_level, goals, weakness, tournament)
+         VALUES ($1, $2, $3::jsonb, $4::jsonb, $5)
+         ON CONFLICT (player_id) DO UPDATE
+           SET skill_level = EXCLUDED.skill_level,
+               goals       = EXCLUDED.goals,
+               weakness    = EXCLUDED.weakness,
+               tournament  = EXCLUDED.tournament,
+               updated_at  = NOW()`,
+        [playerId, a.skill, JSON.stringify(a.goals), JSON.stringify(a.weakness), a.tournament]
+      );
+    },
+
+    /** Slugs the player has finished — what the builder removes from the path. */
+    async completedLessonSlugs(playerId: number | null) {
+      if (!playerId) return [];
+      const r = await db.query<{ slug: string }>(
+        `SELECT l.slug FROM training_completions tc
+         JOIN training_lessons l ON l.id = tc.lesson_id
+         WHERE tc.player_id = $1`,
+        [playerId]
+      );
+      return r.rows.map((x) => x.slug);
+    },
+
     async topRecommendedLesson(playerId: number) {
       const r = await db.query(
         `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, l.description, l.content_type,

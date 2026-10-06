@@ -183,6 +183,25 @@ CREATE TABLE IF NOT EXISTS training_milestones (
   UNIQUE (player_id, milestone_key)
 );
 
+-- What the player told us in the training assessment. One row per player: a
+-- retake overwrites it rather than appending, because a path is built from who
+-- they are NOW, and a history of old answers would only be read to rebuild the
+-- current one.
+--
+-- goals and weakness are JSONB arrays rather than TEXT[] because every answer is
+-- validated against the question catalogue before it is written (parseAnswers),
+-- so the column never needs to constrain membership -- and JSONB is what the
+-- rest of this schema already uses for lists.
+CREATE TABLE IF NOT EXISTS player_training_profile (
+  player_id INTEGER PRIMARY KEY,
+  skill_level TEXT NOT NULL,
+  goals JSONB NOT NULL DEFAULT '[]'::jsonb,
+  weakness JSONB NOT NULL DEFAULT '[]'::jsonb,
+  tournament TEXT NOT NULL DEFAULT 'none',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS training_notifications (
   id SERIAL PRIMARY KEY,
   player_id INTEGER NOT NULL,
