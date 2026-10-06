@@ -127,17 +127,37 @@
        that would then have to be bumped on all 21 pages that load it, for one
        rule used once. */
     .sect__cta{margin-top:30px;}
-    /* The curriculum list. app.css styles .numrow as a generous card — 20/22px
-       padding, a title up to 22px — which reads as thirteen buttons stacked up,
-       and they are not buttons: nothing on this page links out of them. Tightened
-       here rather than in app.css, which is shared with the app behind the ?v=
-       cache-buster (and promo.html is the only page using .numrow at all).
-       The row keeps its card background so the list still has structure; it is
-       the weight that comes down, not the shape. */
-    .numrow{padding:12px 16px;gap:12px;box-shadow:none;border:1px solid var(--hair,#eadfce);}
-    .numrow__name{font-size:clamp(15px,2vw,17px);}
-    .numrow__meta{font-size:12px;margin-top:2px;}
-    .numrow__num{font-size:13px;}
+    /* The curriculum list. app.css styles it as thirteen separate cards — 20/22px
+       padding, a shadow each, a 10px gap between — which reads as a stack of
+       buttons, and nothing on this page links out of one. It is one card with
+       hairline-separated rows instead, and two columns once there is width for
+       them: thirteen full-width rows is a long scroll on a phone and a very tall
+       column of wasted space on a desktop.
+       Tightened here rather than in app.css, which is shared with the app behind
+       the ?v= cache-buster — and promo.html is the only page using .numrow. */
+    .numlist{gap:0;background:var(--color-white);border:1px solid var(--hair,#eadfce);
+      border-radius:var(--radius-lg);overflow:hidden;}
+    .numrow{padding:9px 16px;gap:12px;box-shadow:none;background:transparent;border-radius:0;
+      border-top:1px solid var(--hair,#eadfce);}
+    /* no rule above the first row — or above the first row of EACH column once
+       the grid splits in two, which is items 1 and 2 in row-major order */
+    .numrow:first-child{border-top:none;}
+    .numrow__name{font-size:clamp(15px,2vw,16px);}
+    .numrow__meta{font-size:12px;margin-top:1px;}
+    .numrow__num{font-size:12px;}
+    /* On a phone the row is name + count and nothing else. The description of
+       each path is real information, but it is the line a thumb scrolls past,
+       and carrying it costs 13 two-line rows: with it the list is 859px, without
+       it 520px. It comes back at 760px, where the two-column layout has the room
+       for it. It stays in the DOM either way, so the page still says what is in
+       each path to anything reading the markup. */
+    @media (max-width:759px){ .numrow__meta{display:none;} }
+    @media (min-width:760px){
+      .numlist{grid-template-columns:1fr 1fr;}
+      .numrow:nth-child(2){border-top:none;}
+      /* a hairline between the two columns, on the right-hand cells only */
+      .numrow:nth-child(odd){border-right:1px solid var(--hair,#eadfce);}
+    }
     /* The secondary follow line under the community CTA. Inline, like the rest
        of this page's rules, because app.css is shared with the app behind the
        ?v= cache-buster and a rule there means bumping it on all 22 pages. */
