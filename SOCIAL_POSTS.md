@@ -284,7 +284,90 @@ If a sub wants an image, `event-assets/boulder-creek-re-run/social.png`.
 
 ---
 
+## 10 · X / Twitter
+**Image:** the **16:9** art, not the 4:5 — `web/img/events/boulder-creek-re-run.webp`
+for the event, `event-assets/graphics/*.png` for the app posts. X crops a
+timeline card to roughly 16:9, which is the opposite of Instagram's 4:5, so the
+feed image built for post 5 is the wrong shape here.
+
+### Event
+> We're hosting a PDGA C-tier.
+>
+> Boulder Creek Re-Run — Sat Dec 12, at Boulder Creek Golf and Country Club, up in the Santa Cruz redwoods.
+>
+> 19 holes, one round. 18 divisions, pro and am.
+>
+> Registration opens Fri Oct 9, 7pm PDT:
+> https://www.discgolfscene.com/BCR
+
+### Event — once registration is open (replaces the one above)
+> Registration is open for the Boulder Creek Re-Run.
+>
+> PDGA C-tier, Sat Dec 12, in the Santa Cruz redwoods. 19 holes, one round, on a ball golf course turned disc golf friendly.
+>
+> 18 divisions, pro and am.
+>
+> https://www.discgolfscene.com/BCR
+
+### The app
+> Most rounds don't make you better. Structured practice does.
+>
+> Disc Golf Go: 134 coached video lessons across 13 skill paths, taught by touring pros and the channels that actually coach.
+>
+> Free on iOS, Android and the web.
+> https://discgolfgo.com
+
+### Thread — what touring pros actually upload
+> **1/** I pulled the last 15 uploads from four touring pros' YouTube channels and counted how many actually teach you to do something.
+>
+> Lizotte: 0
+> Wysocki: 0
+> McBeth: 1
+> Buhr: 3
+>
+> "Just watch the pros" is weaker advice than it sounds.
+
+> **2/** Gannon Buhr is the outlier. "How to Putt in the Wind" and "10 Things I Wish I Knew When I Started" are both in his last 15.
+>
+> McBeth's Blueprint series is course strategy, not mechanics, so I didn't count it — but 8 of his 15 are that. Fair to argue.
+
+> **3/** Wysocki's last 15 are practice rounds. Lizotte's are course-build vlogs.
+>
+> No criticism in that — touring is the job, teaching isn't.
+>
+> But it means the real instruction comes from coaching channels: Overthrow, Danny Lindahl, Disc Golf Strong, BlitzDG.
+
+> **4/** (I build a disc golf training app, which is why I was counting. Numbers pulled today off each channel's own RSS feed — they'll drift.)
+
+### Single — the ball golf audit
+> Audited 199 disc golf "instructional" videos in my own library.
+>
+> Three led with ball golf. One was a USGA ruling on penalty areas. One was a schoolteacher whose other uploads are wedge shots.
+>
+> All four pass a "disc golf <topic>" search. A plausible title isn't evidence.
+
+---
+
 ## Posting notes
+
+- **Post 10's lengths were measured the way X counts, not the way they look.**
+  Every URL counts as **23 characters** whatever its real length, so a raw
+  character count understates any post carrying a link. Measured that way all
+  eight fit: event 247, registration-open 226, app 244, thread 223/249/250/134,
+  audit 270 — all under 280. Re-measure after any edit; the event posts are
+  within ~30 characters of the ceiling.
+- **No hashtags, on purpose.** They work on Instagram and read as spam on X.
+  The Instagram captions in post 5 should not be pasted here.
+- **The 4:5 feed image is the WRONG shape for X.** A timeline card crops to
+  about 16:9, so use the landscape art rather than the image built for
+  Instagram's taller frame. Same picture, different crop.
+- **Post 10's thread concedes its weak point in tweet 2**, like the Reddit
+  version: McBeth's Blueprint series is course strategy and was not counted as
+  teaching, which is a judgement, so the thread says so and gives the number.
+  On X that line is what stops the quote-tweets being the correction.
+- **Tweet 4 is the disclosure and it is not optional.** It also dates the
+  numbers, because they came off live RSS feeds and a pro posting a tutorial
+  next week makes tweet 1 wrong in public.
 
 - **Posts 7-9 are the app on Reddit, and 7 and 8 deliberately do not link it.**
   That is not modesty, it is what makes them postable: both carry a finding
