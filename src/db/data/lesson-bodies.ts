@@ -54,6 +54,261 @@ export interface LessonBody {
 }
 
 export const LESSON_BODIES: Record<string, LessonBody> = {
+  // ─────────────────────── NEW TO DISC GOLF ───────────────────────
+  'what-is-disc-golf': {
+    why:
+      'Disc golf is the rare sport you can play properly on your first afternoon. Most courses are free, a starter set costs less than a round of ball golf, and nothing about the game needs a lesson before you can enjoy it. What it does reward, immediately and for years, is accuracy and putting rather than raw power — which is why a 70-year-old regularly beats a 25-year-old who throws further.',
+    how: [
+      'You throw from a tee pad toward a basket, and every throw counts. The lowest total across the course wins.',
+      'Wherever your disc comes to rest is where you throw from next. You mark that spot and throw again.',
+      'The hole is finished when the disc comes to rest supported by the chains or sitting in the tray. Hitting the pole or the outside of the basket does not count.',
+      'Most holes are par 3, meaning a drive, an approach and a putt. A course is usually 9 or 18 holes.',
+      'Three discs cover the whole game: a putter for close in, a midrange for most shots, and a slower driver for distance.',
+    ],
+    wrong: [
+      {
+        fault: 'Assuming you need a bag of twenty discs before you can play.',
+        fix: 'Three is genuinely enough for your first year, and fewer discs makes you better faster because you learn what each one does.',
+      },
+      {
+        fault: 'Thinking the game is about throwing far.',
+        fix: 'Rounds are decided inside 100 feet. Distance is the part that looks impressive and the part that matters least.',
+      },
+      {
+        fault: 'Buying a fast distance driver first because the name sounds like the one you want.',
+        fix: 'A fast disc needs arm speed you have not built yet and will dive hard left of where you aimed. Start slow and work up.',
+      },
+    ],
+    drill: {
+      name: 'Nine holes, three discs',
+      reps: '9 holes with exactly 3 discs, counting every throw',
+      body:
+        'Take a putter, a midrange and one driver, and play nine holes counting honestly — penalties included. The number you write down is not meant to be good. It is your baseline, and beating it a month later is the most motivating thing in the sport.',
+    },
+  },
+
+  'your-first-discs': {
+    why:
+      'The single biggest cause of early frustration is a disc that is too fast for your arm. A high-speed driver thrown at beginner speed finishes hard left for a right-handed backhand no matter how well you throw it — so it punishes good form and bad form identically, and teaches you nothing. Picking three forgiving discs is the cheapest improvement available to you.',
+    how: [
+      'Read the four flight numbers printed on most discs: speed, glide, turn and fade. Speed is how much arm you need; turn is negative when a disc wants to bend right for a right-handed backhand; fade is how hard it finishes left.',
+      'Get a putter, around speed 2 or 3. It is for putting and for anything inside about 150 feet.',
+      'Get a midrange, around speed 4 or 5. This should be the disc you throw most often for your first season.',
+      'Get an understable fairway driver, around speed 6 or 7 with a turn of -2 or -3. That is your long shot.',
+      'Choose lighter weights — 150 to 165 grams rather than 175. A lighter disc flies further with less power, which is exactly your situation.',
+    ],
+    wrong: [
+      {
+        fault: 'Starting with a speed 12 or 13 distance driver.',
+        fix: 'Nothing above speed 9 is useful until you are throwing a midrange about 250 feet. Put it in the cupboard and come back to it.',
+      },
+      {
+        fault: 'Buying at maximum weight because heavier sounds more stable.',
+        fix: 'It is more stable, which is the opposite of what you want. Go light until your arm catches up.',
+      },
+      {
+        fault: 'Borrowing a strong player’s overstable disc, throwing it badly, and concluding you cannot throw.',
+        fix: 'Their discs are matched to their arm speed. Try the same shot with a light understable midrange before you judge yourself.',
+      },
+      {
+        fault: 'Owning ten discs before you can reliably tell two of them apart in the air.',
+        fix: 'Three discs, thrown a thousand times, teaches more than ten discs thrown a hundred times each.',
+      },
+    ],
+    drill: {
+      name: 'Learn what yours do',
+      reps: '10 throws with each of your 3 discs (30 total), into an open field',
+      body:
+        'Throw each disc ten times at the same target with the same effort, and watch where it finishes rather than how far it goes. You are learning the shape: which one holds straight, which one fades left, which one turns right first. Knowing those three shapes is most of course management.',
+    },
+  },
+
+  'your-first-throws': {
+    why:
+      'Almost every beginner throw fails the same two ways: the nose points up, so the disc climbs, stalls and falls; and the arm swings out away from the body, so the power leaks sideways. Fix those two and distance arrives on its own, without throwing harder — which is fortunate, because throwing harder makes both of them worse.',
+    how: [
+      'Take a power grip: four fingers curled under the rim, thumb flat on top, firm but not clenched.',
+      'Stand side-on to your target, feet about shoulder width, with your throwing shoulder pointing where you want the disc to go.',
+      'Reach back level. The disc stays at the same height the whole way back — not dropped, not lifted.',
+      'Keep the disc flat with the nose very slightly down. A nose-up release is what makes a throw balloon and die.',
+      'Pull the disc across your chest in a straight line, close to your body, the way you would start a lawnmower across you.',
+      'Let it go without squeezing, and let your body rotate through rather than stopping at the release.',
+      'Aim right of your target if you throw right-handed backhand. Every disc finishes left, and fighting that is how people spend a year throwing into trees.',
+    ],
+    wrong: [
+      {
+        fault: 'Rounding — swinging the disc out away from your body in an arc instead of pulling it straight across.',
+        fix: 'Pull the disc past your sternum, close enough to brush your shirt. This is the single most common form fault in the sport.',
+      },
+      {
+        fault: 'Releasing nose-up, so the disc climbs, stalls and drops.',
+        fix: 'Think about the front edge pointing slightly down at release. It will feel like the disc will hit the ground. It will not.',
+      },
+      {
+        fault: 'Throwing with the arm alone while the feet stay planted.',
+        fix: 'Let your weight move from the back foot to the front foot as you throw. The arm is the last thing to move, not the only thing.',
+      },
+      {
+        fault: 'Gripping so hard the wrist locks, which kills the snap that makes a disc spin.',
+        fix: 'Firm fingers, loose wrist. Spin comes from the disc ripping out of a relaxed hand, not from squeezing.',
+      },
+    ],
+    drill: {
+      name: 'Stand-still flat',
+      reps: '20 stand-still throws, no run-up, with a midrange',
+      body:
+        'No approach, no x-step: just stand side-on and throw. You are not chasing distance, you are chasing a disc that leaves flat and lands flat. Watch the last second of each flight — if it is turning over or stalling upward, the nose angle is the thing to change. A flat 200 feet beats a wobbling 250 every time.',
+    },
+  },
+
+  'basic-rules': {
+    why:
+      'You only need about six rules to play a fair round, and they settle the two arguments that actually come up: where you are allowed to stand, and what going out of bounds costs. Knowing them also means you can play a casual round with strangers without anybody having to teach you mid-hole.',
+    how: [
+      'Tee off with your supporting point behind the front line of the tee pad, not over it.',
+      'Play it where it lies. Mark your lie with a mini marker disc placed directly in front of where the disc came to rest, then throw with a supporting point within 30 cm directly behind that marker.',
+      'The player whose disc is furthest from the basket throws first.',
+      'Out of bounds costs one penalty throw, and you play from within one metre of the point where the disc last crossed into bounds.',
+      'You have holed out when the disc comes to rest supported by the chains or resting in the tray. The pole and the outside of the basket do not count.',
+      'Inside circle 1 — ten metres, usually marked — you must show you are balanced after a putt before you walk past your marker.',
+    ],
+    wrong: [
+      {
+        fault: 'Stepping past the marker on the follow-through, which is a foot fault.',
+        fix: 'Place your front foot deliberately behind the marker before you throw, and on putts inside the circle, stay on your feet until the disc lands.',
+      },
+      {
+        fault: 'Moving a branch, a leaf or a stone that is in the way.',
+        fix: 'PDGA rule 803.01 says obstacles to a stance may not be moved. You take the lie as you find it — which is also why where your drive finishes matters so much.',
+      },
+      {
+        fault: 'Re-throwing a bad shot because it felt like practice.',
+        fix: 'Every throw counts from the moment you start the hole. Counting honestly is the whole basis of the score meaning anything.',
+      },
+      {
+        fault: 'Assuming a disc stuck up a tree is automatically a penalty.',
+        fix: 'The two-metre rule is optional and off by default in PDGA play — it only applies where the organiser says so. In a casual round, mark below it and play on.',
+      },
+    ],
+    drill: {
+      name: 'Play one strict round',
+      reps: '1 full round marking every single lie',
+      body:
+        'Play nine or eighteen holes marking every lie with a mini and placing your foot deliberately behind it, including on throws where it obviously does not matter. It is slow and slightly silly for one round, and after that you do it without thinking — which is the point, because the rules only cost you strokes when you are improvising under pressure.',
+    },
+  },
+
+  'how-scoring-works': {
+    why:
+      'Scoring itself is simple arithmetic. What catches people out is the vocabulary, and not knowing it is the thing that makes a first round with strangers uncomfortable. Ten minutes here means you can keep a card for a group on day one.',
+    how: [
+      'Count every throw you make on a hole, and add any penalty throws, to get your score for that hole.',
+      'Par is the number a competent player is expected to take. On most disc golf holes that is 3: a drive, an approach and a putt.',
+      'Your score is usually spoken relative to par. One under is a birdie, two under an eagle, one over a bogey, two over a double bogey.',
+      'Holing out from the tee is an ace — a hole in one.',
+      'Add every hole together for a round total. Scorecards normally also show your running total against par, so +4 after nine holes means four throws more than par.',
+      'Lowest total wins. There is no scoring advantage anywhere for throwing further.',
+    ],
+    wrong: [
+      {
+        fault: 'Forgetting to add the penalty throw after going out of bounds.',
+        fix: 'Write the hole score down before you walk to the next tee, while the penalty is still fresh.',
+      },
+      {
+        fault: 'Not counting a short throw that only travelled a few feet.',
+        fix: 'Every release counts, including the one that hit a tree two metres away.',
+      },
+      {
+        fault: 'Comparing your total with a professional’s score on television.',
+        fix: 'They are playing a different course at a different length. Compare your total only with your own previous total on the same layout.',
+      },
+      {
+        fault: 'Judging a round by par when par is set for far better players.',
+        fix: 'For your first season, ignore par entirely and track your own number. Going from 72 to 65 on your local course is real progress whatever par says.',
+      },
+    ],
+    drill: {
+      name: 'Keep the card',
+      reps: '1 full round, writing each hole score down before leaving the tee',
+      body:
+        'Keep the card for your whole group for one round, on paper or in the app. Writing somebody else’s score forces you to actually watch and count, and after eighteen holes of it the vocabulary is yours permanently.',
+    },
+  },
+
+  'etiquette-101': {
+    why:
+      'Disc golf is played in groups, on shared ground, with objects flying at head height. Nearly every bit of friction on a course is avoidable, and the habits that avoid it take no skill at all — which makes this the fastest way to be welcome in any group you join.',
+    how: [
+      'Stand still and quiet behind the person throwing, never in front of them and never in their eyeline.',
+      'Whoever is furthest from the basket throws first. On the tee, the lowest score on the previous hole goes first.',
+      'Shout "FORE!" loudly and immediately if your disc heads anywhere near another person. It is the one thing you should never be shy about.',
+      'Wait until the group ahead is out of range before you throw. If a faster group catches you, wave them through.',
+      'Take your rubbish with you, and do not break branches to open a line. The course belongs to everybody who plays it after you.',
+      'Help look for a lost disc, and return any you find — which is why your name and phone number should be on yours.',
+    ],
+    wrong: [
+      {
+        fault: 'Walking ahead to your own disc while somebody is still throwing.',
+        fix: 'Stay behind the thrower until the disc has landed. This is the most common one and the most genuinely dangerous.',
+      },
+      {
+        fault: 'Talking, rustling a bag or moving during someone’s throw.',
+        fix: 'Be still from the moment they step onto the pad. It costs you nothing and is noticed every time.',
+      },
+      {
+        fault: 'Throwing when you are not sure whether the group ahead is clear.',
+        fix: 'If you cannot see them, wait. A disc at speed into a stranger is the one mistake with consequences beyond your scorecard.',
+      },
+      {
+        fault: 'Playing music out loud on a busy course.',
+        fix: 'Headphones, or nothing. Other groups are concentrating even if you are not.',
+      },
+    ],
+    drill: {
+      name: 'Watch where you stand',
+      reps: '1 round deliberately positioning yourself for every throw',
+      body:
+        'For one round, before each person throws, consciously put yourself behind them and off to the side where they can see you are not in the way. Notice how often you would otherwise have been ahead of the thrower. After one round it stops being a decision.',
+    },
+  },
+
+  'your-first-round': {
+    why:
+      'The first round decides whether most people come back. The sport is not the problem when they do not — the course usually is. Picking a short, open, quiet course for your first outing is worth more than any amount of practice beforehand.',
+    how: [
+      'Pick a beginner-friendly course: mostly par 3s, holes under about 300 feet, and not heavily wooded. Course apps list length and difficulty.',
+      'Go at a quiet time. A weekday morning means nobody waiting behind you while you look for a disc.',
+      'Take three discs, water, a mini marker and a small towel. That is the whole kit.',
+      'Play from the shortest tees. There is no prize for the long ones and they turn a fun round into a long one.',
+      'Write your name and phone number on every disc before you leave the house.',
+      'Count every throw, write the total down, and keep it. That number is the one you will beat.',
+    ],
+    wrong: [
+      {
+        fault: 'Starting at the longest, most wooded course nearby because it is the one everybody talks about.',
+        fix: 'Those courses are good because they are hard. Earn them. A short open course on day one is far more fun.',
+      },
+      {
+        fault: 'Going on a Saturday afternoon with groups stacked up behind you.',
+        fix: 'Go early on a weekday. You will play twice as fast and feel none of the pressure.',
+      },
+      {
+        fault: 'Measuring the day against par and leaving discouraged.',
+        fix: 'Par is set for players with years of practice. Your own total, beaten next time, is the only score that means anything yet.',
+      },
+      {
+        fault: 'Taking one disc, or taking fifteen.',
+        fix: 'Three. You will lose less, carry less and learn faster.',
+      },
+    ],
+    drill: {
+      name: 'Beat your own number',
+      reps: 'the same 9 holes, twice, within 2 weeks',
+      body:
+        'Play nine holes and write the total down. Play the same nine again within a fortnight and compare. Almost everybody improves by several throws between the first and second attempt, purely from knowing where the trouble is — and seeing that happen is what turns a first round into a second season.',
+    },
+  },
+
   // ─────────────────────────────── PUTTING ───────────────────────────────
   'putting-fundamentals': {
     why:

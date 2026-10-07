@@ -76,13 +76,35 @@ test('no body uses a literal double hyphen', () => {
   }
 });
 
-test('the whole Putting category is written', () => {
-  // Rollout is one category at a time, so this tracks which are done AND
-  // stops a new putting lesson shipping with no body beside nine that have one.
-  const putting = LESSONS.filter((l) => l.category_slug === 'putting');
-  assert.equal(putting.length, 10);
-  const missing = putting.filter((l) => !LESSON_BODIES[l.slug]).map((l) => l.slug);
-  assert.deepEqual(missing, [], `putting lessons with no written body: ${missing.join(', ')}`);
+// Rollout is one category at a time. This list tracks which are done AND stops
+// a new lesson shipping into a finished category with no body beside the rest.
+const WRITTEN_CATEGORIES = ['getting-started', 'putting'];
+
+test('every finished category is finished', () => {
+  for (const slug of WRITTEN_CATEGORIES) {
+    const ls = LESSONS.filter((l) => l.category_slug === slug);
+    assert.ok(ls.length > 0, `no such category: ${slug}`);
+    const missing = ls.filter((l) => !LESSON_BODIES[l.slug]).map((l) => l.slug);
+    assert.deepEqual(missing, [], `${slug} lessons with no written body: ${missing.join(', ')}`);
+  }
+});
+
+test('no written body sits outside a category claimed as finished', () => {
+  // The other direction: a body written for a lesson in an unfinished category
+  // is fine, but a category that is actually complete should be ON the list
+  // rather than quietly finished and untracked.
+  const byCat = new Map<string, { total: number; written: number }>();
+  for (const l of LESSONS) {
+    const e = byCat.get(l.category_slug) ?? { total: 0, written: 0 };
+    e.total += 1;
+    if (LESSON_BODIES[l.slug]) e.written += 1;
+    byCat.set(l.category_slug, e);
+  }
+  for (const [slug, e] of byCat) {
+    if (e.total === e.written && !WRITTEN_CATEGORIES.includes(slug)) {
+      assert.fail(`${slug} is fully written but missing from WRITTEN_CATEGORIES`);
+    }
+  }
 });
 
 test('a written body reaches the lesson through LESSONS', () => {
