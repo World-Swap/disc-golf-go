@@ -6,11 +6,16 @@
 // the expiry date are on the page rather than behind a link, and nothing that
 // matters depends on images or CSS loading.
 //
-// It deliberately does NOT tell anyone to "enter the code at checkout". There is
-// no checkout: entries are taken by a TD on Disc Golf Scene and merchandise is
-// sold in person. When the online store opens, that line gets added here and in
-// the catalogue's terms -- and not before, because a coupon promises whatever
-// its terms said at issue time and those terms are denormalised onto the row.
+// The two kinds redeem by DIFFERENT routes and the email says which, because
+// telling an entry holder to show it at a counter sends them to the wrong place:
+//
+//   tournament_entry -- Disc Golf Scene takes a discount code at registration,
+//     so the player types it in themselves. We add their code to the event
+//     beforehand with Max uses 1 and their own email address, so DGS enforces
+//     single use and a code that gets shared is useless to anyone else.
+//   merch -- shown in person at an event. There is no online store yet; when
+//     there is, that route gets added here and in the catalogue's terms, and not
+//     before, because terms are denormalised onto the row at issue time.
 
 import type { CouponRow } from './rewards.repo';
 
@@ -35,12 +40,7 @@ export function couponEmail(coupon: CouponRow, username: string | null) {
     `Valid until ${expires}.`,
     ``,
     `How to use it:`,
-    `  - Show this email -- printed or on your phone -- and we will`,
-    `    read the code off it.`,
-    `  - Tournament entry: show it to the TD when you register.`,
-    `  - Merchandise: show it at a Disc Golf Go event.`,
-    ``,
-    `You can put 2 coupons of the same kind on one purchase.`,
+    ...howToText(coupon),
     ``,
     `One use only, no cash value. The code stops working after ${expires}.`,
     ``,
@@ -60,10 +60,7 @@ export function couponEmail(coupon: CouponRow, username: string | null) {
     <p style="margin:0 0 20px;font-size:14px"><strong>Valid until ${esc(expires)}.</strong></p>
     <p style="margin:0 0 6px;font-size:13px;font-weight:700">How to use it</p>
     <ul style="margin:0 0 20px;padding-left:18px;font-size:14px;line-height:1.6">
-      <li>Show this email — printed or on your phone — and we will read the code off it.</li>
-      <li>Tournament entry: show it to the TD when you register.</li>
-      <li>Merchandise: show it at a Disc Golf Go event.</li>
-      <li>You can put 2 coupons of the same kind on one purchase.</li>
+      ${howToHtml(coupon).map((l) => `<li>${esc(l)}</li>`).join('')}
     </ul>
     <p style="margin:0;font-size:12px;color:#6b6b6b">One use only, no cash value. The code stops working after ${esc(expires)}.</p>
   </div>
@@ -81,6 +78,33 @@ export function couponEmail(coupon: CouponRow, username: string | null) {
  * nullable only because it was added after the first coupons existed, so the
  * fallback says nothing rather than guessing a number.
  */
+/**
+ * How this particular coupon is redeemed. Kind-specific on purpose: an entry
+ * coupon is typed into Disc Golf Scene's registration form by the player, while
+ * a merchandise coupon is shown to a person. Giving both sets of instructions to
+ * everyone is how somebody turns up at a desk holding a code that was meant to
+ * be entered online a week earlier.
+ */
+function howTo(c: CouponRow): string[] {
+  if (c.kind === 'tournament_entry') {
+    return [
+      'Register for the event on Disc Golf Scene as usual.',
+      'Enter this code in the discount code box at registration.',
+      'The code only works for the email address on your Disc Golf Go account, so there is no point sharing it.',
+      'It comes off the division entry fee only -- not greens, PDGA, TD fees or add-ons.',
+      'Up to 2 entry coupons can be combined - reply before you register and we will issue them as a single $10 code.',
+    ];
+  }
+  return [
+    'Show this email -- printed or on your phone -- at a Disc Golf Go event.',
+    'We read the code off it and take $5 off.',
+    'You can put 2 merchandise coupons on one purchase.',
+  ];
+}
+
+const howToText = (c: CouponRow): string[] => howTo(c).map((l) => `  - ${l}`);
+const howToHtml = howTo;
+
 function earnedLine(c: CouponRow): string {
   return c.lessons_at_issue
     ? `You earned this by completing ${c.lessons_at_issue} training lessons:`

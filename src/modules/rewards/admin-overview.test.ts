@@ -139,38 +139,73 @@ test('the limits the tab prints come from the service, not the page', async () =
   assert.equal(out.max_per_visit, MAX_COUPONS_PER_VISIT);
 });
 
-test('nothing promises a checkout that does not exist', async () => {
-  // Coupons are honoured IN PERSON: shown to the TD when registering for a
-  // listed event on Disc Golf Scene, or over the counter for merchandise. There
-  // is no online store and no checkout to type a code into, so neither the
-  // terms nor the email may say there is.
+test('each kind names the route it is actually redeemed by', async () => {
+  // The two kinds redeem differently and the copy must not blur them:
   //
-  // This matters more than ordinary copy because a coupon's terms are
-  // DENORMALISED onto the row at issue time: a coupon promising online
-  // redemption keeps promising it for six months after the claim stops being
-  // false-by-accident and starts being false-by-record. When the store opens,
-  // update the terms and delete this test in the same change.
+  //   tournament_entry -- Disc Golf Scene takes a discount code at registration,
+  //     so the player enters it. The terms must name that site, or the player
+  //     never finds the box to type it into.
+  //   merch -- shown in person. There is no online store, so merchandise terms
+  //     must not promise buying online. When the store opens, that claim gets
+  //     added here deliberately rather than drifting in.
+  //
+  // This replaces a blanket ban on the word "online", which was right only while
+  // BOTH kinds were in person and would now forbid describing the entry route
+  // honestly.
   const { COUPON_TYPES } = await import('./rewards.catalog');
   const { couponEmail } = await import('./coupon-email');
 
-  const sample = {
-    id: 1, code: 'DGG-AAAA-AAAA', player_id: 1, type_key: 'merch_5', kind: 'merch',
-    title: 'x', terms: 'x', face_value_usd: 5, gold_spent: 0, lessons_at_issue: 33,
-    status: 'issued', issued_at: new Date(), expires_at: new Date(Date.now() + DAY), redeemed_at: null,
+  const base = {
+    id: 1, code: 'DGG-AAAA-AAAA', player_id: 1, title: 'x', face_value_usd: 5,
+    gold_spent: 0, lessons_at_issue: 33, status: 'issued', issued_at: new Date(),
+    expires_at: new Date(Date.now() + DAY), redeemed_at: null,
   };
-  const email = couponEmail(sample as never, 'ana');
 
-  const forbidden = [/at checkout/i, /\bonline\b/i];
-  for (const re of forbidden) {
-    for (const t of COUPON_TYPES) {
-      assert.ok(!re.test(t.terms), `${t.key} terms must not match ${re}: ${t.terms}`);
-    }
-    assert.ok(!re.test(email.text), `email text must not match ${re}`);
-    assert.ok(!re.test(email.html), `email html must not match ${re}`);
+  const entry = COUPON_TYPES.find((t) => t.kind === 'tournament_entry')!;
+  const merch = COUPON_TYPES.find((t) => t.kind === 'merch')!;
+  assert.ok(entry && merch, 'both kinds must exist');
+
+  assert.match(entry.terms, /Disc Golf Scene/,
+    'entry terms must name where the code is entered');
+  const entryEmail = couponEmail({ ...base, type_key: entry.key, kind: entry.kind, terms: entry.terms } as never, 'ana');
+  assert.match(entryEmail.text, /Disc Golf Scene/);
+  assert.match(entryEmail.text, /discount code box/,
+    'the email must say where the box is, not just that a code exists');
+
+  // Merchandise: in person only, until there is a store.
+  const merchEmail = couponEmail({ ...base, type_key: merch.key, kind: merch.kind, terms: merch.terms } as never, 'ana');
+  for (const re of [/\bonline\b/i, /at checkout/i]) {
+    assert.ok(!re.test(merch.terms), `merch terms must not match ${re}: ${merch.terms}`);
+    assert.ok(!re.test(merchEmail.text), `merch email must not match ${re}`);
   }
+  assert.match(merchEmail.text, /in person|at a Disc Golf Go event/i);
 
-  // And the email must not quote a gold price: coupons are earned from lessons,
-  // so gold_spent is 0 on every row and "you redeemed 0 gold" was what it said.
-  assert.ok(!/\bgold\b/i.test(email.text), 'the email must not mention gold');
-  assert.match(email.text, /33 training lessons/);
+  // An entry holder must not be told to show it at a counter, and a merch holder
+  // must not be sent to a registration form. Giving everyone both sets of
+  // instructions is how somebody turns up at a desk with a code that was meant
+  // to be entered online a week earlier.
+  assert.ok(!/Disc Golf Scene/.test(merchEmail.text), 'merch email must not mention registration');
+  assert.ok(!/show (this email|it) .*(counter|in person)/i.test(entryEmail.text),
+    'entry email must not tell the player to show it in person');
+
+  // And neither may quote a gold price: coupons are earned from lessons, so
+  // gold_spent is 0 on every row and "you redeemed 0 gold" was what it said.
+  for (const e of [entryEmail, merchEmail]) {
+    assert.ok(!/\bgold\b/i.test(e.text), 'the email must not mention gold');
+    assert.match(e.text, /33 training lessons/);
+  }
+});
+
+test('the DGS fields a code is set up with are the ones that bind it', async () => {
+  // Disc Golf Scene's own discount-code form offers Max uses and Email as
+  // OPTIONAL fields. They are the two that carry the security of the scheme:
+  // Max uses 1 makes DGS enforce single use, and Email ties the code to the
+  // player who earned it, so a code shared in a group chat is worthless to
+  // everyone else. The console tells the operator to set both, and the coupon
+  // must therefore carry an email to tie it to.
+  const page = await import('node:fs').then((fs) =>
+    fs.readFileSync('web/admin.html', 'utf8'));
+  assert.match(page, /Max uses 1/, 'the console must tell the operator to cap uses at 1');
+  assert.match(page, /'Max uses: 1'/, 'the copied field block must carry it too');
+  assert.match(page, /Email: ' \+ \(c\.email/, 'the copied block must carry the player email');
 });

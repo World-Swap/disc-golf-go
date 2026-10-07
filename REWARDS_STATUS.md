@@ -101,58 +101,76 @@ Both ledgers reconcile to their balances, and no file but
 
 ## How a coupon is honoured
 
-**In person, and only in person.** There is no online checkout and nothing to
-type a code into:
+The two kinds redeem by **different routes**, and conflating them sends a player
+to the wrong place.
 
-- **Tournament entry** — the player shows the code to the TD when registering.
-  Registration runs on Disc Golf Scene, which we do not control, so the TD takes
-  the $5 off by hand.
-- **Merchandise** — shown over the counter at a Disc Golf Go event.
-- **Online** — not yet. When the store goes live, the catalogue's `terms` and the
-  coupon email get the online path added, and the test that forbids the word
-  "online" in either (`admin-overview.test.ts`) is deleted in the same change.
-  Not before: a coupon's terms are **denormalised onto its row at issue time**,
-  so a coupon issued today promising online redemption keeps promising it for
-  six months.
+### Tournament entry — a discount code on Disc Golf Scene
 
-**The staff surface is the admin page, not a separate staff page.** `/admin` →
-**Coupons** shows, computed from the real tables rather than from any stored
-counter:
+Disc Golf Scene's listing editor has **Discount codes → Add a code**, taking
+Code, Amount, Percentage, Max uses, Expires on, PDGA and Email. Its own note:
+codes *"apply only to the divisional entry fee and do not apply to additional
+items"*, which is exactly what the coupon's terms claim about greens, PDGA and
+TD fees — so that limit is the site's, not ours, and the terms are accurate.
 
-- what is outstanding, used, expired and unclaimed, in both counts and dollars;
-- every player with training progress, their coupons available / used / expired,
-  and the entitlement they have earned but not yet claimed;
-- every code ever issued, with who holds it and its live status;
-- a lookup for one or two codes that says what each is worth and whether it is
-  live, and marks them used — one, or two of the same kind as a stack.
+Before an event, add each live entry coupon as a code. `/admin` → **Coupons** →
+**Disc Golf Scene setup** lists them already laid out as that form's fields,
+with a Copy fields button. Two of the optional fields carry the security of the
+whole scheme and are not optional for us:
 
-Marking used is irreversible and confirms with the code in the prompt, which is
-the one thing the person at the counter can check against the paper coupon.
+- **Max uses: 1** — DGS then enforces single use itself, which makes it the
+  guard and this console merely the record. Without it, one code could be
+  entered by every registrant.
+- **Email: the player's** — ties the code to the account that earned it, so a
+  code posted in a group chat is worthless to anyone else. The console flags any
+  coupon whose account has no email, because that one cannot be tied down.
 
-Two rules the console enforces because the server does, shown on the page rather
-than taught by a refusal: at most **2 codes** on one purchase, and they must be
-the **same kind** — $5 off merchandise and $5 off an entry fee do not both apply
-to one merchandise purchase. A stack is **all-or-nothing in one transaction**: a
-pair containing an expired code is refused with the good code left unspent.
+Set **Expires on** to the coupon's own expiry so a code cannot outlive it. The
+player enters the code themselves at registration; mark it used here once the
+entry list shows them.
+
+### Merchandise — in person
+
+Shown at an event, read off the player's phone or a printout, $5 off. There is
+no online store. When one opens, that route gets added to the catalogue's terms
+and the coupon email deliberately — **not before**, because a coupon's terms are
+**denormalised onto its row at issue time**, so a coupon issued today promising
+online redemption keeps promising it for six months. `admin-overview.test.ts`
+holds merchandise to in-person wording until then.
+
+### Two on one purchase
+
+A player may present **2 coupons of the same kind**. `redeem-together` marks both
+used in one transaction — all-or-nothing, so a pair containing an expired code is
+refused with the good one left unspent. How the discount is *delivered* differs:
+at a counter, take $10 off; on Disc Golf Scene, add a single **$10** code rather
+than two $5 ones, because a registration takes one code.
 
 What this honestly does not enforce: the server has no concept of a "visit", so
 it cannot stop two separate single redemptions a minute apart. The batch limit
-binds the flow staff actually use for stacking; the rest is a counter policy the
-terms state.
+binds the flow staff use for stacking; the rest is counter policy the terms state.
+
+### The staff surface is the admin page
+
+No separate staff page — whoever honours a code is already signed in to `/admin`.
+The **Coupons** tab shows, computed from the real tables rather than any stored
+counter: what is outstanding, used, expired and unclaimed in counts and dollars;
+every player with training progress, their coupons, and the entitlement they have
+earned but not claimed; every code ever issued; the Disc Golf Scene setup list;
+and a lookup that marks one or two codes used. Marking used is irreversible and
+confirms with the code in the prompt — the one thing the person at the counter
+can check against the paper coupon.
 
 ---
 
 ## Open — in the order it should be done
 
-### 1. Write the TD procedure for the first event.
-This is the last thing between here and switching it on, and it is a document
-rather than code. Coupons are honoured **in person**: entries are taken by a TD
-on Disc Golf Scene, which we do not control, so the TD takes $5 off by hand and
-the code is then marked used in the admin console. What needs writing, before
-the first event rather than during it: who marks the code used and when, what to
-do when a player presents a code the console says is expired or already used
-(refuse, and the console says which), and that two coupons of the **same kind**
-go on one purchase and the console applies both or neither.
+### 1. Do a dry run on the next event before switching it on.
+The procedure is written above and the console produces the fields, but it has
+never been run against a real Disc Golf Scene listing. Worth proving once, with a
+code issued to a test account: add it to the event with Max uses 1 and that
+account's email, register with it, confirm DGS takes $5 off the division entry
+fee, confirm a second attempt is refused, and confirm a different email cannot
+use it. That last check is the one carrying the anti-sharing claim.
 
 ### 2. Then flip `REWARDS_ENABLED`.
 Ideally with **one event as a pilot** rather than opening it to all 141 players

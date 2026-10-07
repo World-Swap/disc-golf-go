@@ -50,6 +50,13 @@
        straight on: "AVAILABLE$20 outstanding". */
     .stat .sub { display: block; margin-top: 2px; text-transform: none; letter-spacing: 0;
       font-size: 11px; color: #8b857f; }
+    .dgs { border: 1px solid #e4dfd6; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+      background: #faf8f4; }
+    .dgs__hd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .dgs__f { display: grid; grid-template-columns: 112px 1fr; gap: 2px 10px; font-size: 13px; }
+    .dgs__f dt { color: #6b6560; font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      align-self: center; }
+    .dgs__f dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
     code.cpn { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
       letter-spacing: .04em; white-space: nowrap; }
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
@@ -170,10 +177,17 @@
       <div style="height:18px"></div>
       <h2>Honour a code</h2>
       <p class="muted" style="margin-top:0">
-        Coupons are presented in person — at an event with the TD, or over the counter.
-        Look a code up to check it is live, then mark it used. Marking used cannot be undone.
-        Up to <b id="cStackN">2</b> codes of the <i>same kind</i> go on one purchase: enter both,
-        and either both are applied or neither is.
+        <b>Merchandise</b> coupons are shown in person. <b>Entry</b> coupons are entered by the
+        player on Disc Golf Scene — add them to the event first (see below), then mark them used
+        here once the entry list shows them. Look a code up to check it is live, then mark it used.
+        Marking used cannot be undone.
+      </p>
+      <p class="muted">
+        <b>Two on one purchase.</b> A player may put <b id="cStackN">2</b> codes of the
+        <i>same kind</i> together. Enter both below and either both are marked used or neither is —
+        that is the record. Delivering the discount differs by kind: for merchandise take $10 off at
+        the counter; for an entry, add a single <b>$10</b> code to Disc Golf Scene instead of two
+        $5 ones, since a registration takes one code.
       </p>
       <form class="row" id="cLookupForm">
         <div><label for="cCode1">Code</label><input id="cCode1" placeholder="DGG-XXXX-XXXX" autocapitalize="characters" /></div>
@@ -181,6 +195,18 @@
         <div class="narrow"><button type="submit" class="ghost">Look up</button></div>
       </form>
       <div id="cLookupOut"></div>
+
+      <div style="height:18px"></div>
+      <h2>Disc Golf Scene setup</h2>
+      <p class="muted" style="margin-top:0">
+        Before an event, add each live entry coupon to the Disc Golf Scene listing under
+        <i>Discount codes → Add a code</i>. Set <b>Max uses 1</b> so DGS enforces single use, and
+        set <b>Email</b> to the player's, so a code that gets shared is useless to anyone else.
+        DGS applies codes to the <i>division entry fee only</i>, not add-ons.
+        To honour two coupons on one entry, add a single <b>$10</b> code instead and mark both used here.
+      </p>
+      <div id="cDgsRows"></div>
+      <p class="muted" id="cDgsNote" style="margin-bottom:0"></p>
 
       <div style="height:18px"></div>
       <h2>Players</h2>
@@ -723,6 +749,7 @@
       : (ps.length + ' player' + (ps.length === 1 ? '' : 's') + ' with training progress. ' +
          '"Unclaimed" is a coupon earned but not yet taken in the app — it is not money owed until claimed.');
 
+    renderDgs();
     renderCouponRows();
   }
 
@@ -744,6 +771,72 @@
     $('cCouponNote').textContent = all.length
       ? rows.length + ' of ' + all.length + ' coupons shown.' : '';
   }
+
+  /**
+   * The Disc Golf Scene panel: every live ENTRY coupon, laid out as the fields
+   * that site's "New discount code" form asks for, so they can be copied across
+   * without reading them off a table and retyping.
+   *
+   * Max uses 1 and Email are the two that matter. Max uses makes DGS itself
+   * enforce single use, so this console is the record rather than the guard; the
+   * Email field ties the code to the player who earned it, which is what makes a
+   * code posted in a group chat worthless to everyone else.
+   */
+  function renderDgs() {
+    var live = cData.coupons.filter(function (c) {
+      return c.status === 'issued' && c.kind === 'tournament_entry';
+    });
+    if (!live.length) {
+      $('cDgsRows').innerHTML = '<p class="muted">No live entry coupons to add.</p>';
+      $('cDgsNote').textContent = '';
+      return;
+    }
+    $('cDgsRows').innerHTML = live.map(function (c) {
+      // DGS takes a date-time; the coupon's own expiry is the one to use, so a
+      // code cannot outlive the coupon it represents.
+      return '<div class="dgs">' +
+        '<div class="dgs__hd"><code class="cpn">' + esc(c.code) + '</code>' +
+        '<span class="muted">' + esc(c.username || ('#' + c.player_id)) + '</span>' +
+        '<span style="flex:1"></span>' +
+        '<button class="ghost" data-dgscopy="' + esc(c.code) + '">Copy fields</button></div>' +
+        '<dl class="dgs__f">' +
+        '<dt>Code</dt><dd>' + esc(c.code) + '</dd>' +
+        '<dt>Amount</dt><dd>' + c.face_value_usd + '</dd>' +
+        '<dt>Max uses</dt><dd>1</dd>' +
+        '<dt>Expires on</dt><dd>' + esc(when(c.expires_at)) + '</dd>' +
+        '<dt>Email</dt><dd>' + esc(c.email || '— no email on this account —') + '</dd>' +
+        '</dl></div>';
+    }).join('');
+    var noEmail = live.filter(function (c) { return !c.email; }).length;
+    $('cDgsNote').textContent = live.length + ' live entry coupon' + (live.length === 1 ? '' : 's') +
+      ' to add.' + (noEmail
+        ? ' ' + noEmail + ' has no email address on the account, so its code cannot be tied to one' +
+          ' person — add it without the Email field and it will work for whoever enters it first.'
+        : ' Every one can be tied to an email address.');
+  }
+
+  $('cDgsRows').addEventListener('click', async function (e) {
+    var b = e.target.closest('button[data-dgscopy]');
+    if (!b) return;
+    var c = cData.coupons.find(function (x) { return x.code === b.dataset.dgscopy; });
+    if (!c) return;
+    var text = [
+      'Code: ' + c.code,
+      'Amount of discount: ' + c.face_value_usd,
+      'Max uses: 1',
+      'Expires on: ' + when(c.expires_at),
+      'Email: ' + (c.email || ''),
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      b.textContent = 'Copied';
+      setTimeout(function () { b.textContent = 'Copy fields'; }, 1500);
+    } catch (err) {
+      // Clipboard access is refused outside a secure context, so fall back to
+      // something the operator can still act on rather than failing silently.
+      window.prompt('Copy these into Disc Golf Scene:', text);
+    }
+  });
 
   $('cFilters').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-cfilter]');
