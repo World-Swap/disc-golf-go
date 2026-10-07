@@ -26,6 +26,34 @@
               object-fit: cover; background: #e8e2d8; margin-right: 12px; }
     .vrow .row__title { white-space: normal; overflow: visible; text-overflow: clip;
                         line-height: 1.25; }
+
+    /* The written lesson body. Prose, so it is set at a size somebody can
+       actually read a paragraph in -- NOT the mono 12px the generic
+       content_body `sections` branch uses, which is small print. */
+    .lb { margin: 0 0 6px; font-size: 15px; line-height: 1.65; color: var(--color-ink); }
+    .lb--why { font-size: 16px; }
+    .lsteps { margin: 0; padding: 0; list-style: none; counter-reset: lstep; }
+    .lsteps li { position: relative; counter-increment: lstep; padding: 0 0 12px 32px;
+                 font-size: 15px; line-height: 1.6; color: var(--color-ink); }
+    .lsteps li:last-child { padding-bottom: 0; }
+    .lsteps li::before { content: counter(lstep); position: absolute; left: 0; top: 1px;
+                         width: 22px; height: 22px; border-radius: 50%;
+                         background: var(--color-orange); color: #fff;
+                         font-size: 12px; font-weight: 700; line-height: 22px;
+                         text-align: center; }
+    .lfault { display: flex; gap: 10px; padding: 12px 0;
+              border-top: 1px solid var(--color-hairline); }
+    .lfault:first-child { border-top: 0; padding-top: 0; }
+    .lfault__x { flex: none; width: 18px; font-weight: 700; color: var(--color-orange);
+                 line-height: 1.55; }
+    .lfault__t { margin: 0; font-size: 15px; line-height: 1.55; color: var(--color-ink);
+                 font-weight: 600; }
+    .lfault__f { margin: 4px 0 0; font-size: 14px; line-height: 1.55;
+                 color: var(--color-ash); }
+    .ldrill { border: 1px solid var(--color-orange); }
+    .ldrill__reps { display: inline-block; margin: 0 0 10px; padding: 4px 10px;
+                    border-radius: 999px; background: var(--color-orange); color: #fff;
+                    font-size: 12px; font-weight: 700; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -320,11 +348,49 @@
         }
       }
 
+      // A heading over a block of the written body.
+      function lbHead(t) { return '<p class="section-label">' + esc(t) + '</p>'; }
+
+      // The WRITTEN lesson: why it matters, the method, the faults, a drill with
+      // a rep count. Rendered ahead of the generic shapes below because a lesson
+      // that has one of these should never fall through to three bare tips --
+      // which is what the whole library was until these were written.
+      function renderWritten(cb) {
+        var out = '';
+        if (cb.why) out += lbHead('Why it matters') + '<p class="lb lb--why">' + esc(cb.why) + '</p>';
+        if (Array.isArray(cb.how) && cb.how.length) {
+          out += lbHead('How to do it') + '<ol class="lsteps">' +
+            cb.how.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('') + '</ol>';
+        }
+        if (Array.isArray(cb.wrong) && cb.wrong.length) {
+          out += lbHead('What goes wrong') + '<div>' + cb.wrong.map(function (w) {
+            return '<div class="lfault"><span class="lfault__x" aria-hidden="true">\u2715</span><div>' +
+              '<p class="lfault__t">' + esc(w.fault) + '</p>' +
+              '<p class="lfault__f">' + esc(w.fix) + '</p></div></div>';
+          }).join('') + '</div>';
+        }
+        if (cb.drill && cb.drill.body) {
+          out += lbHead('Drill' + (cb.drill.name ? ' \u00b7 ' + cb.drill.name : '')) +
+            '<div class="card ldrill">' +
+            (cb.drill.reps ? '<span class="ldrill__reps">' + esc(cb.drill.reps) + '</span>' : '') +
+            '<p class="lb">' + esc(cb.drill.body) + '</p></div>';
+        }
+        // The three tips stay, as a recap to scan on the course rather than as
+        // the lesson itself.
+        if (Array.isArray(cb.tips) && cb.tips.length) {
+          out += lbHead('Key points') + '<div class="rows">' + cb.tips.map(function (t) {
+            return '<div class="row"><span class="row__glyph">\u25b8</span><div class="row__body"><div class="row__sub" style="text-transform:none;letter-spacing:0;font-size:15px;line-height:1.5;color:var(--color-ink)">' + esc(t) + '</div></div></div>';
+          }).join('') + '</div>';
+        }
+        return out;
+      }
+
       // Basic content_body renderer (tip_card / guide / list / text).
       function renderContent(l) {
         var cb = l.content_body;
         if (!cb) return '';
         try { if (typeof cb === 'string') cb = JSON.parse(cb); } catch (e) { return '<div class="card"><p style="font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--color-frost)">' + esc(cb) + '</p></div>'; }
+        if (cb.why || cb.drill || Array.isArray(cb.how)) return renderWritten(cb);
         var out = '';
         if (Array.isArray(cb.sections)) {
           out = cb.sections.map(function (s) {

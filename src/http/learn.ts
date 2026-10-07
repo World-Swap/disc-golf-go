@@ -2,12 +2,20 @@
 //
 // ── Why CATEGORY pages and not LESSON pages ────────────────────────────────
 // The obvious move is one page per lesson: 134 URLs, each targeting a phrase
-// somebody types into Google. Measured against the actual data, that is a bad
-// idea. A lesson is a description plus two or three one-line tips -- a median
+// somebody types into Google. Measured against the actual data, that WAS a bad
+// idea. A lesson was a description plus two or three one-line tips -- a median
 // of 28 words, a maximum of 47. The two guide pages already on this site run
 // about 570 words each. 134 pages at 28 words is thin content: Google mostly
 // declines to index it, and enough of it teaches a crawler that the whole
 // domain is low quality.
+//
+// THAT MEASUREMENT IS NOW OUT OF DATE for any lesson with a written body in
+// src/db/data/lesson-bodies.ts: those run about 300 words each, which is the
+// same order as the guide pages and comfortably past thin. So per-lesson URLs
+// become defensible -- but only once the whole library is written, because a
+// mixed set of 300-word and 28-word pages is worse than either. Revisit when
+// lesson-bodies.ts covers all 134; until then this stays aggregated by
+// category and the written `why` and drill are folded into that page.
 //
 // Aggregated by category the same material is a real page: 7 to 16 lessons,
 // every tip, a credited pro video each, and genuine outbound links -- 178 to
@@ -124,6 +132,11 @@ ${opts.ld}
     .relguide a{color:var(--color-orange);font-weight:700;text-decoration:none;}
     /* The video credit under each lesson. Who taught it is the point, so the
        channel is shown rather than hidden behind the link text. */
+    /* The drill is the one line on the page a reader can act on today, so it
+       gets a rule above it rather than sitting in the run of prose. */
+    .drill{font-size:15px;line-height:1.65;margin:14px 0 18px;padding:12px 0 0;
+           border-top:1px solid var(--color-hairline);}
+    .drill strong{color:var(--color-orange);}
     .vid{font-size:15px;line-height:1.6;margin:0 0 18px;opacity:.78;}
     .vid a{color:var(--color-orange);font-weight:700;text-decoration:none;}
     .catlist{list-style:none;padding:0;margin:0;}
@@ -180,6 +193,15 @@ function categoryPage(c: SeedCategory): string {
 
   const body = lessons.map((l) => {
     const tips = l.content_body.tips.map((t) => `        <li>${esc(t)}</li>`).join('\n');
+    // The written body, where that lesson has one. `why` is the paragraph that
+    // makes this a page worth reading rather than a list of bullets; the drill
+    // is included because a rep count is the most actionable line on the page.
+    // The full method and fault list stay in the app -- a 21-lesson category
+    // would run to 6,000 words with them.
+    const why = l.content_body.why ? `      <p>${esc(l.content_body.why)}</p>` : '';
+    const drill = l.content_body.drill
+      ? `      <p class="drill"><strong>Drill &middot; ${esc(l.content_body.drill.name)}</strong> &mdash; ${esc(l.content_body.drill.reps)}. ${esc(l.content_body.drill.body)}</p>`
+      : '';
     const video = l.youtube_url && l.youtube_title
       ? `      <p class="vid">Watch: <a href="${esc(l.youtube_url)}" rel="noopener">${esc(displayTitle(l.youtube_title))}</a>${l.youtube_channel ? ` — ${esc(l.youtube_channel)}` : ''}</p>`
       : '';
@@ -189,9 +211,10 @@ function categoryPage(c: SeedCategory): string {
     // anchor is how lesson-level sharing stays honest.
     return `      <h3 id="${esc(l.slug)}">${esc(l.title)}</h3>
       <p>${esc(l.description)}</p>
-      <ul>
+${why}      <ul>
 ${tips}
       </ul>
+${drill}
 ${video}`;
   }).join('\n');
 
