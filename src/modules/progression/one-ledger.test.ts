@@ -15,7 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { applyGold } from './grants';
+import { applyGold, applyXp } from './grants';
 
 const SRC = join(__dirname, '../..');
 
@@ -96,4 +96,42 @@ test('applyGold reports the real balance when there is nothing to credit', async
     [],
     'a no-op credit must not touch the balance'
   );
+});
+
+test('a failing ledger write prevents the credit, rather than orphaning it', async () => {
+  // This is the structural fix for a real production bug. advanceDailyChallenge
+  // used to credit XP and THEN write its ledger row -- into xp_log.context,
+  // which is JSONB, passing a bare title string that is not valid JSON. The
+  // insert threw every time, the caller was `void ...catch(console.error)`, and
+  // the result was XP sitting in players.xp with no row in either ledger.
+  // Nine live accounts carry ~300 XP of it.
+  //
+  // applyXp writes the ledger row FIRST, so if it fails the balance never moves.
+  const seen: string[] = [];
+  const q = {
+    async query(sql: string) {
+      seen.push(sql.trim().split('\n')[0]!);
+      if (/INSERT INTO xp_transactions/.test(sql)) throw new Error('invalid input syntax for type json');
+      return { rows: [{ xp: 999, level: 9 }] };
+    },
+  };
+  await assert.rejects(() => applyXp(q, 1, 50, 'daily_challenge_complete'), /json/);
+  assert.deepEqual(
+    seen.filter((s) => /UPDATE players/.test(s)),
+    [],
+    'the balance must not move when the ledger row could not be written'
+  );
+});
+
+test('the ledger row is written before the balance, not after', async () => {
+  const order: string[] = [];
+  const q = {
+    async query(sql: string) {
+      if (/INSERT INTO xp_transactions/.test(sql)) order.push('ledger');
+      if (/UPDATE players/.test(sql)) order.push('balance');
+      return { rows: [{ xp: 100, level: 2 }] };
+    },
+  };
+  await applyXp(q, 1, 10, 'training_completion');
+  assert.deepEqual(order, ['ledger', 'balance'], 'ledger first is what makes a failed write safe');
 });
