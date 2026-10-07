@@ -37,13 +37,16 @@ export const XP_EVENTS = {
   "milestone_rounds_10": 500,
   "milestone_rounds_50": 2500,
   "milestone_state_champion": 5000,
-  // Throw Lab. Rounds pay little on purpose — the challenges below are the
-  // engine, because they cap naturally per period and can't be farmed.
-  "game_round_3": 15,
-  "game_round_6": 30,
-  "game_round_9": 50,
-  "game_round_18": 120,
-  "game_under_par": 40
+  // Throw Lab. Cut hard in the 2026-10-07 rebalance: the client simulates the
+  // physics, so a scripted round is indistinguishable from a played one and the
+  // 12-round daily cap is the only thing bounding it. At these rates a capped
+  // day pays 480 XP against a training library worth 25,700 -- 54 days of
+  // perfect grinding to match what the lessons pay once.
+  "game_round_3": 5,
+  "game_round_6": 10,
+  "game_round_9": 15,
+  "game_round_18": 30,
+  "game_under_par": 10
 } as const;
 
 export type XpEvent = keyof typeof XP_EVENTS;

@@ -123,8 +123,10 @@ export function createReferralsService(db: Database, repo: ReferralsRepo = creat
         await repo.grantGold(friendId, FRIEND_BONUS_GOLD);
         await repo.markRewarded(a.id, REWARD_GOLD);
         repo.trackEvent('referral_first_round', a.code_used, a.referrer_id, friendId, { reward_gold: REWARD_GOLD, friend_bonus: FRIEND_BONUS_GOLD });
-        await repo.xpLog(a.referrer_id, 'referral_reward', REWARD_GOLD, { friend_id: friendId, activation_id: a.id });
-        await repo.xpLog(friendId, 'referral_signup_bonus', FRIEND_BONUS_GOLD, { referrer_activation_id: a.id });
+        // These used to write REWARD_GOLD and FRIEND_BONUS_GOLD into xp_log --
+        // gold amounts, logged as XP, for XP that was never granted. The award
+        // is gold, and grantGold now records it in gold_transactions, so the
+        // phantom XP rows are gone rather than moved to the other ledger.
         rewards.push({ referrer_id: a.referrer_id, amount: REWARD_GOLD });
       }
 

@@ -31,8 +31,21 @@ interface Queryable {
 export async function applyXp(
   q: Queryable,
   playerId: number,
-  amount: number
+  amount: number,
+  eventType: string,
+  metadata: Record<string, unknown> = {},
+  source: string = 'other'
 ): Promise<{ newXp: number; newLevel: number }> {
+  // The ledger row is written HERE, not by the caller, so XP cannot move without
+  // one. There used to be two ledgers -- grants and training wrote
+  // xp_transactions, story quests and daily challenges wrote xp_log, and
+  // training wrote BOTH for the same award, so a naive union double-counted it.
+  // xp_transactions is now the single ledger; xp_log is left in place for the
+  // history already in it and is no longer written.
+  await q.query(
+    'INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)',
+    [playerId, eventType, amount, JSON.stringify(metadata), source]
+  );
   const r = await q.query(
     `UPDATE players
         SET xp = xp + $1,
@@ -126,16 +139,54 @@ export async function grantXp(
     finalAmount = baseAmount; // non-fatal — boost failure must not block the grant
   }
 
-  // `source` is how redeemable XP will be told from farmable XP; grantXp was the
-  // only writer leaving it NULL, so every check-in and Throw Lab row was untagged.
-  await client.query(
-    'INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)',
-    [playerId, eventType, finalAmount, JSON.stringify({ ...metadata, base_xp: baseAmount, boost_percent: boostPercent }), sourceFor(eventType)]
+  // `source` is how redeemable XP is told from farmable XP; grantXp was the only
+  // writer leaving it NULL, so every check-in and Throw Lab row was untagged.
+  const { newXp, newLevel } = await applyXp(
+    client,
+    playerId,
+    finalAmount,
+    eventType,
+    { ...metadata, base_xp: baseAmount, boost_percent: boostPercent },
+    sourceFor(eventType)
   );
 
-  const { newXp, newLevel } = await applyXp(client, playerId, finalAmount);
-
   return { amount: finalAmount, baseAmount, boostPercent, boostLabel, newXp, newLevel };
+}
+
+/**
+ * The ONE place players.gold is incremented, and the only one that guarantees a
+ * gold_transactions row.
+ *
+ * Gold had the same disease as level did: nine writers, and six of them --
+ * referrals, four training paths, story quests and daily challenges -- ran a
+ * bare `UPDATE players SET gold = gold + $1` with no ledger row at all, so a
+ * balance could not be explained from its own audit trail. That is tolerable
+ * for a vanity counter and not for a currency that buys coupons.
+ *
+ * Spending is deliberately NOT routed through here: both spend paths already
+ * take `SELECT gold ... FOR UPDATE` and re-check the balance inside the same
+ * transaction, which is what makes a double-spend impossible, and that belongs
+ * next to the purchase it guards.
+ */
+export async function applyGold(
+  q: Queryable,
+  playerId: number,
+  amount: number,
+  eventType: string,
+  metadata: Record<string, unknown> = {}
+): Promise<{ newGold: number }> {
+  if (amount <= 0) {
+    // Nothing to credit, but the caller still asked for the balance -- returning
+    // 0 here would report an empty wallet rather than an unchanged one.
+    const cur = await q.query('SELECT gold FROM players WHERE id = $1', [playerId]);
+    return { newGold: Number(cur.rows[0]?.gold ?? 0) };
+  }
+  await q.query(
+    'INSERT INTO gold_transactions (player_id, amount, event_type, metadata) VALUES ($1, $2, $3, $4)',
+    [playerId, amount, eventType, JSON.stringify(metadata)]
+  );
+  const r = await q.query('UPDATE players SET gold = gold + $1 WHERE id = $2 RETURNING gold', [amount, playerId]);
+  return { newGold: Number(r.rows[0]?.gold ?? 0) };
 }
 
 /** Total active gold-boost multiplier for a player (1.0 = none, capped at +200%). */
@@ -179,15 +230,7 @@ export async function grantGold(
   const multiplier = await getActiveGoldBoostMultiplier(client, playerId);
   const amount = Math.round(base * multiplier);
 
-  await client.query(
-    'INSERT INTO gold_transactions (player_id, amount, event_type, metadata) VALUES ($1, $2, $3, $4)',
-    [playerId, amount, eventType, JSON.stringify(metadata)]
-  );
+  const { newGold } = await applyGold(client, playerId, amount, eventType, metadata);
 
-  const result = await client.query<{ gold: number }>(
-    'UPDATE players SET gold = gold + $1 WHERE id = $2 RETURNING gold',
-    [amount, playerId]
-  );
-
-  return { base, multiplier, amount, newGold: result.rows[0]!.gold };
+  return { base, multiplier, amount, newGold };
 }

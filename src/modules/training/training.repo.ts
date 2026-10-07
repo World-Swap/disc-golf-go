@@ -1,9 +1,10 @@
 // src/modules/training/training.repo.ts — data access for the training library
 // + completion/streak/milestone system. Completion writes use the `source`
-// column + xp_log (training's own XP path, distinct from the progression grants).
+// column, and XP through the shared applyXp primitive -- training used to have
+// its own path writing xp_transactions twice and xp_log once for one award.
 
 import type { PoolClient } from 'pg';
-import { applyXp } from '../progression/grants';
+import { applyXp, applyGold } from '../progression/grants';
 import type { Queryable, Database } from '../../db/types';
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
@@ -210,12 +211,9 @@ export function createTrainingRepo(db: Database) {
     },
 
     async addXp(client: PoolClient, playerId: number, amount: number, eventType: string, metadata: object, source: string) {
-      await applyXp(client, playerId, amount);
-      await client.query('INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)', [playerId, eventType, amount, JSON.stringify(metadata), source]);
-    },
-
-    async addXpLog(client: PoolClient, playerId: number, source: string, amount: number, context: object) {
-      await client.query('INSERT INTO xp_log (player_id, source, amount, context) VALUES ($1, $2, $3, $4)', [playerId, source, amount, JSON.stringify(context)]);
+      // applyXp writes the xp_transactions row itself -- this used to insert a
+      // second one here and a third into xp_log, so one award logged three times.
+      await applyXp(client, playerId, amount, eventType, metadata as Record<string, unknown>, source);
     },
 
     async categoryLessonCount(client: PoolClient, categoryId: number): Promise<number> {
@@ -240,8 +238,8 @@ export function createTrainingRepo(db: Database) {
       return r.rows[0] ?? null;
     },
 
-    async addGold(client: PoolClient, playerId: number, amount: number) {
-      await client.query('UPDATE players SET gold = gold + $1 WHERE id = $2', [amount, playerId]);
+    async addGold(client: PoolClient, playerId: number, amount: number, reason = 'training_milestone') {
+      await applyGold(client, playerId, amount, reason, { via: 'training' });
     },
 
     async playerXp(client: PoolClient, playerId: number): Promise<number> {
@@ -450,9 +448,7 @@ export function createTrainingRepo(db: Database) {
     },
 
     async awardShare(playerId: number, lessonId: number, title: string, xpBonus: number) {
-      await applyXp(db, playerId, xpBonus);
-      await db.query('INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)', [playerId, 'training_share', xpBonus, JSON.stringify({ lesson_id: lessonId, lesson_title: title }), 'training_share']);
-      await db.query('INSERT INTO xp_log (player_id, source, amount, context) VALUES ($1, $2, $3, $4)', [playerId, 'training_share', xpBonus, JSON.stringify({ lesson_id: lessonId, lesson_title: title })]);
+      await applyXp(db, playerId, xpBonus, 'training_share', { lesson_id: lessonId, lesson_title: title }, 'training_share');
     },
   };
 }

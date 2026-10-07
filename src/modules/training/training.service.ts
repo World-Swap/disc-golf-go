@@ -33,8 +33,8 @@ const TIER_MESSAGES: Record<string, Array<{ type: string; title: string; body: s
 };
 
 const VALID_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced', 'all_levels'];
-const STREAK_BONUS_XP = 25;
-const CATEGORY_COMPLETE_BONUS_XP = 100;
+const STREAK_BONUS_XP = 50;
+const CATEGORY_COMPLETE_BONUS_XP = 500;
 const SHARE_BONUS_XP = 10;
 
 export const MILESTONE_DEFS = [
@@ -244,7 +244,6 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
 
           // Base lesson XP (credited to players.xp).
           await repo.addXp(client, playerId, xpReward, 'training_completion', { lesson_id: lessonId, lesson_title: lesson.title }, 'training');
-          await repo.addXpLog(client, playerId, 'training_completion', xpReward, { lesson_id: lessonId, lesson_title: lesson.title });
 
           // Category completion bonus (savepoint-guarded).
           await client.query('SAVEPOINT cat_check');

@@ -1,6 +1,7 @@
 // src/modules/referrals/referrals.repo.ts — referral codes, activations, events.
 
 import type { Queryable } from '../../db/types';
+import { applyGold } from '../progression/grants';
 
 export function createReferralsRepo(db: Queryable) {
   return {
@@ -72,8 +73,8 @@ export function createReferralsRepo(db: Queryable) {
       return r.rows;
     },
 
-    async grantGold(playerId: number, amount: number) {
-      await db.query('UPDATE players SET gold = gold + $1 WHERE id = $2', [amount, playerId]);
+    async grantGold(playerId: number, amount: number, reason = 'referral') {
+      await applyGold(db, playerId, amount, reason, { via: 'referral' });
     },
 
     async markRewarded(activationId: number, amount: number) {
@@ -81,10 +82,6 @@ export function createReferralsRepo(db: Queryable) {
         `UPDATE referral_activations SET status = 'rewarded', reward_type = 'gold', reward_amount = $1, rewarded_at = now() WHERE id = $2`,
         [amount, activationId]
       );
-    },
-
-    async xpLog(playerId: number, source: string, amount: number, context: object) {
-      await db.query('INSERT INTO xp_log (player_id, source, amount, context) VALUES ($1, $2, $3, $4)', [playerId, source, amount, JSON.stringify(context)]);
     },
 
     trackEvent(eventType: string, referralCode: string, referrerId: number | null, userId: number | null, metadata: object = {}) {
