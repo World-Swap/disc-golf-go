@@ -85,13 +85,24 @@ test('badge gold stays a one-off ceiling, which is why it is exempt from the cap
   // The exemption rests on badges being earn-once. If the catalogue grew, or
   // badge_unlock got more valuable, that reasoning would quietly stop holding
   // and check-ins would have a farmable path again.
+  // COUNT TIER UNLOCKS, NOT BADGE FAMILIES. The first version of this test
+  // counted Object.values(BADGE_DEFINITIONS) -- 17 -- and reported a 340 gold
+  // ceiling. But both callers grant with { category, tier }, so the award fires
+  // once per TIER: 17 families x 5 tiers = 85 unlocks, and the real ceiling is
+  // 1,700. The test passed the whole time while measuring something other than
+  // what it claimed, which is the exact failure mode it exists to prevent.
   const { BADGE_DEFINITIONS } = await import('../progression/badges');
-  const defs = BADGE_DEFINITIONS as unknown;
-  const all = Array.isArray(defs) ? defs : Object.values(defs as Record<string, unknown[]>).flat();
-  const lifetimeMax = all.length * (GOLD_EVENTS.badge_unlock as number);
+  const defs = BADGE_DEFINITIONS as Record<string, { tiers: Record<string, unknown> }>;
+  const unlocks = Object.values(defs).reduce((n, b) => n + Object.keys(b.tiers).length, 0);
+  const lifetimeMax = unlocks * (GOLD_EVENTS.badge_unlock as number);
   const cheapest = Math.min(...COUPON_TYPES.map((c) => c.goldCost));
+  // The exemption's reasoning is that this is earn-once and bounded, not that it
+  // is small: a tier unlocks once and never again. 1,700 gold is $24 across the
+  // lifetime of an account, which is acceptable -- but it must not GROW, so the
+  // bound is pinned just above the true figure rather than at a flattering one.
+  assert.equal(unlocks, 85, 'badge tier unlocks changed — re-check the ceiling below');
   assert.ok(
-    lifetimeMax <= cheapest * 2,
-    `badge gold now tops out at ${lifetimeMax}, more than two coupons — put it behind the cap`
+    lifetimeMax <= cheapest * 5,
+    `badge gold now tops out at ${lifetimeMax} (${(lifetimeMax / cheapest).toFixed(1)} coupons) — put it behind the cap`
   );
 });

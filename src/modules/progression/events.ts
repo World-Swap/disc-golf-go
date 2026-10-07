@@ -52,8 +52,8 @@ export const XP_EVENTS = {
 export type XpEvent = keyof typeof XP_EVENTS;
 
 export const GOLD_EVENTS = {
-  "checkin_new_course": 25,
-  "checkin_return": 10,
+  "checkin_new_course": 5,
+  "checkin_return": 2,
   "round_complete": 20,
   "round_complete_18": 35,
   "birdie": 5,
@@ -63,9 +63,9 @@ export const GOLD_EVENTS = {
   "battle_win_weekly": 75,
   "battle_win_monthly": 150,
   "battle_loss": 10,
-  "challenge_daily": 15,
-  "challenge_weekly": 40,
-  "challenge_monthly": 100,
+  "challenge_daily": 3,
+  "challenge_weekly": 10,
+  "challenge_monthly": 25,
   "badge_unlock": 20,
   "level_up": 50,
   "state_champion_first": 200,

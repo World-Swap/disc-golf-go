@@ -44,7 +44,13 @@ test('only the progression primitive increments players.xp', () => {
 
 test('only the progression primitive increments players.gold', () => {
   const offenders = FILES
-    .filter((f) => !f.endsWith('progression/grants.ts') && !f.endsWith('vault/gold.ts'))
+    // Only grants.ts is exempt. vault/gold.ts used to be exempt too -- it held a
+    // SECOND, HIGHER rate table (check-in 50 against 25, legendary 300 against
+    // 250) and a bare `UPDATE players SET gold = gold + $1` with no ledger row.
+    // Nothing imported it, so it was deleted rather than exempted: an unaudited
+    // credit path at double the rates is exactly what would silently undo the
+    // earning caps the moment somebody wired it up.
+    .filter((f) => !f.endsWith('progression/grants.ts'))
     .filter((f) => /UPDATE players[\s\S]{0,40}SET gold = gold \+/.test(readFileSync(f, 'utf8')));
   assert.deepEqual(offenders.map(rel), [], 'gold must move through applyGold, which writes the ledger row');
 });

@@ -4,6 +4,7 @@ import type { PoolClient } from 'pg';
 import { evaluateBadges, type BadgeStats } from './badges';
 import { getCheckinMilestone, getCourseMilestone, getStateMilestone, getRoundMilestone } from './milestones';
 import { grantXp, grantGold } from './grants';
+import { GOLD_EVENTS } from './events';
 
 const zeroStats: BadgeStats = {
   battleWins: 0, bestStreak: 0, challengesCompleted: 0, completedCities: 0, completedStates: 0,
@@ -90,10 +91,14 @@ test('grantXp applies active XP boost', async () => {
 });
 
 test('grantGold applies multiplier; zero events are no-ops', async () => {
+  // Read the rate from the table rather than hardcoding it: this test is about
+  // the BOOST ARITHMETIC, not the price, and a hardcoded 25 made a deliberate
+  // repricing of check-in gold look like a broken multiplier.
   const { client } = fakeClient({ gold: 60, goldBoostPct: 20 });
-  const g = await grantGold(client, 7, 'checkin_new_course'); // base 25 * 1.2 = 30
-  assert.equal(g.base, 25);
-  assert.equal(g.amount, 30);
+  const base = GOLD_EVENTS.checkin_new_course as number;
+  const g = await grantGold(client, 7, 'checkin_new_course');
+  assert.equal(g.base, base);
+  assert.equal(g.amount, Math.round(base * 1.2));
   assert.equal(g.newGold, 60);
 
   const { client: c2 } = fakeClient();
