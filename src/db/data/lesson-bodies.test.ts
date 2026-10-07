@@ -78,7 +78,7 @@ test('no body uses a literal double hyphen', () => {
 
 // Rollout is one category at a time. This list tracks which are done AND stops
 // a new lesson shipping into a finished category with no body beside the rest.
-const WRITTEN_CATEGORIES = ['approach', 'disc-selection', 'driving', 'forehand', 'getting-started', 'form-technique', 'practice', 'putting', 'course-strategy'];
+const WRITTEN_CATEGORIES = ['approach', 'disc-selection', 'driving', 'forehand', 'getting-started', 'form-technique', 'practice', 'putting', 'course-strategy', 'mental-game', 'fitness-warmup', 'rules-etiquette', 'tournament-competition'];
 
 test('every finished category is finished', () => {
   for (const slug of WRITTEN_CATEGORIES) {
@@ -116,11 +116,30 @@ test('a written body reaches the lesson through LESSONS', () => {
   assert.equal(l.content_body.tips.length, 3);
 });
 
-test('a lesson with no written body still has its tips', () => {
-  const plain = LESSONS.find((l) => !LESSON_BODIES[l.slug])!;
-  assert.ok(plain, 'expected at least one not-yet-written lesson');
-  assert.ok(plain.content_body.tips.length > 0);
-  assert.equal(plain.content_body.why, undefined);
+test('the whole curated library is written', () => {
+  // This replaced a test that asserted at least one lesson was still
+  // unwritten, which was the right guard during the rollout and fired
+  // correctly the moment the last category landed. The invariant now is
+  // coverage: every curated lesson has a body, and a new one cannot ship
+  // without one.
+  const missing = LESSONS.filter((l) => !LESSON_BODIES[l.slug]).map((l) => l.slug);
+  assert.deepEqual(missing, [], `curated lessons with no written body: ${missing.join(', ')}`);
+  assert.equal(Object.keys(LESSON_BODIES).length, LESSONS.length);
+});
+
+test('a lesson with no body would still render its tips', () => {
+  // The fallback is still live and still matters: GENERATED lessons, published
+  // daily from the video feed, never get a body. They are database rows rather
+  // than entries in LESSONS, so the path is exercised here against the merge
+  // itself rather than against a real lesson.
+  assert.equal(LESSON_BODIES['no-such-lesson-slug'], undefined,
+    'an unknown slug must not resolve to a body');
+  // Assert the REAL merge rather than a reconstruction of it: lessons.ts must
+  // keep the lesson untouched when LESSON_BODIES has no entry, which is what
+  // leaves a generated lesson's tips alone.
+  const merge = readFileSync('src/db/data/lessons.ts', 'utf8');
+  assert.match(merge, /const body = LESSON_BODIES\[l\.slug\];/);
+  assert.match(merge, /return body \? \{ \.\.\.l, content_body: \{ \.\.\.l\.content_body, \.\.\.body \} \} : l;/);
 });
 
 test('push vs spin putt does not claim a wind advantage for either', () => {

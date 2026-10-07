@@ -3089,6 +3089,1474 @@ export const LESSON_BODIES: Record<string, LessonBody> = {
     },
   },
 
+  // ──────────────────────────── MENTAL GAME ────────────────────────────
+  'pre-shot-routine': {
+    why:
+      'A routine is a sequence you run so that pressure has nothing left to change. Under stress the gap between deciding and throwing stretches, the tempo quickens, and a shot you have made a thousand times comes out differently. The routine is the same on hole 1 and hole 18, which is the entire point of having one.',
+    how: [
+      'Decide everything behind your lie: the line, the disc, the power, the landing spot.',
+      'Rehearse the shot once, at the pace you will actually throw it.',
+      'Step in the same way every time, same foot first, same stance.',
+      'Take one breath out.',
+      'Throw. No pause between the rehearsal and the shot, because that pause is where the tempo goes.',
+      'Hold the finish until the disc lands, then step away.',
+    ],
+    wrong: [
+      {
+        fault: 'Only using it on shots that feel important.',
+        fix: 'Use it on every throw including tap-ins. A routine you have never run under pressure is not a routine, it is an intention.',
+      },
+      {
+        fault: 'Rehearsing at a different speed from the real throw.',
+        fix: 'A gentle practice motion before a hard throw rehearses the wrong shot. Match the pace.',
+      },
+      {
+        fault: 'Re-deciding once you are in your stance.',
+        fix: 'Step all the way off and start again from behind the lie. Deciding twice is how both the line and the tempo go.',
+      },
+      {
+        fault: 'Letting the routine get longer when you are nervous.',
+        fix: 'Count it. The number of rehearsals is fixed, and knowing the number is what stops it creeping.',
+      },
+    ],
+    drill: {
+      name: 'Every single throw',
+      reps: '1 full round with the routine on all 18 holes, tap-ins included',
+      body:
+        'One round, no exceptions, the full routine on every throw however trivial. It will feel pedantic for the first few holes. By hole 18 it will be automatic, and that is the state you want it in before it matters.',
+    },
+  },
+
+  'staying-present-focus': {
+    why:
+      'You can only throw the shot in front of you, and attention spent on the last hole or the running total is attention not spent on this one. The practical problem is not knowing that — everybody knows that — it is having something to do with your attention instead.',
+    how: [
+      'Give your attention a job: the aim point, the line, the feel of the grip. Something specific and present.',
+      'Use the walk between shots as the off switch. Think about whatever you like while walking; switch on at the lie.',
+      'Breathe out slowly before you step in. A long exhale is the fastest physical route to a calmer head.',
+      'Notice when you have drifted and come back without annoyance. Drifting is normal; staying gone is the problem.',
+      'Do not check the running total mid-round unless the format genuinely requires it.',
+    ],
+    wrong: [
+      {
+        fault: 'Trying to stop thinking about the score.',
+        fix: 'That does not work, in the same way that not thinking of something never works. Replace it with the aim point rather than suppressing it.',
+      },
+      {
+        fault: 'Being hard on yourself for losing focus.',
+        fix: 'Everybody drifts. The skill is the return, and treating the drift as a failure makes the return slower.',
+      },
+      {
+        fault: 'Staying switched on for the whole round.',
+        fix: 'Nobody can concentrate for three hours. Switch off between shots deliberately so you have something left at the lie.',
+      },
+    ],
+    drill: {
+      name: 'Switch on at the lie',
+      reps: '1 round, deliberately switching off between every shot',
+      body:
+        'For one round, give yourself explicit permission to think about anything at all while walking, and then switch on when you reach your lie. Most players find they concentrate better in the moments that matter and finish the round less tired, which is the argument for doing it.',
+    },
+  },
+
+  'managing-frustration-bad-shot': {
+    why:
+      'Anger after a bad throw is normal and is not the problem. The problem is that it reliably costs you the NEXT throw as well, because a frustrated decision is a worse decision and a tense body throws worse. One bad shot is a bogey; one bad shot plus the reaction is a double.',
+    how: [
+      'Let the reaction happen. Give it a few seconds rather than pretending it is not there.',
+      'Then put a physical marker on the end of it: a breath out, picking up your bag, taking three steps. A deliberate action that signals the reaction is over.',
+      'Switch attention to the next decision, which is a concrete problem with a concrete answer.',
+      'Go back to your routine. It is a sequence, which gives a disturbed mind something to follow.',
+      'Judge yourself on the process rather than the outcome. You cannot control whether a disc catches a branch.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing the next shot immediately while still angry.',
+        fix: 'Wait. The urge to put it right at once is exactly what turns one mistake into two.',
+      },
+      {
+        fault: 'Suppressing the reaction entirely.',
+        fix: 'Suppressed frustration leaks into the next three holes. Feel it briefly, mark its end, move.',
+      },
+      {
+        fault: 'Taking more risk to win the stroke back.',
+        fix: 'The stroke is gone and the odds have not changed. Chasing is the most expensive habit in the sport.',
+      },
+      {
+        fault: 'Replaying the shot while walking to it.',
+        fix: 'Give yourself one review, then genuinely stop. Walking is for switching off, not for a post-mortem.',
+      },
+    ],
+    drill: {
+      name: 'Mark the end',
+      reps: '1 round with a fixed physical reset after every bad shot',
+      body:
+        'Pick one deliberate action — a breath out and a tug on your bag strap, anything — and do it after every throw you are unhappy with, for a whole round. It sounds trivial. It works because it converts a vague feeling into a thing with a definite end.',
+    },
+  },
+
+  'bounce-back-playing-next-shot': {
+    why:
+      'The throw immediately after a bad one is the most expensive throw in disc golf. It is taken by somebody annoyed, often from an awkward position, and it is the one most likely to be a hero attempt. Making that single throw reliably boring is worth more strokes than almost anything else you could work on.',
+    how: [
+      'Treat it as a shot in its own right with its own plan, not as part of a rescue.',
+      'Pick the highest-percentage option available, which usually means the shortest safe one.',
+      'Decide what score you will accept on this hole, then play the shots that guarantee it.',
+      'Run your full routine on it. This is the throw that most needs the structure.',
+      'Accept that it will often be unambitious. A dull next shot is what stops a bad hole becoming a terrible one.',
+    ],
+    wrong: [
+      {
+        fault: 'Attempting the shot that would undo the mistake.',
+        fix: 'If it works you are level; if it fails you are two worse. Count how often it works before you reach for it.',
+      },
+      {
+        fault: 'Rushing it because you want the hole over.',
+        fix: 'Slow down deliberately. The wish for the hole to end is what makes the next number bigger.',
+      },
+      {
+        fault: 'Skipping the routine because the shot is a recovery.',
+        fix: 'Recovery shots are exactly where a routine earns its keep. Run it.',
+      },
+    ],
+    drill: {
+      name: 'The boring next shot',
+      reps: '1 round always taking the safest option after a bad throw',
+      body:
+        'For one round, after any throw you are unhappy with, you must take the safest available next shot — no exceptions, no judgement calls. Compare the score to your usual. The number is the argument, because the instinct will not accept anything else.',
+    },
+  },
+
+  'confidence-calibration': {
+    why:
+      'Confidence and ability should match. Too little and you lay up from distances you make; too much and you attempt shots you hit once in five. Both cost strokes, and the second costs more. The point is not to be confident — it is to be accurate about what you can actually do.',
+    how: [
+      'Count what you make in practice, by distance and by shot type. Real numbers, written down.',
+      'Attempt in a round only what you make in practice at a decent rate. For most shots that means better than half.',
+      'Know that your numbers drop under pressure, so keep a margin rather than throwing to the edge of your range.',
+      'Build confidence by widening the range in practice, not by attempting more in rounds.',
+      'Review it honestly every month. Ranges move in both directions.',
+    ],
+    wrong: [
+      {
+        fault: 'Judging your range by your best ever shot.',
+        fix: 'One success is not a rate. Your range is what you do most of the time, which is a much shorter distance.',
+      },
+      {
+        fault: 'Laying up from distances you reliably make.',
+        fix: 'Under-confidence is also a leak. If the numbers say you make it, take it.',
+      },
+      {
+        fault: 'Treating confidence as something to talk yourself into.',
+        fix: 'It comes from repetitions you have actually done. There is no shortcut and pretending there is produces the overestimate.',
+      },
+    ],
+    drill: {
+      name: 'Know your real numbers',
+      reps: '20 putts each at 20, 25, 30 and 35 ft (80 total)',
+      body:
+        'Eighty putts, four numbers, written down. The distance where you drop below about half is where "run it" stops being correct. Most players find that line is considerably shorter than they had been playing as though it was, and knowing it changes decisions immediately.',
+    },
+  },
+
+  'tournament-mental-prep': {
+    why:
+      'Most of what goes wrong in a first tournament is not throwing, it is the day: arriving late, not knowing the format, being hungry on hole 12, and having no plan beyond "play well". All of that is preparable, and preparing it is what leaves attention available for the golf.',
+    how: [
+      'Know the format, the start time, the layout and where you need to be, the day before.',
+      'Arrive early enough to warm up unhurried. Rushing to the first tee costs more than the extra half hour.',
+      'Set process goals rather than score goals: run the routine every throw, commit to every line. Those are things you control.',
+      'Pack food and water for the whole round. An energy dip at hole 12 reads exactly like losing your nerve.',
+      'Walk or map the course beforehand if you can, so hole 7 is not a surprise.',
+    ],
+    wrong: [
+      {
+        fault: 'Setting a score target.',
+        fix: 'You do not control the score, only the process. A target you cannot control is a stick to beat yourself with from hole 3 onward.',
+      },
+      {
+        fault: 'Arriving with just enough time.',
+        fix: 'Give yourself an hour. The whole first nine holes can be spent recovering from a rushed arrival.',
+      },
+      {
+        fault: 'Trying something new on the day.',
+        fix: 'A tournament is for executing what you have, not for experiments. Bring the discs and shots you trust.',
+      },
+    ],
+    drill: {
+      name: 'Rehearse the day',
+      reps: '1 practice round played exactly as the tournament day will run',
+      body:
+        'Play a practice round at the same time of day, with the same warm-up, the same food, the same bag and the same routine you intend to use. You are rehearsing the day rather than the golf, and the number of small things that turn out to be unresolved is always higher than expected.',
+    },
+  },
+
+  'visualization-before-the-round': {
+    why:
+      'Seeing a shot before you throw it gives your body a target to organise around, which is a more useful instruction than a list of mechanics. It is also the part of the routine that most reliably survives nerves, because it is a picture rather than a thought.',
+    how: [
+      'Picture the whole flight: the release, the shape, where it peaks, where it lands and where it finishes.',
+      'Include the feel, not just the picture. What the throw feels like when it goes right is half of the rehearsal.',
+      'Do it from behind the lie, looking at the actual line, rather than abstractly.',
+      'Keep it brief — a few seconds. A long visualisation becomes a delay, and delay is what nerves exploit.',
+      'Visualise the shot you intend, never the one you fear. Picturing the OB line is an instruction to throw at it.',
+    ],
+    wrong: [
+      {
+        fault: 'Picturing what you want to avoid.',
+        fix: 'Replace the thought rather than fighting it: look at the line you want and describe it to yourself.',
+      },
+      {
+        fault: 'Visualising only the sight and not the feel.',
+        fix: 'Rehearse the physical sensation too. The body responds to that more readily than to a picture.',
+      },
+      {
+        fault: 'Taking so long that it becomes a stall.',
+        fix: 'A few seconds. If it is longer than your rehearsal motion it has become a delaying tactic.',
+      },
+    ],
+    drill: {
+      name: 'See it, feel it, throw it',
+      reps: '1 round visualising every shot for 3 seconds before stepping in',
+      body:
+        'Three seconds of seeing the flight and feeling the throw, before every shot, for one round. The short fixed length is deliberate — it keeps it a part of the routine rather than something that expands whenever you are unsure.',
+    },
+  },
+
+  'dealing-with-performance-anxiety': {
+    why:
+      'Nerves are a physical event: heart rate up, breathing shallow, muscles tightening, tempo quickening. That is not a character problem and it does not go away with experience — good players are nervous too. What they have is a way of working while it is happening.',
+    how: [
+      'Slow the breathing out. A long exhale is the most reliable physical lever on a fast heart rate.',
+      'Point your attention outward at the target rather than inward at how you feel. Nerves grow on attention.',
+      'Deliberately slow your routine, because nerves compress everything and tempo is the first casualty.',
+      'Accept the feeling rather than fighting it. Fighting it adds a second problem on top of the first.',
+      'Reframe it honestly: a raised heart rate before something you care about is your body getting ready, which is what it is for.',
+    ],
+    wrong: [
+      {
+        fault: 'Trying to calm down before throwing.',
+        fix: 'You will usually not manage it, and waiting makes it worse. Throw while nervous, slowly and with your routine.',
+      },
+      {
+        fault: 'Treating nerves as evidence you are not ready.',
+        fix: 'Everybody has them. They mean the thing matters, which is the reason you entered.',
+      },
+      {
+        fault: 'Speeding up to get the shot over with.',
+        fix: 'This is the most common and the most costly. Make the routine deliberately slower than usual.',
+      },
+      {
+        fault: 'Only ever practising calm.',
+        fix: 'Practise with stakes and with people watching, so the feeling itself is familiar rather than novel.',
+      },
+    ],
+    drill: {
+      name: 'Throw it nervous',
+      reps: '10 putts from 25 ft after 20 press-ups, with somebody watching',
+      body:
+        'Raise your heart rate deliberately, then putt with someone watching. You are rehearsing the physical state rather than the stroke. The point is not to make the nerves go away — it is to have thrown well while they were there, so the next time is not the first time.',
+    },
+  },
+
+  'bouncing-back-bad-hole': {
+    why:
+      'A big number on one hole costs you that hole. It costs you the round only if you carry it to the next tee. Players who score consistently are not the ones who avoid the bad hole, they are the ones for whom the hole after a 6 looks exactly like any other hole.',
+    how: [
+      'Finish the hole, then draw a line under it on the walk to the next tee.',
+      'Use the walk deliberately: one short review of what went wrong, then genuinely done.',
+      'Run your normal routine on the next tee, unaltered. The temptation is to do something different, and something different is the mistake.',
+      'Play the next hole as it deserves, not as compensation. A par 3 does not become a birdie hole because you just took a 6.',
+      'Remember the arithmetic: one double is recoverable over eighteen holes; three is not, and the second and third come from chasing the first.',
+    ],
+    wrong: [
+      {
+        fault: 'Attacking the next hole to make the strokes back.',
+        fix: 'The next hole has the same odds it always had. Chasing is how one bad hole becomes a bad round.',
+      },
+      {
+        fault: 'Changing your routine, your disc or your style after a bad hole.',
+        fix: 'Change nothing. One hole is not evidence of anything about your game.',
+      },
+      {
+        fault: 'Mentally totalling the round from the bad hole onward.',
+        fix: 'Arithmetic about the final score is not a shot. Go back to the line, the aim point and the next throw.',
+      },
+    ],
+    drill: {
+      name: 'Line under it',
+      reps: '1 round, one 10-second review per bad hole and then done',
+      body:
+        'After any hole you are unhappy with, give yourself exactly ten seconds of review on the walk, then deliberately switch to the next hole. Count at the end of the round how many times a bad hole was followed by another. That count is what this is for, and it drops quickly.',
+    },
+  },
+
+  'playing-with-lead-behind': {
+    why:
+      'Being ahead and being behind both change how people play, and usually for the worse: a lead makes players defensive and tight, a deficit makes them reckless. The scoreboard does not change the odds on any individual shot, and playing as though it does is how leads get lost.',
+    how: [
+      'With a lead, keep taking the shots you would otherwise take. Freezing up is how a lead becomes a tie.',
+      'With a lead, do tighten on genuinely marginal decisions — but only those. There is a difference between playing sensibly and playing scared.',
+      'Behind, be patient. Strokes come back over holes, not on one hero shot, and the hero shot usually makes it worse.',
+      'Behind, take the good risks when the miss is cheap. That is a real adjustment and it is not the same as forcing.',
+      'Either way, run the same routine. The routine is the thing that should not know the score.',
+    ],
+    wrong: [
+      {
+        fault: 'Playing not to lose when ahead.',
+        fix: 'Defensive play is still a change of strategy, and an unrehearsed one. Keep playing your game.',
+      },
+      {
+        fault: 'Forcing low-percentage shots when behind.',
+        fix: 'They are still low percentage. Patience and the occasional good risk closes gaps; desperation widens them.',
+      },
+      {
+        fault: 'Watching the scoreboard mid-round.',
+        fix: 'Check it when the format requires and otherwise not at all. It cannot improve a single decision you are about to make.',
+      },
+    ],
+    drill: {
+      name: 'Play the hole, not the board',
+      reps: '1 competitive round without checking the leaderboard until the end',
+      body:
+        'Play a whole round — a league night, a doubles round, anything with a score that matters — without looking at where you stand until it is over. Notice how many decisions you would have made differently, and whether any of them would have been better.',
+    },
+  },
+
+  'focus-when-partner-struggling': {
+    why:
+      'You will regularly share a card with somebody having a bad day, and frustration is contagious. Their slow play, their muttering and their mood all land on your round unless you have something in place. This is a skill, and it is mostly about having a bubble rather than about being unaffected.',
+    how: [
+      'Run your own routine regardless. It is the thing that keeps your tempo yours rather than the card’s.',
+      'Stand somewhere settled while others throw, and use the time for your own next shot.',
+      'Be decent to them and then let it go. Sympathy does not require absorbing the mood.',
+      'Keep your own pace even if the card slows. If waiting is long, stay loose and go through your own plan.',
+      'Resist comparing your round to theirs, in either direction.',
+    ],
+    wrong: [
+      {
+        fault: 'Absorbing somebody else’s frustration.',
+        fix: 'Notice it happening, which is most of the defence, and go back to your routine.',
+      },
+      {
+        fault: 'Trying to coach a card-mate mid-round.',
+        fix: 'It rarely helps and it takes you out of your own round. Unless they ask, leave it.',
+      },
+      {
+        fault: 'Letting a slow card make you rush when it is your turn.',
+        fix: 'Your tempo is yours. Take the same time you always take.',
+      },
+    ],
+    drill: {
+      name: 'Your own bubble',
+      reps: '1 round with a full routine on every shot regardless of the card',
+      body:
+        'Play a round with a group and commit to running your complete routine on every throw whatever is happening around you — rushed, slow, loud, grumpy. The routine is the bubble, and this is the round where you find out whether yours is solid.',
+    },
+  },
+
+  'manage-expectations-weakest-discs': {
+    why:
+      'Everybody has shots they hit about half the time. Treating those as reliable is how rounds blow up, and treating them as impossible leaves strokes on the course. Knowing which of your shots are coin flips, specifically, is what lets you plan around them instead of being surprised by them.',
+    how: [
+      'List your shots honestly and mark each one: reliable, about half, or a long shot.',
+      'On the half-and-below shots, aim for the safe outcome rather than the best one.',
+      'Plan holes so that your weak shots are not required. Often a different line turns a 50/50 into a routine shot.',
+      'Practise the weak ones deliberately, which is where they stop being weak.',
+      'Re-assess monthly. The list moves, and an out-of-date list is as misleading as no list.',
+    ],
+    wrong: [
+      {
+        fault: 'Planning a hole around a shot you hit half the time.',
+        fix: 'Find the route that uses your reliable shots. There usually is one, and it is usually a stroke cheaper.',
+      },
+      {
+        fault: 'Avoiding weak shots entirely, including in practice.',
+        fix: 'Avoid them in rounds and seek them out in practice. That is how the list changes.',
+      },
+      {
+        fault: 'Assuming a shot you hit in practice transfers immediately.',
+        fix: 'Practice rates drop under pressure. Give yourself a margin before promoting a shot to reliable.',
+      },
+    ],
+    drill: {
+      name: 'Mark the list',
+      reps: '10 attempts at each of your 5 least certain shots (50 total)',
+      body:
+        'Pick five shots you are unsure about, throw ten of each, and write the make rate beside them. You now have a factual list rather than an impression — and on the course it tells you instantly whether the shot you are considering is one you own.',
+    },
+  },
+
+  // ─────────────────────── FITNESS & WARMUP ───────────────────────
+  // Nothing in this category is medical advice. Where something hurts, the
+  // instruction is to stop and get it looked at properly rather than to
+  // self-diagnose from a lesson in a disc golf app.
+  'five-minute-dynamic-warmup': {
+    why:
+      'A disc golf throw is a fast rotational movement through a big range, and a cold shoulder is poorly equipped for it. Five minutes before the first tee both reduces the chance of a strain and measurably improves the first few holes, which are otherwise spent warming up at the cost of strokes.',
+    how: [
+      'Arm circles, both directions, gradually bigger — about 30 seconds.',
+      'Trunk rotations with the arms loose, letting them swing around you — 30 seconds.',
+      'Leg swings forward and back, then side to side, holding something for balance — 30 seconds each leg.',
+      'Hip openers: slow lunges with a gentle rotation toward the front leg.',
+      'Then throw: ten easy putts, a few soft midranges, and build to full power over five or six throws.',
+      'Keep it dynamic — moving stretches rather than held ones, which belong after the round rather than before.',
+    ],
+    wrong: [
+      {
+        fault: 'Going straight to full-power drives on hole 1.',
+        fix: 'Build up over several throws. The first full-effort throw of the day is where strains happen.',
+      },
+      {
+        fault: 'Long static stretches before throwing.',
+        fix: 'Save held stretches for afterwards. Before throwing you want the body moving and warm, not lengthened and relaxed.',
+      },
+      {
+        fault: 'Skipping it when running late.',
+        fix: 'That is exactly when it is needed, and five minutes is almost always available. Shorten it rather than dropping it.',
+      },
+    ],
+    drill: {
+      name: 'Five minutes, every round',
+      reps: '5 minutes before every round: 2 min mobility, 3 min building throws',
+      body:
+        'Two minutes of arm circles, trunk rotations and leg swings, then three minutes of throws building from easy putts to full power. Do it before every round for a month and compare how your first three holes go against your memory of them.',
+    },
+  },
+
+  'balance-stability': {
+    why:
+      'A throw is generated against the ground, and the brace on the front leg is where the energy turns into disc speed. If that leg is unstable the body compensates by standing up or spinning off, both of which cost distance and accuracy. Balance work is the least glamorous distance training there is and among the most effective.',
+    how: [
+      'Train single-leg balance: stand on one leg for 30 seconds, then with eyes closed, then on an unstable surface.',
+      'Add movement: single-leg reaches, where you balance on one leg and reach forward and down with the opposite hand.',
+      'Train the core against rotation as well as in it — holds that resist being twisted build the stiffness a brace needs.',
+      'Practise standstill throws, which expose balance faults immediately.',
+      'Hold your finish after every throw. If you cannot, balance is the thing to work on.',
+    ],
+    wrong: [
+      {
+        fault: 'Working on balance only while standing still.',
+        fix: 'Add movement and load. A throw tests balance while you are moving fast, not while you are standing on one leg in a kitchen.',
+      },
+      {
+        fault: 'Assuming poor balance in the throw is a technique fault.',
+        fix: 'Often it is a capacity fault. If you cannot hold a single-leg stance for 30 seconds, no technique cue will fix the brace.',
+      },
+      {
+        fault: 'Training only the throwing-side leg.',
+        fix: 'Both. Asymmetry is common in rotational sports and it is worth not making it worse.',
+      },
+    ],
+    drill: {
+      name: 'Thirty seconds a side',
+      reps: '3 x 30 seconds single-leg balance per side, 4 days a week',
+      body:
+        'Three sets of thirty seconds on each leg, eyes closed once the eyes-open version is easy. It takes three minutes and can be done while the kettle boils. Then test it where it matters: hold your finish after twenty throws and count how many you can hold.',
+    },
+  },
+
+  'hip-mobility': {
+    why:
+      'The throw rotates through the hips, and hips that do not rotate freely force the rotation somewhere else — usually the lower back, which is neither built for it nor forgiving about it. Mobility here buys distance and is the single most protective thing most throwers can do.',
+    how: [
+      'Work on rotation specifically: seated or standing hip rotations through the full available range.',
+      'Open the hip flexors, which shorten with sitting and limit how far you can extend through a throw.',
+      'Do a little most days rather than a lot occasionally. Mobility responds to frequency more than to duration.',
+      'Work both sides equally even though the throw is one-sided.',
+      'Move slowly and stop short of pain. Mobility work should feel like range, not like strain.',
+    ],
+    wrong: [
+      {
+        fault: 'Stretching hard once a week.',
+        fix: 'Ten minutes most days beats an hour on Sunday. Frequency is what changes range.',
+      },
+      {
+        fault: 'Pushing into pain to get more range.',
+        fix: 'Stop short of it. Pain is not the mechanism and pushing through it is how a mobility session becomes an injury.',
+      },
+      {
+        fault: 'Assuming lower-back soreness after throwing is normal.',
+        fix: 'It is common and that is not the same as normal. Often it is the hips not rotating — and if it persists, get it looked at properly.',
+      },
+    ],
+    drill: {
+      name: 'Ten minutes, most days',
+      reps: '10 minutes of hip mobility, 5 days a week for 4 weeks',
+      body:
+        'Ten minutes, five days a week, both sides, moving slowly through the range you have rather than forcing a bigger one. Four weeks is enough to notice, both in how far you can rotate and in how your back feels after a round.',
+    },
+  },
+
+  'building-training-routine': {
+    why:
+      'Training that is not planned defaults to whatever is most enjoyable, which for almost everybody is throwing drivers. A routine is a decision made in advance about where the time goes, and its main job is making sure the unglamorous parts actually happen.',
+    how: [
+      'Split the week deliberately: putting most days, approaches twice, field work once, strength and mobility two or three times.',
+      'Keep sessions short. Thirty focused minutes beats two distracted hours and is far more likely to happen again on Thursday.',
+      'Give every session one goal, named before you start.',
+      'Write down one number per session so you can tell whether it is working.',
+      'Build in rest. A week with no recovery day is a week that ends with a sore shoulder.',
+    ],
+    wrong: [
+      {
+        fault: 'Planning an ambitious schedule you will not keep.',
+        fix: 'Plan what you will actually do. Three honest half-hours beat a seven-day plan abandoned on Wednesday.',
+      },
+      {
+        fault: 'Spending most of the time on the enjoyable parts.',
+        fix: 'Keep some of it, because training you dislike does not happen — but weight the time toward putting and approaches.',
+      },
+      {
+        fault: 'No rest days.',
+        fix: 'Schedule them. Improvement happens during recovery, and throwing volume without rest is how overuse injuries start.',
+      },
+    ],
+    drill: {
+      name: 'Write the week',
+      reps: '1 written week, repeated 4 times',
+      body:
+        'Write down an honest week — which days, how long, what each session is for — and run it four times. At the end you will have both a habit and a month of numbers, which is enough to see what is working and to adjust the next month on evidence.',
+    },
+  },
+
+  'injury-prevention': {
+    why:
+      'The injuries that end disc golf seasons are nearly all overuse: shoulder, elbow and lower back, built up over weeks of throwing hard without warming up or resting. They are largely preventable, and the prevention is unexciting enough that most people skip it until the first time they cannot throw.',
+    how: [
+      'Warm up before every session and every round, without exceptions.',
+      'Build throwing volume gradually. A sudden jump from one session a week to four is how elbows start hurting.',
+      'Strengthen the shoulder and upper back, which take the load a throw puts through them.',
+      'Keep the hips mobile so the lower back is not doing the rotating.',
+      'Treat early soreness as information. Back off for a few days rather than throwing through it.',
+      'If something hurts beyond ordinary soreness, or keeps coming back, get it looked at by a professional rather than diagnosing it yourself.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing through pain because it is only mild.',
+        fix: 'Mild and persistent is how overuse injuries announce themselves. Rest it early, when a few days is enough.',
+      },
+      {
+        fault: 'A big jump in throwing volume.',
+        fix: 'Increase gradually. Most throwing injuries arrive a couple of weeks after a sudden increase.',
+      },
+      {
+        fault: 'Warming up only before competitive rounds.',
+        fix: 'Every time. Your shoulder does not know it is a casual round.',
+      },
+      {
+        fault: 'Working on strength and skipping mobility.',
+        fix: 'Both. Strength without range just loads a restricted joint harder.',
+      },
+    ],
+    drill: {
+      name: 'Warm up every time',
+      reps: '5-minute warm-up before 100% of sessions, for 1 month',
+      body:
+        'The drill is the habit: five minutes before every single session and round for a month, with no exceptions made for being in a hurry. Count the exceptions at the end. The target is zero, and this is the cheapest insurance available on a throwing arm.',
+    },
+  },
+
+  'recovery-rest-days': {
+    why:
+      'Improvement happens between sessions, not during them. Throwing every day without recovery produces fatigue, worse form and eventually an injury — and because the decline is gradual it is easy to mistake for a technique problem and to respond by throwing more.',
+    how: [
+      'Schedule rest days deliberately rather than taking them when you feel wrecked.',
+      'Prioritise sleep, which is where most physical recovery actually happens.',
+      'Stay hydrated, particularly across a hot tournament day where a round is several hours outdoors.',
+      'Use light mobility on off days — gentle movement helps more than complete stillness.',
+      'Treat an unusually bad session as possible fatigue rather than as a sudden loss of ability.',
+    ],
+    wrong: [
+      {
+        fault: 'Responding to a bad session by practising more.',
+        fix: 'Check your rest first. Fatigue and a form fault look identical from the inside and have opposite cures.',
+      },
+      {
+        fault: 'Taking rest days only when something hurts.',
+        fix: 'By then it is late. Plan them in, the same way you plan sessions.',
+      },
+      {
+        fault: 'Treating a rest day as complete inactivity.',
+        fix: 'Light mobility or a walk is better than nothing at all. Rest from throwing, not from moving.',
+      },
+    ],
+    drill: {
+      name: 'Two planned rest days',
+      reps: '2 scheduled rest days per week for 4 weeks',
+      body:
+        'Put two rest days in the week before the week starts, and keep them even when you feel fine — especially then. Note your practice numbers across the month. Most people find they go up, which is a difficult thing to believe until you have the numbers.',
+    },
+  },
+
+  'building-disc-golf-strength': {
+    why:
+      'The strength that matters for throwing is rotational and explosive, not maximal. Being able to lift a heavy weight slowly has little to do with how fast you can rotate, which is why a lot of general gym work transfers poorly while a small amount of specific work transfers well.',
+    how: [
+      'Train rotation explosively: medicine-ball throws against a wall, rotating from the hips rather than the arms.',
+      'Train the legs, which generate the force everything else transmits. Squats, lunges and single-leg work.',
+      'Train the core to resist rotation as well as produce it — the brace depends on stiffness.',
+      'Train for speed rather than load on the rotational work. Light and fast beats heavy and slow for this.',
+      'Keep it to two or three sessions a week and leave recovery time before a throwing session.',
+    ],
+    wrong: [
+      {
+        fault: 'Heavy, slow lifting and expecting distance.',
+        fix: 'Throwing is a speed event. Explosive and light transfers; grinding heavy singles mostly does not.',
+      },
+      {
+        fault: 'Training arms and shoulders for distance.',
+        fix: 'Distance comes from the legs and the rotation. Train the shoulder for durability, not for power.',
+      },
+      {
+        fault: 'Lifting hard the day before a tournament.',
+        fix: 'Leave a clear gap. Fatigue costs more than the session gains at that point.',
+      },
+      {
+        fault: 'Adding strength work on top of an already full throwing week.',
+        fix: 'Total load is what injures people. Add it in place of something, not on top of everything.',
+      },
+    ],
+    drill: {
+      name: 'Rotational throws',
+      reps: '3 x 8 medicine-ball rotational throws per side, 2 days a week',
+      body:
+        'Three sets of eight each side against a wall, as fast as you can while staying controlled, rotating from the hips. Two sessions a week with recovery before your throwing days. This is the single most transferable gym exercise for a disc golf throw.',
+    },
+  },
+
+  'pre-round-stretching': {
+    why:
+      'What you do in the ten minutes before the first tee decides how holes 1 to 3 go and how your shoulder feels on hole 18. The important distinction is dynamic versus static: moving the joints through their range before throwing, and saving the held stretches for afterwards.',
+    how: [
+      'Arm circles in both directions, building from small to large.',
+      'Trunk rotations with loose arms, letting them wrap around you.',
+      'Leg swings front to back and side to side, holding something for balance.',
+      'Shoulder dislocates or wall slides, gently, to open the upper back.',
+      'Finish with throws: putts first, then midranges, building to full power over several throws.',
+    ],
+    wrong: [
+      {
+        fault: 'Long held stretches before throwing.',
+        fix: 'Dynamic before, static after. Held stretching immediately before explosive movement is not what you want.',
+      },
+      {
+        fault: 'Stretching but not throwing before hole 1.',
+        fix: 'The build-up throws are the most important part. The first full-power throw should not be a tee shot that counts.',
+      },
+      {
+        fault: 'The same routine regardless of the weather.',
+        fix: 'Cold days need longer. Add a few minutes and a few more build-up throws.',
+      },
+    ],
+    drill: {
+      name: 'The ten-minute version',
+      reps: '10 minutes before a round: 4 min mobility, 6 min building throws',
+      body:
+        'Four minutes of dynamic mobility and six minutes of throws building from putts to full power. Run it before every round for a month. The holes you usually spend warming up into are the ones that get better, and those are strokes.',
+    },
+  },
+
+  'core-strength': {
+    why:
+      'The core is what connects the legs to the arm, and a throw is only as strong as that connection. Its job in a throw is as much about resisting movement as producing it: the brace needs a trunk stiff enough to transmit rotation rather than absorb it.',
+    how: [
+      'Train anti-rotation as well as rotation — holds where you resist being twisted build exactly the stiffness a brace needs.',
+      'Train the whole trunk, front, back and sides, rather than just the front.',
+      'Include rotational work at speed, such as medicine-ball throws, since that is the pattern the throw uses.',
+      'Keep sessions short and frequent. The core responds well to regular moderate work.',
+      'Breathe and brace rather than holding your breath. A braced trunk is a stiff one, not a held one.',
+    ],
+    wrong: [
+      {
+        fault: 'Thinking of core work as sit-ups.',
+        fix: 'Flexion is the least relevant pattern for throwing. Anti-rotation and rotation are what matter.',
+      },
+      {
+        fault: 'Training only the front.',
+        fix: 'The back and sides do most of the work in a rotational sport. Train all of it.',
+      },
+      {
+        fault: 'High volume, poor quality.',
+        fix: 'Short sets with real tension beat long sets done sloppily, and they are far kinder to the lower back.',
+      },
+    ],
+    drill: {
+      name: 'Anti-rotation holds',
+      reps: '3 x 20 seconds per side, 3 days a week',
+      body:
+        'Hold a resisted position where something is trying to twist you and you refuse to let it — a band or cable held at chest height, arms extended, standing side-on. Three sets of twenty seconds each side. It is far harder than it sounds and it is the pattern a brace actually uses.',
+    },
+  },
+
+  'shoulder-arm-care': {
+    why:
+      'The throwing shoulder takes the most load and complains first, and shoulder problems are the most common reason players lose months rather than days. Nearly all of it is volume and preparation rather than bad luck, which means nearly all of it is manageable.',
+    how: [
+      'Strengthen the rotator cuff and the upper back, which support and decelerate the shoulder through a throw.',
+      'Warm the shoulder specifically before throwing, not just the body generally.',
+      'Manage volume. Count your full-power throws and increase gradually rather than in jumps.',
+      'Build up within a session too — the first throws should be easy ones.',
+      'Treat a sore elbow or shoulder as a signal to back off for a few days, and if it persists or is sharp, get it assessed properly rather than working from advice in an app.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing hard through shoulder soreness.',
+        fix: 'Back off early. A few days now is a far better trade than several weeks later.',
+      },
+      {
+        fault: 'A big jump in throwing volume — a weekend of three rounds after a quiet month.',
+        fix: 'Build gradually. Most throwing injuries follow a sudden increase by a week or two.',
+      },
+      {
+        fault: 'Strengthening the throwing muscles and ignoring the upper back.',
+        fix: 'The upper back and cuff decelerate the arm, which is where a lot of the strain actually lands.',
+      },
+      {
+        fault: 'Self-diagnosing a persistent problem.',
+        fix: 'Pain that is sharp, or that keeps returning, needs a professional. This lesson is about prevention, not treatment.',
+      },
+    ],
+    drill: {
+      name: 'Cuff and upper back',
+      reps: '3 x 12 band external rotations and 3 x 12 band pull-aparts, 3 days a week',
+      body:
+        'Light resistance band, three sets of twelve of each, three times a week. It takes five minutes and it is tedious. It is also the work that keeps a throwing shoulder available for the whole season, which is worth more than any single distance gain.',
+    },
+  },
+
+  // ─────────────────────── RULES & ETIQUETTE ───────────────────────
+  // Rules here are cited to the PDGA rule number where one applies, because a
+  // confident summary of a rule is exactly the kind of thing that is wrong on
+  // a detail and gets repeated. Where a rule is optional or varies by event,
+  // that is stated rather than smoothed over.
+  'ob-relief-rules': {
+    why:
+      'Out of bounds is the most common penalty in the game and the one most often taken incorrectly — usually in the player’s own favour by accident. Knowing it properly costs nothing and saves the two awkward conversations that otherwise happen: where exactly the disc went out, and what it costs.',
+    how: [
+      'An out-of-bounds throw costs one penalty throw (PDGA 806.02).',
+      'Your next lie is within one metre of the point where the disc LAST crossed into out of bounds, measured perpendicular from the line, and no closer to the target.',
+      'You may instead play from your previous lie, which still carries the same one penalty throw. Sometimes that is the better option.',
+      'A disc is out of bounds only when it comes to rest out of bounds. Passing over OB ground and landing in bounds is fine.',
+      'Check the local OB lines before you tee — many courses mark paths, roads or water as OB, and they vary hole by hole.',
+    ],
+    wrong: [
+      {
+        fault: 'Playing from where the disc came to rest rather than where it last crossed the line.',
+        fix: 'The crossing point is what matters, and it is often a long way back. Agree it with the group before anybody moves.',
+      },
+      {
+        fault: 'Assuming a throw that flew over OB is penalised.',
+        fix: 'Only where it comes to rest counts. Over and back in is no penalty at all.',
+      },
+      {
+        fault: 'Forgetting that the previous lie is an option.',
+        fix: 'Same penalty either way. From a bad crossing point, going back is sometimes the cheaper shot.',
+      },
+      {
+        fault: 'Not knowing the local OB before teeing.',
+        fix: 'Read the sign. OB varies by hole and by event and it is the most common source of an avoidable stroke.',
+      },
+    ],
+    drill: {
+      name: 'Walk the line',
+      reps: '1 round, identifying every OB line before teeing on all holes',
+      body:
+        'For one round, before each tee shot, say out loud where the OB is on that hole and which side the safe miss is. By the end you will know your home course’s OB properly, which is worth more over a season than almost any technical work.',
+    },
+  },
+
+  'lie-improvement-foot-faults': {
+    why:
+      'A foot fault is the easiest penalty to avoid and the easiest to commit without noticing, particularly on a follow-through. In casual play it mostly causes arguments; in a tournament it costs a throw. Both are avoidable by placing your foot deliberately rather than arriving at it.',
+    how: [
+      'Mark your lie, then place a supporting point within 30 centimetres directly behind the marker (PDGA 802.07).',
+      'No supporting point may be closer to the target than the rear edge of your marker at the moment of release.',
+      'Other body parts may be anywhere, including in front of the marker — it is supporting points that are restricted.',
+      'Inside circle 1 (10 metres), you must also demonstrate full control of balance after release before advancing past the marker (806.01).',
+      'Outside circle 1, following through past the marker after release is legal and normal.',
+    ],
+    wrong: [
+      {
+        fault: 'Stepping past the marker before the disc has left your hand.',
+        fix: 'Place the foot first, deliberately, and release before anything moves past the marker.',
+      },
+      {
+        fault: 'Falling forward on a putt inside the circle.',
+        fix: 'That is a stance violation however well the putt flew. If you have to fall forward to reach, you are outside your range.',
+      },
+      {
+        fault: 'Thinking any part of you in front of the marker is a fault.',
+        fix: 'Only supporting points. You can lean a long way forward as long as nothing supporting you is past the line.',
+      },
+      {
+        fault: 'Moving a branch or a stone to make the stance easier.',
+        fix: 'Obstacles to a stance may not be moved (803.01). Take the lie you have.',
+      },
+    ],
+    drill: {
+      name: 'Place the foot',
+      reps: '1 round deliberately placing the front foot before every throw',
+      body:
+        'Mark every lie and consciously place your supporting foot behind the marker before every throw, including ones where it plainly does not matter. One round of this and it becomes automatic, which is what you want before it is a tournament and somebody is watching.',
+    },
+  },
+
+  'water-hazard-play': {
+    why:
+      'Water causes more rules confusion than anything else, because two completely different rules can apply and they have opposite consequences. Whether that pond is marked out of bounds or is simply water you can stand in decides whether you take a penalty or get free relief.',
+    how: [
+      'First establish which it is: water marked out of bounds, or ordinary water that is in bounds. The course signage or the event decides this, not the water.',
+      'If it is marked OB, it is an ordinary OB penalty: one throw, and play from within one metre of where it last crossed.',
+      'If the water is in bounds and your disc is in it and reachable, it is simply your lie. You may play it.',
+      'Casual water — temporary water from rain, not a permanent feature — gives free relief: you may move back along the line of play, no closer to the target, to the nearest spot without the condition (PDGA 803.06).',
+      'Casual relief is free; OB relief is not. Confusing the two is the mistake.',
+    ],
+    wrong: [
+      {
+        fault: 'Assuming all water is out of bounds.',
+        fix: 'Only if the course or the event says so. Plenty of water is in bounds and simply playable.',
+      },
+      {
+        fault: 'Taking free relief from water that is marked OB.',
+        fix: 'That is one penalty throw and a specific lie. Free relief is for CASUAL water only.',
+      },
+      {
+        fault: 'Taking casual relief closer to the target.',
+        fix: 'Relief is never closer to the target. That constraint is what makes it free.',
+      },
+      {
+        fault: 'Wading in to retrieve a disc that is out of bounds anyway.',
+        fix: 'If it is OB you are taking the penalty regardless. Decide whether the disc is worth the wet feet separately.',
+      },
+    ],
+    drill: {
+      name: 'Read the sign',
+      reps: '1 round identifying the status of every water feature before teeing',
+      body:
+        'On a course with water, check each hole’s signage before you tee and say which water is OB and which is not. It takes seconds and it is the single piece of information that decides what a wet throw costs you.',
+    },
+  },
+
+  'courtesy-pace-of-play': {
+    why:
+      'Pace and courtesy cost no skill and decide whether people want to play with you. They also matter more than most players realise in a tournament, where slow play genuinely can be penalised and where the group behind is affected by every minute you take.',
+    how: [
+      'Stand still and silent behind the thrower, never in front and never in their eyeline.',
+      'The player furthest from the basket throws first; on the tee, the best score on the previous hole goes first.',
+      'Be ready when it is your turn: disc chosen, line decided, bag down.',
+      'Walk to your disc while it is safe to do so, so you are not starting your decision when your turn arrives.',
+      'Wave a faster group through rather than making them wait all round.',
+      'Shout FORE immediately and loudly if a disc is heading anywhere near anyone.',
+    ],
+    wrong: [
+      {
+        fault: 'Starting to think about your shot only when it is your turn.',
+        fix: 'Decide while others throw. This alone is most of playing at a good pace.',
+      },
+      {
+        fault: 'Standing where the thrower can see you.',
+        fix: 'Behind and to the side. It is distracting in a way people rarely mention and always notice.',
+      },
+      {
+        fault: 'Spending five minutes looking for a disc with a group waiting.',
+        fix: 'Mark it, wave them through, keep looking. Three minutes is the usual competitive limit for a lost disc.',
+      },
+      {
+        fault: 'Hesitating to shout FORE because it feels embarrassing.',
+        fix: 'Shout. Every time, loudly, immediately. This is the one piece of etiquette with real consequences.',
+      },
+    ],
+    drill: {
+      name: 'Ready when it is your turn',
+      reps: '1 round deciding every shot before your turn arrives',
+      body:
+        'Play a round where you must have your disc in hand and your line chosen before it is your turn, every time. Notice how much faster the group moves and how much calmer your own throws feel without the decision being made under a waiting group’s gaze.',
+    },
+  },
+
+  'official-vs-casual-play': {
+    why:
+      'There are two different games being played under one name: a casual round where the group agrees what counts, and a sanctioned round where the full PDGA rulebook applies. Most friction comes from people assuming they are in the same one. Knowing the difference lets you relax a rule on purpose rather than by ignorance.',
+    how: [
+      'In casual play, the group can agree to relax rules — mulligans, generous OB, no two-metre rule. That is fine as long as everybody agrees beforehand.',
+      'In a sanctioned event, the full rulebook applies, plus whatever the director has specified for that event.',
+      'Read the event’s own notes: OB definitions, mandatory routes, drop zones and optional rules are set per event.',
+      'Learn the real rules even if you play casually, so when you relax one you are choosing to.',
+      'When a group disagrees mid-round and it matters, play a provisional and sort it out afterwards.',
+    ],
+    wrong: [
+      {
+        fault: 'Assuming casual house rules apply at a tournament.',
+        fix: 'They do not. Read the event notes, and ask at the players meeting rather than discovering it on hole 4.',
+      },
+      {
+        fault: 'Enforcing full rules strictly in a casual round nobody agreed to.',
+        fix: 'Agree at the start. Rules lawyering an unsanctioned round with friends is its own kind of bad etiquette.',
+      },
+      {
+        fault: 'Never learning the rules because you only play casually.',
+        fix: 'Knowing them is what makes relaxing them a choice. It also makes your first tournament far less daunting.',
+      },
+    ],
+    drill: {
+      name: 'Agree it on the first tee',
+      reps: '1 casual round, rules agreed out loud before hole 1',
+      body:
+        'Before a casual round, spend thirty seconds agreeing what you are playing: mulligans or not, how OB works, two-metre rule on or off. It prevents every mid-round disagreement, and saying it aloud reveals how often people had different assumptions.',
+    },
+  },
+
+  'pdga-rulebook-casual-players': {
+    why:
+      'The rulebook is long and almost none of it comes up. Perhaps eight rules cover everything you will meet in a normal round, and knowing those eight means you can play anywhere, with anyone, without needing to be taught mid-hole.',
+    how: [
+      'Tee off with supporting points behind the front line of the tee pad.',
+      'Mark your lie, and throw with a supporting point within 30 cm behind the marker.',
+      'Out of bounds is one penalty throw, played from within a metre of where it last crossed.',
+      'You are holed out when the disc rests supported by the chains or in the tray.',
+      'Furthest from the basket throws first.',
+      'Obstacles to a stance may not be moved; casual water and loose debris give relief.',
+      'Inside circle 1, show balance after a putt before advancing past your marker.',
+      'When unsure, take the interpretation that is worse for you, and look it up afterwards.',
+    ],
+    wrong: [
+      {
+        fault: 'Guessing in your own favour when a rule is unclear.',
+        fix: 'Take the stricter reading, then check afterwards. It costs little and it is how you stay somebody people trust to keep score.',
+      },
+      {
+        fault: 'Trying to learn the whole rulebook before playing.',
+        fix: 'Learn these eight. The rest you can look up on the rare occasions it comes up.',
+      },
+      {
+        fault: 'Being embarrassed to ask mid-round.',
+        fix: 'Ask. Every experienced player has looked something up, and nobody minds the question.',
+      },
+    ],
+    drill: {
+      name: 'The eight',
+      reps: '1 round applying all 8 rules deliberately',
+      body:
+        'Play a round consciously applying each of the eight — marking, stance, order, OB, holing out. Say which one you are applying as you do it. After one round they are yours, and the rulebook stops being a thing you are vaguely worried about.',
+    },
+  },
+
+  'drop-zone-rules': {
+    why:
+      'A drop zone is an alternative lie the course or event provides when the normal relief would be impractical — across water, past a mandatory, or off a cliff. The confusion is that using one does not necessarily mean the penalty goes away, and whether it applies is set by the event rather than by you.',
+    how: [
+      'A drop zone is a marked lie the course or the event director designates for specific situations.',
+      'Use it when the signage or the event notes tell you to. It is not a general option you may take whenever you prefer it.',
+      'Throwing from a drop zone usually still carries the penalty throw for whatever sent you there — missing a mandatory, or going out of bounds.',
+      'Some holes offer a choice between the drop zone and the ordinary relief. Read which, before you tee.',
+      'Check the players meeting or the event notes: drop zones are often specific to an event, not permanent features.',
+    ],
+    wrong: [
+      {
+        fault: 'Assuming the drop zone cancels the penalty.',
+        fix: 'It usually does not. It provides a lie, not an amnesty.',
+      },
+      {
+        fault: 'Using a drop zone because it is a better lie than the one you have.',
+        fix: 'Only when directed to. Otherwise you have just taken an illegal lie.',
+      },
+      {
+        fault: 'Not knowing a hole has one until you need it.',
+        fix: 'Read the hole signage before teeing. Finding out under pressure is how it gets used incorrectly.',
+      },
+    ],
+    drill: {
+      name: 'Find them before you need them',
+      reps: '1 round locating every drop zone on the course before teeing each hole',
+      body:
+        'Walk a round and find every drop zone the course has, noting what each is for. It takes a few extra minutes once, and it means the one time you need one you already know where it is and what it costs.',
+    },
+  },
+
+  'marking-lie-correctly': {
+    why:
+      'Marking is the most frequently performed rule in the game — you do it on every throw after the tee — and doing it loosely is how a few centimetres of advantage creep in without anybody intending it. Doing it properly is also how you avoid a dispute in a round that counts.',
+    how: [
+      'Place your mini marker on the line of play, directly in front of the thrown disc, touching its front edge.',
+      'Alternatively, play from the thrown disc itself, which is perfectly legal and often simpler.',
+      'Then throw with a supporting point within 30 centimetres directly behind the marker.',
+      'Mark before you pick the disc up, so the position is not a matter of memory.',
+      'If the lie is unusual — on a slope, against an obstacle, above the ground — agree it with your group before moving anything.',
+    ],
+    wrong: [
+      {
+        fault: 'Picking the disc up before marking it.',
+        fix: 'Mark first, every time. Once the disc is in your hand the exact lie is a reconstruction.',
+      },
+      {
+        fault: 'Placing the mini a little further along the line of play.',
+        fix: 'Touching the front edge. The creep is small, usually unintentional and completely avoidable.',
+      },
+      {
+        fault: 'Marking inconsistently depending on how much the shot matters.',
+        fix: 'Same every time. The habit is what protects you when it does matter.',
+      },
+    ],
+    drill: {
+      name: 'Mark every lie',
+      reps: '1 full round marking all lies with a mini, including obvious ones',
+      body:
+        'Mark every lie precisely for a whole round, even the ones where it plainly makes no difference. It is slightly tedious for nine holes and automatic thereafter, which is the state you want it in before a round that counts.',
+    },
+  },
+
+  'two-meter-rule': {
+    why:
+      'This is the rule most often quoted incorrectly, because it used to be standard and no longer is. A disc stuck in a tree above two metres is NOT automatically a penalty — in PDGA play the rule is optional and off unless the event or the course declares it. Knowing that is worth a stroke and an argument.',
+    how: [
+      'Default is OFF. In PDGA competition the two-metre rule applies only where the director has declared it, usually for specific holes or objects (PDGA 803.08).',
+      'Where it is in effect: a disc resting more than two metres above the ground costs one penalty throw.',
+      'Your lie in that case is marked on the ground directly below the disc.',
+      'Where it is not in effect, there is no penalty: mark directly below and play on.',
+      'Check the event notes or the course signage. In casual play, agree it on the first tee.',
+    ],
+    wrong: [
+      {
+        fault: 'Taking a penalty automatically for a disc up a tree.',
+        fix: 'Check whether the rule is actually in effect. Most of the time it is not, and you have just given away a stroke.',
+      },
+      {
+        fault: 'Assuming it applies because it used to.',
+        fix: 'It has been optional since 2018. A lot of long-standing players still quote the old default.',
+      },
+      {
+        fault: 'Measuring from where you are standing on a slope.',
+        fix: 'It is the height above the ground directly below the disc. On a hill that is a meaningfully different measurement.',
+      },
+    ],
+    drill: {
+      name: 'Ask on the first tee',
+      reps: 'every casual round: 1 question before hole 1',
+      body:
+        'Make it part of your first-tee routine to ask whether the two-metre rule is on. It takes one sentence, it settles the most commonly misquoted rule in the sport before it matters, and it saves the mid-round debate that otherwise always happens on hole 11.',
+    },
+  },
+
+  'casual-relief': {
+    why:
+      'Casual relief is the free help the rules give you for conditions nobody intended to be part of the course: puddles, loose debris, a spectator, a parked car. Knowing you are entitled to it saves genuinely awkward lies, and knowing its limits saves you from taking relief you were not owed.',
+    how: [
+      'Casual water — temporary water, usually from rain, rather than a permanent feature — gives free relief (PDGA 803.06).',
+      'Relief means moving to the nearest spot that avoids the condition, along the line of play, NO CLOSER to the target.',
+      'Loose debris not attached to anything — leaves, twigs, loose stones — may be moved.',
+      'Fixed or growing obstacles may not be moved, and neither may anything that is part of the course (803.01).',
+      'Casual obstacles such as people, animals, vehicles and equipment can be moved or waited out.',
+      'When in doubt about whether something is casual, ask the group and take the stricter reading.',
+    ],
+    wrong: [
+      {
+        fault: 'Treating permanent water or mud as casual.',
+        fix: 'Casual means temporary and unintended. A pond that is always there is part of the course.',
+      },
+      {
+        fault: 'Breaking or bending a branch that is in the way.',
+        fix: 'Growing obstacles may not be moved. This is also the rule that keeps courses from being gradually destroyed.',
+      },
+      {
+        fault: 'Taking relief closer to the target.',
+        fix: 'Never closer. That constraint is what makes the relief free rather than an advantage.',
+      },
+    ],
+    drill: {
+      name: 'Name the condition',
+      reps: '1 wet round, naming the relief rule for every awkward lie',
+      body:
+        'Play after rain and, at each awkward lie, say out loud whether the condition is casual and what relief you are entitled to. You will find you are entitled to more than you thought on puddles and less than you thought on branches, which is the useful correction.',
+    },
+  },
+
+  'provisional-throws': {
+    why:
+      'A provisional throw is what stops a disagreement over a ruling from either halting the round or being settled badly under pressure. You play both outcomes, keep moving, and sort it out afterwards with somebody who knows. It is the most useful rule almost nobody uses.',
+    how: [
+      'Use one when the group genuinely disagrees about a ruling, or when it is unclear whether a disc is lost or out of bounds (PDGA 805.01).',
+      'Announce it clearly to the group BEFORE throwing: say you are playing a provisional and what the two outcomes are.',
+      'Play out both: your score under each interpretation.',
+      'Resolve it after the round with an official, or with the rulebook, and record the correct score.',
+      'Keep playing. The whole purpose is that the round does not stop and nobody has to be right on the spot.',
+    ],
+    wrong: [
+      {
+        fault: 'Deciding a contested ruling on the spot and moving on.',
+        fix: 'If it genuinely matters and the group disagrees, play a provisional. Being pressured into a ruling is how the wrong score gets kept.',
+      },
+      {
+        fault: 'Playing a provisional without announcing it.',
+        fix: 'Announce it before the throw, clearly. An unannounced provisional is just a second throw.',
+      },
+      {
+        fault: 'Using one to retake a shot you did not like.',
+        fix: 'It is for genuine rules uncertainty, not for a second attempt. Using it otherwise is cheating with extra steps.',
+      },
+    ],
+    drill: {
+      name: 'Say it out loud once',
+      reps: '1 practice announcement, before you ever need it',
+      body:
+        'Next time a ruling is even slightly unclear in a casual round, practise announcing a provisional properly — what you are doing and what the two outcomes are. Having said the words once makes it far more likely you will use it when it actually counts.',
+    },
+  },
+
+  'mando-rules': {
+    why:
+      'A mandatory forces your disc to pass a marked object on a specified side, usually for safety or to stop players shortcutting a dogleg. Missing one is a penalty plus a specific lie, and it is the rule most likely to catch out a player on an unfamiliar course who did not read the sign.',
+    how: [
+      'A mando is marked with an arrow on the object — a tree, a pole — showing the side your disc must pass.',
+      'Your disc must cross the mando line on the correct side (PDGA 804.01).',
+      'If you miss it, you take one penalty throw and play from the designated drop zone for that mando.',
+      'A double mando requires passing between two objects, which is a narrower window than it looks from the tee.',
+      'Read the sign before you throw. Mandos are marked on the tee signage and are easy to miss on a course you do not know.',
+    ],
+    wrong: [
+      {
+        fault: 'Not noticing a mando until after throwing.',
+        fix: 'Read the tee sign on every unfamiliar hole. A missed mando is a stroke and a worse lie, for a sign you walked past.',
+      },
+      {
+        fault: 'Assuming you can play on from where the disc landed after missing it.',
+        fix: 'You play from the drop zone with a penalty. Where the disc finished is irrelevant.',
+      },
+      {
+        fault: 'Attempting a line that only just makes the mando.',
+        fix: 'Give it margin. The cost of missing is a stroke plus a worse position, which is rarely worth the few feet gained.',
+      },
+    ],
+    drill: {
+      name: 'Read every tee sign',
+      reps: '1 unfamiliar course, reading all 18 tee signs before throwing',
+      body:
+        'On a course you do not know, read the sign on every hole before teeing and note any mando, drop zone or OB. It adds a couple of minutes to the round and removes the single most common way of losing a stroke somewhere new.',
+    },
+  },
+
+  // ─────────────────── TOURNAMENT & COMPETITION ───────────────────
+  'reading-tournament-field': {
+    why:
+      'Knowing the shape of an event before you start — the format, the layout, how many rounds, who is in it — removes a whole category of surprise that otherwise eats attention during the golf. It also stops you playing the wrong strategy, which is easy to do when you do not know how the thing is scored.',
+    how: [
+      'Read the format, the number of rounds and the layout before round one.',
+      'Know how the division works and what counts: points, cash, a cut, a final nine.',
+      'Play the course rather than the competitors, especially early. The field is not something you can influence.',
+      'Resist watching the leaderboard in the first round. There is nothing it can tell you that changes a good decision.',
+      'Know when and where you are starting, and what the hole assignments are, the day before.',
+    ],
+    wrong: [
+      {
+        fault: 'Playing to beat a specific person.',
+        fix: 'You control your own score only. Playing the course is both more effective and considerably less stressful.',
+      },
+      {
+        fault: 'Checking the leaderboard constantly in round one.',
+        fix: 'Early position tells you nothing and changes nothing. Leave it until it can actually affect a decision.',
+      },
+      {
+        fault: 'Learning the format on the first tee.',
+        fix: 'Read it in advance. Strategy depends on how you are scored, and discovering that late means playing the first round wrong.',
+      },
+    ],
+    drill: {
+      name: 'Know the event cold',
+      reps: '1 written page before your next event: format, layout, times, division',
+      body:
+        'Before your next tournament, write down the format, the layout, your start time and hole, the division and how it is scored. One page. Everything on it is something you would otherwise be working out on the day with attention you needed for golf.',
+    },
+  },
+
+  'warm-up-competition-day': {
+    why:
+      'Hole 1 in a tournament counts exactly as much as hole 18, and an unwarmed player throws their first few holes worse. A proper warm-up is the cheapest strokes available on competition day, and almost everybody shortens it because of nerves and timing.',
+    how: [
+      'Arrive early enough that the warm-up is unhurried. An hour before the horn is a reasonable target.',
+      'Start with mobility: arm circles, trunk rotations, leg swings.',
+      'Putt first. Twenty or thirty putts gets the hands and the stroke going, and it settles nerves better than driving does.',
+      'Then throw, building from easy midranges to full-power drives over several throws.',
+      'Finish with a few putts again, so the last thing you do before the horn is the thing you will do most.',
+      'Have the whole sequence fixed in advance, so nerves cannot rush or reorder it.',
+    ],
+    wrong: [
+      {
+        fault: 'Arriving with barely enough time and warming up on hole 1.',
+        fix: 'The first three holes count. Get there early enough that the warm-up is a routine rather than a scramble.',
+      },
+      {
+        fault: 'Warming up by throwing drivers as hard as possible.',
+        fix: 'Build up. The first max-effort throw of the day should not be the fifth thing you do.',
+      },
+      {
+        fault: 'Skipping the putting warm-up because the drive feels more urgent.',
+        fix: 'You will putt far more often than you drive, and putting settles the nerves better. Putt first.',
+      },
+    ],
+    drill: {
+      name: 'The fixed sequence',
+      reps: '30 min: 5 mobility, 25 putts, 15 building throws, 10 putts',
+      body:
+        'Write the sequence down and use exactly the same one before every round, practice or competitive. The familiarity is the point — a known sequence is something to hold on to when the first tee is busier than usual.',
+    },
+  },
+
+  'managing-nerves-slow-play': {
+    why:
+      'Tournament rounds are slower than casual ones, often considerably. That means long waits on tees, going cold between shots, and energy dips in the back nine. None of it is about throwing and all of it affects your score.',
+    how: [
+      'Stay loose during waits: easy arm circles, a gentle rotation, keep moving rather than sitting down.',
+      'Eat and drink on a schedule rather than when you notice you need to. An energy dip at hole 12 feels exactly like losing your nerve.',
+      'Use the waiting time for your own next shot rather than on the leaderboard or conversation.',
+      'Run the full routine on every throw, which resets your tempo after a long gap.',
+      'Accept the pace. Being annoyed about slow play costs you more than the slow play does.',
+    ],
+    wrong: [
+      {
+        fault: 'Going cold during long waits and throwing straight from standing still.',
+        fix: 'Keep moving gently. A few easy rotations before stepping onto the pad is enough.',
+      },
+      {
+        fault: 'Eating only when hungry.',
+        fix: 'By then it is late. Small amounts regularly, on a schedule, across the whole round.',
+      },
+      {
+        fault: 'Getting irritated by the pace.',
+        fix: 'It is the same for everyone on the card. Irritation is a cost you add to a situation you cannot change.',
+      },
+    ],
+    drill: {
+      name: 'Practise the wait',
+      reps: '20 throws with a 3-minute gap between each',
+      body:
+        'Throw, then wait three minutes, then throw again — twenty times. It is a dull session and it is exactly what a slow tournament round asks of you: a full-quality throw from cold, repeatedly, with your routine as the only thing bridging the gap.',
+    },
+  },
+
+  'bag-setup-competitive': {
+    why:
+      'The bag you carry into a tournament should be chosen for that course on that day, not assembled by habit. The two mistakes are carrying experiments and carrying duplicates — both of which turn a decision you should make quickly into one you make badly under pressure.',
+    how: [
+      'Walk or study the layout first, then pick the bag the course asks for.',
+      'Bag for the forecast. A windy day wants more stable discs and heavier weights than a calm one.',
+      'Carry only discs you trust. A tournament is not the place for a mould you are still learning.',
+      'Remove duplicates that fly almost identically. Two discs doing one job is a decision you do not need at speed.',
+      'Know what each disc in the bag does TODAY, in these conditions, rather than in general.',
+    ],
+    wrong: [
+      {
+        fault: 'Carrying a new disc to try out.',
+        fix: 'Leave it at home. Every disc in a competitive bag should be one whose flight you can call before you throw it.',
+      },
+      {
+        fault: 'Bringing the same bag regardless of the course or weather.',
+        fix: 'Pick for the layout and the forecast. A wooded course and an open one want different bags.',
+      },
+      {
+        fault: 'Carrying twenty discs so that everything is covered.',
+        fix: 'Weight and decision time both cost. A tight bag of trusted discs beats a complete one you have to search.',
+      },
+    ],
+    drill: {
+      name: 'Pack for the course',
+      reps: '1 bag chosen deliberately per event, written down before packing',
+      body:
+        'Before your next event, write the list of discs and one line on what each is for on that layout. If you cannot write the line, the disc does not go. The list usually comes out shorter than your usual bag and the round feels simpler for it.',
+    },
+  },
+
+  'safe-vs-aggressive': {
+    why:
+      'Risk level should be set by the situation, not by temperament. Playing safe all day leaves strokes on the course; attacking all day gives them away faster. The skill is noticing which situation you are in, which usually comes down to what a miss costs here and what the format rewards.',
+    how: [
+      'Default to safe where a par holds your position and the miss is expensive.',
+      'Attack where the miss is cheap — open ground behind, nothing in play, a comeback you would take anyway.',
+      'Let the format decide the baseline: a points race rewards consistency, a cash cut can reward late aggression.',
+      'Account for where you are in the event. Needing strokes late genuinely changes the arithmetic; wanting them on hole 3 does not.',
+      'Decide before you step in, and commit. A half-hearted aggressive shot is the worst of both.',
+    ],
+    wrong: [
+      {
+        fault: 'Picking a risk level by mood.',
+        fix: 'Pick it from the hole and the format. Mood is the least reliable input available.',
+      },
+      {
+        fault: 'Attacking early because you want a good start.',
+        fix: 'There is no good start worth a double on hole 2. Early holes are where consistency pays most.',
+      },
+      {
+        fault: 'Playing safe on the last few holes while needing strokes.',
+        fix: 'If you genuinely need them, the arithmetic has changed. Safe play from behind guarantees the result you are trying to avoid.',
+      },
+    ],
+    drill: {
+      name: 'Label every hole',
+      reps: '1 round labelling each hole safe or aggressive before teeing',
+      body:
+        'Label all eighteen before you throw on each, and play the label. At the end, check which labels were wrong. You are training the judgement itself rather than any shot, and it is the judgement that most separates tournament scores.',
+    },
+  },
+
+  'post-round-review-adjustment': {
+    why:
+      'A round contains a great deal of information and almost all of it is lost within an hour. Five minutes of review afterwards turns a round into data — specifically, into the one thing worth practising next, which is otherwise chosen by whim.',
+    how: [
+      'Immediately after the round, note where the strokes went: drives, approaches, putts, decisions, penalties.',
+      'Be specific. "Putting was bad" is not useful; "missed four putts between 20 and 30 feet" is.',
+      'Separate bad execution from bad decisions. They need completely different fixes.',
+      'Pick ONE thing to practise before the next round, and write it down.',
+      'Track it across rounds. A pattern over five rounds is real; one round is noise.',
+    ],
+    wrong: [
+      {
+        fault: 'Reviewing only the bad holes.',
+        fix: 'Strokes leak in ordinary holes too — a mediocre approach leading to a 30-foot putt is a cost that never looks dramatic.',
+      },
+      {
+        fault: 'Picking three or four things to work on.',
+        fix: 'One. Three changes at once means not knowing which worked, which is how practice becomes busywork.',
+      },
+      {
+        fault: 'Reviewing days later.',
+        fix: 'Do it in the car park. The detail is gone within an hour and the memory that remains is mostly the worst hole.',
+      },
+    ],
+    drill: {
+      name: 'Five minutes in the car park',
+      reps: '5 minutes of notes after every round, for 5 rounds',
+      body:
+        'Five minutes immediately after each round: where the strokes went, bad decisions separated from bad execution, and one thing to practise. After five rounds read them together. The pattern that appears is usually not what you would have guessed.',
+    },
+  },
+
+  'points-vs-cash-format-strategy': {
+    why:
+      'How you get paid should change how you play, and most players never think about it. A points series rewards turning up and being consistent; a cash event with a cut rewards being above a line. Those are genuinely different incentives and they argue for different risk levels.',
+    how: [
+      'Find out before you enter: points, cash, a cut, a final round, how deep the payout goes.',
+      'In a points format, consistency wins. Avoiding a disaster round is worth more than a brilliant one.',
+      'Where there is a cut, know roughly where the line is and whether you are safely inside it.',
+      'When you are comfortably inside a payout and the next place is far away, there is nothing to gain from risk.',
+      'When you need strokes to reach a line, the arithmetic genuinely changes and more risk becomes correct.',
+    ],
+    wrong: [
+      {
+        fault: 'Playing every event the same way.',
+        fix: 'The format sets the baseline. A points series and a one-off cash event reward different things.',
+      },
+      {
+        fault: 'Taking risks when already safely in a payout.',
+        fix: 'Nothing to gain, something to lose. Consolidate.',
+      },
+      {
+        fault: 'Not knowing the payout structure until afterwards.',
+        fix: 'Read it before round one. It is part of knowing what game you are playing.',
+      },
+    ],
+    drill: {
+      name: 'Read the structure first',
+      reps: '1 event, payout and format read before round 1',
+      body:
+        'Before your next event, read exactly how it pays and write one sentence on what that means for your risk level. It is five minutes, it is something most of the field will not have done, and it occasionally changes a decision worth several places.',
+    },
+  },
+
+  'tournament-practice-prep': {
+    why:
+      'A practice round is worth more than any amount of general practice in the week before an event, because it converts unknowns into knowns. Every hole you have seen is a hole you are not working out under pressure with a group waiting.',
+    how: [
+      'Play at least one practice round on the layout, ideally at the same time of day.',
+      'Note the lines, the OB, the mandos, the drop zones and where the pins are likely to be.',
+      'Write down a plan for each hole: disc, shape, landing zone.',
+      'Spend most of the remaining practice time on putting and approaches. Tight rounds are decided inside 150 feet.',
+      'Do not change anything technical in the final week. Dial what you have rather than rebuilding it.',
+    ],
+    wrong: [
+      {
+        fault: 'Working on form in the week before an event.',
+        fix: 'Too late to help and likely to hurt. Sharpen what exists; rebuild after the event.',
+      },
+      {
+        fault: 'Playing a practice round and not writing anything down.',
+        fix: 'Write the plan per hole. By the event you will have forgotten half of what you noticed.',
+      },
+      {
+        fault: 'Spending the practice round trying to score.',
+        fix: 'Throw several options from each tee and learn the hole. Scoring in a practice round proves nothing.',
+      },
+    ],
+    drill: {
+      name: 'A plan per hole',
+      reps: '1 practice round, 18 written hole plans',
+      body:
+        'Play the layout and write one line per hole: disc, shape, landing zone, where the trouble is. Eighteen lines. Carry it. Most of the value is in having made the decisions when nothing was at stake.',
+    },
+  },
+
+  'formats-and-doubles': {
+    why:
+      'Casual disc golf is played in several formats and knowing them means you can join any group without needing it explained. Doubles in particular is how most people first play competitively, and it is both the friendliest introduction and genuinely good practice.',
+    how: [
+      'Singles: everybody plays their own disc, lowest total wins. This is the default.',
+      'Best-shot doubles: partners both throw, pick the better lie, and both throw again from there. The most common casual format.',
+      'Alternate shot: partners take turns throwing the same disc, which makes position far more important.',
+      'Worst-shot doubles: you play from the WORSE of the two lies, which is punishing and excellent practice.',
+      'Know whether your format is handicapped, and how, before you start.',
+    ],
+    wrong: [
+      {
+        fault: 'Both partners playing it safe in best-shot doubles.',
+        fix: 'One safe, one aggressive. That is the whole advantage of the format and most pairs never use it.',
+      },
+      {
+        fault: 'Treating alternate shot like singles.',
+        fix: 'Every throw hands a position to your partner. Think about where you are leaving them, not just about your own shot.',
+      },
+      {
+        fault: 'Not asking the format before starting.',
+        fix: 'Ask on the first tee. It takes a sentence and it decides how you play every hole.',
+      },
+    ],
+    drill: {
+      name: 'One safe, one attacking',
+      reps: '1 round of best-shot doubles, deciding the order on every tee',
+      body:
+        'Play a doubles round where you explicitly agree before each hole which of you throws safe and which attacks — and have the safe one throw first. Most pairs have never done this and it is where the format’s advantage actually lives.',
+    },
+  },
+
+  'scorekeeping': {
+    why:
+      'Keeping the card is a small responsibility that goes wrong in predictable ways, and a disputed score at the end of a round is both awkward and avoidable. It is also, quietly, the best way to learn the vocabulary and to pay attention to the whole group.',
+    how: [
+      'Confirm every player’s score out loud before leaving the hole, while everybody is still standing there.',
+      'Record it immediately rather than carrying two or three holes in your head.',
+      'Use a digital card where the event allows — it sums automatically and syncs live, which removes the arithmetic errors entirely.',
+      'Where there are two cards, check them against each other at the turn rather than at the end.',
+      'Include penalty throws as you record them, not afterwards.',
+    ],
+    wrong: [
+      {
+        fault: 'Carrying several holes in your head to keep pace.',
+        fix: 'Record at the hole. It takes seconds and it is where almost all scoring errors come from.',
+      },
+      {
+        fault: 'Confirming scores only at the end of the round.',
+        fix: 'Confirm at each hole while everybody remembers. A dispute on hole 18 about hole 6 is unresolvable.',
+      },
+      {
+        fault: 'Forgetting to add a penalty throw.',
+        fix: 'Add it as it happens. Penalties are the single most commonly omitted stroke.',
+      },
+    ],
+    drill: {
+      name: 'Keep the card',
+      reps: '1 round keeping the card for the whole group',
+      body:
+        'Volunteer to keep the card for a full round, confirming every score at every hole. You will pay more attention to the group and the round than you ever have, and the vocabulary stops being something you have to think about.',
+    },
+  },
+
 };
 
 /** True when a lesson has a written body, so callers can fall back to tips. */
