@@ -1,8 +1,8 @@
 # Event assets
 
-Finished images for Disc Golf Go events — made to be **downloaded and posted or
-printed by hand**, the same way `store-assets/` holds the Play and App Store
-uploads.
+Finished media for Disc Golf Go — made to be **downloaded and posted or printed
+by hand**, the same way `store-assets/` holds the Play and App Store uploads.
+Mostly images; `video/` holds the promo film.
 
 **This folder is deliberately NOT under `web/`.** Everything under `web/` is
 served by `express.static`, so anything put there is public at a guessable URL
@@ -11,7 +11,7 @@ behind them, so they live outside it — the same reason `SOCIAL_POSTS.md` sits 
 the repo root rather than beside the images it describes.
 
 One folder per event, named for the event, plus `graphics/` for the brand art
-that is not tied to any one event.
+that is not tied to any one event and `video/` for finished film.
 
 ```
 event-assets/
@@ -26,7 +26,41 @@ event-assets/
     card.png                  2400x1350. This event's own card art.
     social.png / social.jpg   1080x1350 frame at 3x -> 3240x4050. The FEED post.
     flyer.png  / flyer.jpg    2460x4527. Print, Stories, Facebook.
+  video/
+    promo.mp4                 1920x1080, 36.2s, h264. The promo film.
 ```
+
+## `video/promo.mp4`
+
+**The one ORIGINAL in this folder.** Everything else here is an export of art
+the site serves as webp; this exists nowhere else, so there is no canonical copy
+to go back to — if it is replaced, replace it here.
+
+**It is silent, on purpose.** There is no licensed track, and a scratch one
+would have to be fought off before a real one goes on. Lay audio over it.
+
+Seven shots, each animated from brand art drawn to the four-colour spec
+(cream `#F7F4EF`, green `#2E7D57`, ink `#202020`, orange `#FC6414`), with every
+title composited in Inter afterwards rather than drawn by the model. The order
+follows the positioning rules in `CLAUDE.md`: the training library leads and
+takes four of the seven shots, Throw Lab appears once and only as a game
+("Rained off? ... just for the fun of it"), and scorecards and check-in are not
+mentioned at all. Every figure on screen was counted from
+`src/db/data/lessons.ts`, not copied from a doc — 134 lessons, 13 skill paths,
+199 distinct videos, 62 creators.
+
+**It is 16:9 and a 9:16 cut is not a crop.** The captions sit in a lower-left
+panel sized for this frame; a vertical version needs the text re-laid out, not
+the sides trimmed.
+
+Two things worth keeping from making it. The title panel is charcoal on most
+shots but **cream on the tournament-gallery shot**, because a charcoal panel
+measured 1.08:1 against that shot's crowd and lost its own edge — the swap is
+measured, not taste, and that card carries no orange numeral so ink-on-cream
+(10.2:1) was available. And the orange numerals are on charcoal rather than
+cream because **on cream they measure 2.3:1**, below even the 3:1 large-text
+threshold; the repo's darker orange only reached 2.7:1, so inverting the panel
+was the fix that kept all four brand colours.
 
 **`graphics/` and `card.png` are EXPORTS, not the originals.** The same three
 pictures are what the site actually serves, as webp:
