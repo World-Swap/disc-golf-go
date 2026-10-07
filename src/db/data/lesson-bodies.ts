@@ -1085,6 +1085,839 @@ export const LESSON_BODIES: Record<string, LessonBody> = {
     },
   },
 
+  // ───────────────────────────── DRIVING ─────────────────────────────
+  'x-step-run-up': {
+    why:
+      'The x-step exists to let you arrive at the plant already moving, so the brace has something to convert. It is worth perhaps 15 to 20 percent over a standstill for most players — real, but far less than people expect, which is why learning it before you can throw well standing still mostly adds a new way to be off balance.',
+    how: [
+      'Start by walking it at half speed. The x-step is a timing pattern, not a sprint, and every fault in it comes from rushing.',
+      'For a right-handed backhand the pattern is: step onto the right foot, cross the left behind it, then plant the right foot across your body at an angle to the target.',
+      'Keep your shoulders turned away from the target the whole way through the steps.',
+      'Time it so the plant foot lands exactly as the reach back reaches full extension. That coincidence is the entire point of the move.',
+      'Stay low and smooth. If your head bobs up and down through the steps, you are losing more than the run-up is giving you.',
+    ],
+    wrong: [
+      {
+        fault: 'Running at the pad and hoping speed turns into distance.',
+        fix: 'Speed you cannot brace against is wasted. Walk it until the timing is right, then add pace a little at a time.',
+      },
+      {
+        fault: 'The plant landing before or after the reach back completes.',
+        fix: 'Have somebody watch the two and tell you which arrives first. Almost everybody plants late, which means throwing from a stopped body.',
+      },
+      {
+        fault: 'Opening the shoulders during the steps.',
+        fix: 'Stay closed until the plant. If you are facing the target before you plant, the x-step has done nothing but move you forward.',
+      },
+      {
+        fault: 'Adding an x-step before you can drive from a standstill.',
+        fix: 'Build the standstill first. A run-up multiplies whatever your form already is, including the faults.',
+      },
+    ],
+    drill: {
+      name: 'Walk it',
+      reps: '20 walking-pace x-steps, then 10 at full speed',
+      body:
+        'Twenty repetitions at walking pace, throwing at maybe half effort, watching only for the plant and the reach back finishing together. Then ten at full speed. If the full-speed ones fall apart, you have found your real pace — work there and let it rise on its own.',
+    },
+  },
+
+  'distance-mechanics': {
+    why:
+      'Distance comes from four measurable things: how fast the disc leaves, how much spin it has, the angle it launches at and the nose angle. Arm strength affects one of them a little. This is why the biggest throwers are so rarely the biggest people, and why chasing distance through effort reliably stalls at about 300 feet.',
+    how: [
+      'Release speed comes from the chain working in order and bracing hard, not from pulling harder.',
+      'Spin comes from the disc ripping out of a relaxed hand late. A disc with speed and no spin flips and dies.',
+      'Launch angle wants to be slightly upward on most drives — the disc needs some height to use its glide.',
+      'Nose angle wants to be slightly down. This is the one that costs people the most and the one they notice least.',
+      'Add these one at a time. Trying to fix all four in a session means knowing nothing about any of them afterwards.',
+    ],
+    wrong: [
+      {
+        fault: 'Treating distance as a strength problem and going to the gym for it.',
+        fix: 'Strength helps at the margins and only once the sequence is right. Form work pays several times more for almost everybody.',
+      },
+      {
+        fault: 'Throwing harder, which usually means the arm leading and the nose rising.',
+        fix: 'Throw at 80% while you work on the four factors. Max effort hides everything you are trying to see.',
+      },
+      {
+        fault: 'Judging a change by one throw.',
+        fix: 'Change one thing, throw twenty, measure the group rather than the best one. The best throw of twenty tells you nothing about what you will do on a course.',
+      },
+    ],
+    drill: {
+      name: 'One factor at a time',
+      reps: '20 throws per factor, one factor per session',
+      body:
+        'Pick one of the four — start with nose angle, which pays most — and throw twenty focusing on nothing else. Pace out the group rather than the longest. Next session, the next factor. Four sessions covers all of them properly, which is faster than four months of changing everything at once.',
+    },
+  },
+
+  'standstill-drives': {
+    why:
+      'The standstill is the best form diagnostic in the sport, because it removes every variable a run-up adds and leaves only what your body does with the disc. Most good players throw roughly 80% of their maximum distance from a standstill — so if yours is far below that, the problem was never the footwork.',
+    how: [
+      'Set up side-on, feet a little wider than shoulder width, weight loaded on the back leg.',
+      'Reach back level and straight, with the shoulders turned away.',
+      'Shift onto the front foot and brace, exactly as you would with a run-up. The sequence does not change; only the approach is gone.',
+      'Rotate through the core and let the disc come out late and close to the body.',
+      'Hold the finish. If you cannot, the standstill has just told you something a run-up would have hidden.',
+    ],
+    wrong: [
+      {
+        fault: 'Treating the standstill as a weaker, gentler throw.',
+        fix: 'Throw it at full intent. The point is to see your real form at real speed, not to be careful.',
+      },
+      {
+        fault: 'Leaving the weight on the back foot because there is no run-up pushing you forward.',
+        fix: 'You still have to transfer. Without the run-up doing it for you, this is where you find out whether you ever were.',
+      },
+      {
+        fault: 'Going back to the run-up the moment the standstill feels short.',
+        fix: 'It is supposed to feel short at first. Build it until it is near your run-up distance, and your run-up distance rises with it.',
+      },
+    ],
+    drill: {
+      name: 'Standstill month',
+      reps: '50 standstill drives per session, no run-up at all',
+      body:
+        'For one month of field work, throw nothing but standstills. Measure your best each session. Almost everybody gains distance on their full run-up during a month where they never practised it, because the run-up was never the limiting factor.',
+    },
+  },
+
+  'nose-angle': {
+    why:
+      'Nose angle is the most expensive thing most players get wrong and the hardest to see. It is the angle of the disc’s leading edge relative to the direction it is travelling — not relative to the ground — and a few degrees nose-up turns a disc into a parachute that climbs, stalls and falls out of the sky well short.',
+    how: [
+      'Keep the front edge slightly below the flight path at release. Slightly down, not dramatically.',
+      'Reach back level rather than low. A reach back that dips makes the disc come through rising, which is nose-up by definition.',
+      'Keep the wrist flat through the power pocket — a wrist that curls up tilts the nose up with it.',
+      'Watch the first thirty feet of flight. A nose-up throw climbs and loses speed visibly; a nose-down one tracks flat and holds.',
+      'Pull on a slightly rising line through the body while keeping the nose down. These are different things and confusing them is the usual trap.',
+    ],
+    wrong: [
+      {
+        fault: 'Confusing launch angle with nose angle, and tilting the whole disc up to get height.',
+        fix: 'Height comes from the line you pull on. The nose stays down regardless of how high you are throwing.',
+      },
+      {
+        fault: 'A dipping reach back, which guarantees a nose-up release.',
+        fix: 'Reach back level with your shoulder. Fix the back of the throw and the nose angle often fixes itself.',
+      },
+      {
+        fault: 'Judging nose angle by how far the disc went.',
+        fix: 'Judge it by the shape of the first thirty feet. A nose-up throw can still go far downwind and will tell you nothing.',
+      },
+    ],
+    drill: {
+      name: 'Watch the first thirty feet',
+      reps: '20 throws, judging only the first 30 ft of flight',
+      body:
+        'Throw twenty and ignore where each lands entirely. Watch only whether the disc climbs in the first thirty feet or tracks flat. Climbing is nose-up. When twenty out of twenty track flat, the distance has already arrived without you looking for it.',
+    },
+  },
+
+  'fix-grip-lock': {
+    why:
+      'Grip lock is holding the disc a fraction too long, so it leaves after the hand has already started across your body — which for a right-handed backhand sends it hard right, usually into whatever you were most trying to avoid. It feels like a grip problem and almost never is: it is a timing problem that the grip gets blamed for.',
+    how: [
+      'Check whether you are standing up through the throw. Rising pulls the release point back and late — this is the most common cause.',
+      'Make sure you are rotating through rather than stopping. A body that stops makes the hand travel further across before the disc can leave.',
+      'Release out in front of your chest, not behind it. The disc should go when your arm is extending toward the target.',
+      'Ease the grip pressure slightly. Not loose — just not clenched, so the disc can rip out when it is supposed to.',
+      'Work at 70% until it stops. Grip lock arrives with effort, so the diagnosis is easier below the effort that triggers it.',
+    ],
+    wrong: [
+      {
+        fault: 'Loosening the grip until the disc flies out early and wobbles.',
+        fix: 'That trades one fault for a worse one. Fix the timing; the grip pressure is a small adjustment at the end, not the cure.',
+      },
+      {
+        fault: 'Aiming further left to compensate.',
+        fix: 'You are now aiming for a fault. When it stops happening — and it does, intermittently — the compensation puts you in trouble on the other side.',
+      },
+      {
+        fault: 'Only seeing it at full power and assuming it is random.',
+        fix: 'It is not random; it is effort-dependent. Throw at 70% and it will largely vanish, which tells you exactly what is causing it.',
+      },
+    ],
+    drill: {
+      name: 'Seventy percent',
+      reps: '30 throws at 70%, raising effort only once 10 in a row are clean',
+      body:
+        'Throw thirty at seventy percent. Once you have ten consecutive throws with no right-side miss, go to eighty. Repeat. You are finding the effort level at which your timing holds and then raising it deliberately, rather than hoping the problem goes away at full power. It does not.',
+    },
+  },
+
+  'utility-drives': {
+    why:
+      'Three shaped drives cover most of the holes that a straight throw cannot: the flex for distance on an open hole, the hyzer flip for a long straight line, and the spike hyzer for landing hard on a tight target. Having these means you stop trying to force your standard throw into holes it does not fit.',
+    how: [
+      'Flex shot: take an overstable disc and throw it on an anhyzer. It flexes back to flat and then fades, giving a long S-line and a predictable finish.',
+      'Hyzer flip: take an understable disc and throw it on a hyzer. It flips up to flat and runs straight for a long way. This is the longest straight shot most players have.',
+      'Spike hyzer: throw an overstable disc on a steep hyzer. It comes down hard and stops, which is what you want over or around an obstacle onto a tight pin.',
+      'Each one is a disc choice plus an angle. Neither alone gives you the shot.',
+      'Pick the shot for the shape the hole needs, then the disc that produces it at your arm speed — not the other way round.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing a flex shot with a disc that is not overstable enough, so it turns over and stays there.',
+        fix: 'The flex needs a disc that genuinely wants to come back. If it does not return to flat, it is too understable for your arm.',
+      },
+      {
+        fault: 'Attempting a hyzer flip with a disc that is too stable, so it never flips.',
+        fix: 'Hyzer flips need an understable or well-worn disc. A fresh stable disc just flies a hyzer.',
+      },
+      {
+        fault: 'Learning all three at once on the course.',
+        fix: 'Learn each in a field until it is repeatable. A utility shot you are unsure of is worse than the standard throw you are sure of.',
+      },
+    ],
+    drill: {
+      name: 'One shape per session',
+      reps: '25 throws of one shape, in an open field',
+      body:
+        'Pick one shape and throw twenty-five of them with the right disc, adjusting the angle until it works repeatably. Do not move on until you can call it before you throw it. Three sessions gives you all three shapes, which is more new ground than most players cover in a season.',
+    },
+  },
+
+  'power-pocket-timing': {
+    why:
+      'The power pocket is the moment the disc is closest to your chest with the elbow bent around 90 degrees, just before everything unwinds. It is where the whip happens — and if the disc is already extending away from you at that moment, there is no whip left to release, which is exactly what rounding costs you.',
+    how: [
+      'Bring the disc in close as the front foot plants, elbow bent, disc near the sternum.',
+      'Keep the elbow leading. The hand and the disc trail behind it until the final extension.',
+      'Let the brace and the hip rotation unwind against that bent arm — that is what loads it.',
+      'Extend late, so the arm straightens as the disc is already leaving.',
+      'Time the peak of the reach back to the front-foot plant. If those two are out of order, there is no pocket to hit.',
+    ],
+    wrong: [
+      {
+        fault: 'Extending the arm early, so the disc swings out wide instead of coming in close.',
+        fix: 'Elbow first, hand second. Feel the disc brush past your chest — this is the same cure as rounding, because it is the same fault.',
+      },
+      {
+        fault: 'Trying to create the pocket by pulling the arm in with muscle.',
+        fix: 'The pocket is a position the rotation puts you in, not something you do with the arm. Work on the brace and the hips.',
+      },
+      {
+        fault: 'Hitting the pocket but with the shoulders already open.',
+        fix: 'Stay closed until the plant. An open chest at the pocket means the load has already been spent.',
+      },
+    ],
+    drill: {
+      name: 'Brush the shirt',
+      reps: '20 slow reps, then 20 throws',
+      body:
+        'Twenty slow-motion reps where the disc physically brushes your shirt at the pocket, then twenty throws trying to keep that contact. It is a feel you either have or do not, and when it arrives the throw gets noticeably quieter and longer at the same time.',
+    },
+  },
+
+  'weight-shift': {
+    why:
+      'The weight shift is what turns the ground into disc speed. Without it the arm throws alone, which is both the slowest way to throw and the fastest way to hurt your shoulder. The common mistake is to think of it as moving forward, when what matters is moving forward and then STOPPING.',
+    how: [
+      'Load onto the back leg with the knee soft. Feel the weight genuinely there, not just leaning.',
+      'Move the hips toward the target first, before the shoulders and well before the arm.',
+      'Plant the front foot and let it stop you. The sudden stop is what converts the movement into rotation.',
+      'Keep the movement smooth rather than lunging. A lunge arrives with the weight still travelling and nothing to brace against.',
+      'Finish with the weight fully on the front foot and the body balanced over it.',
+    ],
+    wrong: [
+      {
+        fault: 'Lunging forward, so the body is still moving when the disc leaves.',
+        fix: 'Smooth, then stop. The brace needs something to stop; a lunge arrives too fast to be stopped at all.',
+      },
+      {
+        fault: 'Never loading onto the back leg in the first place.',
+        fix: 'If you start with the weight central there is no shift to make. Feel it land on the back leg before anything moves forward.',
+      },
+      {
+        fault: 'Shifting with the shoulders rather than the hips.',
+        fix: 'Hips first. Shoulders leading is the same fault as the arm leading, one link further up.',
+      },
+    ],
+    drill: {
+      name: 'Load, plant, stop',
+      reps: '20 standstill throws exaggerating the load onto the back leg',
+      body:
+        'Twenty standstill drives where you deliberately overload the back leg before moving — more than feels necessary. Then plant and feel the front leg stop you. Exaggerating it is how the feeling becomes findable; it settles back to normal size on its own once you know what you are looking for.',
+    },
+  },
+
+  'choosing-a-driver': {
+    why:
+      'The most common equipment mistake in the sport is throwing a driver faster than your arm. A disc above your speed never reaches the part of its flight where it does anything interesting — it just fades left early for a right-handed backhand, which looks like a form problem and is not. Most amateurs score better with fairway drivers than with distance drivers, all season.',
+    how: [
+      'Fairway drivers are roughly speed 6 to 9. They need less arm, hold a line better and are far more accurate in the woods.',
+      'Distance drivers are roughly speed 10 to 14. They need real arm speed to fly as designed.',
+      'A reasonable gate: until you are throwing a fairway driver around 300 feet reliably, a distance driver is not adding anything.',
+      'Judge a disc by whether it finishes where you aimed, not by how far it went on your best throw.',
+      'If a disc fades hard left early for a right-handed backhand no matter how you throw it, it is too fast for you right now.',
+    ],
+    wrong: [
+      {
+        fault: 'Buying speed 13 drivers because that is what the professionals throw.',
+        fix: 'They are throwing them at speeds you are not yet producing. The same disc in your hand is a completely different flight.',
+      },
+      {
+        fault: 'Blaming your form for a disc that is simply too fast.',
+        fix: 'Try the same shot with a fairway driver. If the problem disappears, it was the disc.',
+      },
+      {
+        fault: 'Carrying five distance drivers and one fairway.',
+        fix: 'Invert it. Most of your drives on most courses want control, and the driver you throw best is the one you should own several of.',
+      },
+    ],
+    drill: {
+      name: 'Fairway versus distance',
+      reps: '15 throws with a fairway driver and 15 with a distance driver',
+      body:
+        'Same target, same day, fifteen of each. Pace out both groups and note not just the distance but how wide the spread is. Most players find the fairway group is barely shorter and dramatically tighter — and the tightness is what a scorecard measures.',
+    },
+  },
+
+  'distance-control': {
+    why:
+      'Almost every hole asks for a specific distance rather than a maximum. A player who can throw 300 feet but only one distance is worse off than one who throws 250 on demand, because the second one can leave themselves a putt and the first one is always scrambling. This is the skill that turns driving ability into scores.',
+    how: [
+      'Change the disc before you change the throw. A slower disc at full form is far more repeatable than your driver at a guessed effort.',
+      'When you must power down, keep the same form and shorten the reach back rather than slowing the arm. Slowing the arm changes the nose angle and the spin.',
+      'Learn three distances properly: your comfortable putter distance, your comfortable midrange distance and your comfortable fairway distance. Those three cover most holes.',
+      'Pace out the distances you actually achieve, rather than estimating them. Nearly everybody overestimates.',
+      'Pick the shot that leaves the next one, not the one that gets furthest down the fairway.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing every shot at maximum and taking whatever distance arrives.',
+        fix: 'Pick a target distance before you throw. A drive that goes 40 feet past into trouble is not a good drive.',
+      },
+      {
+        fault: 'Powering down by slowing the arm, which changes nose angle and spin at the same time.',
+        fix: 'Shorten the reach back and keep the arm speed. One variable instead of three.',
+      },
+      {
+        fault: 'Guessing your own distances.',
+        fix: 'Pace them out once. The gap between what people think they throw and what they throw is routinely 50 feet.',
+      },
+    ],
+    drill: {
+      name: 'Hit the number',
+      reps: '10 throws each at 150, 200 and 250 ft (30 total)',
+      body:
+        'Mark three distances in a field and throw ten at each, aiming to land ON the mark rather than past it. Score how many finish within twenty feet. This is tedious and it is the single most score-reducing field session available — most players are shocked at how poor their control is at distances they thought were easy.',
+    },
+  },
+
+  // ───────────────────────────── APPROACH ─────────────────────────────
+  'scoring-zone': {
+    why:
+      'Inside about 150 feet is where rounds are decided, and it is the part of the game amateurs practise least and professionals practise most. Getting up and down from here — one throw to the circle, one putt — is the difference between par and bogey on holes where the drive went fine. A big drive that leaves a bad approach has saved nothing.',
+    how: [
+      'Pick a landing spot, not "near the basket". Name the patch of ground you want the disc to finish on.',
+      'Choose the spot that leaves the putt you are best at, which for most people is straight and uphill rather than sidehill or downhill.',
+      'Favour the side away from trouble. A shot that finishes 25 feet short on the safe side beats one that finishes 10 feet away over a bank.',
+      'Use the slowest disc that will get there. A putter or midrange lands softer and stays where it lands.',
+      'Account for what happens AFTER it lands — slope, skip, wet grass. Where it stops is the only thing that matters.',
+    ],
+    wrong: [
+      {
+        fault: 'Aiming at the basket and accepting wherever it ends up.',
+        fix: 'Aim at a spot. Aiming at a basket means a miss can go anywhere; aiming at a spot means a miss is near that spot.',
+      },
+      {
+        fault: 'Taking the aggressive line when a miss leaves a 40-foot comeback.',
+        fix: 'Weigh the gain against the cost of the likely miss, not against the cost of the perfect shot.',
+      },
+      {
+        fault: 'Throwing a driver from 150 feet because it is in your hand.',
+        fix: 'A putter or midrange from here lands softer and stops. Drivers skip, and skips end up anywhere.',
+      },
+      {
+        fault: 'Practising drives for an hour and approaches for five minutes.',
+        fix: 'Invert the ratio. This is where the strokes are, and it is the cheapest part of the game to practise.',
+      },
+    ],
+    drill: {
+      name: 'Up and down',
+      reps: '10 approaches from 120 ft, then putt each one out',
+      body:
+        'Throw an approach from 120 feet, walk to it, and putt it out. Score how many times you get down in two. Ten repetitions takes twenty minutes and tells you more about your scoring than any amount of distance work. Target is seven out of ten before you move further back.',
+    },
+  },
+
+  'touch-approaches': {
+    why:
+      'The approach that finishes nearest is usually not the one thrown hardest at the basket — it is the one that lands dead and stays. A disc that arrives flat and slow stops where it lands; one that arrives fast skips, and a skip past the basket turns a 15-foot putt into a 40-foot one.',
+    how: [
+      'Use a putter or a midrange. Their slow speed is exactly what makes them land softly.',
+      'Throw with easy, smooth power — this is a shot where effort actively hurts.',
+      'Let the disc arrive slightly nose-up so it stalls and falls rather than driving forward. This is the one shot where nose-up is correct.',
+      'Throw it on a line that lands beyond the basket only if the ground behind is safe. Otherwise land it short and let it finish.',
+      'Watch the ground. Wet grass stops a disc dead; hard-packed dirt sends it another 20 feet.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing hard and relying on the basket to stop the disc.',
+        fix: 'Baskets reject far more than they catch. Throw to land, not to hit.',
+      },
+      {
+        fault: 'Using a driver, which arrives fast and skips.',
+        fix: 'Slowest disc that reaches. The whole point of the shot is a soft arrival.',
+      },
+      {
+        fault: 'Ignoring the ground conditions.',
+        fix: 'Look at where it will land before you choose the shot. The same throw finishes 20 feet apart on wet and dry ground.',
+      },
+    ],
+    drill: {
+      name: 'Land it dead',
+      reps: '20 approaches from 100 ft, scoring where it STOPS',
+      body:
+        'Twenty throws from 100 feet, and measure where each disc comes to rest rather than where it lands. Count how many finish inside 15 feet. You will find the soft, floaty ones win comfortably over the ones thrown at the chains, which is the lesson and is surprisingly hard to believe until you have counted.',
+    },
+  },
+
+  'run-vs-lay-up': {
+    why:
+      'This is a decision, not a skill, and it is probably the cheapest stroke saving available to an intermediate player. The question is never "can I make this?" — it is "what does a miss cost, and how often will I miss?" Answering that honestly turns a lot of bogeys into pars at no physical cost at all.',
+    how: [
+      'Ask what happens to a miss. If it runs 30 feet past, or into OB, or down a slope, that is the real price of the attempt.',
+      'Be honest about your make rate from that distance. Use the number from your practice sessions, not your memory of the one you made.',
+      'Lay up to the distance you putt best from, which for most people is 15 to 20 feet and straight on.',
+      'Run it when the miss is cheap — flat ground behind, nothing in play, a comeback you would take anyway.',
+      'Decide before you step in, and then execute without revisiting it.',
+    ],
+    wrong: [
+      {
+        fault: 'Running everything because laying up feels passive.',
+        fix: 'Laying up is a shot, not a surrender. The scorecard does not record how it felt.',
+      },
+      {
+        fault: 'Judging the attempt by the best case rather than the likely one.',
+        fix: 'Multiply: how often you make it against what the miss costs. That arithmetic almost always argues for the lay-up outside the circle.',
+      },
+      {
+        fault: 'Laying up to a random distance rather than your favourite one.',
+        fix: 'A lay-up should finish at the distance you practise most. Otherwise you have traded one hard putt for another.',
+      },
+      {
+        fault: 'Changing your mind mid-stroke.',
+        fix: 'A half-committed run is the worst of both. Decide behind the marker and then commit entirely.',
+      },
+    ],
+    drill: {
+      name: 'Count the cost',
+      reps: '20 putts from 45 ft, recording the comeback distance on every miss',
+      body:
+        'Twenty putts from 45 feet. For each miss, measure how far the comeback is. Now you have two real numbers — your make rate and your average miss — and they are what the decision should be made on. Most players discover their average miss is far longer than they believed.',
+    },
+  },
+
+  'approach-angles': {
+    why:
+      'A pin tucked behind a tree, on a slope, or against OB cannot be attacked straight. Having the three angles available for approach shots — hyzer, flat and anhyzer — means you can reach pins that otherwise force a lay-up, and more importantly it means you can pick the angle whose MISS finishes somewhere safe.',
+    how: [
+      'Hyzer: fades in and lands hard, which stops it quickly. Best when you need the disc to drop and stay, or to come in from the left for a right-handed backhand.',
+      'Flat: the straightest line, and the most predictable distance. Use it when the path is open.',
+      'Anhyzer: curves right for a right-handed backhand, which opens up pins behind a guardian on that side.',
+      'Choose the angle by where a MISS goes, not only by where a make goes.',
+      'With approaches you can use a putter or midrange for all three, which keeps the distance manageable while you shape it.',
+    ],
+    wrong: [
+      {
+        fault: 'Using the same angle for every approach because it is the comfortable one.',
+        fix: 'Learn the other two in a field. A single angle means every pin that does not suit it costs you a stroke.',
+      },
+      {
+        fault: 'Picking the angle purely by where the basket is.',
+        fix: 'Pick it by where the trouble is. The shape that keeps a miss out of trouble is usually the right one.',
+      },
+      {
+        fault: 'Shaping with a driver because it holds the angle better.',
+        fix: 'It also lands faster and skips further. Shape it with a putter or midrange and accept a slightly less extreme curve.',
+      },
+    ],
+    drill: {
+      name: 'Three ways in',
+      reps: '10 approaches each on hyzer, flat and anhyzer from 120 ft (30 total)',
+      body:
+        'One basket, one midrange, thirty approaches split between the three angles. Note where each group finishes and, importantly, where the misses in each group finish. That second pattern is the information you will actually use when picking a shape on the course.',
+    },
+  },
+
+  'scramble-approaches': {
+    why:
+      'Everybody ends up behind a tree. The stroke is already spent — what decides whether it costs one or three is the next decision. The single most expensive habit in amateur disc golf is trying to rescue a bad position with a heroic shot and finding a worse one.',
+    how: [
+      'First, get back into play. A clean lie in the fairway is worth more than 40 extra feet from a bad one.',
+      'Take the lowest, safest line out. Low shots hit fewer things and roll predictably.',
+      'Look for the widest gap, even if it is backwards or sideways. A sideways throw to a clean lie is often the cheapest shot available.',
+      'Use a disc you can control from an awkward stance — a putter or midrange, rarely a driver.',
+      'Accept the bogey when it is the cheap option. Trying to save par from trouble is how a 4 becomes a 7.',
+    ],
+    wrong: [
+      {
+        fault: 'Attempting the gap that saves par when you would hit it one time in four.',
+        fix: 'Count it honestly. Three times in four you are now in worse trouble with a stroke gone.',
+      },
+      {
+        fault: 'Throwing hard out of trouble.',
+        fix: 'Power magnifies whatever goes wrong, and from an awkward stance something usually does. Smooth and low.',
+      },
+      {
+        fault: 'Refusing to throw sideways or backwards.',
+        fix: 'The scorecard has no column for direction. Clean lie, next throw, move on.',
+      },
+    ],
+    drill: {
+      name: 'Deliberately bad lies',
+      reps: '15 throws from lies you place on purpose',
+      body:
+        'Walk into the trees and drop a disc somewhere genuinely awkward — behind a trunk, in a kneeling lie, with a low ceiling. Play it out. Fifteen of these teaches you what you can actually do from bad positions, which is the knowledge the decision on the course depends on.',
+    },
+  },
+
+  'roller-approaches': {
+    why:
+      'The approach roller is for the situation where there is no air route at all: a low ceiling, a line of trunks, a corner nothing flies around. It is a shorter, more controlled version of the driving roller, and because the distance is short it is far more precise than people expect once the angle is learned.',
+    how: [
+      'Use an understable disc — a worn midrange or putter is ideal for approach distance.',
+      'Release on a steep anhyzer with a downward angle so the disc meets the ground on edge.',
+      'Aim at the patch of ground where you want the roll to start, and plan the roll from there.',
+      'Keep the power low. An approach roller needs direction, not speed, and a fast roller runs past.',
+      'Check the ground first. Firm and short grass only — a roller dies instantly in the rough.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing it as hard as a driving roller.',
+        fix: 'The roll carries most of the distance. Gentle release, correct angle, let it run.',
+      },
+      {
+        fault: 'Attempting it on soft or long ground.',
+        fix: 'Look at the surface before committing. If the grass is above your ankle, this shot is not available.',
+      },
+      {
+        fault: 'Forgetting that the disc curves as it slows.',
+        fix: 'A roller falls in the direction it is leaning as it loses speed. Plan for that curve rather than being surprised by it.',
+      },
+    ],
+    drill: {
+      name: 'Roll to a spot',
+      reps: '15 approach rollers at a target 100 ft away',
+      body:
+        'Fifteen rollers at a target on firm, short ground, aiming to stop ON it rather than near it. You are learning two things at once: the release angle that makes the disc stand up, and how far it runs after it does. Both are specific to your disc and worth knowing precisely.',
+    },
+  },
+
+  'long-approaches': {
+    why:
+      'From 200 feet and out you are not going to hit the chains often, so the shot is about leaving a putt rather than making one. The difference between a good and a bad long approach is rarely distance — it is which side of the basket the disc finishes on, and whether the putt it leaves is one you want.',
+    how: [
+      'Pick a disc that finishes predictably at that distance for you. Predictable beats long every time on this shot.',
+      'Aim to leave an uphill, straight-on putt. Downhill and sidehill putts from the same distance are measurably harder.',
+      'Favour the safe side of any trouble, even at the cost of twenty feet.',
+      'Account for the landing: a disc arriving at 200 feet is still moving, so plan the skip or the roll out.',
+      'Accept two throws from here as a good outcome. Trying to make it is how you end up three-putting from a bad side.',
+    ],
+    wrong: [
+      {
+        fault: 'Attacking the pin from 220 feet.',
+        fix: 'Your make rate from there is near zero and the misses are expensive. Play for the best two-throw outcome.',
+      },
+      {
+        fault: 'Choosing the disc that goes furthest rather than the one that finishes most reliably.',
+        fix: 'You know the distance you need. Pick for predictability and spend the choice on the finish.',
+      },
+      {
+        fault: 'Ignoring which side the putt will come from.',
+        fix: 'Before you throw, decide which side you would rather putt from, and aim so the miss goes there.',
+      },
+    ],
+    drill: {
+      name: 'Leave the putt',
+      reps: '10 approaches from 220 ft, scoring the putt they leave',
+      body:
+        'Ten throws from 220 feet. Score each one not on distance from the basket but on whether it left a putt you would be happy with — uphill, straight, inside 25 feet. Count the happy ones. Seven out of ten is a strong number and most people start well below it.',
+    },
+  },
+
+  'approach-routine': {
+    why:
+      'Approaches get practised like drives and played like putts: one shot, one chance, consequence attached. Most players have a careful routine for putting and none at all for the shot immediately before it — which is why approach distance is so inconsistent compared with putting distance.',
+    how: [
+      'Stand behind your lie and decide the landing spot, the disc and the shape before you step in.',
+      'Rehearse the exact throw once, at the pace you intend to use. Not a vague practice swing — the actual shot.',
+      'Step in the same way each time, the same foot first.',
+      'Take one breath, then throw. No pause between the rehearsal and the shot.',
+      'Use it on every approach, including the easy ones, so it is automatic when the shot matters.',
+    ],
+    wrong: [
+      {
+        fault: 'Walking up and throwing because the shot looks straightforward.',
+        fix: 'The easy ones are where the routine gets built. If you only use it under pressure you have never practised it under pressure.',
+      },
+      {
+        fault: 'A rehearsal at a different speed from the real throw.',
+        fix: 'Rehearse at the pace you will use. A gentle practice motion before a hard throw rehearses the wrong shot.',
+      },
+      {
+        fault: 'Deciding the disc after stepping in.',
+        fix: 'All decisions happen behind the lie. Once you are in your stance there is nothing left but to throw it.',
+      },
+    ],
+    drill: {
+      name: 'Routine every one',
+      reps: '20 approaches from mixed distances, full routine on each',
+      body:
+        'Twenty approaches from distances you pick at random between 80 and 200 feet, one disc at a time, with the full routine on every single one — including walking back and resetting. It is slow. It is also the closest thing to an actual round that field work ever gets, and it transfers far better than throwing twenty from one spot.',
+    },
+  },
+
+  // ───────────────────────────── FOREHAND ─────────────────────────────
+  // Direction note: a right-handed FOREHAND spins the opposite way to a
+  // right-handed backhand, so its turn is to the LEFT and its fade is to the
+  // RIGHT -- the mirror image. Every left/right claim below says which throw
+  // it is talking about, because getting this backwards is the single easiest
+  // way to teach somebody the wrong shot.
+  'forehand-grip': {
+    why:
+      'The forehand lives or dies on the grip, more than the backhand does. Two fingers are holding a disc that wants to leave early, and the wrist has to stay firm enough to deliver spin while the arm stays loose. Get the grip wrong and no amount of work on the mechanics will stop the disc wobbling out of your hand.',
+    how: [
+      'Put your index and middle finger under the disc with the middle finger pressed against the inside of the rim. The thumb sits on top.',
+      'Choose between the power grip, with both fingers against the rim side by side, and the stacked grip, with the index resting on top of the middle finger. Both are used at the top level.',
+      'Keep the wrist firm. Unlike the backhand, the forehand wants a wrist that holds its shape and then snaps, not one that stays loose throughout.',
+      'Keep the forearm and shoulder relaxed. Tension there is what produces the arm-only forehand that wobbles.',
+      'Rest the disc against the pad of the thumb and the inside of the rim so it is genuinely supported, not pinched.',
+    ],
+    wrong: [
+      {
+        fault: 'Holding the disc with the fingers away from the rim, out in the middle of the plate.',
+        fix: 'Push the middle finger right up against the inside of the rim. That contact is what transfers spin.',
+      },
+      {
+        fault: 'A loose wrist that collapses at release, producing wobble.',
+        fix: 'Firm wrist, relaxed arm. This is the reverse of the backhand and it is why backhand players find the forehand awkward at first.',
+      },
+      {
+        fault: 'Squeezing with the whole arm.',
+        fix: 'The grip is in the fingers and the wrist. A tense shoulder makes the arm lead, which is the main cause of a bad forehand.',
+      },
+    ],
+    drill: {
+      name: 'Grip and flick',
+      reps: '30 short flicks from 30 ft, watching only for wobble',
+      body:
+        'Short, easy flicks at a target thirty feet away, with no attempt at distance at all. Watch the first few feet of each flight. A clean forehand leaves flat and quiet; a bad grip shows as a visible wobble immediately. Fix it here, at thirty feet, where nothing else can be blamed.',
+    },
+  },
+
+  'forehand-mechanics': {
+    why:
+      'The forehand is a shorter, quicker motion than the backhand and it rewards completely different things. People who throw a good backhand often throw a bad forehand for one reason: they try to generate it with the arm, because the arm is right there and the motion is short. The power comes from the same place it always does — the ground.',
+    how: [
+      'Set up side-on or slightly open to the target, weight loaded on the back foot.',
+      'Lead with the elbow, keeping the disc close to your body as the arm comes forward.',
+      'Let the disc trail behind the hand. The hand goes first and the disc follows, which is what loads the wrist.',
+      'Extend out in front of your body and snap the wrist at release. The snap is the spin, and the spin is the shot.',
+      'Keep the disc flat. A forehand released with the outside edge down will turn over to the left and roll for a right-handed thrower.',
+      'Follow through across your body and let the weight finish on the front foot.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing it entirely with the arm and shoulder, like skipping a stone.',
+        fix: 'Use the legs and rotation. The forehand is short, which makes it feel like an arm throw, and that feeling is the trap.',
+      },
+      {
+        fault: 'Releasing beside or behind the body rather than out in front.',
+        fix: 'Extend first, release second. A late release sends the disc low and left for a right-handed forehand.',
+      },
+      {
+        fault: 'Letting the outside edge drop at release, so the disc turns over.',
+        fix: 'Keep it flat or slightly on hyzer. Most forehand turnover is a release angle problem, not a disc problem.',
+      },
+      {
+        fault: 'Rushing the whole motion because it is short.',
+        fix: 'It is quick, not rushed. The sequence still has to happen in order: legs, rotation, elbow, hand, wrist.',
+      },
+    ],
+    drill: {
+      name: 'Standstill flicks',
+      reps: '25 standstill forehands at 60% effort',
+      body:
+        'No footwork, no run-up, sixty percent effort, twenty-five throws. You are building the shape of the motion and the feel of the wrist snap without speed hiding either. Add power only once twenty-five in a row come out flat and clean, which usually takes a few sessions rather than a few throws.',
+    },
+  },
+
+  'forehand-distance': {
+    why:
+      'Most players’ forehands top out well short of their backhands, and conclude the forehand is simply a shorter throw. It is not — it is a throw they are making with their arm. Forehand distance comes from exactly the same chain as backhand distance, and the players who throw both a long way are using their legs for both.',
+    how: [
+      'Use a run-up or at least a crow hop. The forehand benefits from momentum just as much as the backhand does.',
+      'Load the back leg, drive the hips, plant and brace. The lower half does not know which throw you are making.',
+      'Let the disc trail further behind the hand than feels natural. The longer the trail, the more the wrist loads.',
+      'Snap late and hard. Everything before the snap is set-up; the snap is where distance actually appears.',
+      'Keep the disc flat or very slightly hyzer. Forehands lose more distance to a turned-over release than to anything else.',
+    ],
+    wrong: [
+      {
+        fault: 'Adding effort in the arm and shoulder.',
+        fix: 'That produces a faster arm and no more spin, so the disc flies badly and not far. The legs are where the distance is.',
+      },
+      {
+        fault: 'Throwing an understable disc for extra distance, which turns over and rolls.',
+        fix: 'Forehands need more stable discs than backhands at the same power, because the snap puts a lot of spin on. Go more overstable than feels right.',
+      },
+      {
+        fault: 'Short-arming it — releasing close to the body to keep control.',
+        fix: 'Extend out front. Distance and accuracy both live in the extension.',
+      },
+      {
+        fault: 'Working on forehand distance before the motion is clean.',
+        fix: 'A wobbling forehand does not get longer with power, it gets worse. Clean first, then long.',
+      },
+    ],
+    drill: {
+      name: 'Crow hop and brace',
+      reps: '20 forehands with a crow hop, 20 without, same disc',
+      body:
+        'Twenty with a crow hop and twenty standstill, same disc, same target, and pace both groups. If the crow-hop group is not clearly longer, your lower half is not involved in the throw — which is the finding, and it is the thing to work on before anything else.',
+    },
+  },
+
+  'forehand-utility': {
+    why:
+      'Overheads — the tomahawk and the thumber — are the shots for when nothing goes forward: a wall of trees with sky above, a dogleg with no line, a lie where you need the disc to come down almost vertically. They are also the shots most likely to hurt you if thrown often, so they are tools for specific holes rather than part of a regular rotation.',
+    how: [
+      'Tomahawk: hold the disc with a forehand grip and throw it vertically, overhand, like a baseball. It climbs, turns over in flight and comes down steeply.',
+      'Thumber: put your thumb inside the rim and throw it overhand with the disc vertical. It flies a similar shape with a different release.',
+      'Use an overstable disc for both. An understable one turns over too early and dives before it has got anywhere.',
+      'Learn which way YOUR overhead finishes and throw the same disc every time. The finish depends on the disc, the release angle and your speed, so the only reliable answer is the one you have observed.',
+      'Aim high. Overheads need height to work, and a flat one is just a bad throw.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing overheads regularly because they are fun.',
+        fix: 'They put real strain on the shoulder and elbow. Keep them for the holes that genuinely have no other shot.',
+      },
+      {
+        fault: 'Using an understable disc.',
+        fix: 'Overstable, and the beatier the worse. An overhead relies on the disc resisting the turn long enough to get up and over.',
+      },
+      {
+        fault: 'Assuming an overhead will finish the way somebody described online.',
+        fix: 'Go and throw twenty in a field and watch. Yours finishes where yours finishes, and that is the only version that helps you on a course.',
+      },
+    ],
+    drill: {
+      name: 'Learn your own finish',
+      reps: '20 overheads in an open field with one disc',
+      body:
+        'Twenty tomahawks with one overstable disc, in a field, with nothing in the way. Watch where each one finishes relative to your aim and how steeply it comes down. You are not practising accuracy yet — you are collecting the one piece of information that makes the shot usable, which is what your overhead actually does.',
+    },
+  },
+
+  'forehand-rollers': {
+    why:
+      'A forehand roller gets a disc down a line a backhand roller cannot, and because the forehand curves the other way it opens up the opposite side of the course. For a right-handed thrower it is the natural roller when the ground runs away to the left, where a backhand roller would be fighting its own lean.',
+    how: [
+      'Use an understable disc. As with every roller, a stable one will not turn into the roll.',
+      'Release with the outside edge dropped — the forehand equivalent of a steep anhyzer — and angled downward so the disc meets the ground on its edge.',
+      'Throw at modest power. The roll supplies the distance, and a fast roller is an uncontrolled one.',
+      'Aim at the ground where you want the roll to start, not at the target.',
+      'Expect it to curve as it slows, in the direction it is leaning. Learn which way yours goes and plan for it.',
+    ],
+    wrong: [
+      {
+        fault: 'Using the same disc as your air forehand.',
+        fix: 'That disc is almost certainly too stable to roll. Reach for the most understable thing in your bag.',
+      },
+      {
+        fault: 'Too shallow an angle, so the disc skips and lands flat.',
+        fix: 'Steeper. A roller that fails has nearly always failed because the release was too timid.',
+      },
+      {
+        fault: 'Throwing one on soft ground or in long grass.',
+        fix: 'Check the surface first. Rollers need firm, short ground or they stop within a few feet.',
+      },
+    ],
+    drill: {
+      name: 'Forehand roller angle',
+      reps: '15 forehand rollers on firm open ground',
+      body:
+        'Fifteen rollers with one understable disc, varying only the steepness. You are hunting for the angle where the disc stands up and runs cleanly instead of skipping or flopping. Once found it is repeatable, and it is a shot that will sit unused for weeks and then save two strokes in one round.',
+    },
+  },
+
+  'fixing-your-forehand': {
+    why:
+      'Two faults account for nearly every bad forehand: wobble, and turning over into a roll. They look like different problems and they usually have the same root — not enough spin, which means not enough wrist snap, which usually means the arm is doing the work. Fixing the cause fixes both at once.',
+    how: [
+      'Diagnose wobble first. A disc that leaves the hand oscillating has too little spin; everything else is downstream of that.',
+      'Get the spin from a late, hard wrist snap rather than a faster arm. Slow the arm down deliberately and snap harder.',
+      'Release out in front of your body. A release beside or behind you is both weaker and more likely to turn over.',
+      'Keep the disc flat or slightly hyzer. A dropped outside edge turns the disc over to the left for a right-handed forehand, which is what produces the roll.',
+      'If it still turns over with a clean release, use a more overstable disc. Forehands need more stability than backhands at the same power.',
+    ],
+    wrong: [
+      {
+        fault: 'Treating wobble as a grip problem and only adjusting the fingers.',
+        fix: 'Check the grip once, then look at the wrist. Wobble is a spin problem far more often than a grip problem.',
+      },
+      {
+        fault: 'Fighting a turnover by throwing harder.',
+        fix: 'More arm speed with the same spin turns it over faster. More spin or more stability, not more effort.',
+      },
+      {
+        fault: 'Changing three things at once and not knowing what worked.',
+        fix: 'One change, twenty throws, judge the group. This is the only way to learn anything from a field session.',
+      },
+      {
+        fault: 'Practising the forehand at full power while it is still broken.',
+        fix: 'Sixty percent until it is clean. Power added to a bad forehand produces a worse one, loudly.',
+      },
+    ],
+    drill: {
+      name: 'Spin before speed',
+      reps: '30 throws at 60% with a deliberate wrist snap',
+      body:
+        'Thirty throws at sixty percent effort where the only thing you try to do is snap the wrist hard and late. The disc should come out quiet and flat and not go very far. That is correct — you are separating spin from speed so you can build the first one, and the distance comes back on its own once it is there.',
+    },
+  },
+
+  'backhand-vs-forehand': {
+    why:
+      'These are two different tools and the question is never which is better, it is which the hole wants. Having both means the course stops dictating to you. Having only one means every hole that bends the wrong way costs you something, every single round.',
+    how: [
+      'For a right-handed player, the backhand naturally finishes left and the forehand naturally finishes right. Those two are your default shapes.',
+      'Reach for the forehand when the hole bends right, when you need a quick shot from an awkward stance, or when you cannot turn your back on the target for a backhand run-up.',
+      'Reach for the backhand for distance and for most open holes. For nearly everybody the backhand goes further and holds a line better.',
+      'In tight woods the forehand is often the safer shot simply because it needs less space to throw.',
+      'Build the backhand first if you are starting out. It is the higher ceiling and the more useful of the two.',
+    ],
+    wrong: [
+      {
+        fault: 'Learning only one and shaping every hole around it.',
+        fix: 'A serviceable 200-foot forehand is worth more than another 20 feet of backhand, because it changes which holes are available to you.',
+      },
+      {
+        fault: 'Using the forehand because the backhand feels hard, before either is reliable.',
+        fix: 'Build the backhand first. The forehand is a specialist shot that is easier to produce badly and harder to produce well.',
+      },
+      {
+        fault: 'Throwing a forehand for distance on an open hole out of habit.',
+        fix: 'Compare them honestly in a field. For almost everybody the backhand wins on distance by a clear margin.',
+      },
+    ],
+    drill: {
+      name: 'Both, same target',
+      reps: '15 backhands and 15 forehands at the same target',
+      body:
+        'Same day, same target, fifteen of each. Pace both groups and note the spread as well as the distance. You will end up with two honest numbers, and those numbers — not habit or preference — are what should decide which throw you reach for when a hole could take either.',
+    },
+  },
+
 };
 
 /** True when a lesson has a written body, so callers can fall back to tips. */
