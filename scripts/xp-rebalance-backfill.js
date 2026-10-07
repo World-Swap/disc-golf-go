@@ -6,9 +6,15 @@
  * The rebalance multiplied lesson XP by 10 (10/15/20 -> 100/150/200), the
  * category-complete bonus by 5 (100 -> 500) and the streak bonus by 2 (25 -> 50).
  * Without this, a player who finished fifty lessons last month sits on a tenth
- * of the XP of someone who finishes the same fifty tomorrow, on a shared
- * leaderboard that is about to decide who gets a coupon. The old XP is not
+ * of the XP of someone who finishes the same fifty tomorrow. The old XP is not
  * wrong, it is just denominated in the old currency; this redenominates it.
+ *
+ * WHAT THIS IS NO LONGER ABOUT, and it is most of why it was held: coupons used
+ * to be bought with gold, which came from levels, which came from XP -- so XP
+ * decided who got real merchandise and this was a money question. Since
+ * 2026-10-07 coupons are earned from LESSON COMPLETIONS and nothing else, so XP
+ * no longer reaches the reward path at all. What is left is leaderboard position
+ * and level/gold for the shop. Still the owner's call, but a much smaller one.
  *
  * Only training XP is touched. Check-in and Throw Lab rates were cut or left
  * alone, and nobody is clawed back -- the rebalance makes the library worth
@@ -25,9 +31,10 @@
  * same day -- the two were decided separately and on different grounds.
  * Reconcile pays a debt: XP players were told they had earned. This grants XP
  * nobody is owed, to stop early users sitting on a tenth of what a newcomer
- * earns for the same lessons. That is a fairness call about a leaderboard that
- * is about to gate coupons, and it is the owner's to make, not a repair to
- * apply quietly. Ask before running it.
+ * earns for the same lessons. That was a fairness call about a leaderboard about
+ * to gate coupons; coupons no longer run off XP (see above), so it is now about
+ * leaderboard position and shop gold only. Still the owner's to make, not a
+ * repair to apply quietly. Ask before running it.
  *
  * Nothing is lost by waiting. Verified against a real Postgres on 2026-10-07:
  * this script and the reconcile are order-independent (both sequences land on

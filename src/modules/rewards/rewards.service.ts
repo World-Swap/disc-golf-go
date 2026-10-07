@@ -16,14 +16,20 @@ import { couponEmail } from './coupon-email';
  * including a GPS check-in -- so the supply was not trustworthy and this was the
  * only honest bound. Coupons are earned from LESSONS now, which closes that hole
  * at the source, but this cap stays and is still the number that bounds the
- * cost: 1 a month is 12 a year, $60 per account, whatever anyone completes.
+ * cost: 1 a month is 12 a year, which is a $60 CEILING -- not what anyone earns.
+ * Reaching it needs 12 x LESSONS_PER_COUPON = 396 lessons and the library holds
+ * 163, so the CONTENT binds and this cap is a safety net that currently never
+ * fires. A player who finishes everything earns $20, paced out over four months
+ * by this window, then about $13 a year from new content. Do not quote the $60
+ * as the per-account cost; it was quoted that way for most of a day and it is
+ * three times the real figure.
  * Capping EARNING alone would mean auditing every path and would still miss the
  * next one; capping REDEMPTION bounds
  * the liability at one place no matter which path the gold came from.
  */
 /**
  * How many coupons one account can be ISSUED in a window. This is the real
- * bound on what the programme costs: at 1 a month it is 12 a year, $60 per
+ * bound on what the programme could cost in the worst case: at 1 a month, 12 a year, $60 per
  * account, whatever the gold balance says.
  */
 export const MAX_COUPONS_PER_WINDOW = 1;
