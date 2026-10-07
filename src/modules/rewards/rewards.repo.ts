@@ -13,6 +13,7 @@ export interface CouponRow {
   terms: string;
   face_value_usd: number;
   gold_spent: number;
+  lessons_at_issue: number | null;
   status: string;
   issued_at: Date;
   expires_at: Date;
@@ -22,6 +23,43 @@ export interface CouponRow {
 export function createRewardsRepo(db: Database) {
   return {
     /** FOR UPDATE: the lock that makes a concurrent double-redeem impossible. */
+    /**
+     * Serialise redemptions for one player.
+     *
+     * This used to be lockGold, which locked the row AND returned the balance --
+     * the balance half is gone now that coupons are earned from lessons, but the
+     * LOCK is still needed: without it two concurrent taps both read the same
+     * entitlement and both pass.
+     */
+    async lockPlayer(client: PoolClient, playerId: number): Promise<boolean> {
+      const r = await client.query('SELECT id FROM players WHERE id = $1 FOR UPDATE', [playerId]);
+      return r.rows.length > 0;
+    },
+
+    /** Lessons this player has completed. The basis of coupon entitlement. */
+    async lessonsCompleted(client: PoolClient, playerId: number): Promise<number> {
+      const r = await client.query<{ n: string }>(
+        'SELECT COUNT(*)::text AS n FROM training_completions WHERE player_id = $1',
+        [playerId]
+      );
+      return Number(r.rows[0]?.n ?? 0);
+    },
+
+    /**
+     * Coupons ever issued to this player, voided ones excluded.
+     *
+     * Counted over ALL TIME, not a window: the entitlement is
+     * floor(lessons / LESSONS_PER_COUPON) minus this, so the same lessons can
+     * never pay a second coupon however long ago the first was taken.
+     */
+    async countIssuedEver(client: PoolClient, playerId: number): Promise<number> {
+      const r = await client.query<{ n: string }>(
+        "SELECT COUNT(*)::text AS n FROM coupons WHERE player_id = $1 AND status <> 'void'",
+        [playerId]
+      );
+      return Number(r.rows[0]?.n ?? 0);
+    },
+
     async lockGold(client: PoolClient, playerId: number): Promise<number | null> {
       const r = await client.query<{ gold: number }>('SELECT gold FROM players WHERE id = $1 FOR UPDATE', [playerId]);
       return r.rows[0] ? Number(r.rows[0].gold) : null;
@@ -47,10 +85,12 @@ export function createRewardsRepo(db: Database) {
 
     async insertCoupon(client: PoolClient, c: Omit<CouponRow, 'id' | 'issued_at' | 'redeemed_at' | 'status'>) {
       const r = await client.query<CouponRow>(
-        `INSERT INTO coupons (code, player_id, type_key, kind, title, terms, face_value_usd, gold_spent, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO coupons (code, player_id, type_key, kind, title, terms, face_value_usd,
+                              gold_spent, lessons_at_issue, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
-        [c.code, c.player_id, c.type_key, c.kind, c.title, c.terms, c.face_value_usd, c.gold_spent, c.expires_at]
+        [c.code, c.player_id, c.type_key, c.kind, c.title, c.terms, c.face_value_usd,
+         c.gold_spent, c.lessons_at_issue, c.expires_at]
       );
       return r.rows[0]!;
     },

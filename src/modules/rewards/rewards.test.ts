@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateCouponCode, normaliseCouponCode, couponExpiryFrom, COUPON_VALID_MONTHS } from './coupon-code';
-import { goldOwedForLevel, COUPON_TYPES, couponTypeByKey, LEVEL_UP_GOLD } from './rewards.catalog';
+import { goldOwedForLevel, COUPON_TYPES, couponTypeByKey, LEVEL_UP_GOLD, LESSONS_PER_COUPON } from './rewards.catalog';
 import { goldForLevel } from './level-rewards';
 
 test('codes are unguessable and never collide in bulk', () => {
@@ -65,11 +65,13 @@ test('level gold is a pure function of the level, so it cannot drift', () => {
   }
 });
 
-test('every coupon costs more than one level pays', () => {
-  // A coupon reachable from a single level-up is a coupon farmed by anyone who
-  // can nudge one more level out of the system.
+test('a coupon takes real work, not one lesson', () => {
+  // The old version of this asserted a coupon cost more than one level-up pays,
+  // because coupons were bought with gold. Gold no longer buys them at all --
+  // the equivalent worry is a coupon reachable from a handful of lessons, which
+  // the engagement gate alone would not make expensive enough.
   for (const c of COUPON_TYPES) {
-    assert.ok(c.goldCost > goldForLevel(2), `${c.key} is too cheap at ${c.goldCost}`);
+    assert.ok(c.lessonsRequired >= 20, `${c.key} is too cheap at ${c.lessonsRequired} lessons`);
   }
 });
 
@@ -90,33 +92,40 @@ test('every coupon states its terms in words, not just a number', () => {
   }
 });
 
-test('finishing the whole library is worth exactly $20, as specified', async () => {
-  // The brief: all coupons are $5, and completing the library pays $20. Both
-  // sides of that drift independently -- lesson XP, the level curve, the
-  // milestone gold, the coupon price -- so the RELATIONSHIP is pinned here
-  // rather than any one number. If a rebalance moves any of them, this fails
-  // and someone decides deliberately instead of finding out from a player.
+test('finishing the curated library is worth exactly $20, as specified', async () => {
+  // The brief: all coupons are $5, and completing the library pays $20. This is
+  // much simpler to pin now than it was: the price is in LESSONS, so the chain
+  // no longer runs through lesson XP, the level curve and milestone gold -- four
+  // numbers that each drifted independently and between them made this test's
+  // earlier version a four-step derivation.
   const { LESSONS } = await import('../../db/data/lessons');
-  const { getLevelFromXp } = await import('../progression/level');
-  const { MILESTONE_DEFS } = await import('../training/training.service');
-
-  const lessonXp = (LESSONS as Array<{ xp_reward: number }>).reduce((s, l) => s + Number(l.xp_reward), 0);
-  const categories = new Set((LESSONS as Array<{ category_slug: string }>).map((l) => l.category_slug)).size;
-  const libraryXp = lessonXp + categories * 500 + 50; // + one streak bonus
-  const milestoneGold = (MILESTONE_DEFS as readonly { gold?: number }[]).reduce((s, m) => s + (m.gold ?? 0), 0);
-  const libraryGold = goldOwedForLevel(getLevelFromXp(libraryXp)) + milestoneGold;
+  const curated = (LESSONS as unknown[]).length;
 
   for (const c of COUPON_TYPES) {
     assert.equal(c.faceValueUsd, 5, `${c.key} must be a $5 coupon`);
-    assert.equal(c.goldCost, COUPON_TYPES[0]!.goldCost, 'every coupon costs the same');
+    assert.equal(c.lessonsRequired, COUPON_TYPES[0]!.lessonsRequired, 'every coupon costs the same');
   }
 
-  const coupons = Math.floor(libraryGold / COUPON_TYPES[0]!.goldCost);
-  assert.equal(coupons, 4, `the library buys ${coupons} coupons, not 4 (gold: ${libraryGold})`);
-  assert.equal(coupons * 5, 20, 'the library must be worth $20');
+  const coupons = Math.floor(curated / LESSONS_PER_COUPON);
+  assert.equal(coupons, 4, `${curated} curated lessons earn ${coupons} coupons, not 4`);
+  assert.equal(coupons * 5, 20, 'the curated library must be worth $20');
 
-  // And it must not be able to drift upward with a bit of extra play.
-  const leftover = libraryGold - coupons * COUPON_TYPES[0]!.goldCost;
-  assert.ok(leftover < COUPON_TYPES[0]!.goldCost / 2,
-    `${leftover} gold spare is most of another coupon — ordinary play would tip this past $20`);
+  // It must not be able to drift upward on a lesson or two of ordinary progress.
+  const leftover = curated - coupons * LESSONS_PER_COUPON;
+  assert.ok(leftover < LESSONS_PER_COUPON / 2,
+    `${leftover} lessons spare is most of another coupon — ordinary progress would tip this past $20`);
+});
+
+test('a growing library cannot outrun the payout, because the cap bounds it', async () => {
+  // Generated lessons ADD to the library, so "finish everything" is a moving
+  // target and more content does mean more coupons earned. That is fine and is
+  // bounded elsewhere: issuance is 1 per 30 days, so 12 a year is the ceiling no
+  // matter how many lessons exist. This states the relationship so nobody has to
+  // re-derive it the next time the library grows.
+  const { MAX_COUPONS_PER_WINDOW, COUPON_WINDOW_DAYS } = await import('./rewards.service');
+  const perYear = Math.floor(365 / COUPON_WINDOW_DAYS) * MAX_COUPONS_PER_WINDOW;
+  const lessonsForAYearOfCoupons = perYear * LESSONS_PER_COUPON;
+  assert.ok(lessonsForAYearOfCoupons > 300,
+    `${lessonsForAYearOfCoupons} lessons would exhaust a year's coupons — that is reachable, raise the price`);
+  assert.ok(perYear * 5 <= 60, `$${perYear * 5} a year per account`);
 });

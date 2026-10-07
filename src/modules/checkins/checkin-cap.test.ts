@@ -77,8 +77,15 @@ test('the unrewarded check-in still counts for everything else', () => {
 test('the XP path was the bigger half, which is why both are capped', () => {
   // Capping gold alone would have left check-in XP -> level -> level gold open.
   const xp = 1532 * (XP_EVENTS.checkin_new_course as number);
-  assert.ok(goldOwedForLevel(getLevelFromXp(xp)) > Math.min(...COUPON_TYPES.map((c) => c.goldCost)),
-    'uncapped check-in XP alone must still be worth more than a coupon, or this test is pointless');
+  // Coupons are no longer bought with gold, so this cannot be stated in coupons.
+  // State it as the LEVEL instead, which is the mechanism the whole test is
+  // about (check-in XP -> level -> level gold) and does not move when gold is
+  // repriced. Measured: 459,600 XP is level 61 and 5,600 gold -- the first
+  // rewrite of this line guessed "> 10,000 gold" and was nearly 2x out, which
+  // is what asserting a number nobody measured looks like.
+  const level = getLevelFromXp(xp);
+  assert.ok(level > 50, `uncapped check-in XP reaches level ${level}; if that is low this test is pointless`);
+  assert.ok(goldOwedForLevel(level) > 5_000, `and ${goldOwedForLevel(level)} gold`);
 });
 
 test('badge gold stays a one-off ceiling, which is why it is exempt from the cap', async () => {
@@ -95,7 +102,9 @@ test('badge gold stays a one-off ceiling, which is why it is exempt from the cap
   const defs = BADGE_DEFINITIONS as Record<string, { tiers: Record<string, unknown> }>;
   const unlocks = Object.values(defs).reduce((n, b) => n + Object.keys(b.tiers).length, 0);
   const lifetimeMax = unlocks * (GOLD_EVENTS.badge_unlock as number);
-  const cheapest = Math.min(...COUPON_TYPES.map((c) => c.goldCost));
+  // Stated in gold against the level-reward curve rather than in coupons, since
+  // badge gold cannot buy a coupon any more.
+  const cheapest = 350;
   // The exemption's reasoning is that this is earn-once and bounded, not that it
   // is small: a tier unlocks once and never again. 1,700 gold is $24 across the
   // lifetime of an account, which is acceptable -- but it must not GROW, so the

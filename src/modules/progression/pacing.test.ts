@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { XP_EVENTS, GOLD_EVENTS } from './events';
 import { DAILY_CHALLENGE_MAX_GOLD } from '../story/daily-challenge';
 import { MAX_REWARDED_REFERRALS } from '../referrals/referrals.service';
-import { COUPON_GOLD_COST, COUPON_VALUE_USD } from '../rewards/rewards.catalog';
+import { COUPON_VALUE_USD } from '../rewards/rewards.catalog';
 import { LESSONS } from '../../db/data/lessons';
 
 const X = XP_EVENTS as Record<string, number>;
@@ -56,9 +56,10 @@ test('referral gold is capped per account, and the friend bonus is not', () => {
   const bonusAt = src.indexOf('grantGold(friendId, FRIEND_BONUS_GOLD)');
   assert.ok(bonusAt > loopAt && !/payReferrer[\s\S]{0,120}grantGold\(friendId/.test(src),
     'the friend bonus must not be behind the referrer cap');
+  // No longer expressed in dollars: referral gold cannot buy a coupon, so its
+  // ceiling is a shop-and-vault number now, not a liability.
   const ceiling = MAX_REWARDED_REFERRALS * 200;
-  assert.ok(ceiling <= 2500,
-    `referrals top out at ${ceiling} gold ($${(ceiling / COUPON_GOLD_COST * COUPON_VALUE_USD).toFixed(0)})`);
+  assert.ok(ceiling <= 2500, `referrals top out at ${ceiling} gold`);
 });
 
 test('a referral past the cap is still recorded, so it cannot be re-paid later', () => {

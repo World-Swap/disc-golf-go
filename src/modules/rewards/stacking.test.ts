@@ -16,7 +16,7 @@ import {
   COUPON_WINDOW_DAYS,
   MAX_COUPONS_PER_VISIT,
 } from './rewards.service';
-import { COUPON_TYPES, COUPON_GOLD_COST, COUPON_VALUE_USD } from './rewards.catalog';
+import { COUPON_TYPES, LESSONS_PER_COUPON, COUPON_VALUE_USD } from './rewards.catalog';
 
 const SRC = readFileSync(join(__dirname, 'rewards.service.ts'), 'utf8');
 
@@ -76,10 +76,41 @@ test('both rules are on the coupon itself, because that is all a player holds', 
   }
 });
 
-test('gold earned now dwarfs gold spendable, so the cap does the work', () => {
-  // Not a failure, a statement of where the limit lives: at 12 coupons a year
-  // the price per coupon barely matters, because the window runs out long
-  // before the balance does.
-  const spendableYr = 12 * COUPON_GOLD_COST;
-  assert.ok(spendableYr <= 4200, `${spendableYr} gold a year is redeemable`);
+test('the two limits together, stated once so nobody re-derives them', () => {
+  // Coupons are earned from lessons and capped at one a month, so the two
+  // numbers that matter are independent: lessons decide WHETHER you qualify,
+  // the window decides HOW FAST you can take what you qualify for.
+  const perYear = 12 * MAX_COUPONS_PER_WINDOW;
+  assert.equal(perYear, 12);
+  assert.ok(perYear * COUPON_VALUE_USD <= 60, 'the yearly cost per account');
+  // A year of coupons needs this many lessons, which is more than the library
+  // holds -- so the window, not the content, is the binding limit.
+  assert.ok(perYear * LESSONS_PER_COUPON > 300);
+});
+
+test('nothing on the coupon path reads or moves gold', () => {
+  // The structural half of pricing coupons in lessons. Without this the next
+  // person to touch redeem() can quietly reintroduce a gold check, and the two
+  // most spoofable sources in the app (a GPS check-in and a Throw Lab round)
+  // would buy real merchandise again. Proved end to end against a real
+  // Postgres: 999,999 gold and level 61 with 0 lessons is refused.
+  const svc = readFileSync(join(__dirname, 'rewards.service.ts'), 'utf8');
+  const redeem = svc.slice(svc.indexOf('async redeem('), svc.indexOf('async lookup('));
+  assert.doesNotMatch(redeem, /lockGold|spendGold/, 'redeem must not touch gold');
+  assert.doesNotMatch(redeem, /Not enough gold/, 'there is no balance to be short of');
+  assert.match(redeem, /lessonsCompleted/, 'the entitlement is lessons');
+  assert.match(redeem, /countIssuedEver/, 'and it subtracts what was already issued');
+  // The lock survived the move off gold and must stay: without it two taps both
+  // read the same unclaimed entitlement.
+  assert.match(redeem, /lockPlayer/, 'the row lock must still be taken');
+  const lockAt = redeem.indexOf('lockPlayer');
+  assert.ok(redeem.indexOf('lessonsCompleted') > lockAt, 'the entitlement is read UNDER the lock');
+});
+
+test('the rewards page prices in lessons, not gold', () => {
+  // The page used to read /players/me purely for the balance. If gold comes back
+  // into this page it is a sign the pricing has drifted back.
+  const html = readFileSync(join(__dirname, '../../../web/rewards.html'), 'utf8');
+  assert.doesNotMatch(html, /gold_cost/, 'the page must not price in gold');
+  assert.match(html, /lessons_required|lessons_completed/, 'it must price in lessons');
 });

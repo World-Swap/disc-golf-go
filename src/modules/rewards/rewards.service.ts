@@ -1,22 +1,24 @@
-// src/modules/rewards/rewards.service.ts — spend gold, get a coupon, get an email.
+// src/modules/rewards/rewards.service.ts — finish lessons, earn a coupon, get an email.
 
 import type { Database } from '../../db/types';
 import { withTransaction } from '../../db/pool';
 import { AppError, badRequest, notFound } from '../../http/errors';
 import { sendEmail as defaultSendEmail, type SendEmail } from '../../lib/email';
 import { createRewardsRepo, type RewardsRepo, type CouponRow } from './rewards.repo';
-import { COUPON_TYPES, couponTypeByKey, REWARDS_ENABLED } from './rewards.catalog';
+import { COUPON_TYPES, couponTypeByKey, REWARDS_ENABLED, LESSONS_PER_COUPON } from './rewards.catalog';
 import { generateCouponCode, normaliseCouponCode, couponExpiryFrom, COUPON_VALID_MONTHS } from './coupon-code';
 import { couponEmail } from './coupon-email';
 
 /**
  * A ceiling on what one account can take OUT, regardless of how gold got in.
  *
- * This exists because the gold supply is not trustworthy enough to be the only
- * limit. Check-in gold is uncapped and there are 1,532 courses, so a spoofed
- * GPS track is worth 1,532 x 25 = 38,300 gold -- about 127 of the cheapest
- * coupon, which is real merchandise. Capping EARNING would mean auditing eight
- * separate paths and would still miss the next one; capping REDEMPTION bounds
+ * It was written when coupons were bought with GOLD, and gold had eight sources
+ * including a GPS check-in -- so the supply was not trustworthy and this was the
+ * only honest bound. Coupons are earned from LESSONS now, which closes that hole
+ * at the source, but this cap stays and is still the number that bounds the
+ * cost: 1 a month is 12 a year, $60 per account, whatever anyone completes.
+ * Capping EARNING alone would mean auditing every path and would still miss the
+ * next one; capping REDEMPTION bounds
  * the liability at one place no matter which path the gold came from.
  */
 /**
@@ -68,14 +70,35 @@ export function createRewardsService({
           kind: c.kind,
           title: c.title,
           terms: c.terms,
-          gold_cost: c.goldCost,
+          lessons_required: c.lessonsRequired,
         })),
       };
     },
 
     async mine(playerId: number) {
       const rows = await repo.listForPlayer(playerId);
-      return { coupons: rows.map(view) };
+      // The entitlement comes back with the coupons so the page can say where a
+      // player stands without a second call -- and so the number it shows is the
+      // same one redeem() enforces, rather than the page recomputing it from a
+      // lesson count and drifting.
+      const prog = await withTransaction(db, async (client) => {
+        const lessons = await repo.lessonsCompleted(client, playerId);
+        const issued = await repo.countIssuedEver(client, playerId);
+        const earned = Math.floor(lessons / LESSONS_PER_COUPON);
+        return {
+          lessons_completed: lessons,
+          lessons_per_coupon: LESSONS_PER_COUPON,
+          coupons_earned: earned,
+          coupons_issued: issued,
+          available: Math.max(earned - issued, 0),
+          // Based on EARNED, not issued: with 40 lessons and one coupon earned
+          // but unclaimed, (issued + 1) * 33 reads 33 -- a threshold already
+          // passed. (earned + 1) * 33 is 66, which is the honest answer, and the
+          // two are identical in the only case redeem() uses it (earned == issued).
+          next_at: (earned + 1) * LESSONS_PER_COUPON,
+        };
+      });
+      return { coupons: rows.map(view), progress: prog };
     },
 
     /** Spend gold for a coupon. The whole thing is one transaction. */
@@ -87,10 +110,27 @@ export function createRewardsService({
       const coupon = await withTransaction(db, async (client) => {
         // The lock comes first and everything else happens under it, so two
         // taps cannot both pass the balance check. Same shape as shop.buy().
-        const gold = await repo.lockGold(client, playerId);
-        if (gold == null) throw notFound('Player not found');
-        if (gold < type.goldCost) {
-          throw new AppError(400, 'Not enough gold', { have: gold, need: type.goldCost });
+        if (!(await repo.lockPlayer(client, playerId))) throw notFound('Player not found');
+
+        // ENTITLEMENT, not a balance. Only lessons earn coupons -- check-in XP,
+        // Throw Lab XP, level gold and referral gold now reach this path not at
+        // all, which is the whole point of pricing in lessons: the two most
+        // spoofable sources in the app can no longer buy money.
+        const lessons = await repo.lessonsCompleted(client, playerId);
+        const issued = await repo.countIssuedEver(client, playerId);
+        const earned = Math.floor(lessons / LESSONS_PER_COUPON);
+        if (earned <= issued) {
+          const nextAt = (issued + 1) * LESSONS_PER_COUPON;
+          const left = nextAt - lessons;
+          // Pluralised, because "Complete 1 more lessons" is exactly the slip the
+          // "1 coupons every 30 days" message had, and this is the message the
+          // player closest to a reward sees.
+          throw new AppError(400, `Complete ${left} more ${left === 1 ? 'lesson' : 'lessons'} to earn your next coupon`, {
+            lessons_completed: lessons,
+            lessons_required: nextAt,
+            coupons_earned: earned,
+            coupons_issued: issued,
+          });
         }
 
         const taken = await repo.countRecent(client, playerId, COUPON_WINDOW_DAYS);
@@ -101,8 +141,6 @@ export function createRewardsService({
             window_days: COUPON_WINDOW_DAYS,
           });
         }
-
-        await repo.spendGold(client, playerId, type.goldCost, type.key);
 
         const issuedAt = new Date();
         // The UNIQUE on code is the real guard; retrying on collision is just
@@ -119,7 +157,11 @@ export function createRewardsService({
               title: type.title,
               terms: type.terms,
               face_value_usd: type.faceValueUsd,
-              gold_spent: type.goldCost,
+              // Zero on every coupon issued since the switch to lesson pricing.
+              // The column stays because rows issued under the old gold pricing
+              // carry a real number and that history should not be rewritten.
+              gold_spent: 0,
+              lessons_at_issue: lessons,
               expires_at: couponExpiryFrom(issuedAt),
             });
           } catch (e) {
@@ -131,7 +173,7 @@ export function createRewardsService({
       });
 
       // Outside the transaction on purpose: a failed email must not roll back a
-      // coupon the player has already paid for. It is recorded either way, and
+      // coupon the player has already earned. It is recorded either way, and
       // visible in the app, so a bounced email is recoverable rather than lost.
       try {
         const p = await repo.playerEmail(playerId);

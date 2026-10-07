@@ -893,6 +893,15 @@ CREATE TABLE IF NOT EXISTS coupons (
 CREATE INDEX IF NOT EXISTS idx_coupons_player ON coupons(player_id, issued_at DESC);
 CREATE INDEX IF NOT EXISTS idx_coupons_status ON coupons(status, expires_at);
 
+-- Lessons completed at the moment this coupon was issued.
+--
+-- Coupons are earned by crossing lesson thresholds rather than bought with gold,
+-- so this is the basis of the entitlement and worth recording on the row: it is
+-- what lets the count be audited later without replaying training_completions.
+-- gold_spent stays for the rows issued under the old gold pricing, and reads 0
+-- on everything issued since.
+ALTER TABLE coupons ADD COLUMN IF NOT EXISTS lessons_at_issue INTEGER;
+
 -- ── Lesson engagement: evidence that a lesson was actually opened ──
 -- (No backticks in this file: SCHEMA_SQL is a JS template literal.)
 --

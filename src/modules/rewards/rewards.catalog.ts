@@ -52,7 +52,32 @@ export const LEVEL_UP_GOLD = 50;
  * season of training, not a checkout.
  */
 export const COUPON_VALUE_USD = 5;
-export const COUPON_GOLD_COST = 350;
+
+/**
+ * Lessons completed per coupon earned.
+ *
+ * Coupons used to be BOUGHT WITH GOLD, and that was the wrong currency. Gold
+ * comes from eight sources, and the biggest of them were a GPS check-in and a
+ * Throw Lab round -- the two most spoofable paths in the app, and the two the
+ * positioning rules say we do not sell. So the thing the app is for paid for
+ * the reward least, and the thing a script can fake paid for it most.
+ *
+ * Now only lessons earn coupons, and nothing else touches the reward path at
+ * all: check-in XP, Throw Lab XP, level gold and referral gold are all now
+ * irrelevant to what a player can claim. Gold still exists and still buys
+ * shop and vault items; it just no longer buys money.
+ *
+ * 33 is derived rather than chosen: the brief is that the whole library is worth
+ * $20, which is four $5 coupons, and 134 / 33 = 4.06 -- exactly four with two
+ * lessons spare. 34 would give 3.9 (three coupons and most of a fourth, which a
+ * little ordinary progress would tip over), and 33 leaves a remainder that
+ * cannot drift anywhere. Same reasoning that picked 350 gold over 300.
+ *
+ * It is an ENTITLEMENT, not a balance: you cannot un-complete a lesson, so
+ * "spending" them is incoherent. Crossing 33, 66, 99 … earns one each, counted
+ * against coupons already issued, so the same lessons can never pay twice.
+ */
+export const LESSONS_PER_COUPON = 33;
 
 export type CouponKind = 'tournament_entry' | 'merch';
 
@@ -64,7 +89,11 @@ export interface CouponType {
   title: string;
   /** The actual concession, in words, because a bare number is not honourable. */
   terms: string;
-  goldCost: number;
+  /**
+   * Lessons that must be COMPLETED to be entitled to one. Not a currency and not
+   * gold: see LESSONS_PER_COUPON.
+   */
+  lessonsRequired: number;
   /** For reporting what outstanding coupons could cost, in whole dollars. */
   faceValueUsd: number;
 }
@@ -75,7 +104,7 @@ export const COUPON_TYPES: CouponType[] = [
     kind: 'merch',
     title: '$5 off merchandise',
     terms: '$5 off any merchandise purchase, online or at a Disc Golf Go event. Up to 2 merchandise coupons may be used on one purchase.',
-    goldCost: COUPON_GOLD_COST,
+    lessonsRequired: LESSONS_PER_COUPON,
     faceValueUsd: COUPON_VALUE_USD,
   },
   {
@@ -83,7 +112,7 @@ export const COUPON_TYPES: CouponType[] = [
     kind: 'tournament_entry',
     title: '$5 off a tournament entry',
     terms: '$5 off the entry fee for any Disc Golf Go listed event. Up to 2 entry coupons may be used on one entry. Does not cover greens, PDGA or TD fees.',
-    goldCost: COUPON_GOLD_COST,
+    lessonsRequired: LESSONS_PER_COUPON,
     faceValueUsd: COUPON_VALUE_USD,
   },
 ];

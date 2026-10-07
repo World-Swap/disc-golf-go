@@ -18,7 +18,7 @@ import {
 import type { CheckinsRepo, PlayerRow, CourseRow } from './checkins.repo';
 
 /** Rewarded check-ins per UTC day. Beyond this a check-in records but pays nothing. */
-export const CHECKIN_REWARDS_PER_DAY = 3;
+export const CHECKIN_REWARDS_PER_DAY = 1;
 
 const BAD_WEATHER = ['rain', 'snow', 'cold', 'heat'];
 
@@ -85,8 +85,12 @@ export async function awardCheckinRewards(client: PoolClient, repo: CheckinsRepo
   // $730 of merchandise at coupon prices. GPS is the easiest signal in the app
   // to fake, and it was paying the most.
   //
-  // Three a day is deliberately generous for real play: a round is one check-in,
-  // a double-header is two, and three courses in a day is a big day out.
+  // ONE a day, because a round is one check-in. Three was the first setting and
+  // it was generous for real play but still left 900 XP a day of the most
+  // spoofable signal in the app driving levels -- 328,500 a year against a
+  // library worth 25,700 once. At one a day that is 36,500, roughly 1.4x the
+  // library rather than 12.8x. Past the cap a check-in still records and still
+  // counts toward courses, streaks and badges; it just stops paying.
   const rewarded = checkinsToday < CHECKIN_REWARDS_PER_DAY;
 
   const now = new Date();

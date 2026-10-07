@@ -53,11 +53,11 @@
 </head>
 <body>
   <main class="app">
-    <header class="topbar"><span class="topbar__title">Rewards</span><span class="pill" id="goldpill">—</span></header>
+    <header class="topbar"><span class="topbar__title">Rewards</span><span class="pill" id="progpill">—</span></header>
     <div class="screen stack">
       <div>
         <a class="back" href="/profile">← Profile</a>
-        <p class="section-label">Earn gold, take it out</p>
+        <p class="section-label">Finish lessons, take it out</p>
         <h1 class="h-display">REWARDS<span class="mark" style="width:30%"></span></h1>
       </div>
       <div id="content" class="loading">Loading…</div>
@@ -71,25 +71,25 @@
       if (!DGG.requireAuth()) return;
       DGG.tabbar('profile');
       var content = document.getElementById('content');
-      var goldPill = document.getElementById('goldpill');
+      var progPill = document.getElementById('progpill');
       var esc = DGG.esc, API = DGG.API;
       function day(d) {
         try { return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
         catch (e) { return String(d).slice(0, 10); }
       }
 
-      var state = { gold: 0, cat: null, mine: [] };
+      var state = { prog: null, cat: null, mine: [] };
       var justIssued = null;
 
       function render() {
         var html = '';
-        html += '<div class="purse"><p class="purse__l">Your gold</p>' +
-                '<p class="purse__n">' + state.gold.toLocaleString() + '</p>' +
+        html += '<div class="purse"><p class="purse__l">Lessons completed</p>' +
+                '<p class="purse__n">' + (state.prog ? state.prog.lessons_completed : 0) + '</p>' +
                 '<p class="purse__sub">Earned by levelling up, finishing lessons and playing. ' +
                 'Spend it on a coupon below.</p></div>';
 
         if (!state.cat || !state.cat.enabled) {
-          html += '<p class="note">Coupons are not open yet. Keep earning — your gold is safe and ' +
+          html += '<p class="note">Coupons are not open yet. Keep training — your lessons count and ' +
                   'will still be here.</p>';
           content.className = 'screen stack';
           content.innerHTML = html;
@@ -107,7 +107,7 @@
             live.map(coupon).join('') + '</div>';
         }
 
-        html += '<div id="offers"><p class="section-label">Redeem gold</p>' +
+        html += '<div id="offers"><p class="section-label">Claim a coupon</p>' +
                 state.cat.coupons.map(offer).join('') +
                 '<p class="note" style="margin-top:12px">Codes last ' + state.cat.valid_months +
                 ' months and can be used once. You can redeem ' + state.cat.max_per_window + ' ' +
@@ -130,13 +130,14 @@
       }
 
       function offer(c) {
-        var short = state.gold < c.gold_cost;
+        var avail = state.prog ? state.prog.available : 0;
+        var short = avail < 1;
         return '<div class="offer">' +
           '<div class="offer__top"><div class="offer__t">' + esc(c.title) + '</div>' +
-          '<div class="offer__c" data-short="' + (short ? 1 : 0) + '">' + c.gold_cost.toLocaleString() + ' gold</div></div>' +
+          '<div class="offer__c" data-short="' + (short ? 1 : 0) + '">' + c.lessons_required + ' lessons</div></div>' +
           '<p class="offer__terms">' + esc(c.terms) + '</p>' +
           '<button class="btn btn--block" data-key="' + esc(c.key) + '"' + (short ? ' disabled' : '') + '>' +
-          (short ? (c.gold_cost - state.gold).toLocaleString() + ' more gold needed' : 'Redeem') + '</button>' +
+          (short ? ((state.prog ? state.prog.next_at - state.prog.lessons_completed : c.lessons_required) + ' more lessons') : 'Claim') + '</button>' +
           '</div>';
       }
 
@@ -161,10 +162,10 @@
             var key = b.getAttribute('data-key');
             var c = state.cat.coupons.filter(function (x) { return x.key === key; })[0];
             if (!c) return;
-            // Spending gold is not undoable, and the coupon expires whether or
+            // Claiming is not undoable, and the coupon expires whether or
             // not it gets used, so the confirm states both plainly.
             if (!window.confirm(
-              'Redeem ' + c.gold_cost + ' gold for "' + c.title + '"?\n\n' +
+              'Claim "' + c.title + '"?\n\n' +
               'This cannot be undone, and the code expires in ' + state.cat.valid_months + ' months.'
             )) return;
             b.disabled = true; b.textContent = 'Redeeming…';
@@ -190,15 +191,18 @@
       }
 
       function load() {
+        // /players/me is gone from this list: it was only here for the gold
+        // balance, and gold no longer decides anything on this page.
         return Promise.all([
-          API.get('/players/me'),
           API.get('/rewards/catalogue'),
           API.get('/rewards/mine')['catch'](function () { return { coupons: [] }; }),
         ]).then(function (res) {
-          state.gold = Number((res[0] && res[0].gold) || 0);
-          state.cat = res[1];
-          state.mine = (res[2] && res[2].coupons) || [];
-          goldPill.textContent = state.gold.toLocaleString() + ' gold';
+          state.cat = res[0];
+          state.prog = (res[1] && res[1].progress) || null;
+          state.mine = (res[1] && res[1].coupons) || [];
+          progPill.textContent = state.prog
+            ? state.prog.available + ' ready'
+            : '—';
           render();
         });
       }
