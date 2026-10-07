@@ -660,6 +660,431 @@ export const LESSON_BODIES: Record<string, LessonBody> = {
         'Miss and the count goes back to zero. Doing it last, when you are tired and want to go home, is the entire point — that is the state a closing hole puts you in. Then take one thing onto the course: say your aim point quietly out loud before every putt inside 30 feet, for one whole round.',
     },
   },
+  // ─────────────────────── FORM & TECHNIQUE ───────────────────────
+  'grip-basics': {
+    why:
+      'The grip decides two things nothing else can fix: how much spin the disc leaves with, and exactly when it leaves. Too loose and it slips out early, wobbling, with no spin to hold a line. Too tight and the wrist locks, which kills the snap that spin actually comes from. Almost every "I cannot throw far" problem has a grip component.',
+    how: [
+      'For drives, use a power grip: all four fingers curled under the rim with the pads pressed into the inside of the rim, thumb flat on top roughly above them.',
+      'For putts and short approaches, a fan grip works better: fingers spread across the underside of the flight plate for control rather than power.',
+      'Squeeze with the fingers, not the whole hand. The pressure is in the last joint of each finger; the wrist stays loose.',
+      'Keep the thumb on the flight plate near the rim rather than stretched out toward the centre, which gives away leverage.',
+      'Use the same grip for every throw of the same type. Grip is the one variable you should never be adjusting mid-round.',
+    ],
+    wrong: [
+      {
+        fault: 'A death grip, squeezing with the whole hand and forearm.',
+        fix: 'Firm fingers, loose wrist. A locked wrist cannot snap, and the snap is where spin comes from — squeezing harder makes the disc spin less.',
+      },
+      {
+        fault: 'Holding the disc loosely enough that it slips out early, which shows up as a wobbling flight.',
+        fix: 'If the disc flutters off the hand, grip pressure is the first thing to raise. The disc should have to be ripped out, not let go.',
+      },
+      {
+        fault: 'A different grip on every throw, so nothing else can be diagnosed.',
+        fix: 'Set it deliberately before each throw until it is automatic. You cannot tune anything downstream of an input that keeps changing.',
+      },
+      {
+        fault: 'The thumb stretched toward the centre of the flight plate.',
+        fix: 'Keep it near the rim, opposite the fingers. That is where it can actually hold the disc against the pull.',
+      },
+    ],
+    drill: {
+      name: 'One grip, twenty throws',
+      reps: '20 throws setting the grip deliberately before each one',
+      body:
+        'Set the grip, check it, then throw — twenty times, same disc, same effort. Watch only for wobble in the first twenty feet of flight. A clean throw leaves silently and flat; a slipped one flutters. You are looking to make the second kind disappear entirely before you worry about distance.',
+    },
+  },
+
+  'stance-fundamentals': {
+    why:
+      'Your stance is everything upstream of the arm. If the base is unstable you cannot brace, and if you cannot brace, the energy you generate goes into moving your own body around rather than into the disc. This is why some players with modest arms outdrive stronger ones: they are standing on something solid.',
+    how: [
+      'Set your feet about shoulder width or a little wider, side-on to the target, with your throwing shoulder pointing where the disc is going.',
+      'Start with your weight loaded on the back leg, knee soft rather than locked.',
+      'Keep your chest turned away from the target as you reach back. Opening it early is how power leaks.',
+      'Plant the front foot deliberately, with the toe pointing down the target line or slightly across it.',
+      'Keep the knees bent through the throw. Standing up mid-throw is the quiet killer of distance.',
+    ],
+    wrong: [
+      {
+        fault: 'Feet too close together, which leaves nothing to brace against.',
+        fix: 'Widen until you feel you could be shoved and not move. That is the base a throw is built on.',
+      },
+      {
+        fault: 'Standing tall with straight legs.',
+        fix: 'Soft knees at setup and through the throw. A straight leg cannot absorb or redirect anything.',
+      },
+      {
+        fault: 'Opening the chest toward the target before the pull begins.',
+        fix: 'Stay closed until the front foot has planted. The chest opening IS the throw; doing it early means doing it with nothing left.',
+      },
+      {
+        fault: 'Weight already on the front foot before the arm starts.',
+        fix: 'Load back, then move forward. If you start forward there is no transfer to make.',
+      },
+    ],
+    drill: {
+      name: 'Plant and hold',
+      reps: '20 stand-still throws, holding the finish for 2 seconds',
+      body:
+        'Throw from a standstill and freeze when the disc leaves, holding your finish for a slow count of two. If you cannot hold it, you were off balance during the throw and the disc knows. This finds the fault faster than any amount of watching video of yourself.',
+    },
+  },
+
+  'reach-back': {
+    why:
+      'The reach back sets the length of the path the disc accelerates over, but more importantly it sets the LINE. A reach back that drifts out behind you makes rounding inevitable, because the arm has to come back in before it can go forward — and no amount of work on the pull fixes a bad start to it.',
+    how: [
+      'Reach straight back along the line you want the disc to travel, not out to the side.',
+      'Keep the disc level with your shoulder. Dropping it low or lifting it high changes the release angle before you have even started.',
+      'Keep the disc flat, matching the angle you intend to release at.',
+      'Let the shoulders turn away with the arm rather than the arm stretching away from a still body.',
+      'Finish the reach back before the forward move starts. Smooth and complete beats long and rushed.',
+    ],
+    wrong: [
+      {
+        fault: 'Reaching back and around, so the disc ends up behind your back rather than behind your shoulder.',
+        fix: 'Imagine a rail along your target line and keep the disc on it. Everything you want from a throw starts with this path being straight.',
+      },
+      {
+        fault: 'Letting the disc drop toward the ground at the back of the reach.',
+        fix: 'Level with the shoulder. A dropped reach back comes through nose-up, which is why the throw balloons.',
+      },
+      {
+        fault: 'Over-reaching until balance goes.',
+        fix: 'Reach as far as you can while still being able to stop. Extra inches bought with balance cost more than they pay.',
+      },
+      {
+        fault: 'Starting forward while still reaching back, so the two moves overlap.',
+        fix: 'Complete one, then the other. Rushing them together is what makes a throw feel frantic and come out short.',
+      },
+    ],
+    drill: {
+      name: 'On the rail',
+      reps: '15 slow reps at half speed, then 10 throws',
+      body:
+        'Stand beside a fence line, a path edge or a line of discs on the ground running toward your target. Do fifteen reach-backs at half speed watching the disc stay on that line, then throw ten. The slow reps are the point — at full speed you cannot feel where the disc went.',
+    },
+  },
+
+  'follow-through': {
+    why:
+      'You cannot stop a properly accelerated throw cleanly, so the follow-through is evidence as much as technique: if you can come to a dead halt at the release, you were slowing down before it. It is also what stops you decelerating in the first place, because a body that intends to finish does not brake at the last moment.',
+    how: [
+      'Let the momentum rotate you rather than resisting it. The hips and chest finish facing the target or past it.',
+      'Allow the weight to arrive fully on the front foot.',
+      'Let the trailing arm pull back as the throwing arm comes through — it is a counterweight, not decoration.',
+      'Outside the putting circle, stepping through after the release is normal and legal. Let it happen.',
+      'Finish balanced. Spinning off or falling sideways means something upstream was off.',
+    ],
+    wrong: [
+      {
+        fault: 'Stopping the arm at the moment of release.',
+        fix: 'Throw through the release point, not to it. A disc that is still accelerating when it leaves goes further and flies flatter.',
+      },
+      {
+        fault: 'Falling backwards after the throw.',
+        fix: 'The weight never transferred. Work on the plant and brace rather than the finish — the finish is the symptom.',
+      },
+      {
+        fault: 'Spinning off the plant foot before the disc has gone.',
+        fix: 'The front leg should stop the body’s forward movement, not pivot out of its way. Plant it and let it hold.',
+      },
+    ],
+    drill: {
+      name: 'Hold the finish',
+      reps: '20 throws, holding the finish until the disc lands',
+      body:
+        'Throw, then stand still in the finished position until the disc hits the ground. You will find yourself unable to on some throws, and those are exactly the ones that went badly. Making the hold possible every time quietly fixes balance, bracing and deceleration at once.',
+    },
+  },
+
+  'putting-form': {
+    why:
+      'Putting is the one throw where everything that makes a drive long makes the shot worse. There is no run-up, no weight shift to time, no big rotation — and the single biggest putting fault among people who drive well is importing drive mechanics into a stroke that does not want them. This lesson is about what to strip out; the Putting path covers the stroke itself in depth.',
+    how: [
+      'Keep the motion short. The disc travels a fraction of the distance it does on a drive, and anything longer adds variability for no range.',
+      'Keep the shoulders square to the target rather than turning away. Rotation is the drive’s engine and the putt’s enemy.',
+      'Take what little power you need from the legs, pushing up and forward, not from a bigger arm swing.',
+      'Move the hand in a straight line at the aim point and extend through it, finishing with the hand pointing at the pole.',
+      'Stay balanced and upright. Inside circle 1 you must demonstrate control of balance after the release, so a putt you fall out of costs a stroke.',
+    ],
+    wrong: [
+      {
+        fault: 'Reaching back and rotating the shoulders as if driving.',
+        fix: 'Square and short. If your putting motion looks like a small version of your drive, it is still too big.',
+      },
+      {
+        fault: 'Adding power with the arm when the putt is long.',
+        fix: 'Bend lower and push up with the legs. The arm’s job is the line; the legs’ job is the distance.',
+      },
+      {
+        fault: 'Different power on every putt from the same distance.',
+        fix: 'Pick an aim point and a stroke size that go together, and repeat them. Consistency of effort matters more than the exact amount.',
+      },
+      {
+        fault: 'Falling forward on circle-1 putts.',
+        fix: 'If you need to fall forward to get there you are outside your range. Lag it, or build the range in practice first.',
+      },
+    ],
+    drill: {
+      name: 'Square shoulders',
+      reps: '20 putts from 20 ft with your back against nothing but your shoulders kept square',
+      body:
+        'Twenty putts from twenty feet with one rule: the shoulders do not turn. Have somebody watch from behind, or film it — most people are rotating far more than they believe. Taking the rotation out usually costs a little distance on the first session and gains a great deal of consistency within a week.',
+    },
+  },
+
+  'advanced-weight-transfer': {
+    why:
+      'Distance is a timing problem rather than a strength one. Energy travels legs to hips to torso to shoulder to arm to disc, each link accelerating and then slowing to hand what it has to the next. Any link that fires early leaves the ones after it with less to work with — which is why a well-timed throw from an average athlete outruns a muscled one.',
+    how: [
+      'Load onto the rear leg at the end of the reach back, with the knee soft and the weight genuinely back.',
+      'Start the move forward with the hips, not the arm or the shoulders.',
+      'Plant the front foot and then BRACE — the front leg stops moving forward, which turns your linear speed into rotation.',
+      'Let the chest open against that brace, then the shoulder, then the arm.',
+      'The disc rips out last, late, when everything ahead of it has already done its work.',
+    ],
+    wrong: [
+      {
+        fault: 'The arm leading the throw, which is the most common fault at every level.',
+        fix: 'Slow the whole thing to half speed and feel the hips start first. At half speed you can feel the order; at full speed you cannot.',
+      },
+      {
+        fault: 'No brace — the front knee keeps travelling forward after the plant.',
+        fix: 'The front leg is a wall, not a shock absorber. If it collapses forward there is nothing for the rotation to work against.',
+      },
+      {
+        fault: 'Standing up through the throw, which unloads the legs before they have contributed.',
+        fix: 'Stay at the same height from plant to release. Filming from the side shows this instantly.',
+      },
+      {
+        fault: 'Weight still on the back foot at release.',
+        fix: 'The transfer has to finish before the disc leaves. If you are still back, the arm threw it on its own.',
+      },
+    ],
+    drill: {
+      name: 'Half speed, right order',
+      reps: '20 throws at 50% effort, then 10 at full',
+      body:
+        'Twenty throws at genuinely half effort, thinking only about hips-then-chest-then-arm. Then ten at full speed without thinking about it at all. The half-speed reps are where the sequence gets learned; the full-speed ones are where you find out whether it survived. Expect it not to, at first.',
+    },
+  },
+
+  'nasty-anhyzer': {
+    why:
+      'The anhyzer is the only way to make a right-handed backhand finish to the right, which means it opens up every hole that bends that way without needing a forehand. It is also the least forgiving release angle in the game, because the thing that makes it work — the disc wanting to turn — is the same thing that makes it crash when thrown slowly.',
+    how: [
+      'Tilt the top edge of the disc away from you at release. That tilt is the shot.',
+      'Keep the nose down relative to that tilted angle. Nose-up on an anhyzer turns over and dives almost immediately.',
+      'Keep your arm speed up. An anhyzer thrown tentatively flips and crashes; this is a shot you commit to or do not play.',
+      'Use a stable or slightly understable disc. An understable one holds the angle longer and finishes further right.',
+      'Aim at where you want the disc at its highest point, not at where you want it to land.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing it softly because the angle feels risky.',
+        fix: 'Soft is what makes it fail. Commit to full effort — the angle is controlled by the release, not by the power.',
+      },
+      {
+        fault: 'Using an overstable disc, which climbs back out of the anhyzer and finishes left anyway.',
+        fix: 'Match the disc to the shot. If the disc will not hold the angle, the angle is not the problem.',
+      },
+      {
+        fault: 'Releasing nose-up, so the disc turns over and drops out of the sky.',
+        fix: 'Nose down relative to the tilt. This is the difference between a shaped anhyzer and a crash.',
+      },
+      {
+        fault: 'Reaching for an anhyzer when a hyzer gets to the same place.',
+        fix: 'Hyzer is far more repeatable. Use the anhyzer when the hole demands it, not when it looks good.',
+      },
+    ],
+    drill: {
+      name: 'Three angles',
+      reps: '10 anhyzers each at slight, medium and steep tilt (30 total)',
+      body:
+        'Open field, one disc, three deliberately different amounts of tilt, ten throws each. Watch how far right each one finishes and how much height it needs. You are building a mental table of what each angle buys you, which is the thing you will actually use on a course.',
+    },
+  },
+
+  'hyzer-vs-anhyzer-release': {
+    why:
+      'Hyzer, flat and anhyzer are the entire vocabulary of shot shaping. Everything more advanced — hyzer flips, flex shots, rollers — is one of these three combined with a disc’s stability. Getting the three clear in your head is what turns "I threw it and it went somewhere" into choosing a shape.',
+    how: [
+      'Hyzer: the top edge is tilted toward you. The disc finishes left for a right-handed backhand, and lands predictably. It is the most reliable shape in the game.',
+      'Anhyzer: the top edge is tilted away from you. The disc finishes right for a right-handed backhand.',
+      'Flat: the disc is level. It gives the straightest flight, and it needs a disc whose stability suits your power or it will do one of the other two anyway.',
+      'The finish comes from the angle AND the disc AND your power together. The same angle with an overstable and an understable disc gives two different shots.',
+      'Reverse left and right throughout if you throw left-handed backhand or right-handed forehand.',
+    ],
+    wrong: [
+      {
+        fault: 'Thinking the release angle alone decides where the disc finishes.',
+        fix: 'Stability and arm speed matter as much. A flat release of a very understable disc is an anhyzer shot in practice.',
+      },
+      {
+        fault: 'Confusing a hyzer with simply aiming left.',
+        fix: 'Hyzer is the disc’s tilt, not your aim. You can throw a hyzer aimed well right of the basket, and usually should.',
+      },
+      {
+        fault: 'Reaching for an anhyzer on every hole that bends right.',
+        fix: 'Consider a hyzer aimed right, or a flex shot, first. Anhyzer is the least repeatable of the three and should be a choice rather than a reflex.',
+      },
+    ],
+    drill: {
+      name: 'Ten of each',
+      reps: '10 hyzer, 10 flat, 10 anhyzer with the same disc (30 total)',
+      body:
+        'One disc, one target, thirty throws split evenly between the three angles. Mark roughly where each group finishes. The three clusters are your actual shot shapes with that disc — and the gaps between them are the holes in your game that another disc, or another angle, has to fill.',
+    },
+  },
+
+  'roller-shot-technique': {
+    why:
+      'A roller gets under a low ceiling, around a corner nothing flies around, and on firm flat ground it can travel further than anything you throw in the air. It is also the shot most people never learn, which means it quietly costs them a stroke on the same two holes every time they play their home course.',
+    how: [
+      'Use an understable disc. An overstable one will not turn over into the roll, which is most of the battle.',
+      'Release on a steep anhyzer — far steeper than feels sensible, often close to vertical for a cut roller.',
+      'Release with a downward angle so the disc meets the ground on its edge and stands up rather than landing flat.',
+      'Aim at the patch of ground where you want the roll to begin, not at the basket.',
+      'Expect the disc to roll in the direction it is leaning and to fall that way as it slows — usually to the right for a right-handed backhand roller.',
+    ],
+    wrong: [
+      {
+        fault: 'Using a stable or overstable disc.',
+        fix: 'Pick the most understable, most worn disc in your bag. Rollers are the one place a beaten-up disc is the right tool.',
+      },
+      {
+        fault: 'Too flat an angle, so the disc skips and lands on its back.',
+        fix: 'Steeper than you think. A roller that fails usually failed because the angle was timid.',
+      },
+      {
+        fault: 'Throwing a roller into long grass or soft ground.',
+        fix: 'Rollers need firm, short ground. In the rough they stop dead and you have wasted a throw on a shot that was never available.',
+      },
+      {
+        fault: 'Aiming at the target rather than at the landing point.',
+        fix: 'The roll is most of the distance. Plan where it touches down and which way it will curve from there.',
+      },
+    ],
+    drill: {
+      name: 'Find the angle',
+      reps: '15 rollers on firm open ground',
+      body:
+        'Fifteen rollers in a field with no target at all, varying only the steepness of the release. You are looking for the angle at which the disc stands up cleanly and runs rather than skipping or falling over. Once you have found it, it is repeatable — and this is a shot that stays learned.',
+    },
+  },
+
+  'throwing-tight-fairways': {
+    why:
+      'In the woods, distance is worth very little and a miss is worth a great deal. A controlled 250 feet down the gap beats 350 feet into a trunk every single time, and the players who score well on wooded courses are almost never the ones throwing hardest. This is the category where discipline outscores ability.',
+    how: [
+      'Throttle back to around 80% effort. Control rises sharply as power comes off, and the distance you lose is less than you expect.',
+      'Pick the gap, not the basket. Your target is the space the disc has to pass through, which may be nowhere near the hole.',
+      'Use a stable midrange or a control driver. High-speed drivers need power you cannot afford to use here.',
+      'Prefer a hyzer line, which finishes predictably, over a flat or anhyzer line that depends on everything going right.',
+      'Play the shot that leaves the best next shot. On a wooded hole, position beats distance almost always.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing full power because the hole is long.',
+        fix: 'Length is not the problem on a wooded hole; the trees are. Take the power off and take the line.',
+      },
+      {
+        fault: 'Aiming at the basket through a line of trunks.',
+        fix: 'Aim at the gap. If there is no gap toward the basket, aim at the gap that leaves you one.',
+      },
+      {
+        fault: 'Attempting a gap you would hit one time in five.',
+        fix: 'Count honestly: a one-in-five gap costs you more over a season than the safe line ever will. Take the shot you hit four times in five.',
+      },
+      {
+        fault: 'Reaching for a distance driver because the fairway looks open at the start.',
+        fix: 'A fast disc in the woods finishes hard left and finds the trees you could not see. Midrange until you have proved otherwise.',
+      },
+    ],
+    drill: {
+      name: 'Name the gap',
+      reps: '9 wooded holes at a maximum of 80% power',
+      body:
+        'Play nine wooded holes with two rules: never throw above about 80% effort, and say out loud which gap you are throwing through before each shot. Compare the total with your usual score on the same nine. Most players shoot the same or better while feeling as though they are barely trying, which is the lesson.',
+    },
+  },
+
+  'adjusting-release-point-wind': {
+    why:
+      'Wind changes what a disc does more than any other condition, and the adjustments are not intuitive — the most natural response, throwing harder into a headwind, makes the problem worse rather than better. Knowing which way each wind pushes a disc is worth several strokes on any exposed course.',
+    how: [
+      'Into a headwind, the extra airspeed makes a disc behave more understable, so it wants to turn over. Throw something more stable, keep it low, and keep the nose down.',
+      'With a tailwind, there is less airspeed and less lift, so the disc behaves more overstable and drops sooner. Throw something more understable, with slightly more height.',
+      'In a crosswind, a wind from your left will push the disc right and lift the left edge. Aim into the wind and let it bring the disc back.',
+      'Keep everything lower in strong wind. Height is exposure, and a disc held up high is at the wind’s mercy for longer.',
+      'Commit. A tentative throw in wind spends longer in the air at low speed, which is exactly what you do not want.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing harder into a headwind.',
+        fix: 'More power means more airspeed, which makes the disc turn over more. Throw a more stable disc at normal effort instead.',
+      },
+      {
+        fault: 'Releasing nose-up into a headwind, which makes the disc balloon straight up.',
+        fix: 'Nose down, hard. This is the single biggest wind fault and it is very visible once you look for it.',
+      },
+      {
+        fault: 'Using the same disc regardless of the wind.',
+        fix: 'Carry one disc more stable and one less stable than your usual, specifically for this. Changing discs beats changing your throw.',
+      },
+      {
+        fault: 'Ignoring a tailwind because it feels like help.',
+        fix: 'A tailwind takes lift away and makes discs finish early and drop. It costs distance as often as it gives it.',
+      },
+    ],
+    drill: {
+      name: 'Four directions, one disc',
+      reps: '10 throws in each of 4 wind directions (40 total), on a windy day',
+      body:
+        'Take one disc to an open field on a genuinely windy day and throw ten into the wind, ten with it, and ten across it each way. Note where each group finishes relative to your aim. This is the session nobody does and it is the one that separates scores when the weather turns.',
+    },
+  },
+
+  'power-transfer': {
+    why:
+      'The ceiling on your distance is not how much energy you can generate, it is how much of it reaches the disc. Most players leak the majority of it — into an early arm, a collapsing front leg, or a body that stands up mid-throw. This is why form work adds more distance than strength work for almost everybody.',
+    how: [
+      'Think of it as a chain: ground, legs, hips, torso, shoulder, elbow, wrist, disc. Each link accelerates and then slows down, handing its speed to the next.',
+      'Brace hard on the front leg. The brace is what converts your forward movement into rotation, and it is the link most often missing.',
+      'Keep the disc close to your chest as it comes through the power pocket. A disc held out wide breaks the chain and bleeds speed.',
+      'Let the wrist be the last thing to fire, very late. That final snap is where spin comes from.',
+      'Stay at the same height from plant to release. Rising up through the throw unloads the legs before they have paid out.',
+    ],
+    wrong: [
+      {
+        fault: 'Starting the chain at the arm.',
+        fix: 'The arm is the end of the sequence, not the start. If the arm moves first, everything behind it is just along for the ride.',
+      },
+      {
+        fault: 'No brace: the front knee keeps moving forward through the release.',
+        fix: 'Plant and stop. Film from the side — a collapsing front leg is obvious on video and invisible from the inside.',
+      },
+      {
+        fault: 'Pulling the disc wide of the body, which breaks the chain at the last link.',
+        fix: 'Close to the chest. All the sequencing in the world does not survive a rounded pull.',
+      },
+      {
+        fault: 'Trying to add distance with effort.',
+        fix: 'Effort goes into the parts of the chain that are already working and does nothing for the broken link. Find the leak first.',
+      },
+    ],
+    drill: {
+      name: 'Brace and feel it',
+      reps: '20 stand-still throws at 70% focusing only on the front leg',
+      body:
+        'Stand-still throws at seventy percent, thinking about nothing except the front leg planting and stopping. You are feeling for the moment your forward movement turns into rotation. When it happens properly the throw feels easier and goes further, which is the most convincing evidence in the sport that power is not about effort.',
+    },
+  },
+
 };
 
 /** True when a lesson has a written body, so callers can fall back to tips. */

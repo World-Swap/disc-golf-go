@@ -78,7 +78,7 @@ test('no body uses a literal double hyphen', () => {
 
 // Rollout is one category at a time. This list tracks which are done AND stops
 // a new lesson shipping into a finished category with no body beside the rest.
-const WRITTEN_CATEGORIES = ['getting-started', 'putting'];
+const WRITTEN_CATEGORIES = ['getting-started', 'form-technique', 'putting'];
 
 test('every finished category is finished', () => {
   for (const slug of WRITTEN_CATEGORIES) {
