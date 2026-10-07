@@ -45,6 +45,8 @@
     .tag--ok { background: #e7f4ed; color: #1c5f40; }
     .tag--used { background: #f2efe8; color: #6b6560; }
     .tag--dead { background: #fdecea; color: #8c1d18; }
+    /* Cancelled by staff — struck through so it never reads as merely lapsed. */
+    .tag--void { background: #f2efe8; color: #6b6560; text-decoration: line-through; }
     /* The second line of a coupon tile. .stat span is inline (the existing
        tiles have one label each), so a sub-line needs to be a block or it runs
        straight on: "AVAILABLE$20 outstanding". */
@@ -225,6 +227,7 @@
         <button type="button" data-cfilter="issued" aria-selected="false">Available</button>
         <button type="button" data-cfilter="redeemed" aria-selected="false">Used</button>
         <button type="button" data-cfilter="expired" aria-selected="false">Expired</button>
+        <button type="button" data-cfilter="void" aria-selected="false">Void</button>
       </div>
       <div class="scroll"><table>
         <thead><tr><th>Code</th><th>Status</th><th style="width:1%"></th><th>Player</th>
@@ -720,10 +723,20 @@
   var cData = null;
   var cFilter = 'all';
 
+  // Named per status rather than "anything that is not issued or redeemed is
+  // expired", which is what made a coupon CANCELLED by staff read as one that
+  // simply lapsed. Those are different facts and a counter needs to tell them
+  // apart. An unrecognised status now prints itself instead of claiming to be
+  // expired, so a new one shows up as odd rather than as a wrong answer.
+  var STATUS = {
+    issued:   { cls: 'ok',   label: 'Available' },
+    redeemed: { cls: 'used', label: 'Used' },
+    expired:  { cls: 'dead', label: 'Expired' },
+    'void':   { cls: 'void', label: 'Void' }
+  };
   var statusTag = function (st) {
-    var cls = st === 'issued' ? 'ok' : st === 'redeemed' ? 'used' : 'dead';
-    var label = st === 'issued' ? 'Available' : st === 'redeemed' ? 'Used' : 'Expired';
-    return '<span class="tag tag--' + cls + '">' + label + '</span>';
+    var s = STATUS[st] || { cls: 'dead', label: String(st || 'Unknown') };
+    return '<span class="tag tag--' + s.cls + '">' + esc(s.label) + '</span>';
   };
   var usd = function (n) { return '$' + Number(n || 0); };
 
@@ -756,13 +769,17 @@
       d.max_per_window + ' issued every ' + d.window_days + ' days</b>, and up to <b>' +
       d.max_per_visit + '</b> presented together on one purchase.';
 
-    $('cSummary').innerHTML = [
+    // Void only earns a tile when there are any: a permanently-zero tile in the
+    // row is noise, and cancelling a coupon should be rare.
+    var tiles = [
       ['Available', s.available, usd(s.value_available_usd) + ' outstanding'],
       ['Used', s.used, usd(s.value_used_usd) + ' honoured'],
-      ['Expired', s.expired, 'never presented'],
-      ['Issued ever', s.issued, s.holders + ' holding one'],
-      ['Unclaimed', s.unclaimed, 'earned, not yet taken'],
-    ].map(function (x) {
+      ['Expired', s.expired, 'never presented']
+    ];
+    if (s.voided) tiles.push(['Void', s.voided, 'cancelled by staff']);
+    tiles.push(['Issued ever', s.issued, s.holders + ' holding one']);
+    tiles.push(['Unclaimed', s.unclaimed, 'earned, not yet taken']);
+    $('cSummary').innerHTML = tiles.map(function (x) {
       return '<div class="stat"><b>' + x[1] + '</b><span>' + esc(x[0]) + '</span>' +
         '<span class="sub">' + esc(x[2]) + '</span></div>';
     }).join('');

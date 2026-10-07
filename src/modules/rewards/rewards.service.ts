@@ -235,6 +235,7 @@ export function createRewardsService({
         available: number;
         used: number;
         expired: number;
+        voided: number;
         issued: number;
         value_available_usd: number;
         value_used_usd: number;
@@ -242,7 +243,7 @@ export function createRewardsService({
       const byPlayer = new Map<number, Acc>();
       const blank = (id: number, username: string | null, email: string | null): Acc => ({
         player_id: id, username, email, lessons: 0,
-        available: 0, used: 0, expired: 0, issued: 0,
+        available: 0, used: 0, expired: 0, voided: 0, issued: 0,
         value_available_usd: 0, value_used_usd: 0,
       });
 
@@ -265,16 +266,21 @@ export function createRewardsService({
         if (c.username) a.username = c.username;
         if (c.email) a.email = c.email;
         a.issued += 1;
-        // 'issued' is what couponStatus returns for a live coupon; it only
-        // reports 'expired' once the date has passed.
+        // Every status is named explicitly rather than swept into an `else`.
+        // That `else` is what made a VOIDED coupon count as expired here while
+        // the summary counted it as neither, so one page showed two numbers that
+        // disagreed. A status added later should land in `voided` -- visible and
+        // wrong -- rather than silently inflating the expired count.
         if (status === 'issued') {
           a.available += 1;
           a.value_available_usd += c.face_value_usd;
         } else if (status === 'redeemed') {
           a.used += 1;
           a.value_used_usd += c.face_value_usd;
-        } else {
+        } else if (status === 'expired') {
           a.expired += 1;
+        } else {
+          a.voided += 1;
         }
         return {
           code: c.code,
@@ -322,6 +328,9 @@ export function createRewardsService({
           available: count('issued'),
           used: count('redeemed'),
           expired: count('expired'),
+          // Cancelled by staff. Counted apart from expired because they mean
+          // different things: one lapsed, the other was taken back.
+          voided: count('void'),
           // What is outstanding is the number that matters at a counter: it is
           // money that can still be presented. Used is what it has cost so far.
           value_available_usd: sum((c) => (c.status === 'issued' ? c.face_value_usd : 0)),

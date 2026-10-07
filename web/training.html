@@ -283,7 +283,7 @@
           '<div id="cta"></div>' +
           (l.slug ? shareRow('Share this lesson', l.category_slug || slug, l.slug) : '');
         loadResources(id);
-        wireVideo();
+        wireVideo(id);
         wireShare();
         engage(id, 'opened');
         wireEngagement(id);
@@ -373,11 +373,23 @@
       }
 
       // Swap the preview pane for the embedded player on tap.
-      function wireVideo() {
+      //
+      // `lessonId` is passed in so the play itself reports engagement. It used
+      // to rely on wireEngagement's delegated listener, which matches
+      // `a[href],button` -- and the pane is a DIV carrying role="button", so the
+      // match failed and watching the video registered NOTHING. The player was
+      // then told to "watch the video or open one of the links first" by a page
+      // whose video they were already watching.
+      //
+      // Reporting it here ties the signal to the event instead of to the markup
+      // shape, so restyling the pane cannot silently break the gate again.
+      function wireVideo(lessonId) {
         var p = document.getElementById('vpane');
         if (!p) return;
+        var reported = false;
         function play() {
           var id = p.getAttribute('data-id');
+          if (!reported) { reported = true; engage(lessonId, 'resource_opened', 'video'); }
           p.innerHTML = '<div class="vpane__frame"><iframe src="https://www.youtube.com/embed/' + id +
             '?autoplay=1&rel=0&playsinline=1" title="Lesson video" frameborder="0" ' +
             'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
@@ -408,7 +420,10 @@
           var a = ev.target && ev.target.closest && ev.target.closest('a[href],button');
           if (!a) return;
           var href = a.getAttribute('href') || '';
-          var isVideo = a.id === 'playvid' || /youtube\.com|youtu\.be/.test(href);
+          // No #playvid exists any more; the embedded pane reports itself from
+          // the wireVideo play handler. This still covers the fallback card, which
+          // is a real <a> out to YouTube when a URL has no embeddable id.
+          var isVideo = /youtube\.com|youtu\.be/.test(href);
           var isResource = a.classList && a.classList.contains('row') && a.target === '_blank';
           if (isVideo) engage(id, 'resource_opened', 'video');
           else if (isResource) engage(id, 'resource_opened', href.slice(0, 200));
