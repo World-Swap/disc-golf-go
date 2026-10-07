@@ -19,8 +19,27 @@ import { couponEmail } from './coupon-email';
  * separate paths and would still miss the next one; capping REDEMPTION bounds
  * the liability at one place no matter which path the gold came from.
  */
-export const MAX_COUPONS_PER_WINDOW = 3;
+/**
+ * How many coupons one account can be ISSUED in a window. This is the real
+ * bound on what the programme costs: at 1 a month it is 12 a year, $60 per
+ * account, whatever the gold balance says.
+ */
+export const MAX_COUPONS_PER_WINDOW = 1;
 export const COUPON_WINDOW_DAYS = 30;
+
+/**
+ * How many coupons can be PRESENTED TOGETHER on one purchase. A different
+ * question from the issuance cap above, and worth keeping distinct: issuance is
+ * how fast you earn them, stacking is what you may do with the ones you hold.
+ * At 1 a month, stacking 2 means saving two months for $10 off.
+ *
+ * Honest about what this does and does not enforce: `redeemTogether` refuses
+ * more than this many codes in one call, and that is the flow staff use to
+ * stack. It CANNOT stop two separate single redemptions a minute apart, because
+ * the server has no concept of a "visit" -- that half is a counter policy the
+ * terms state, not something code can guarantee.
+ */
+export const MAX_COUPONS_PER_VISIT = 2;
 
 export function createRewardsService({
   db,
@@ -43,6 +62,7 @@ export function createRewardsService({
         valid_months: COUPON_VALID_MONTHS,
         max_per_window: MAX_COUPONS_PER_WINDOW,
         window_days: COUPON_WINDOW_DAYS,
+        max_per_visit: MAX_COUPONS_PER_VISIT,
         coupons: COUPON_TYPES.map((c) => ({
           key: c.key,
           kind: c.kind,
@@ -75,7 +95,8 @@ export function createRewardsService({
 
         const taken = await repo.countRecent(client, playerId, COUPON_WINDOW_DAYS);
         if (taken >= MAX_COUPONS_PER_WINDOW) {
-          throw new AppError(429, `You can redeem ${MAX_COUPONS_PER_WINDOW} coupons every ${COUPON_WINDOW_DAYS} days`, {
+          const noun = MAX_COUPONS_PER_WINDOW === 1 ? 'coupon' : 'coupons';
+          throw new AppError(429, `You can redeem ${MAX_COUPONS_PER_WINDOW} ${noun} every ${COUPON_WINDOW_DAYS} days`, {
             taken,
             window_days: COUPON_WINDOW_DAYS,
           });
@@ -133,6 +154,72 @@ export function createRewardsService({
       const row = await repo.findByCode(code);
       if (!row) throw notFound('No such coupon');
       return { coupon: view(row) };
+    },
+
+    /**
+     * Staff-side: redeem several coupons against ONE purchase.
+     *
+     * Three rules, and each exists for a reason a counter would hit:
+     *  - at most MAX_COUPONS_PER_VISIT codes, so the stack cannot be unbounded;
+     *  - no duplicate codes in the same call, because scanning the same coupon
+     *    twice must not read as two discounts;
+     *  - every code must be the same KIND, since $5 off merchandise and $5 off
+     *    an entry fee do not both apply to one merchandise purchase.
+     *
+     * It is all-or-nothing: if the second code is expired or already used, the
+     * first is NOT consumed, because a half-applied stack at a busy desk is
+     * worse than a refusal.
+     */
+    async redeemTogether(rawCodes: unknown, note: string) {
+      const list = Array.isArray(rawCodes) ? rawCodes : [rawCodes];
+      if (list.length === 0) throw badRequest('No coupon codes given');
+      if (list.length > MAX_COUPONS_PER_VISIT) {
+        throw new AppError(400, `At most ${MAX_COUPONS_PER_VISIT} coupons can be used on one purchase`, {
+          max_per_visit: MAX_COUPONS_PER_VISIT,
+          given: list.length,
+        });
+      }
+      const codes = list.map((c) => {
+        const code = normaliseCouponCode(String(c ?? ''));
+        if (!code) throw badRequest('That is not a valid coupon code');
+        return code;
+      });
+      if (new Set(codes).size !== codes.length) {
+        throw badRequest('That is the same coupon twice');
+      }
+
+      return withTransaction(db, async (client) => {
+        const rows = [];
+        for (const code of codes) {
+          const existing = await repo.findByCode(code, client);
+          if (!existing) throw notFound(`No such coupon: ${code}`);
+          rows.push(existing);
+        }
+        const kinds = new Set(rows.map((r) => r.kind));
+        if (kinds.size > 1) {
+          throw new AppError(400, 'These coupons are for different things and cannot be combined', {
+            kinds: [...kinds],
+          });
+        }
+        const redeemed = [];
+        for (const code of codes) {
+          const row = await repo.markRedeemed(code, String(note ?? '').slice(0, 500), client);
+          if (!row) {
+            // Throwing rolls the whole stack back -- see all-or-nothing above.
+            const ex = rows.find((r) => r.code === code)!;
+            if (ex.status === 'redeemed') {
+              throw new AppError(409, `Already redeemed: ${code}`, { code, redeemed_at: ex.redeemed_at });
+            }
+            if (new Date(ex.expires_at) <= new Date()) {
+              throw new AppError(410, `Expired: ${code}`, { code, expired_at: ex.expires_at });
+            }
+            throw new AppError(409, `Cannot be redeemed: ${code}`, { code, status: ex.status });
+          }
+          redeemed.push(row);
+        }
+        const totalUsd = redeemed.reduce((t, r) => t + Number(r.face_value_usd ?? 0), 0);
+        return { success: true, coupons: redeemed.map(view), total_usd: totalUsd, count: redeemed.length };
+      });
     },
 
     /** Staff-side: mark it used. The WHERE clause is what makes it one-shot. */

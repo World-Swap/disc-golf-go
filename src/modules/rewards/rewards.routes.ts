@@ -41,5 +41,13 @@ export function createRewardsRouter(
     res.json(await service.markRedeemed(String(req.body?.code ?? ''), String(req.body?.note ?? '')));
   }));
 
+  // Stacking: several codes, one purchase, one transaction. Separate from the
+  // single redeem above because the limit and the same-kind rule only make
+  // sense for a batch.
+  router.post('/rewards/admin/redeem-together', requireAdmin, asyncHandler(async (req, res) => {
+    const b = (req.body ?? {}) as { codes?: unknown; note?: unknown };
+    res.json(await service.redeemTogether(b.codes, String(b.note ?? '')));
+  }));
+
   return router;
 }

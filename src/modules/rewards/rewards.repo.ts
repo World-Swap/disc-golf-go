@@ -1,7 +1,7 @@
 // src/modules/rewards/rewards.repo.ts — data access for coupons.
 
 import type { PoolClient } from 'pg';
-import type { Database } from '../../db/types';
+import type { Database, Queryable } from '../../db/types';
 
 export interface CouponRow {
   id: number;
@@ -67,8 +67,12 @@ export function createRewardsRepo(db: Database) {
       return r.rows;
     },
 
-    async findByCode(code: string): Promise<CouponRow | null> {
-      const r = await db.query<CouponRow>('SELECT * FROM coupons WHERE code = $1', [code]);
+    // `client` is optional on both of these so a multi-coupon redemption can run
+    // inside ONE transaction and roll back as a unit. Default to the pool for
+    // the single-coupon callers, which need no transaction.
+    async findByCode(code: string, client?: PoolClient): Promise<CouponRow | null> {
+      const q: Queryable = client ?? db;
+      const r = await q.query<CouponRow>('SELECT * FROM coupons WHERE code = $1', [code]);
       return r.rows[0] ?? null;
     },
 
@@ -77,8 +81,9 @@ export function createRewardsRepo(db: Database) {
      * WHERE is the guard, so two people scanning the same code at a desk cannot
      * both succeed. Returns null when it was already used or has lapsed.
      */
-    async markRedeemed(code: string, note: string): Promise<CouponRow | null> {
-      const r = await db.query<CouponRow>(
+    async markRedeemed(code: string, note: string, client?: PoolClient): Promise<CouponRow | null> {
+      const q: Queryable = client ?? db;
+      const r = await q.query<CouponRow>(
         `UPDATE coupons
             SET status = 'redeemed', redeemed_at = NOW(), redeemed_note = $2
           WHERE code = $1 AND status = 'issued' AND expires_at > NOW()

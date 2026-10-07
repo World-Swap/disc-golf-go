@@ -110,8 +110,14 @@
         html += '<div id="offers"><p class="section-label">Redeem gold</p>' +
                 state.cat.coupons.map(offer).join('') +
                 '<p class="note" style="margin-top:12px">Codes last ' + state.cat.valid_months +
-                ' months and can be used once. You can redeem ' + state.cat.max_per_window +
-                ' coupons every ' + state.cat.window_days + ' days.</p></div>';
+                ' months and can be used once. You can redeem ' + state.cat.max_per_window + ' ' +
+                (state.cat.max_per_window === 1 ? 'coupon' : 'coupons') + ' every ' +
+                state.cat.window_days + ' days' +
+                (state.cat.max_per_visit > 1
+                  ? ', and use up to ' + state.cat.max_per_visit +
+                    ' of the same kind together on one purchase'
+                  : '') +
+                '.</p></div>';
 
         var spent = state.mine.filter(function (c) { return c.status !== 'issued'; });
         if (spent.length) {
