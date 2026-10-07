@@ -26,6 +26,14 @@
  *   node scripts/xp-reconcile.js            # report
  *   node scripts/xp-reconcile.js --fix      # repair fault 1 only
  *
+ * RUN AGAINST PRODUCTION 2026-10-07: `--fix` was executed and reported
+ * "Repaired 3 players, 475 XP credited." -- players 12 (200), 38 (175) and
+ * 27 (100). That was the entire fault-1 liability across the whole player base.
+ * The script is idempotent, so re-running it is harmless and is the way to
+ * check nothing new has accrued; a later run reporting more than 0 owed means a
+ * NEW uncredited-bonus path has appeared and wants investigating, because the
+ * code paths that caused this were removed in bdc2619.
+ *
  * STATUS, 2026-10-07: --fix is AUTHORISED by the project owner and is the
  * intended action -- fault 1 is XP players were told they had earned and never
  * received, so paying it is a repair, not a policy choice. Run it against
