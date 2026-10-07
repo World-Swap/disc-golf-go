@@ -7,6 +7,8 @@ import { XP_EVENTS, GOLD_EVENTS, type XpEvent, type GoldEvent } from './events';
 import { getLevelFromXp } from './level';
 
 /** Anything that can run a query — a pool, a client, or the Database wrapper. */
+import { grantLevelRewards } from '../rewards/level-rewards';
+
 interface Queryable {
   query(sql: string, params?: unknown[]): Promise<{ rows: any[] }>;
 }
@@ -56,7 +58,20 @@ export async function applyXp(
   );
   const row = r.rows[0];
   if (!row) return { newXp: 0, newLevel: 1 };
-  return { newXp: Number(row.xp), newLevel: Number(row.level) };
+  const newLevel = Number(row.level);
+
+  // Gold for levels reached. Here rather than in any feature, because the level
+  // changes HERE -- wiring it to a feature is what left levelling up through a
+  // lesson paying nothing while levelling up through a check-in paid 50.
+  // Self-healing and exactly-once; see level-rewards.ts. Never fatal: a reward
+  // failure must not undo XP the player earned.
+  try {
+    await grantLevelRewards(q, playerId, newLevel);
+  } catch (e) {
+    console.error('[grants] level reward failed for player', playerId, (e as Error).message);
+  }
+
+  return { newXp: Number(row.xp), newLevel };
 }
 
 interface BoostRow {

@@ -832,4 +832,50 @@ CREATE INDEX IF NOT EXISTS idx_channel_videos_teaches ON channel_videos(teaches,
 -- The newest list and the per-creator lists are the only two reads.
 CREATE INDEX IF NOT EXISTS idx_channel_videos_recent ON channel_videos(feed_hidden, published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_channel_videos_channel ON channel_videos(channel_id, feed_hidden, published_at DESC);
+
+-- ── Rewards: levelling pays gold, gold buys coupons, coupons are real money ──
+-- (No backticks in this file: SCHEMA_SQL is a JS template literal.)
+
+-- One row per level a player has ALREADY been paid for. The UNIQUE is the whole
+-- mechanism: gold for a level is granted inside a transaction that inserts here
+-- first, so a retry, a concurrent request, or a level recomputed after an XP
+-- correction can never pay twice.
+CREATE TABLE IF NOT EXISTS player_level_rewards (
+  id SERIAL PRIMARY KEY,
+  player_id INTEGER NOT NULL,
+  level INTEGER NOT NULL,
+  gold_awarded INTEGER NOT NULL,
+  awarded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (player_id, level)
+);
+CREATE INDEX IF NOT EXISTS idx_player_level_rewards_player ON player_level_rewards(player_id);
+
+-- An issued coupon. This is a BEARER INSTRUMENT with a cash value, so the row
+-- is written to be auditable on its own: who it belongs to, what was paid, what
+-- it promises, when it dies, and who redeemed it.
+--
+-- title/terms/face_value_usd are DENORMALISED on purpose. The catalogue in
+-- rewards.catalog.ts will be edited, and an outstanding coupon must keep
+-- promising what it promised when it was issued -- the same reasoning as
+-- tournaments.course_name. Reading the live catalogue at redemption time would
+-- let an edit silently change what someone is already holding.
+CREATE TABLE IF NOT EXISTS coupons (
+  id SERIAL PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  player_id INTEGER NOT NULL,
+  type_key TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  terms TEXT NOT NULL,
+  face_value_usd INTEGER NOT NULL DEFAULT 0,
+  gold_spent INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'issued',
+  issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  redeemed_at TIMESTAMPTZ,
+  redeemed_note TEXT,
+  emailed_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_coupons_player ON coupons(player_id, issued_at DESC);
+CREATE INDEX IF NOT EXISTS idx_coupons_status ON coupons(status, expires_at);
 `;

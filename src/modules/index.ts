@@ -8,6 +8,7 @@ import type { Database } from '../db/types';
 import { sendEmail } from '../lib/email';
 import { config } from '../config';
 import { requireAuth, optionalAuth } from '../middleware/auth';
+import { requireAdmin } from '../middleware/admin-auth';
 
 import { createAuthRepo } from './auth/auth.repo';
 import { createAuthService } from './auth/auth.service';
@@ -44,6 +45,8 @@ import { createTournamentRouter } from './tournament/tournament.routes';
 import { createScorecardsRepo } from './scorecards/scorecards.repo';
 import { createScorecardsService } from './scorecards/scorecards.service';
 import { createScorecardsRouter } from './scorecards/scorecards.routes';
+import { createRewardsRouter } from './rewards/rewards.routes';
+import { createRewardsService } from './rewards/rewards.service';
 import { createVideosRepo } from './videos/videos.repo';
 import { createVideosService } from './videos/videos.service';
 import { createVideosRouter } from './videos/videos.routes';
@@ -122,6 +125,7 @@ export function createApiRouter(db: Database): Router {
 
   const scorecardsService = createScorecardsService({ repo: createScorecardsRepo(db) });
   api.use(createScorecardsRouter(scorecardsService, auth));
+  api.use(createRewardsRouter(createRewardsService({ db }), auth, requireAdmin));
 
   // The channel feed is public: it is the creators' own public uploads, and
   // gating it would only make the app look emptier than it is.
