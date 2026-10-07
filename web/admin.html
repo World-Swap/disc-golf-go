@@ -42,6 +42,16 @@
     .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px;
       background: #f2efe8; color: #6b6560; }
     .tag--guest { background: #fdeadf; color: #b3430a; }
+    .tag--ok { background: #e7f4ed; color: #1c5f40; }
+    .tag--used { background: #f2efe8; color: #6b6560; }
+    .tag--dead { background: #fdecea; color: #8c1d18; }
+    /* The second line of a coupon tile. .stat span is inline (the existing
+       tiles have one label each), so a sub-line needs to be a block or it runs
+       straight on: "AVAILABLE$20 outstanding". */
+    .stat .sub { display: block; margin-top: 2px; text-transform: none; letter-spacing: 0;
+      font-size: 11px; color: #8b857f; }
+    code.cpn { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
+      letter-spacing: .04em; white-space: nowrap; }
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
     .stat { background: #faf8f4; border: 1px solid #efeae1; border-radius: 10px; padding: 10px 12px; }
     .stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
@@ -88,6 +98,7 @@
       <button data-tab="stats" aria-selected="false">Stats</button>
       <button data-tab="notifications" aria-selected="false">Notifications</button>
       <button data-tab="email" aria-selected="false">Email</button>
+      <button data-tab="coupons" aria-selected="false">Coupons</button>
     </div>
 
     <section class="card" id="tab-players">
@@ -149,6 +160,52 @@
         <thead><tr><th>Subject</th><th>To</th><th class="num">Count</th><th>Status</th><th>When</th></tr></thead>
         <tbody id="emailRows"></tbody>
       </table></div>
+    </section>
+
+    <section class="card hide" id="tab-coupons">
+      <h2>Coupons</h2>
+      <div class="note" id="cRules" style="background:#faf8f4;color:#6b6560"></div>
+      <div class="stats" id="cSummary"></div>
+
+      <div style="height:18px"></div>
+      <h2>Honour a code</h2>
+      <p class="muted" style="margin-top:0">
+        Coupons are presented in person — at an event with the TD, or over the counter.
+        Look a code up to check it is live, then mark it used. Marking used cannot be undone.
+        Up to <b id="cStackN">2</b> codes of the <i>same kind</i> go on one purchase: enter both,
+        and either both are applied or neither is.
+      </p>
+      <form class="row" id="cLookupForm">
+        <div><label for="cCode1">Code</label><input id="cCode1" placeholder="DGG-XXXX-XXXX" autocapitalize="characters" /></div>
+        <div><label for="cCode2">Second code (optional)</label><input id="cCode2" placeholder="stack on one purchase" autocapitalize="characters" /></div>
+        <div class="narrow"><button type="submit" class="ghost">Look up</button></div>
+      </form>
+      <div id="cLookupOut"></div>
+
+      <div style="height:18px"></div>
+      <h2>Players</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Player</th><th class="num">Avail</th><th class="num">Used</th>
+          <th class="num">Expired</th><th class="num">Unclaimed</th>
+          <th class="num">Lessons</th><th>Email</th></tr></thead>
+        <tbody id="cPlayerRows"></tbody>
+      </table></div>
+      <p class="muted" id="cPlayerNote" style="margin-bottom:0"></p>
+
+      <div style="height:18px"></div>
+      <h2>Codes</h2>
+      <div class="tabs" id="cFilters" style="margin-bottom:12px">
+        <button type="button" data-cfilter="all" aria-selected="true">All</button>
+        <button type="button" data-cfilter="issued" aria-selected="false">Available</button>
+        <button type="button" data-cfilter="redeemed" aria-selected="false">Used</button>
+        <button type="button" data-cfilter="expired" aria-selected="false">Expired</button>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Code</th><th>Status</th><th style="width:1%"></th><th>Player</th>
+          <th>Coupon</th><th class="num">Value</th><th>Issued</th><th>Expires</th></tr></thead>
+        <tbody id="cCouponRows"></tbody>
+      </table></div>
+      <p class="muted" id="cCouponNote" style="margin-bottom:0"></p>
     </section>
 
     <section class="card hide" id="tab-notifications">
@@ -240,12 +297,13 @@
     var b = e.target.closest('button[data-tab]');
     if (!b) return;
     [].forEach.call($('tabs').children, function (x) { x.setAttribute('aria-selected', String(x === b)); });
-    ['players', 'stats', 'notifications', 'email'].forEach(function (t) {
+    ['players', 'stats', 'notifications', 'email', 'coupons'].forEach(function (t) {
       $('tab-' + t).classList.toggle('hide', t !== b.dataset.tab);
     });
     if (b.dataset.tab === 'stats') loadStats();
     if (b.dataset.tab === 'notifications') loadNotifs();
     if (b.dataset.tab === 'email') loadEmails();
+    if (b.dataset.tab === 'coupons') loadCoupons();
   });
 
   // ── players ──
@@ -597,6 +655,187 @@
     try { await api('/admin/notifications/' + b.dataset.ndel, { method: 'DELETE' }); loadNotifs(); }
     catch (err) { note(err.message, 'err'); }
   });
+
+  // ── coupons ──
+  // Coupons are real money: $5 off, presented in person at an event with the TD
+  // or over a counter. This tab is the whole staff surface -- there is no
+  // separate staff page, deliberately, because whoever honours a code is already
+  // the person signed in here.
+  var cData = null;
+  var cFilter = 'all';
+
+  var statusTag = function (st) {
+    var cls = st === 'issued' ? 'ok' : st === 'redeemed' ? 'used' : 'dead';
+    var label = st === 'issued' ? 'Available' : st === 'redeemed' ? 'Used' : 'Expired';
+    return '<span class="tag tag--' + cls + '">' + label + '</span>';
+  };
+  var usd = function (n) { return '$' + Number(n || 0); };
+
+  async function loadCoupons() {
+    $('cSummary').innerHTML = '<p class="muted">Loading…</p>';
+    try {
+      cData = await api('/rewards/admin/coupons');
+    } catch (err) {
+      $('cSummary').innerHTML = '<p class="muted">' + esc(err.message) + '</p>';
+      return;
+    }
+    renderCoupons();
+  }
+
+  function renderCoupons() {
+    var d = cData, s = d.summary;
+    $('cStackN').textContent = String(d.max_per_visit);
+    $('cRules').innerHTML =
+      (d.enabled
+        ? 'Redemption is <b>open</b>. '
+        : '<b>Redemption is switched off</b> (<code>REWARDS_ENABLED</code>), so no new coupon can be claimed. Codes already issued still look up and can still be marked used. ') +
+      'One coupon earned per <b>' + d.lessons_per_coupon + ' lessons</b>, at most <b>' +
+      d.max_per_window + ' issued every ' + d.window_days + ' days</b>, and up to <b>' +
+      d.max_per_visit + '</b> presented together on one purchase.';
+
+    $('cSummary').innerHTML = [
+      ['Available', s.available, usd(s.value_available_usd) + ' outstanding'],
+      ['Used', s.used, usd(s.value_used_usd) + ' honoured'],
+      ['Expired', s.expired, 'never presented'],
+      ['Issued ever', s.issued, s.holders + ' holding one'],
+      ['Unclaimed', s.unclaimed, 'earned, not yet taken'],
+    ].map(function (x) {
+      return '<div class="stat"><b>' + x[1] + '</b><span>' + esc(x[0]) + '</span>' +
+        '<span class="sub">' + esc(x[2]) + '</span></div>';
+    }).join('');
+
+    // Players: everyone who has completed a lesson or holds a coupon. A long
+    // tail of one-lesson accounts is not interesting, so the list is capped and
+    // says so rather than silently truncating.
+    var ps = d.players.filter(function (p) { return p.issued > 0 || p.unclaimed > 0 || p.lessons > 0; });
+    var cap = 60;
+    $('cPlayerRows').innerHTML = ps.length ? ps.slice(0, cap).map(function (p) {
+      return '<tr><td>' + esc(p.username || ('#' + p.player_id)) + '</td>' +
+        '<td class="num">' + (p.available || '—') + '</td>' +
+        '<td class="num">' + (p.used || '—') + '</td>' +
+        '<td class="num">' + (p.expired || '—') + '</td>' +
+        '<td class="num">' + (p.unclaimed ? '<b>' + p.unclaimed + '</b>' : '—') + '</td>' +
+        '<td class="num">' + p.lessons + '</td>' +
+        '<td class="muted">' + esc(p.email || '—') + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="muted">No one has completed a lesson yet.</td></tr>';
+    $('cPlayerNote').textContent = ps.length > cap
+      ? 'Showing the ' + cap + ' most relevant of ' + ps.length + ' players, sorted by what they hold or are owed.'
+      : (ps.length + ' player' + (ps.length === 1 ? '' : 's') + ' with training progress. ' +
+         '"Unclaimed" is a coupon earned but not yet taken in the app — it is not money owed until claimed.');
+
+    renderCouponRows();
+  }
+
+  function renderCouponRows() {
+    var all = cData.coupons;
+    var rows = cFilter === 'all' ? all : all.filter(function (c) { return c.status === cFilter; });
+    $('cCouponRows').innerHTML = rows.length ? rows.map(function (c) {
+      return '<tr><td><code class="cpn">' + esc(c.code) + '</code></td>' +
+        '<td>' + statusTag(c.status) + '</td>' +
+        '<td>' + (c.status === 'issued'
+          ? '<button class="ghost" data-use="' + esc(c.code) + '">Mark used</button>' : '') + '</td>' +
+        '<td>' + esc(c.username || ('#' + c.player_id)) + '</td>' +
+        '<td>' + esc(c.title) + '</td>' +
+        '<td class="num">' + usd(c.face_value_usd) + '</td>' +
+        '<td class="muted">' + when(c.issued_at) + '</td>' +
+        '<td class="muted">' + when(c.expires_at) + '</td></tr>';
+    }).join('') : '<tr><td colspan="8" class="muted">No coupons' +
+      (cFilter === 'all' ? ' have been issued yet.' : ' with that status.') + '</td></tr>';
+    $('cCouponNote').textContent = all.length
+      ? rows.length + ' of ' + all.length + ' coupons shown.' : '';
+  }
+
+  $('cFilters').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-cfilter]');
+    if (!b || !cData) return;
+    cFilter = b.dataset.cfilter;
+    [].forEach.call($('cFilters').children, function (x) { x.setAttribute('aria-selected', String(x === b)); });
+    renderCouponRows();
+  });
+
+  // Marking used is irreversible, so it confirms with the code in the prompt --
+  // the one thing the person at the counter can check against the paper coupon.
+  $('cCouponRows').addEventListener('click', async function (e) {
+    var b = e.target.closest('button[data-use]');
+    if (!b) return;
+    var code = b.dataset.use;
+    if (!window.confirm('Mark ' + code + ' as used?\n\nThis cannot be undone.')) return;
+    b.disabled = true;
+    try {
+      await api('/rewards/admin/redeem', { method: 'POST', body: { code: code, note: 'admin console' } });
+      note(code + ' marked used.', 'ok');
+      await loadCoupons();
+    } catch (err) { note(err.message, 'err'); b.disabled = false; }
+  });
+
+  $('cLookupForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var codes = [$('cCode1').value.trim(), $('cCode2').value.trim()].filter(Boolean);
+    if (!codes.length) return;
+    $('cLookupOut').innerHTML = '<p class="muted">Looking up…</p>';
+    var out = [];
+    for (var i = 0; i < codes.length; i++) {
+      try {
+        var r = await api('/rewards/admin/lookup/' + encodeURIComponent(codes[i]));
+        out.push(r.coupon);
+      } catch (err) {
+        out.push({ code: codes[i], error: err.message });
+      }
+    }
+    renderLookup(out);
+  });
+
+  function renderLookup(found) {
+    var live = found.filter(function (c) { return !c.error && c.status === 'issued'; });
+    var html = found.map(function (c) {
+      if (c.error) {
+        return '<div class="note note--err"><code class="cpn">' + esc(c.code) + '</code> — ' + esc(c.error) + '</div>';
+      }
+      var kind = c.status === 'issued' ? 'ok' : 'err';
+      return '<div class="note note--' + kind + '"><code class="cpn">' + esc(c.code) + '</code> · ' +
+        esc(c.title) + ' · ' + usd(c.face_value_usd) + ' · ' + statusTag(c.status) +
+        (c.redeemed_at ? ' used ' + when(c.redeemed_at) : ' expires ' + when(c.expires_at)) +
+        '<div style="height:6px"></div><span class="muted" style="font-size:13px">' + esc(c.terms || '') + '</span></div>';
+    }).join('');
+
+    // The apply button only appears when every code presented is live and they
+    // agree on kind -- the two rules the server enforces anyway, said here so
+    // nobody at a counter learns them from a refusal.
+    if (live.length === found.length && live.length) {
+      var kinds = {};
+      live.forEach(function (c) { kinds[c.kind] = 1; });
+      if (Object.keys(kinds).length > 1) {
+        html += '<div class="note note--err">These coupons are different kinds, so they cannot go on one purchase. ' +
+          'Apply them separately.</div>';
+      } else {
+        html += '<div style="height:4px"></div><button id="cApply">Apply ' +
+          (live.length > 1 ? 'both (' + usd(live.reduce(function (n, c) { return n + c.face_value_usd; }, 0)) + ' off)' : usd(live[0].face_value_usd) + ' off') +
+          ' and mark used</button>';
+      }
+    }
+    $('cLookupOut').innerHTML = html;
+
+    var apply = $('cApply');
+    if (!apply) return;
+    apply.addEventListener('click', async function () {
+      var list = live.map(function (c) { return c.code; });
+      if (!window.confirm('Apply and mark used:\n\n' + list.join('\n') + '\n\nThis cannot be undone.')) return;
+      apply.disabled = true;
+      try {
+        // One code goes through the single redeem; two go through the batch,
+        // which is all-or-nothing inside one transaction.
+        if (list.length === 1) {
+          await api('/rewards/admin/redeem', { method: 'POST', body: { code: list[0], note: 'admin console' } });
+        } else {
+          await api('/rewards/admin/redeem-together', { method: 'POST', body: { codes: list, note: 'admin console' } });
+        }
+        note(list.join(' + ') + ' marked used.', 'ok');
+        $('cCode1').value = ''; $('cCode2').value = '';
+        $('cLookupOut').innerHTML = '';
+        await loadCoupons();
+      } catch (err) { note(err.message, 'err'); apply.disabled = false; }
+    });
+  }
 
   // A token in sessionStorage means this tab already signed in. Prove it is
   // still valid with a real request rather than trusting its presence.

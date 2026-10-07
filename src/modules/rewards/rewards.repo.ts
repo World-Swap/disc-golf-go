@@ -20,6 +20,12 @@ export interface CouponRow {
   redeemed_at: Date | null;
 }
 
+/** A coupon with the account it belongs to, for the admin console. */
+export interface AdminCouponRow extends CouponRow {
+  username: string | null;
+  email: string | null;
+}
+
 export function createRewardsRepo(db: Database) {
   return {
     /** FOR UPDATE: the lock that makes a concurrent double-redeem impossible. */
@@ -131,6 +137,54 @@ export function createRewardsRepo(db: Database) {
         [code, note]
       );
       return r.rows[0] ?? null;
+    },
+
+    /**
+     * Every coupon ever issued, newest first, with the player it belongs to.
+     *
+     * Deliberately unpaginated, and the admin overview buckets these in JS
+     * rather than counting them in SQL. The reason is that "available" means
+     * status = 'issued' AND NOT YET EXPIRED, and that rule already exists in
+     * one place (couponStatus). A SQL summary would be a SECOND copy of it, free
+     * to disagree with the codes printed on the same page -- which is the exact
+     * failure this repo keeps recording. The table is small by construction:
+     * issuance is capped at one per account per 30 days, so 141 players cannot
+     * produce more than a few thousand rows in years. If it ever does, move the
+     * summary into SQL and pin the two definitions together with a test, the way
+     * level-sql.test.ts does.
+     *
+     * LEFT JOIN because coupons.player_id carries no foreign key: a deleted
+     * account leaves its coupons behind, and a code that is still presentable at
+     * a counter must still be findable here.
+     */
+    async adminAllCoupons(): Promise<AdminCouponRow[]> {
+      const r = await db.query<AdminCouponRow>(
+        `SELECT c.*, p.username, p.email
+           FROM coupons c
+           LEFT JOIN players p ON p.id = c.player_id
+          ORDER BY c.issued_at DESC`
+      );
+      return r.rows;
+    },
+
+    /**
+     * Lessons completed per player, for everyone who has completed any.
+     * Computed from training_completions, not a stored counter, so it cannot
+     * drift from the entitlement redeem() enforces.
+     */
+    async adminLessonCounts(): Promise<Array<{ player_id: number; username: string | null; email: string | null; lessons: number }>> {
+      const r = await db.query<{ player_id: number; username: string | null; email: string | null; lessons: string }>(
+        `SELECT tc.player_id, p.username, p.email, COUNT(*) AS lessons
+           FROM training_completions tc
+           LEFT JOIN players p ON p.id = tc.player_id
+          GROUP BY tc.player_id, p.username, p.email`
+      );
+      return r.rows.map((x) => ({
+        player_id: x.player_id,
+        username: x.username,
+        email: x.email,
+        lessons: Number(x.lessons),
+      }));
     },
 
     async playerEmail(playerId: number): Promise<{ email: string | null; username: string | null } | null> {

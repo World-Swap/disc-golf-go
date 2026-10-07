@@ -195,6 +195,133 @@ export function createRewardsService({
       return { success: true, coupon: view(coupon) };
     },
 
+    /**
+     * Everything the admin console's Coupons tab shows, in one call: who holds
+     * what, which codes are live, which have been used, and what it has cost.
+     *
+     * Every figure is derived here from the coupons table and
+     * training_completions -- nothing is a stored counter, so none of it can
+     * drift from the rows behind it. "available" and "expired" come from
+     * couponStatus, the same function that decides what a player sees on
+     * /rewards and what the single-code lookup reports at a counter.
+     *
+     * `unclaimed` is a different thing from `available` and both matter: a
+     * coupon that exists and has not been used is AVAILABLE, while an
+     * entitlement crossed but never claimed is UNCLAIMED. A player sitting on 40
+     * lessons and no coupons has one unclaimed and nothing available.
+     */
+    async adminOverview() {
+      const [rows, lessonCounts] = await Promise.all([
+        repo.adminAllCoupons(),
+        repo.adminLessonCounts(),
+      ]);
+      const now = new Date();
+
+      type Acc = {
+        player_id: number;
+        username: string | null;
+        email: string | null;
+        lessons: number;
+        available: number;
+        used: number;
+        expired: number;
+        issued: number;
+        value_available_usd: number;
+        value_used_usd: number;
+      };
+      const byPlayer = new Map<number, Acc>();
+      const blank = (id: number, username: string | null, email: string | null): Acc => ({
+        player_id: id, username, email, lessons: 0,
+        available: 0, used: 0, expired: 0, issued: 0,
+        value_available_usd: 0, value_used_usd: 0,
+      });
+
+      // Anyone with lessons is listed even with no coupon yet, because their
+      // unclaimed entitlement is the thing worth seeing before it is claimed.
+      for (const l of lessonCounts) {
+        const a = blank(l.player_id, l.username, l.email);
+        a.lessons = l.lessons;
+        byPlayer.set(l.player_id, a);
+      }
+
+      const coupons = rows.map((c) => {
+        const status = couponStatus(c, now);
+        let a = byPlayer.get(c.player_id);
+        if (!a) {
+          a = blank(c.player_id, c.username, c.email);
+          byPlayer.set(c.player_id, a);
+        }
+        // The join is the authority on the name; a lessons-only row may predate it.
+        if (c.username) a.username = c.username;
+        if (c.email) a.email = c.email;
+        a.issued += 1;
+        // 'issued' is what couponStatus returns for a live coupon; it only
+        // reports 'expired' once the date has passed.
+        if (status === 'issued') {
+          a.available += 1;
+          a.value_available_usd += c.face_value_usd;
+        } else if (status === 'redeemed') {
+          a.used += 1;
+          a.value_used_usd += c.face_value_usd;
+        } else {
+          a.expired += 1;
+        }
+        return {
+          code: c.code,
+          player_id: c.player_id,
+          username: c.username,
+          email: c.email,
+          kind: c.kind,
+          title: c.title,
+          face_value_usd: c.face_value_usd,
+          lessons_at_issue: c.lessons_at_issue,
+          status,
+          issued_at: c.issued_at,
+          expires_at: c.expires_at,
+          redeemed_at: c.redeemed_at,
+        };
+      });
+
+      const players = [...byPlayer.values()]
+        .map((a) => ({
+          ...a,
+          // Earned over all time, counted against coupons already issued -- the
+          // same arithmetic redeem() runs, so this page and the app agree.
+          coupons_earned: Math.floor(a.lessons / LESSONS_PER_COUPON),
+          unclaimed: Math.max(Math.floor(a.lessons / LESSONS_PER_COUPON) - a.issued, 0),
+        }))
+        // Most interesting first: who is holding or owed something, then by
+        // lessons done. A long tail of players with one lesson sorts last.
+        .sort((x, y) =>
+          (y.available + y.unclaimed) - (x.available + x.unclaimed) ||
+          y.issued - x.issued ||
+          y.lessons - x.lessons);
+
+      const sum = (f: (c: (typeof coupons)[number]) => number) => coupons.reduce((n, c) => n + f(c), 0);
+      const count = (st: string) => coupons.filter((c) => c.status === st).length;
+      return {
+        enabled,
+        lessons_per_coupon: LESSONS_PER_COUPON,
+        max_per_window: MAX_COUPONS_PER_WINDOW,
+        window_days: COUPON_WINDOW_DAYS,
+        max_per_visit: MAX_COUPONS_PER_VISIT,
+        summary: {
+          issued: coupons.length,
+          available: count('issued'),
+          used: count('redeemed'),
+          expired: count('expired'),
+          // What is outstanding is the number that matters at a counter: it is
+          // money that can still be presented. Used is what it has cost so far.
+          value_available_usd: sum((c) => (c.status === 'issued' ? c.face_value_usd : 0)),
+          value_used_usd: sum((c) => (c.status === 'redeemed' ? c.face_value_usd : 0)),
+          holders: players.filter((p) => p.available > 0).length,
+          unclaimed: players.reduce((n, p) => n + p.unclaimed, 0),
+        },
+        players,
+        coupons,
+      };
+    },
+
     /** Staff-side: look a code up without changing anything. */
     async lookup(rawCode: string) {
       const code = normaliseCouponCode(String(rawCode ?? ''));
@@ -297,15 +424,23 @@ export function createRewardsService({
  * lapsed coupon reads as expired the moment it lapses, with no job to run and
  * nothing to drift. markRedeemed enforces the same thing in SQL.
  */
+export function couponStatus(c: Pick<CouponRow, 'status' | 'expires_at'>, now = new Date()): string {
+  return c.status === 'issued' && new Date(c.expires_at) <= now ? 'expired' : c.status;
+}
+
 function view(c: CouponRow) {
-  const expired = new Date(c.expires_at) <= new Date();
   return {
     code: c.code,
     kind: c.kind,
     title: c.title,
     terms: c.terms,
     gold_spent: c.gold_spent,
-    status: c.status === 'issued' && expired ? 'expired' : c.status,
+    // The face value is denormalised onto the row at issue time, so an
+    // outstanding coupon keeps promising what it promised. Reporting it here
+    // means a counter reads the discount off the coupon rather than off the
+    // current catalogue -- or, worse, off a hardcoded number in a page.
+    face_value_usd: c.face_value_usd,
+    status: couponStatus(c),
     issued_at: c.issued_at,
     expires_at: c.expires_at,
     redeemed_at: c.redeemed_at,

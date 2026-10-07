@@ -33,6 +33,13 @@ export function createRewardsRouter(
 
   // Staff only, and deliberately so: a public lookup lets anyone probe codes,
   // and a public redeem lets anyone burn a coupon they do not hold.
+  // The admin console's Coupons tab: who holds what, which codes are live,
+  // which are spent. One call, because the page shows all of it at once and a
+  // second endpoint would be a second chance for the two to disagree.
+  router.get('/rewards/admin/coupons', requireAdmin, asyncHandler(async (_req, res) => {
+    res.json(await service.adminOverview());
+  }));
+
   router.get('/rewards/admin/lookup/:code', requireAdmin, asyncHandler(async (req, res) => {
     res.json(await service.lookup(req.params.code ?? ''));
   }));

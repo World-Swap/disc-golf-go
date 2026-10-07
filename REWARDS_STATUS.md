@@ -99,31 +99,62 @@ Both ledgers reconcile to their balances, and no file but
 
 ---
 
+## How a coupon is honoured
+
+**In person, and only in person.** There is no online checkout and nothing to
+type a code into:
+
+- **Tournament entry** — the player shows the code to the TD when registering.
+  Registration runs on Disc Golf Scene, which we do not control, so the TD takes
+  the $5 off by hand.
+- **Merchandise** — shown over the counter at a Disc Golf Go event.
+- **Online** — not yet. When the store goes live, the catalogue's `terms` and the
+  coupon email get the online path added, and the test that forbids the word
+  "online" in either (`admin-overview.test.ts`) is deleted in the same change.
+  Not before: a coupon's terms are **denormalised onto its row at issue time**,
+  so a coupon issued today promising online redemption keeps promising it for
+  six months.
+
+**The staff surface is the admin page, not a separate staff page.** `/admin` →
+**Coupons** shows, computed from the real tables rather than from any stored
+counter:
+
+- what is outstanding, used, expired and unclaimed, in both counts and dollars;
+- every player with training progress, their coupons available / used / expired,
+  and the entitlement they have earned but not yet claimed;
+- every code ever issued, with who holds it and its live status;
+- a lookup for one or two codes that says what each is worth and whether it is
+  live, and marks them used — one, or two of the same kind as a stack.
+
+Marking used is irreversible and confirms with the code in the prompt, which is
+the one thing the person at the counter can check against the paper coupon.
+
+Two rules the console enforces because the server does, shown on the page rather
+than taught by a refusal: at most **2 codes** on one purchase, and they must be
+the **same kind** — $5 off merchandise and $5 off an entry fee do not both apply
+to one merchandise purchase. A stack is **all-or-nothing in one transaction**: a
+pair containing an expired code is refused with the good code left unspent.
+
+What this honestly does not enforce: the server has no concept of a "visit", so
+it cannot stop two separate single redemptions a minute apart. The batch limit
+binds the flow staff actually use for stacking; the rest is a counter policy the
+terms state.
+
+---
+
 ## Open — in the order it should be done
 
-### 1. There is no staff page. This is the blocker.
-`GET /rewards/admin/lookup/:code`, `POST /rewards/admin/redeem` and
-`POST /rewards/admin/redeem-together` all exist and are admin-gated, but
-**nothing in `web/` calls them**. At an event, honouring a coupon means running
-curl. Needed: a page where staff enter or scan a code, see what it is worth and
-whether it is live, and mark it used — including the two-code stack.
+### 1. Write the TD procedure for the first event.
+This is the last thing between here and switching it on, and it is a document
+rather than code. Coupons are honoured **in person**: entries are taken by a TD
+on Disc Golf Scene, which we do not control, so the TD takes $5 off by hand and
+the code is then marked used in the admin console. What needs writing, before
+the first event rather than during it: who marks the code used and when, what to
+do when a player presents a code the console says is expired or already used
+(refuse, and the console says which), and that two coupons of the **same kind**
+go on one purchase and the console applies both or neither.
 
-### 2. The merchandise store does not exist.
-A `$5 off merchandise` coupon has no online checkout to apply to, so it is
-in-person only. Either say that in the terms, or hold `merch_5` back and ship
-only `entry_5` until there is a store.
-
-### 3. Tournament entry discounts have no written process.
-Registration is on discgolfscene, which we do not control, so a TD applies the
-$5 by hand and then marks the code used. That procedure needs writing before the
-first event, not during it.
-
-### 4. The coupon email states expiry but not the stacking rule or "no cash value".
-It is the document a player holds at a counter. The coupon `terms` field does
-carry the stacking rule (and is denormalised at issue time, so outstanding
-coupons keep promising what they promised) — the email should match.
-
-### 5. Then flip `REWARDS_ENABLED`.
+### 2. Then flip `REWARDS_ENABLED`.
 Ideally with **one event as a pilot** rather than opening it to all 141 players
 at once.
 
