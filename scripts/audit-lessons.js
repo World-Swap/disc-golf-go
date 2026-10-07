@@ -147,6 +147,37 @@ const STOP = new Set(('the a an and or of to for your you in on is it how what w
 const keywords = (s) => String(s || '').toLowerCase().split(/[^a-z0-9]+/)
   .filter((w) => w.length > 2 && !STOP.has(w));
 
+// The category classifier, through ts-node so the phrase table exists once.
+// Two copies of "what does this title mean" is how the first one comes to be
+// wrong, which this file's own history already demonstrates.
+require('ts-node/register/transpile-only');
+const { classifyVideo } = require('../src/modules/videos/classify');
+
+/**
+ * Does the video's title name a DIFFERENT discipline from the lesson's?
+ *
+ * This catches what topicFit structurally cannot. "Know Your Lines -- see the
+ * shot before you throw it" cited "Find Your Line for Linear Pull-Throughs",
+ * a form drill, and word overlap scored it 0.50 on the word "line" alone --
+ * the same word meaning two different things. The classifier reads the title
+ * for phrases that NAME a discipline, so it sees "pull-through" and "drill".
+ *
+ * Advisory, never blocking: a lesson on nerves whose video is "Conquering
+ * Putting Nerves" is correct and will show up here. The authoritative list of
+ * reviewed exceptions is in src/modules/videos/video-relevance.test.ts, which
+ * runs on every commit; this is the same check for a manual audit.
+ */
+function misfiled(lesson, videoTitle) {
+  const v = classifyVideo(videoTitle);
+  if (!v) return null;                       // the classifier refuses rather than guesses
+  if (v.categorySlug === lesson.category_slug) return null;
+  // Compare against what the LESSON says it is about, not just its category:
+  // a putting-form lesson filed under Form & Technique should cite putting.
+  const self = classifyVideo(`${lesson.title} ${lesson.description}`);
+  if (self && self.categorySlug === v.categorySlug) return null;
+  return v;
+}
+
 /**
  * How much of the lesson's own vocabulary shows up in the video's real title.
  * A blunt instrument on purpose: it ranks, it does not judge. "Distance
@@ -173,7 +204,7 @@ async function mapLimit(items, limit, fn) {
 
 // ── the audit ───────────────────────────────────────────────────────────────
 async function run(lessons, opts) {
-  const findings = { dead: [], wrongSport: [], mixedSport: [], unverified: [], titleDrift: [], credit: [], lowFit: [], deadLink: [] };
+  const findings = { dead: [], wrongSport: [], mixedSport: [], unverified: [], titleDrift: [], credit: [], lowFit: [], misfiled: [], deadLink: [] };
 
   // Every video reference: the lesson's primary, plus any resource videos.
   const refs = [];
@@ -246,6 +277,10 @@ async function run(lessons, opts) {
     if (ref.kind === 'primary') {
       const fit = topicFit(ref.lesson, p.title);
       if (fit < opts.fit) findings.lowFit.push({ ...where, fit: Number(fit.toFixed(2)), lessonTitle: ref.lesson.title, video: p.title, channel: p.channel });
+      // Checked against the title YouTube actually serves, not the stored
+      // one, so a drifted title is judged on what it says today.
+      const mis = misfiled(ref.lesson, p.title);
+      if (mis) findings.misfiled.push({ ...where, lessonTitle: ref.lesson.title, video: p.title, reads: mis.categorySlug, score: mis.score, matched: mis.matched });
     }
   }
 
@@ -328,6 +363,18 @@ function report(f, opts) {
     if (!opts.verbose && f.titleDrift.length > 10) line(`    ... and ${f.titleDrift.length - 10} more (--verbose to see all)`);
     line('');
   }
+  if (f.misfiled.length) {
+    line(`? VIDEO NAMES A DIFFERENT DISCIPLINE (${f.misfiled.length}) \u2014 REVIEW BY HAND`);
+    line('  Advisory. A nerves lesson citing a putting-nerves video lands here and is correct.');
+    line('  The reviewed list lives in src/modules/videos/video-relevance.test.ts.');
+    for (const r of f.misfiled) {
+      line(`  ${r.lesson} [${r.category}]`);
+      line(`     lesson: ${r.lessonTitle}`);
+      line(`     video : ${r.video}`);
+      line(`     reads as ${r.reads} (${r.score}) via ${r.matched.join(', ')}`);
+    }
+    line('');
+  }
   if (f.lowFit.length) {
     line(`? PRIMARY VIDEO MAY BE OFF TOPIC (${f.lowFit.length}, fit < ${opts.fit}) — REVIEW BY HAND`);
     line('  Keyword overlap is blunt: "Distance Mechanics" vs "How to Throw Far" scores 0 and is fine.');
@@ -343,8 +390,8 @@ function report(f, opts) {
   line('─'.repeat(72));
   line(`blocking: ${blocking}  (dead ${f.dead.length}, wrong sport ${f.wrongSport.length}, dead links ${f.deadLink.length})`);
   line(`advisory: mixed sport ${f.mixedSport.length}, unverified ${f.unverified.length}, credits ${f.credit.length}, `
-    + `title drift ${f.titleDrift.length}, low topic fit ${f.lowFit.length}`);
-  if (!blocking && !f.lowFit.length && !f.mixedSport.length && !f.unverified.length) line('nothing to fix.');
+    + `title drift ${f.titleDrift.length}, low topic fit ${f.lowFit.length}, misfiled ${f.misfiled.length}`);
+  if (!blocking && !f.lowFit.length && !f.misfiled.length && !f.mixedSport.length && !f.unverified.length) line('nothing to fix.');
   return blocking;
 }
 

@@ -50,16 +50,16 @@ const SIGNALS: Record<string, Array<[RegExp, number]>> = {
     // "3 Ways to Drive with Putters" is a driving video. At putt-strength it was
     // filed under Putting, which is the kind of plausible-looking mistake the
     // 2026-09-29 audit was cleaning up.
-    [/\bputter(s)?\b/, 2], [/\bjump putt|straddle|turbo putt/, 3],
-    [/\bcircle (1|one|2|two)\b/, 3], [/\bspin putt|push putt/, 3], [/\bmake more putts\b/, 3],
-    [/\bc1x|comeback putt\b/, 2],
+    [/\bputter(s)?\b/, 2], [/\bjump putt\b|\bstraddle\b|\bturbo putt/, 3],
+    [/\bcircle (1|one|2|two)\b/, 3], [/\bspin putt\b|\bpush putt/, 3], [/\bmake more putts\b/, 3],
+    [/\bc1x\b|\bcomeback putt\b/, 2],
   ],
   driving: [
     [/\bdistance\b/, 2], [/\bdriving\b/, 4], [/\bdriver(s)?\b/, 3], [/\bdrive(s)?\b/, 2], [/\bmax(imum)? distance\b/, 3],
-    [/\breach ?back|x-?step|run ?up\b/, 4], [/\bfarther|further\b/, 2], [/\bpower\b/, 2],
+    [/\breach ?back\b|\bx-?step\b|\brun ?up\b/, 4], [/\bfarther\b|\bfurther\b/, 2], [/\bpower\b/, 2],
     // How the feed actually words "distance": by asking for it, or in feet.
     [/\bthrow(ing)? (it )?(far|farther|further)\b/, 4], [/\bthrow far\b/, 4],
-    [/\b[1-9]\d{2} ?(ft|feet|foot)\b/, 3], [/\bmore power|power pocket\b/, 3],
+    [/\b[1-9]\d{2} ?(ft|feet|foot)\b/, 3], [/\bmore power\b|\bpower pocket\b/, 3],
     [/\bcoil\b/, 3],
   ],
   putting_guard: [],
@@ -69,36 +69,36 @@ const SIGNALS: Record<string, Array<[RegExp, number]>> = {
     // single alternation this maxed out at 3 and so could NEVER clear MIN_SCORE
     // -- the entire category was unreachable.
     [/\bforehand(s)?\b/, 4], [/\bsidearm\b/, 4], [/\bflick\b/, 3],
-    [/\bthumber|tomahawk\b/, 2],
+    [/\bthumber\b|\btomahawk\b/, 2],
   ],
   approach: [
-    [/\bapproach(es|ing)?\b/, 4], [/\bupshot(s)?\b/, 4], [/\bscramble|parked\b/, 2],
+    [/\bapproach(es|ing)?\b/, 4], [/\bupshot(s)?\b/, 4], [/\bscramble\b|\bparked\b/, 2],
     [/\binside (the )?circle\b/, 2], [/\bmidrange(s)?\b/, 2],
   ],
   'disc-selection': [
-    [/\bwhat disc|which disc|disc for\b/, 4], [/\bin the bag|bag breakdown\b/, 3],
-    [/\bplastic|stability|overstable|understable\b/, 2], [/\bflight number(s)?\b/, 3],
+    [/\b(what|which|best) discs?\b/, 4], [/\bin the bag\b|\bbag breakdown\b/, 3],
+    [/\bplastic\b|\bstability\b|\boverstable\b|\bunderstable\b/, 2], [/\bflight number(s)?\b/, 3],
     [/\bbeginner discs?\b/, 3],
   ],
   'course-strategy': [
-    [/\bcourse management|course strategy\b/, 4], [/\bhole breakdown|shot selection\b/, 3],
+    [/\bcourse management\b|\bcourse strategy\b/, 4], [/\bhole breakdown\b|\bshot selection\b/, 3],
     [/\bwhen to (go|lay)\b/, 2], [/\bplaying (in )?wind\b/, 2],
   ],
   'mental-game': [
-    [/\bmental (game|approach)\b/, 4], [/\bnerves|pressure|confidence|focus\b/, 2],
-    [/\broutine\b/, 1], [/\bchoking|tilt\b/, 2],
+    [/\bmental (game|approach)\b/, 4], [/\bnerves\b|\bpressure\b|\bconfidence\b|\bfocus\b/, 2],
+    [/\broutine\b/, 1], [/\bchoking\b|\btilt\b/, 2],
   ],
   'fitness-warmup': [
-    [/\bwarm ?up\b/, 4], [/\bstretch(ing|es)?\b/, 4], [/\bmobility|flexibility\b/, 3],
-    [/\bworkout|exercise|strength\b/, 2], [/\binjur(y|ies)\b/, 3],
+    [/\bwarm ?up\b/, 4], [/\bstretch(ing|es)?\b/, 4], [/\bmobility\b|\bflexibility\b/, 3],
+    [/\bworkout\b|\bexercise\b|\bstrength\b/, 2], [/\binjur(y|ies)\b/, 3],
     [/\belbow\b/, 2], [/\bwrist\b/, 2], [/\bshoulder\b/, 2],
   ],
   'rules-etiquette': [
-    [/\brules?\b/, 2], [/\betiquette\b/, 4], [/\bpenalty|out of bounds|\bOB\b/, 2],
-    [/\bcasual water|relief|drop zone\b/, 3],
+    [/\brules?\b/, 2], [/\betiquette\b/, 4], [/\bpenalty\b|\bout of bounds\b|\bOB\b/, 2],
+    [/\bcasual water\b|\brelief\b|\bdrop zone\b/, 3],
   ],
   'tournament-competition': [
-    [/\btournament(s)?\b/, 4], [/\bcompeting|competition\b/, 2], [/\bPDGA\b/, 2],
+    [/\btournament(s)?\b/, 4], [/\bcompeting\b|\bcompetition\b/, 2], [/\bPDGA\b/, 2],
     [/\bleague\b/, 2], [/\bfirst tournament\b/, 3],
   ],
   practice: [
@@ -107,8 +107,8 @@ const SIGNALS: Record<string, Array<[RegExp, number]>> = {
   ],
   'form-technique': [
     [/\bform\b/, 2], [/\btechnique\b/, 2], [/\bgrip\b/, 3], [/\bfootwork\b/, 4],
-    [/\bbackhand\b/, 2], [/\brelease|follow ?through|hip (rotation|turn)\b/, 2],
-    [/\bnose angle|hyzer|anhyzer\b/, 2],
+    [/\bbackhand\b/, 2], [/\brelease\b|\bfollow ?through\b|\bhip (rotation|turn)\b/, 2],
+    [/\bnose angle\b|\bhyzer\b|\banhyzer\b/, 2],
     // Named faults. Each of these is a form error and nothing else, which is
     // why they score as a plain naming of the category.
     [/\brounding\b/, 4], [/\bplant foot\b/, 4], [/\bform breakdown\b/, 4],
@@ -116,7 +116,7 @@ const SIGNALS: Record<string, Array<[RegExp, number]>> = {
     [/\bposture\b/, 2], [/\bpower pocket\b/, 2],
   ],
   'getting-started': [
-    [/\bbeginner(s)?\b/, 2], [/\bnew to disc golf|first round|getting started\b/, 3],
+    [/\bbeginner(s)?\b/, 2], [/\bnew to disc golf\b|\bfirst round\b|\bgetting started\b/, 3],
     [/\bhow to (start|play) disc golf\b/, 3],
   ],
 };
