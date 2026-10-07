@@ -25,6 +25,21 @@
  *
  *   node scripts/xp-reconcile.js            # report
  *   node scripts/xp-reconcile.js --fix      # repair fault 1 only
+ *
+ * STATUS, 2026-10-07: --fix is AUTHORISED by the project owner and is the
+ * intended action -- fault 1 is XP players were told they had earned and never
+ * received, so paying it is a repair, not a policy choice. Run it against
+ * production when a DATABASE_URL for it is available; it is idempotent (the
+ * `xp_reconcile` marker row means a second run finds nothing), so re-running is
+ * safe. Verified end to end against a real Postgres on the same date: the two
+ * faults are reported separately, --fix credits only fault 1, leaves a player
+ * whose gap is purely `xp_log` untouched, moves players.level with the balance
+ * across a level boundary, and leaves SUM(ledger) == players.xp.
+ *
+ * Its sibling `xp-rebalance-backfill.js` is deliberately NOT to be run: the
+ * owner held it on 2026-10-07. That one is a fairness decision rather than a
+ * debt, and the two are independent -- proved order-independent and idempotent,
+ * so running this one first forecloses nothing.
  */
 const { Pool } = require('pg');
 

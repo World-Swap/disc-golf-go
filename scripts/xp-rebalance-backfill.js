@@ -19,6 +19,21 @@
  *
  *   node scripts/xp-rebalance-backfill.js          # report
  *   node scripts/xp-rebalance-backfill.js --fix    # apply
+ *
+ * STATUS, 2026-10-07: HELD by the project owner. Do NOT run --fix, and do not
+ * assume it goes along with `xp-reconcile.js --fix`, which WAS authorised the
+ * same day -- the two were decided separately and on different grounds.
+ * Reconcile pays a debt: XP players were told they had earned. This grants XP
+ * nobody is owed, to stop early users sitting on a tenth of what a newcomer
+ * earns for the same lessons. That is a fairness call about a leaderboard that
+ * is about to gate coupons, and it is the owner's to make, not a repair to
+ * apply quietly. Ask before running it.
+ *
+ * Nothing is lost by waiting. Verified against a real Postgres on 2026-10-07:
+ * this script and the reconcile are order-independent (both sequences land on
+ * the identical balance, matching a hand-computed target) and each is
+ * idempotent, so running reconcile first does not change what this would do
+ * later, and running this twice cannot double-credit.
  */
 const { Pool } = require('pg');
 
