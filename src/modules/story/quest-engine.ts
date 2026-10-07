@@ -3,6 +3,7 @@
 // events; it advances matching quests and awards rewards in a transaction.
 
 import type { PoolClient } from 'pg';
+import { applyXp } from '../progression/grants';
 import type { Database } from '../../db/types';
 import { withTransaction } from '../../db/pool';
 
@@ -100,7 +101,7 @@ export function evaluateQuestConditions(quest: QuestRow, e: QuestEventData): boo
 
 async function awardQuestRewards(client: PoolClient, playerId: number, quest: QuestRow) {
   if (quest.reward_xp > 0) {
-    await client.query('UPDATE players SET xp = xp + $1 WHERE id = $2', [quest.reward_xp, playerId]);
+    await applyXp(client, playerId, quest.reward_xp);
     await client.query('INSERT INTO xp_log (player_id, source, amount, context) VALUES ($1, $2, $3, $4)', [playerId, `story_quest_${quest.quest_key}`, quest.reward_xp, quest.title]);
   }
   if (quest.reward_gold > 0) {

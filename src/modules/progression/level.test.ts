@@ -4,7 +4,7 @@ import {
   totalXpForLevel,
   getLevelFromXp,
   getLevelProgress,
-  getLevelTitle,
+  getTitleForXp,
   getSkillTier,
   getSkillTierProgress,
 } from './level';
@@ -39,10 +39,14 @@ test('getLevelProgress reports within-level progress', () => {
 });
 
 test('level titles by band', () => {
-  assert.equal(getLevelTitle(1).title, 'Rookie');
-  assert.equal(getLevelTitle(9).title, 'Amateur');
-  assert.equal(getLevelTitle(10).title, 'Intermediate');
-  assert.equal(getLevelTitle(60).title, 'GOAT');
+  // The title is a function of XP, not level, and 'Amateur'/'Intermediate' are
+  // gone: they belonged to the second vocabulary that contradicted skill tiers.
+  assert.equal(getTitleForXp(0).title, 'Rookie');
+  assert.equal(getTitleForXp(500).title, 'Player');
+  assert.equal(getTitleForXp(2_000).title, 'Advanced');
+  assert.equal(getTitleForXp(5_000).title, 'Pro');
+  assert.equal(getTitleForXp(15_000).title, 'Legend');
+  assert.equal(getTitleForXp(50_000).title, 'GOAT');
 });
 
 test('skill tiers by total XP', () => {

@@ -3,7 +3,7 @@
 import {
   getLevelFromXp,
   getLevelProgress,
-  getLevelTitle,
+  getTitleForXp,
   getSkillTier,
   getSkillTierProgress,
   BADGE_DEFINITIONS,
@@ -30,7 +30,7 @@ export function toMeResponse(
   recentCheckins: unknown[]
 ) {
   const level = getLevelFromXp(p.xp);
-  const levelTitle = getLevelTitle(level);
+  const levelTitle = getTitleForXp(p.xp);
 
   return {
     id: p.id,
@@ -118,6 +118,6 @@ export function toProfileResponse(p: {
     xp: p.xp,
     level,
     level_progress: getLevelProgress(p.xp),
-    level_title: getLevelTitle(level).title,
+    level_title: getTitleForXp(p.xp).title,
   };
 }

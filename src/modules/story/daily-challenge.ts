@@ -2,6 +2,7 @@
 // + progress. Assigns one random active pool challenge per UTC day.
 
 import type { Database } from '../../db/types';
+import { applyXp } from '../progression/grants';
 
 export interface DailyChallengeRow {
   id: number;
@@ -59,7 +60,7 @@ export async function advanceDailyChallenge(db: Database, playerId: number, chal
   const justCompleted = updated.progress >= updated.target_value;
   if (justCompleted) {
     if (updated.xp_reward > 0) {
-      await db.query('UPDATE players SET xp = xp + $1 WHERE id = $2', [updated.xp_reward, playerId]);
+      await applyXp(db, playerId, updated.xp_reward);
       await db.query('INSERT INTO xp_log (player_id, source, amount, context) VALUES ($1, $2, $3, $4)', [playerId, 'daily_challenge_complete', updated.xp_reward, updated.title]);
     }
     if (updated.gold_reward > 0) {

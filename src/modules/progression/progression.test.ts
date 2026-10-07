@@ -47,8 +47,13 @@ function fakeClient(overrides: { xp?: number; gold?: number; boostXpPct?: number
       if (/boost_type = 'boost_gold'/.test(sql)) {
         return { rows: overrides.goldBoostPct ? [{ effect_value: overrides.goldBoostPct }] : [] };
       }
-      if (/UPDATE players SET xp/.test(sql)) return { rows: [{ xp: overrides.xp ?? 0 }] };
-      if (/UPDATE players SET gold/.test(sql)) return { rows: [{ gold: overrides.gold ?? 0 }] };
+      // Whitespace-tolerant: applyXp's statement is multi-line (it sets xp and
+      // level in one statement), and a single-line regex stopped matching it.
+      if (/UPDATE players\s+SET xp/.test(sql)) {
+        const xp = overrides.xp ?? 0;
+        return { rows: [{ xp, level: Math.floor((125 + Math.sqrt(15625 + 500 * Math.max(xp, 0))) / 250) }] };
+      }
+      if (/UPDATE players\s+SET gold/.test(sql)) return { rows: [{ gold: overrides.gold ?? 0 }] };
       return { rows: [] };
     },
   } as unknown as PoolClient;
@@ -64,7 +69,16 @@ test('grantXp inserts audit row, updates xp + level, no boost', async () => {
   assert.equal(g.newXp, 1500);
   assert.equal(g.newLevel, 4);
   assert.ok(calls.some((c) => /INSERT INTO xp_transactions/.test(c.sql)));
-  assert.ok(calls.some((c) => /UPDATE players SET level/.test(c.sql)));
+  // level is no longer a second statement -- it moves in the SAME update as xp,
+  // so it cannot drift from it. Assert that, not the old two-statement shape.
+  const xpWrites = calls.filter((c) => /UPDATE players\s+SET xp/.test(c.sql));
+  assert.equal(xpWrites.length, 1, 'xp should be written exactly once');
+  assert.match(xpWrites[0]!.sql, /level\s*=/, 'the same statement must set level');
+  assert.equal(
+    calls.filter((c) => /UPDATE players\s+SET level/.test(c.sql)).length,
+    0,
+    'there must be no separate level update to fall out of step'
+  );
 });
 
 test('grantXp applies active XP boost', async () => {

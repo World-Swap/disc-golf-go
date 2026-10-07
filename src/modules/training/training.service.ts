@@ -231,14 +231,15 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
             await client.query('ROLLBACK TO SAVEPOINT streak_update');
           }
 
-          // Streak bonus (3+ days). NOTE: like the legacy engine, bonus XP is
-          // recorded in xp_transactions but NOT added to players.xp — only the
-          // base lesson XP moves the player's total. Preserved intentionally;
-          // flag for review if the intent was to also credit the bonus.
+          // Streak bonus (3+ days). This used to write an xp_transactions row and
+          // NOT credit players.xp -- inherited from the legacy engine -- so the
+          // player was shown a bonus they never received and the ledger no longer
+          // summed to the balance. It is credited now, which is both what the UI
+          // already claimed and what a reconcilable ledger requires.
           if (streakDays >= 3) {
             bonusXp += STREAK_BONUS_XP;
             bonusReason = (bonusReason ? bonusReason + ', ' : '') + 'streak_' + streakDays;
-            await repo.addXpTransactionOnly(client, playerId, 'training_streak_' + streakDays, STREAK_BONUS_XP, { streak_days: streakDays }, 'training_streak');
+            await repo.addXp(client, playerId, STREAK_BONUS_XP, 'training_streak_' + streakDays, { streak_days: streakDays }, 'training_streak');
           }
 
           // Base lesson XP (credited to players.xp).
@@ -253,7 +254,8 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
             if (done === total && total > 0) {
               categoryCompleteBonus = CATEGORY_COMPLETE_BONUS_XP;
               bonusXp += categoryCompleteBonus;
-              await repo.addXpTransactionOnly(client, playerId, 'training_category_complete', categoryCompleteBonus, { category_id: lesson.category_id }, 'training');
+              // Credited, not just recorded -- see the streak bonus above.
+              await repo.addXp(client, playerId, categoryCompleteBonus, 'training_category_complete', { category_id: lesson.category_id }, 'training');
             }
             await client.query('RELEASE SAVEPOINT cat_check');
           } catch {

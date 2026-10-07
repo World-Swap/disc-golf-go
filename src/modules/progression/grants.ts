@@ -6,12 +6,62 @@ import type { PoolClient } from 'pg';
 import { XP_EVENTS, GOLD_EVENTS, type XpEvent, type GoldEvent } from './events';
 import { getLevelFromXp } from './level';
 
+/** Anything that can run a query — a pool, a client, or the Database wrapper. */
+interface Queryable {
+  query(sql: string, params?: unknown[]): Promise<{ rows: any[] }>;
+}
+
+/**
+ * The ONE place players.xp is incremented.
+ *
+ * xp and the cached level move in a single statement, so level can never drift
+ * from xp -- not between two awaits, not outside a transaction, not if the
+ * process dies mid-grant. That drift was real: level used to be written only by
+ * grantXp, while training, story quests and daily challenges each ran their own
+ * `UPDATE players SET xp = xp + $1`, so the whole training loop left the cached
+ * level behind.
+ *
+ * The level formula is the closed form of level.ts's TOTAL_XP_FOR_LEVEL(n) =
+ * 125n(n-1), solved for the largest n whose threshold xp clears:
+ *   n = floor((125 + sqrt(15625 + 500 * xp)) / 250)
+ * It is duplicated here in SQL on purpose -- atomicity is worth more than a
+ * single expression of the curve -- and `grants.test.ts` asserts the SQL and
+ * getLevelFromXp agree across the whole range, so the two cannot drift apart.
+ */
+export async function applyXp(
+  q: Queryable,
+  playerId: number,
+  amount: number
+): Promise<{ newXp: number; newLevel: number }> {
+  const r = await q.query(
+    `UPDATE players
+        SET xp = xp + $1,
+            level = FLOOR((125 + SQRT(15625 + 500 * GREATEST(xp + $1, 0))) / 250)
+      WHERE id = $2
+      RETURNING xp, level`,
+    [amount, playerId]
+  );
+  const row = r.rows[0];
+  if (!row) return { newXp: 0, newLevel: 1 };
+  return { newXp: Number(row.xp), newLevel: Number(row.level) };
+}
+
 interface BoostRow {
   boost_type: string;
   effect_value: number;
 }
 
 const GOLD_BOOST_CAP_PCT = 200;
+
+/** Which subsystem an XP event came from. Drives the redeemable-XP filter. */
+export function sourceFor(eventType: string): string {
+  if (eventType.startsWith('game_')) return 'game';
+  if (eventType.startsWith('login_streak_')) return 'login_streak';
+  if (eventType.startsWith('milestone_')) return 'milestone';
+  if (eventType.startsWith('battle_')) return 'battle';
+  if (eventType.startsWith('challenge_')) return 'challenge';
+  return 'checkin';
+}
 
 export interface XpGrant {
   amount: number;
@@ -76,19 +126,14 @@ export async function grantXp(
     finalAmount = baseAmount; // non-fatal — boost failure must not block the grant
   }
 
+  // `source` is how redeemable XP will be told from farmable XP; grantXp was the
+  // only writer leaving it NULL, so every check-in and Throw Lab row was untagged.
   await client.query(
-    'INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata) VALUES ($1, $2, $3, $4)',
-    [playerId, eventType, finalAmount, JSON.stringify({ ...metadata, base_xp: baseAmount, boost_percent: boostPercent })]
+    'INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)',
+    [playerId, eventType, finalAmount, JSON.stringify({ ...metadata, base_xp: baseAmount, boost_percent: boostPercent }), sourceFor(eventType)]
   );
 
-  const result = await client.query<{ xp: number }>(
-    'UPDATE players SET xp = xp + $1 WHERE id = $2 RETURNING xp',
-    [finalAmount, playerId]
-  );
-
-  const newXp = result.rows[0]!.xp;
-  const newLevel = getLevelFromXp(newXp);
-  await client.query('UPDATE players SET level = $1 WHERE id = $2', [newLevel, playerId]);
+  const { newXp, newLevel } = await applyXp(client, playerId, finalAmount);
 
   return { amount: finalAmount, baseAmount, boostPercent, boostLabel, newXp, newLevel };
 }

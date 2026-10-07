@@ -56,27 +56,44 @@ export function getLevelProgress(xp: number): LevelProgress {
   return { level, progress, needed, percent: Math.min(100, Math.round((progress / needed) * 100)) };
 }
 
-const LEVEL_TITLES: Array<LevelTitle & { minLevel: number; maxLevel: number }> = [
-  { minLevel: 1, maxLevel: 4, title: 'Rookie', icon: '🥏' },
-  { minLevel: 5, maxLevel: 9, title: 'Amateur', icon: '⛳' },
-  { minLevel: 10, maxLevel: 14, title: 'Intermediate', icon: '🎯' },
-  { minLevel: 15, maxLevel: 24, title: 'Advanced', icon: '🏅' },
-  { minLevel: 25, maxLevel: 39, title: 'Pro', icon: '🥇' },
-  { minLevel: 40, maxLevel: 59, title: 'Legend', icon: '👑' },
-  { minLevel: 60, maxLevel: 999, title: 'GOAT', icon: '🐐' },
-];
-
-export function getLevelTitle(level: number): LevelTitle {
-  const t = LEVEL_TITLES.find((x) => level >= x.minLevel && level <= x.maxLevel) ?? LEVEL_TITLES[0]!;
-  return { title: t.title, icon: t.icon };
-}
-
+// ONE vocabulary, keyed on XP.
+//
+// There used to be two. SKILL_TIERS called you Pro at 5,000 XP; LEVEL_TITLES
+// called you Pro at level 25 = 75,000 XP -- a 15x gap -- and profile.html
+// printed both on the same line, so a player on 5,000 XP read "Pro · Amateur".
+//
+// The bands below keep the OLD SKILL_TIERS thresholds, which are the reachable
+// ones, so no existing player is demoted by the merge; Legend and GOAT are new
+// headroom above a Pro band that previously ran to 99,999. getTitleForXp now
+// derives from this same table, so the two names cannot disagree again.
+//
+// These thresholds are deliberately NOT retuned here. The XP economy is badly
+// scaled (the entire 134-lesson library is worth 1,920 XP, the same as one
+// capped day of Throw Lab) and retuning the bands belongs with that rebalance,
+// not with a bug fix.
 export const SKILL_TIERS: SkillTier[] = [
   { key: 'rookie', title: 'Rookie', minXp: 0, maxXp: 499, icon: '🥏', color: '#6a7a6a', desc: 'New to disc golf' },
   { key: 'player', title: 'Player', minXp: 500, maxXp: 1999, icon: '⛳', color: '#4cdf3c', desc: 'Can play competently' },
   { key: 'advanced', title: 'Advanced', minXp: 2000, maxXp: 4999, icon: '🎯', color: '#ffd050', desc: 'Consistent player' },
-  { key: 'pro', title: 'Pro', minXp: 5000, maxXp: 99999, icon: '🥇', color: '#ff7070', desc: 'Tournament-level' },
+  { key: 'pro', title: 'Pro', minXp: 5000, maxXp: 14999, icon: '🥇', color: '#ff7070', desc: 'Tournament-level' },
+  { key: 'legend', title: 'Legend', minXp: 15000, maxXp: 49999, icon: '👑', color: '#c9a227', desc: 'Long-haul regular' },
+  { key: 'goat', title: 'GOAT', minXp: 50000, maxXp: Number.MAX_SAFE_INTEGER, icon: '🐐', color: '#8a6bd1', desc: 'Been here forever' },
 ];
+
+/**
+ * The player's title. It is a function of XP, NOT of level.
+ *
+ * Deriving it from the level does not work and the first version of this fix got
+ * it wrong: band edges (500, 2,000, 5,000 XP) do not line up with level edges
+ * (250, 750, 1,500 XP), so a title taken from the level disagrees with the tier
+ * taken from the XP for every player sitting between the two. `vocabulary.test`
+ * caught it at xp=500 — level 2, whose start is 250 XP, is still Rookie while
+ * the player is already Player.
+ */
+export function getTitleForXp(xp: number): LevelTitle {
+  const t = getSkillTier(xp);
+  return { title: t.title, icon: t.icon };
+}
 
 export function getSkillTier(xp: number): SkillTier {
   for (let i = SKILL_TIERS.length - 1; i >= 0; i--) {

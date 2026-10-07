@@ -3,6 +3,7 @@
 // column + xp_log (training's own XP path, distinct from the progression grants).
 
 import type { PoolClient } from 'pg';
+import { applyXp } from '../progression/grants';
 import type { Queryable, Database } from '../../db/types';
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
@@ -209,11 +210,7 @@ export function createTrainingRepo(db: Database) {
     },
 
     async addXp(client: PoolClient, playerId: number, amount: number, eventType: string, metadata: object, source: string) {
-      await client.query('UPDATE players SET xp = xp + $1 WHERE id = $2', [amount, playerId]);
-      await client.query('INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)', [playerId, eventType, amount, JSON.stringify(metadata), source]);
-    },
-
-    async addXpTransactionOnly(client: PoolClient, playerId: number, eventType: string, amount: number, metadata: object, source: string) {
+      await applyXp(client, playerId, amount);
       await client.query('INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)', [playerId, eventType, amount, JSON.stringify(metadata), source]);
     },
 
@@ -453,7 +450,7 @@ export function createTrainingRepo(db: Database) {
     },
 
     async awardShare(playerId: number, lessonId: number, title: string, xpBonus: number) {
-      await db.query('UPDATE players SET xp = xp + $1 WHERE id = $2', [xpBonus, playerId]);
+      await applyXp(db, playerId, xpBonus);
       await db.query('INSERT INTO xp_transactions (player_id, event_type, xp_amount, metadata, source) VALUES ($1, $2, $3, $4, $5)', [playerId, 'training_share', xpBonus, JSON.stringify({ lesson_id: lessonId, lesson_title: title }), 'training_share']);
       await db.query('INSERT INTO xp_log (player_id, source, amount, context) VALUES ($1, $2, $3, $4)', [playerId, 'training_share', xpBonus, JSON.stringify({ lesson_id: lessonId, lesson_title: title })]);
     },
