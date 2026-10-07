@@ -28,6 +28,7 @@ if (fs.existsSync(envPath)) {
 const https = require('https');
 const { Pool } = require('pg');
 
+const { dbSsl } = require('./lib/db-ssl');
 if (!process.env.DATABASE_URL) {
   console.error('[audit] DATABASE_URL not set — exiting');
   process.exit(1);
@@ -35,7 +36,7 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false },
+  ssl: dbSsl(),
   idleTimeoutMillis: 15000,
   connectionTimeoutMillis: 15000,
 });

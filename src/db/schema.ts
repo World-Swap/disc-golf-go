@@ -824,6 +824,20 @@ ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS feed_hidden BOOLEAN NOT NULL
 ALTER TABLE feedback ADD COLUMN IF NOT EXISTS player_id INTEGER;
 ALTER TABLE feedback ADD COLUMN IF NOT EXISTS context JSONB;
 ALTER TABLE channel_videos ADD COLUMN IF NOT EXISTS teaches BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Lessons generated from a new channel upload, rather than hand written.
+--
+-- The 134 curated lessons leave this NULL and are never touched by the
+-- generator. A generated lesson is an ADDITION to whichever existing category
+-- the video teaches -- nothing is re-filed or replaced.
+--
+-- The PARTIAL unique index is the exactly-once lock: the refresh job runs daily
+-- and on every boot, so without it a restart would publish the same video again.
+-- Partial because NULL is not distinct from NULL in a UNIQUE index in Postgres
+-- 15+ only with NULLS NOT DISTINCT, and the curated rows must stay unconstrained.
+ALTER TABLE training_lessons ADD COLUMN IF NOT EXISTS generated_from_video TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_lessons_generated_video
+  ON training_lessons(generated_from_video) WHERE generated_from_video IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_channel_videos_teaches ON channel_videos(teaches, published_at DESC);
 -- No backfill here on purpose. This file runs on every boot, so an UPDATE
 -- setting feed_hidden = is_short would undo the per-channel shorts opt-in

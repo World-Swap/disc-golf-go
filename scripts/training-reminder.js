@@ -6,9 +6,10 @@
 try { require('dotenv').config({ path: require('path').join(__dirname, '../.env') }); } catch { /* dotenv optional — Render injects env directly */ }
 const { Pool } = require('pg');
 
+const { dbSsl } = require('./lib/db-ssl');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
+  ssl: dbSsl(),
 });
 
 async function run() {

@@ -29,9 +29,14 @@ export interface Classification {
 }
 
 /**
- * Phrases that NAME a category. Weighted: a phrase that can only mean one
- * thing scores 3, a word that usually means it scores 2, a weak hint scores 1.
- * A hint alone never clears MIN_SCORE, so it can only break a tie.
+ * Phrases that NAME a category, weighted by how certain they make it:
+ *
+ *   4 -- can only mean this category in disc golf ("putting", "forehand",
+ *        "etiquette"). Naming the category once this plainly is enough to
+ *        publish on its own, which is what keeps the library growing.
+ *   3 -- strongly suggests it.
+ *   2 -- usually means it, but appears in other categories' videos too.
+ *   1 -- a weak hint. Never clears MIN_SCORE alone, so it can only break a tie.
  */
 const SIGNALS: Record<string, Array<[RegExp, number]>> = {
   putting: [
@@ -40,55 +45,75 @@ const SIGNALS: Record<string, Array<[RegExp, number]>> = {
     // is actually about, and it is what separates "Putting Practice ... Three
     // Putt" (putting) from "Three Putting Drills For Field Work" (practice).
     // Note \bputt\b does NOT match inside "putting", which is what makes this work.
-    [/\bputting\b/, 3], [/\bputt(s|er|ers)?\b/, 3], [/\bjump putt|straddle|turbo putt/, 3],
+    [/\bputting\b/, 4], [/\bputt(s)?\b/, 4],
+    // A "putter" is a DISC, not the act of putting, so it is a far weaker signal:
+    // "3 Ways to Drive with Putters" is a driving video. At putt-strength it was
+    // filed under Putting, which is the kind of plausible-looking mistake the
+    // 2026-09-29 audit was cleaning up.
+    [/\bputter(s)?\b/, 2], [/\bjump putt|straddle|turbo putt/, 3],
     [/\bcircle (1|one|2|two)\b/, 3], [/\bspin putt|push putt/, 3], [/\bmake more putts\b/, 3],
     [/\bc1x|comeback putt\b/, 2],
   ],
   driving: [
-    [/\bdistance\b/, 2], [/\bdrive[rs]?\b|\bdriving\b/, 3], [/\bmax(imum)? distance\b/, 3],
-    [/\breach ?back|x-?step|run ?up\b/, 3], [/\bfarther|further\b/, 2], [/\bpower\b/, 2],
+    [/\bdistance\b/, 2], [/\bdriving\b/, 4], [/\bdriver(s)?\b/, 3], [/\bdrive(s)?\b/, 2], [/\bmax(imum)? distance\b/, 3],
+    [/\breach ?back|x-?step|run ?up\b/, 4], [/\bfarther|further\b/, 2], [/\bpower\b/, 2],
+    // How the feed actually words "distance": by asking for it, or in feet.
+    [/\bthrow(ing)? (it )?(far|farther|further)\b/, 4], [/\bthrow far\b/, 4],
+    [/\b[1-9]\d{2} ?(ft|feet|foot)\b/, 3], [/\bmore power|power pocket\b/, 3],
+    [/\bcoil\b/, 3],
   ],
   putting_guard: [],
   forehand: [
-    [/\bforehand(s)?\b|\bsidearm\b|\bflick\b/, 3], [/\bthumber|tomahawk\b/, 2],
+    // Split for the same reason putting is: these are three names for one shot,
+    // and a title using more than one of them is more certainly about it. As a
+    // single alternation this maxed out at 3 and so could NEVER clear MIN_SCORE
+    // -- the entire category was unreachable.
+    [/\bforehand(s)?\b/, 4], [/\bsidearm\b/, 4], [/\bflick\b/, 3],
+    [/\bthumber|tomahawk\b/, 2],
   ],
   approach: [
-    [/\bapproach(es|ing)?\b/, 3], [/\bupshot(s)?\b/, 3], [/\bscramble|parked\b/, 2],
+    [/\bapproach(es|ing)?\b/, 4], [/\bupshot(s)?\b/, 4], [/\bscramble|parked\b/, 2],
     [/\binside (the )?circle\b/, 2], [/\bmidrange(s)?\b/, 2],
   ],
   'disc-selection': [
-    [/\bwhat disc|which disc|disc for\b/, 3], [/\bin the bag|bag breakdown\b/, 3],
+    [/\bwhat disc|which disc|disc for\b/, 4], [/\bin the bag|bag breakdown\b/, 3],
     [/\bplastic|stability|overstable|understable\b/, 2], [/\bflight number(s)?\b/, 3],
     [/\bbeginner discs?\b/, 3],
   ],
   'course-strategy': [
-    [/\bcourse management|course strategy\b/, 3], [/\bhole breakdown|shot selection\b/, 3],
+    [/\bcourse management|course strategy\b/, 4], [/\bhole breakdown|shot selection\b/, 3],
     [/\bwhen to (go|lay)\b/, 2], [/\bplaying (in )?wind\b/, 2],
   ],
   'mental-game': [
-    [/\bmental (game|approach)\b/, 3], [/\bnerves|pressure|confidence|focus\b/, 2],
+    [/\bmental (game|approach)\b/, 4], [/\bnerves|pressure|confidence|focus\b/, 2],
     [/\broutine\b/, 1], [/\bchoking|tilt\b/, 2],
   ],
   'fitness-warmup': [
-    [/\bwarm ?up\b/, 3], [/\bstretch(ing|es)?\b/, 3], [/\bmobility|flexibility\b/, 3],
-    [/\bworkout|exercise|strength|injury\b/, 2],
+    [/\bwarm ?up\b/, 4], [/\bstretch(ing|es)?\b/, 4], [/\bmobility|flexibility\b/, 3],
+    [/\bworkout|exercise|strength\b/, 2], [/\binjur(y|ies)\b/, 3],
+    [/\belbow\b/, 2], [/\bwrist\b/, 2], [/\bshoulder\b/, 2],
   ],
   'rules-etiquette': [
-    [/\brules?\b/, 2], [/\betiquette\b/, 3], [/\bpenalty|out of bounds|\bOB\b/, 2],
+    [/\brules?\b/, 2], [/\betiquette\b/, 4], [/\bpenalty|out of bounds|\bOB\b/, 2],
     [/\bcasual water|relief|drop zone\b/, 3],
   ],
   'tournament-competition': [
-    [/\btournament(s)?\b/, 3], [/\bcompeting|competition\b/, 2], [/\bPDGA\b/, 2],
+    [/\btournament(s)?\b/, 4], [/\bcompeting|competition\b/, 2], [/\bPDGA\b/, 2],
     [/\bleague\b/, 2], [/\bfirst tournament\b/, 3],
   ],
   practice: [
-    [/\bdrill(s)?\b/, 3], [/\bpractice (routine|session|plan)\b/, 3],
-    [/\bfield work\b/, 3], [/\bhow to practice\b/, 3],
+    [/\bdrill(s)?\b/, 4], [/\bpractice (routine|session|plan)\b/, 3],
+    [/\bfield work\b/, 4], [/\bhow to practice\b/, 3], [/\bpractice tips\b/, 4],
   ],
   'form-technique': [
-    [/\bform\b/, 2], [/\btechnique\b/, 2], [/\bgrip\b/, 3], [/\bfootwork\b/, 3],
+    [/\bform\b/, 2], [/\btechnique\b/, 2], [/\bgrip\b/, 3], [/\bfootwork\b/, 4],
     [/\bbackhand\b/, 2], [/\brelease|follow ?through|hip (rotation|turn)\b/, 2],
     [/\bnose angle|hyzer|anhyzer\b/, 2],
+    // Named faults. Each of these is a form error and nothing else, which is
+    // why they score as a plain naming of the category.
+    [/\brounding\b/, 4], [/\bplant foot\b/, 4], [/\bform breakdown\b/, 4],
+    [/\bswoop\b/, 3], [/\bcounter ?rotation\b/, 3], [/\bhyzer flip\b/, 3],
+    [/\bposture\b/, 2], [/\bpower pocket\b/, 2],
   ],
   'getting-started': [
     [/\bbeginner(s)?\b/, 2], [/\bnew to disc golf|first round|getting started\b/, 3],
@@ -97,7 +122,7 @@ const SIGNALS: Record<string, Array<[RegExp, number]>> = {
 };
 
 /** Below this, nothing is published. One weak hint must never be enough. */
-export const MIN_SCORE = 3;
+export const MIN_SCORE = 4;
 
 /**
  * Categories that describe HOW TO THROW ANYTHING rather than a particular shot.
@@ -138,8 +163,14 @@ export function classifyVideo(title: string): Classification | null {
 
   // A specific shot beats a generic how-to-throw category, whatever the raw
   // score says -- see GENERIC above.
-  if (GENERIC.has(best.categorySlug) && specific && specific.score >= MIN_SCORE) {
-    return specific;
+  if (GENERIC.has(best.categorySlug) && specific) {
+    // The specific one wins if it stands on its own.
+    if (specific.score >= MIN_SCORE) return specific;
+    // Otherwise REFUSE rather than fall back to the generic category. The title
+    // named a specific shot ("Forehand Basics: Grip and Release"), so filing it
+    // under Form & Technique is the one answer we already know is wrong -- and
+    // with nobody reviewing, publishing nothing beats publishing that.
+    return null;
   }
   // A tie WITHIN a tier means the title names two categories equally well,
   // which is exactly where a guess files it wrongly. Refuse.

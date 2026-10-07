@@ -13,7 +13,7 @@ test('an unambiguous title lands in the right category', () => {
   const cases: Array<[string, string]> = [
     ['How To Putt: Spin vs Push Putting Explained', 'putting'],
     ['Add 50 Feet To Your Drives With This X-Step Fix', 'driving'],
-    ['Forehand Basics: Grip and Release', 'forehand'],
+    ['Forehand Fundamentals: How To Throw A Clean Sidearm', 'forehand'],
     ['Dialing In Your Approach Shots Inside The Circle', 'approach'],
     ['What Disc Should A Beginner Throw? Flight Numbers Explained', 'disc-selection'],
     ['Warm Up Routine Before Your Round: Stretching That Works', 'fitness-warmup'],
@@ -48,6 +48,22 @@ test('a title that names two categories equally is refused, not coin-flipped', (
   // This is precisely where a guess files it wrongly, and nobody is reviewing.
   const r = classifyVideo('Putting And Driving');
   assert.equal(r, null, 'an even tie must refuse');
+});
+
+test('a named shot beats the generic how-to-throw categories', () => {
+  // "Forehand Basics: Grip and Release" scores 5 for Form & Technique on
+  // grip+release, above forehand's 4 -- because "grip" and "release" are shared
+  // vocabulary that appears in forehand, putting and driving videos alike. The
+  // title says what it is about in its first word, so the specific shot wins.
+  assert.equal(classifyVideo('Forehand Basics: Grip and Release')?.categorySlug, 'forehand');
+});
+
+test('a generic category REFUSES rather than absorb a shot it cannot score', () => {
+  // Here the title names a shot ("tomahawk", 2) too weakly to stand up, while
+  // grip+footwork clears the bar for Form & Technique. Filing an overhand video
+  // under Form & Technique is the one answer we already know is wrong, so with
+  // nobody reviewing, publishing nothing beats publishing that.
+  assert.equal(classifyVideo('Tomahawk Grip And Footwork'), null);
 });
 
 test('one weak hint is never enough on its own', () => {

@@ -12,12 +12,14 @@
 
 try { require('dotenv').config({ path: require('path').join(__dirname, '../.env') }); } catch { /* Render injects env directly */ }
 const { Pool } = require('pg');
+const { dbSsl } = require('./lib/db-ssl');
 const { VIDEO_CHANNELS } = require('./video-channels.json');
 // One rule, one place. The classifier is TypeScript because the API and its
 // tests use it too; this job runs it through ts-node rather than keeping a
 // second copy of the patterns that could drift from the first.
 require('ts-node/register/transpile-only');
 const { teaches } = require('../src/modules/videos/teaches');
+const { generateLessonsFromVideos } = require('../src/modules/videos/lesson-generator');
 
 const FEED = 'https://www.youtube.com/feeds/videos.xml?channel_id=';
 const TIMEOUT_MS = 15000;
@@ -25,7 +27,7 @@ const GAP_MS = 250;            // be a polite neighbour to a free endpoint
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
+  ssl: dbSsl(),
 });
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -163,6 +165,24 @@ async function run() {
                 ' channel(s) unavailable; showing ' + total.rows[0].shown + ' videos (' +
                 total.rows[0].hidden + ' shorts hidden), of which ' +
                 total.rows[0].teaching + ' teach');
+
+    // Turn whatever is new and teaches into lessons, ADDED to the existing
+    // categories. The 134 curated lessons are never read or rewritten here; a
+    // generated row is marked by training_lessons.generated_from_video, which is
+    // also the unique key that makes this safe to run on every boot.
+    try {
+      const gen = await generateLessonsFromVideos(pool);
+      console.log('[videos] lessons: +' + gen.created.length + ' published from ' +
+                  gen.considered + ' candidate(s), ' + gen.refused +
+                  ' refused (no single clear category)');
+      for (const l of gen.created) {
+        console.log('[videos]   ' + l.categorySlug + '  ' + l.title);
+      }
+    } catch (e) {
+      // A lesson-generation failure must not fail the feed refresh -- the feed
+      // is what the Players Lounge reads, and it has already been written.
+      console.error('[videos] lesson generation failed:', e && e.message ? e.message : e);
+    }
   } finally {
     client.release();
     await pool.end();

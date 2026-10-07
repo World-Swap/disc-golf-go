@@ -8,6 +8,7 @@
 const https = require('https');
 const { Pool } = require('pg');
 
+const { dbSsl } = require('./lib/db-ssl');
 function checkOembed(url) {
   return new Promise((resolve) => {
     const oembedUrl = 'https://www.youtube.com/oembed?url=' + encodeURIComponent(url) + '&format=json';
@@ -24,7 +25,7 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false },
+  ssl: dbSsl(),
   idleTimeoutMillis: 15000,
   connectionTimeoutMillis: 10000,
 });

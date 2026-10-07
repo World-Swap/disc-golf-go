@@ -10,6 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Pool } = require('pg');
 
+const { dbSsl } = require('./lib/db-ssl');
 const url = process.env.DATABASE_URL;
 if (!url) {
   console.error('DATABASE_URL is required');
@@ -32,7 +33,7 @@ console.warn('[schema] pg_dump unavailable — using catalog introspection fallb
 // ── Fallback: introspect information_schema / pg_catalog ──
 const pool = new Pool({
   connectionString: url,
-  ssl: url.includes('localhost') ? false : { rejectUnauthorized: false },
+  ssl: dbSsl(url),
 });
 
 function columnType(c) {
