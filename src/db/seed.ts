@@ -12,7 +12,7 @@ import { isPlaceholderCourseName } from './data/placeholder-names';
 // initial placeholder; v2 the full legacy library (71 lessons / 671 courses);
 // v3 expands courses to the curated set plus all named US courses from OSM;
 // the placeholder prune then removes the tee/basket rows, leaving ~1,530.
-export const CONTENT_VERSION = 31;
+export const CONTENT_VERSION = 32;
 
 // Clears the fully-replaceable content tables before a re-seed (leaves
 // players/progress intact). Training categories/lessons/resources are NOT dropped

@@ -4,6 +4,7 @@
 // until the story module exists).
 
 import { notFound, badRequest, forbidden, AppError } from '../../http/errors';
+import { articlePreview } from '../../db/data/article-previews';
 import { withTransaction } from '../../db/pool';
 import type { Database } from '../../db/types';
 import { getLevelFromXp, totalXpForLevel, getSkillTier, getSkillTierProgress } from '../progression';
@@ -199,8 +200,24 @@ export function createTrainingService({
       return { ...lesson, is_completed, next_lesson };
     },
 
-    getResources(lessonId: number) {
-      return repo.lessonResources(lessonId);
+    /**
+     * The lesson's resources, with the publisher's own title and description
+     * attached to each article so the page can render a link preview.
+     *
+     * The preview is merged HERE rather than fetched by the page, for the
+     * reasons in scripts/fetch-article-previews.js: a lesson must not depend
+     * on udisc.com being up, and a player's browser should not call a third
+     * party to render a lesson. A url with no preview simply has none, and the
+     * page falls back to the plain row it used before.
+     */
+    async getResources(lessonId: number) {
+      const rows = await repo.lessonResources(lessonId);
+      return rows.map((row) => {
+        const r = row as { url?: string; resource_type?: string };
+        if (r.resource_type !== 'article' || !r.url) return row;
+        const p = articlePreview(r.url);
+        return p ? { ...row, preview: p } : row;
+      });
     },
 
     /**

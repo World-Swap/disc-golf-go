@@ -18,6 +18,7 @@
     "schema:dump": "node scripts/dump-schema.js",
     "holes:previews": "node scripts/gen-hole-previews.js",
     "lessons:audit": "node scripts/audit-lessons.js",
+    "articles:previews": "node scripts/fetch-article-previews.js",
     "courses:stats": "node scripts/refresh-courses.js --stats",
     "courses:refresh": "node scripts/refresh-courses.js --apply",
     "pdga:backfill": "node scripts/backfill-pdga-ids.js",

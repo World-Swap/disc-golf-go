@@ -54,6 +54,38 @@
     .ldrill__reps { display: inline-block; margin: 0 0 10px; padding: 4px 10px;
                     border-radius: 999px; background: var(--color-orange); color: #fff;
                     font-size: 12px; font-weight: 700; line-height: 1.4; }
+
+    /* Article link preview. The article stays a LINK -- this card shows the
+       publisher's own title and description so a reader can tell whether it is
+       worth the tap, which the old one-line row could not.
+       There is deliberately no publisher image: see
+       scripts/fetch-article-previews.js. The square is our own mark, built
+       from the site's initial, so the card has the shape of a preview without
+       hotlinking anybody's artwork or making the player's browser call them. */
+    .lprev { display: flex; gap: 12px; align-items: flex-start; width: 100%;
+             padding: 14px; margin-bottom: 10px; text-decoration: none;
+             border: 1px solid var(--color-hairline); border-radius: 10px;
+             background: var(--color-white); }
+    .lprev:last-child { margin-bottom: 0; }
+    .lprev:hover, .lprev:focus-visible { border-color: var(--color-orange); }
+    .lprev__mark { flex: none; width: 44px; height: 44px; border-radius: 8px;
+                   background: var(--color-peach); color: var(--color-orange);
+                   font-size: 18px; font-weight: 800; line-height: 44px;
+                   text-align: center; text-transform: uppercase; }
+    .lprev__body { min-width: 0; flex: 1; }
+    /* display:block is load-bearing: these are spans inside an <a>, and inline
+       elements ignore the margins below, which ran every line together. */
+    .lprev__site, .lprev__title, .lprev__desc, .lprev__go { display: block; }
+    .lprev__site { margin: 0 0 3px; font-size: 11px; font-weight: 700;
+                   letter-spacing: .04em; text-transform: uppercase;
+                   color: var(--color-ash); }
+    .lprev__title { margin: 0 0 4px; font-size: 15px; font-weight: 700;
+                    line-height: 1.3; color: var(--color-ink);
+                    overflow-wrap: anywhere; }
+    .lprev__desc { margin: 0 0 6px; font-size: 13px; line-height: 1.5;
+                   color: var(--color-ash); overflow-wrap: anywhere; }
+    .lprev__go { margin: 0; font-size: 12px; font-weight: 700;
+                 color: var(--color-orange); overflow-wrap: anywhere; }
   </style>
 </head>
 <body>
@@ -490,27 +522,68 @@
           // the wireVideo play handler. This still covers the fallback card, which
           // is a real <a> out to YouTube when a URL has no embeddable id.
           var isVideo = /youtube\.com|youtu\.be/.test(href);
-          var isResource = a.classList && a.classList.contains('row') && a.target === '_blank';
+          // Matched on data-resource, NOT on a CSS class. The previous version
+          // tested `classList.contains('row')`, and the moment articles became
+          // preview cards instead of rows it would have silently stopped
+          // reporting -- stranding the completion gate exactly the way the
+          // video pane did when it became a <div role="button">. The attribute
+          // states intent, so restyling cannot break the signal again.
+          var isResource = a.getAttribute && a.getAttribute('data-resource') !== null;
           if (isVideo) engage(id, 'resource_opened', 'video');
           else if (isResource) engage(id, 'resource_opened', href.slice(0, 200));
         });
       }
 
       // Blogs / reports / research from pros & companies for the lesson.
+      // The letter shown on a preview card's square. Our own mark rather than
+      // the publisher's logo, for the same reason their image is not used.
+      function siteInitial(p) {
+        // From the DOMAIN, not the site name: a UDisc article showed "R",
+        // because they call the blog Release Point. The domain is what the
+        // reader recognises and where the link actually goes.
+        var src = (p.domain || p.site || '').replace(/^(www|blog|en)\./i, '');
+        return (src.match(/[a-z0-9]/i) || ['?'])[0];
+      }
+
+      // An article rendered as a link PREVIEW: the publisher's own title and
+      // description, credited to them, with the link going to their page. The
+      // point is that a reader can tell what is behind the link before tapping
+      // it -- the old row showed our paraphrase and a name, which is why these
+      // were being ignored.
+      function previewCard(r) {
+        var p = r.preview;
+        return '<a class="lprev" data-resource="article" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
+          '<span class="lprev__mark" aria-hidden="true">' + esc(siteInitial(p)) + '</span>' +
+          '<span class="lprev__body">' +
+            '<span class="lprev__site">' + esc(p.site) + '</span>' +
+            '<span class="lprev__title">' + esc(p.title) + '</span>' +
+            '<span class="lprev__desc">' + esc(p.description) + '</span>' +
+            '<span class="lprev__go">Read on ' + esc(p.domain) + ' \u2192</span>' +
+          '</span></a>';
+      }
+
+      // No preview for this url, so the old row stands. Not a failure state:
+      // one article (a Wikipedia profile) publishes no description at all.
+      function plainRow(r) {
+        var by = [r.author, r.credentials].filter(Boolean).join(' · ') || (r.resource_type || 'Resource');
+        return '<a class="row" data-resource="' + esc(r.resource_type || 'link') + '" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
+          '<span class="row__glyph">' + resIcon(r.resource_type) + '</span>' +
+          '<div class="row__body"><div class="row__title">' + esc(r.title) + '</div>' +
+          '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + esc(by) + '</div></div>' +
+          '<span class="row__meta">↗</span></a>';
+      }
+
       async function loadResources(id) {
         try {
           var rs = await API.get('/training/lessons/' + encodeURIComponent(id) + '/resources');
           if (!rs || !rs.length) return;
+          var cards = rs.filter(function (r) { return r.preview; });
+          var rows = rs.filter(function (r) { return !r.preview; });
           document.getElementById('resources').innerHTML =
-            '<p class="section-label">Read &amp; research</p><div class="rows">' +
-            rs.map(function (r) {
-              var by = [r.author, r.credentials].filter(Boolean).join(' · ') || (r.resource_type || 'Resource');
-              return '<a class="row" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
-                '<span class="row__glyph">' + resIcon(r.resource_type) + '</span>' +
-                '<div class="row__body"><div class="row__title">' + esc(r.title) + '</div>' +
-                '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + esc(by) + '</div></div>' +
-                '<span class="row__meta">↗</span></a>';
-            }).join('') + '</div>';
+            '<p class="section-label">Read &amp; research</p>' +
+            cards.map(previewCard).join('') +
+            (rows.length ? '<div class="rows"' + (cards.length ? ' style="margin-top:10px"' : '') + '>'
+              + rows.map(plainRow).join('') + '</div>' : '');
         } catch (e) { /* no resources */ }
       }
 
