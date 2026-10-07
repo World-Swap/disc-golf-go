@@ -3,10 +3,11 @@
 
 import { Pool, type QueryResultRow } from 'pg';
 import { config } from '../config';
+import { sslConfigFor } from './ssl';
 
 export const pool = new Pool({
   connectionString: config.databaseUrl,
-  ssl: config.databaseUrl.includes('localhost') ? false : { rejectUnauthorized: false },
+  ssl: sslConfigFor(config.databaseUrl),
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
 });
