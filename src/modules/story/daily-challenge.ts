@@ -4,6 +4,16 @@
 import type { Database } from '../../db/types';
 import { applyXp, applyGold } from '../progression/grants';
 
+/**
+ * Most gold one daily challenge can pay, whatever the pool row says.
+ *
+ * One a day is already the cadence cap, so this bounds the AMOUNT. It is set to
+ * roughly one new-course check-in (5), which is the right comparison: both are
+ * a single ordinary daily action. At 6 a day that is ~2,200 a year rather than
+ * ~6,000.
+ */
+export const DAILY_CHALLENGE_MAX_GOLD = 6;
+
 export interface DailyChallengeRow {
   id: number;
   challenge_date: string;
@@ -63,7 +73,13 @@ export async function advanceDailyChallenge(db: Database, playerId: number, chal
       await applyXp(db, playerId, updated.xp_reward, 'daily_challenge_complete', { title: updated.title }, 'daily_challenge');
     }
     if (updated.gold_reward > 0) {
-      await applyGold(db, playerId, updated.gold_reward, 'daily_challenge', { title: updated.title });
+      // CLAMPED, not trusted. The pool is editable data in the seed, and this
+      // was the single largest recurring gold source in the whole app: 10-30 a
+      // day, uncapped, ~6,000 a year -- more than check-ins and every Throw Lab
+      // challenge combined. Lowering the seed values alone would leave the
+      // ceiling one SQL edit away from coming back, so the bound lives here.
+      const gold = Math.min(updated.gold_reward, DAILY_CHALLENGE_MAX_GOLD);
+      await applyGold(db, playerId, gold, 'daily_challenge', { title: updated.title });
     }
   }
   return { completed: justCompleted, row: updated };

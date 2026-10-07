@@ -12,7 +12,7 @@ import { isPlaceholderCourseName } from './data/placeholder-names';
 // initial placeholder; v2 the full legacy library (71 lessons / 671 courses);
 // v3 expands courses to the curated set plus all named US courses from OSM;
 // the placeholder prune then removes the tee/basket rows, leaving ~1,530.
-export const CONTENT_VERSION = 21;
+export const CONTENT_VERSION = 22;
 
 // Clears the fully-replaceable content tables before a re-seed (leaves
 // players/progress intact). Training categories/lessons/resources are NOT dropped
@@ -44,16 +44,16 @@ DELETE FROM story_quests;
 // Non-content seed: daily challenges, shop/vault items, story missions.
 const MISC_SEED_SQL = `
 INSERT INTO daily_challenge_pool (key, title, description, challenge_type, target_value, xp_reward, gold_reward) VALUES
-  ('daily_lesson', 'Learn Something New', 'Complete one training lesson today.', 'watch_and_learn', 1, 30, 10),
-  ('daily_two', 'Double Down', 'Complete two training lessons today.', 'skill_check', 2, 60, 20),
-  ('daily_category', 'Focus Session', 'Complete a lesson in your weakest category.', 'course_apply', 1, 40, 15),
-  ('daily_three', 'Triple Threat', 'Complete three training lessons today.', 'skill_check', 3, 90, 30),
-  ('daily_putting', 'Putt for Dough', 'Complete a Putting lesson today.', 'course_apply', 1, 40, 15),
-  ('daily_driving', 'Bomb It', 'Complete a Driving & Distance lesson today.', 'course_apply', 1, 40, 15),
-  ('daily_approach', 'Scoring Zone', 'Complete an Approach & Upshots lesson today.', 'course_apply', 1, 40, 15),
-  ('daily_mental', 'Head in the Game', 'Complete a Mental Game lesson today.', 'course_apply', 1, 40, 15),
-  ('daily_watch', 'Film Study', 'Watch a pro instructional video today.', 'watch_and_learn', 1, 30, 10),
-  ('daily_newcat', 'Branch Out', 'Complete a lesson in a category you have not started.', 'course_apply', 1, 50, 20);
+  ('daily_lesson', 'Learn Something New', 'Complete one training lesson today.', 'watch_and_learn', 1, 30, 3),
+  ('daily_two', 'Double Down', 'Complete two training lessons today.', 'skill_check', 2, 60, 5),
+  ('daily_category', 'Focus Session', 'Complete a lesson in your weakest category.', 'course_apply', 1, 40, 4),
+  ('daily_three', 'Triple Threat', 'Complete three training lessons today.', 'skill_check', 3, 90, 6),
+  ('daily_putting', 'Putt for Dough', 'Complete a Putting lesson today.', 'course_apply', 1, 40, 4),
+  ('daily_driving', 'Bomb It', 'Complete a Driving & Distance lesson today.', 'course_apply', 1, 40, 4),
+  ('daily_approach', 'Scoring Zone', 'Complete an Approach & Upshots lesson today.', 'course_apply', 1, 40, 4),
+  ('daily_mental', 'Head in the Game', 'Complete a Mental Game lesson today.', 'course_apply', 1, 40, 4),
+  ('daily_watch', 'Film Study', 'Watch a pro instructional video today.', 'watch_and_learn', 1, 30, 3),
+  ('daily_newcat', 'Branch Out', 'Complete a lesson in a category you have not started.', 'course_apply', 1, 50, 5);
 
 INSERT INTO items (name, description, icon, type, effect_value, duration_minutes, rarity, gold_cost) VALUES
   ('XP Boost', '+50% XP for 1 hour.', '🔥', 'boost_xp', 50, 60, 'uncommon', 150),

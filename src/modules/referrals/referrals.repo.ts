@@ -65,6 +65,15 @@ export function createReferralsRepo(db: Queryable) {
       );
     },
 
+    /** How many referrals this player has already been PAID for. */
+    async rewardedCount(referrerId: number): Promise<number> {
+      const r = await db.query<{ n: string }>(
+        "SELECT COUNT(*)::text AS n FROM referral_activations WHERE referrer_id = $1 AND status = 'rewarded'",
+        [referrerId]
+      );
+      return Number(r.rows[0]?.n ?? 0);
+    },
+
     async activatableFor(friendId: number) {
       const r = await db.query<{ id: number; referrer_id: number; code_used: string; expires_at: Date; status: string }>(
         `SELECT id, referrer_id, code_used, expires_at, status FROM referral_activations WHERE friend_id = $1 AND status = 'activated' AND expires_at > now()`,

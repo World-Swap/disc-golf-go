@@ -10,6 +10,22 @@ import { createReferralsRepo, type ReferralsRepo } from './referrals.repo';
 const REFERRAL_UTM = { source: 'referral_share', medium: 'share_link', campaign: 'referral_program' } as const;
 const ACTIVATION_WINDOW_DAYS = 90;
 const REWARD_GOLD = 200;
+/**
+ * Referrals that pay the referrer, per account, for the lifetime of the account.
+ *
+ * This was UNCAPPED, and it is the most farmable path in the app: the reward
+ * triggers when the friend finishes a 9+ hole round, and a Throw Lab round is
+ * simulated by the CLIENT, so fifty throwaway accounts each playing one round
+ * was 10,000 gold -- about $143 of merchandise -- to whoever invited them.
+ *
+ * Ten is set to be generous for the real thing: inviting ten friends who each
+ * actually play is a lot of genuine advocacy, and it still pays 2,000 gold
+ * (~$29). Past the cap the referral STILL WORKS -- it is tracked, the friend
+ * still gets their joining bonus, and it still counts on the referrals page --
+ * the referrer simply stops being paid. Same shape as the check-in cap: the
+ * reward is what is worth faking, not the row.
+ */
+export const MAX_REWARDED_REFERRALS = 10;
 const FRIEND_BONUS_GOLD = 50;
 
 function generateCode(): string {
@@ -118,20 +134,35 @@ export function createReferralsService(db: Database, repo: ReferralsRepo = creat
       if (activations.length === 0) return { awarded: false, reason: 'no_active_referral' };
 
       const rewards: Array<{ referrer_id: number; amount: number }> = [];
+      let capped = 0;
       for (const a of activations) {
-        await repo.grantGold(a.referrer_id, REWARD_GOLD);
+        // Count per referrer, inside the loop: one friend can carry activations
+        // for more than one code, and a cap read once outside would let a
+        // referrer past it on the same call.
+        const already = await repo.rewardedCount(a.referrer_id);
+        const payReferrer = already < MAX_REWARDED_REFERRALS;
+        if (payReferrer) {
+          await repo.grantGold(a.referrer_id, REWARD_GOLD);
+        } else {
+          capped++;
+        }
+        // The friend's joining bonus is NOT capped -- it is once per account by
+        // construction, and withholding it would punish the new player for the
+        // inviter's history.
         await repo.grantGold(friendId, FRIEND_BONUS_GOLD);
-        await repo.markRewarded(a.id, REWARD_GOLD);
-        repo.trackEvent('referral_first_round', a.code_used, a.referrer_id, friendId, { reward_gold: REWARD_GOLD, friend_bonus: FRIEND_BONUS_GOLD });
+        // Still marked rewarded either way, so the referral is recorded and
+        // cannot be re-paid later if the cap is ever raised.
+        await repo.markRewarded(a.id, payReferrer ? REWARD_GOLD : 0);
+        repo.trackEvent('referral_first_round', a.code_used, a.referrer_id, friendId, { reward_gold: payReferrer ? REWARD_GOLD : 0, friend_bonus: FRIEND_BONUS_GOLD, capped: !payReferrer });
         // These used to write REWARD_GOLD and FRIEND_BONUS_GOLD into xp_log --
         // gold amounts, logged as XP, for XP that was never granted. The award
         // is gold, and grantGold now records it in gold_transactions, so the
         // phantom XP rows are gone rather than moved to the other ledger.
-        rewards.push({ referrer_id: a.referrer_id, amount: REWARD_GOLD });
+        rewards.push({ referrer_id: a.referrer_id, amount: payReferrer ? REWARD_GOLD : 0 });
       }
 
       if (rewards.length === 0) return { awarded: false, reason: 'already_rewarded' };
-      return { awarded: true, rewards, friend_bonus: FRIEND_BONUS_GOLD };
+      return { awarded: true, rewards, friend_bonus: FRIEND_BONUS_GOLD, capped };
     },
   };
 }
