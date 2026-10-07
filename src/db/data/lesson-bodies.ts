@@ -1918,6 +1918,655 @@ export const LESSON_BODIES: Record<string, LessonBody> = {
     },
   },
 
+  // ─────────────────────────── DISC SELECTION ───────────────────────────
+  'flight-numbers': {
+    why:
+      'The four numbers on a disc are the closest thing the sport has to a specification, and reading them properly saves you from the most common equipment mistake there is: buying a disc that cannot do what you want at the speed you throw. They are not perfectly comparable between brands, but within a brand they are reliable.',
+    how: [
+      'Speed, roughly 1 to 14, is how fast the disc has to be moving to fly as designed. High speed needs a strong arm, not just a strong wish.',
+      'Glide, roughly 1 to 7, is how well it stays in the air. More glide means more distance for the same effort, and less control into wind.',
+      'Turn, from +1 to -5, is the high-speed behaviour. A negative number means the disc bends right early for a right-handed backhand, and the more negative the more it bends.',
+      'Fade, 0 to 5, is the low-speed finish. A higher number means it hooks left harder at the end for a right-handed backhand.',
+      'Read turn and fade together: a -3 / 1 disc is a long gentle right-to-straight flight, while a 0 / 3 disc goes left and keeps going left.',
+      'Lower numbers all round are more forgiving. A beginner is better served by 5 / 5 / -1 / 1 than by anything exciting.',
+    ],
+    wrong: [
+      {
+        fault: 'Comparing numbers across manufacturers as if they were standardised.',
+        fix: 'They are set by each brand, not by a governing body. A 5-speed from one maker can fly noticeably differently from another’s.',
+      },
+      {
+        fault: 'Expecting the printed flight at your own arm speed.',
+        fix: 'The numbers describe the flight at the speed the disc was designed for. Below that, every disc behaves more overstable than the numbers say.',
+      },
+      {
+        fault: 'Choosing on turn alone and ignoring speed.',
+        fix: 'An understable disc you cannot get up to speed still fades left. Speed is the gate; stability is the shape.',
+      },
+    ],
+    drill: {
+      name: 'Predict then throw',
+      reps: '5 throws each with 4 different discs (20 total)',
+      body:
+        'Before each disc, say out loud what you expect from the numbers — where it will bend and where it will finish. Then throw five and see. Doing this with four discs teaches you how the numbers translate at YOUR arm speed, which is the only translation that matters.',
+    },
+  },
+
+  'understable-vs-overstable': {
+    why:
+      'Stability is the single most useful concept in disc selection. It explains why a disc that works beautifully for one player is unthrowable for another, why your discs behave differently in wind, and why a brand new disc and a worn one from the same mould are effectively two different discs.',
+    how: [
+      'Understable discs want to bend right during the fast part of the flight, for a right-handed backhand. They are easier to get distance from with less power and they are what beginners should mostly throw.',
+      'Overstable discs resist that bend and finish left, reliably and often hard. They are the answer in headwinds, for spike hyzers and for forehands.',
+      'Stable sits between the two: holds a line and finishes gently.',
+      'Stability is relative to YOUR arm speed. A disc that is stable for a strong thrower is overstable for a weaker one. There is no absolute answer.',
+      'Match the stability to the shot: understable to turn right, overstable to come back left, stable to go straight.',
+      'Reverse left and right throughout for a left-handed backhand or a right-handed forehand.',
+    ],
+    wrong: [
+      {
+        fault: 'Treating stability as a property of the disc alone.',
+        fix: 'It is a property of the disc AND your arm speed AND the wind. The same disc is three different discs in those three variables.',
+      },
+      {
+        fault: 'Buying overstable discs because they sound more controlled.',
+        fix: 'Overstable discs need power to do anything other than go left. Without it they just go left sooner.',
+      },
+      {
+        fault: 'Assuming an understable disc will fix an accuracy problem.',
+        fix: 'Understable discs are less forgiving of a bad angle, not more. They are forgiving of low power, which is a different thing.',
+      },
+    ],
+    drill: {
+      name: 'Two extremes',
+      reps: '15 throws with your most understable disc and 15 with your most overstable',
+      body:
+        'Same target, same effort, fifteen of each. Draw the two flight paths on paper afterwards. Everything else in your bag sits between those two lines, and knowing where the edges are is what lets you pick sensibly in the middle.',
+    },
+  },
+
+  'starter-set': {
+    why:
+      'Three discs genuinely covers the whole game for a first season, and carrying three rather than fifteen makes you better faster — because improvement comes from knowing exactly what a disc does, and you only learn that by throwing the same one several hundred times.',
+    how: [
+      'A putter: speed 2 or 3, something comfortable in the hand. It putts, it approaches, and it is the most accurate disc you will own.',
+      'A midrange: speed 4 or 5, straight and forgiving. This should be most of your throws for the first year.',
+      'A fairway driver: speed 6 or 7, slightly understable. This is your distance shot until your arm catches up.',
+      'Buy them light — 150 to 165 grams — so they fly properly at the speed you actually throw.',
+      'Many brands sell exactly this as a three-disc beginner set, which is both cheaper and better chosen than picking individually from a wall of 400 discs.',
+    ],
+    wrong: [
+      {
+        fault: 'Adding a distance driver to the set because it is the exciting one.',
+        fix: 'It will fade hard left for a right-handed backhand and teach you nothing. Add it when the fairway driver is reliably going 300 feet.',
+      },
+      {
+        fault: 'Buying a bag of fifteen because a set was on offer.',
+        fix: 'Carrying fifteen discs you cannot distinguish is worse than carrying three you know. Expand slowly and deliberately.',
+      },
+      {
+        fault: 'Replacing a disc because somebody said a different mould was better.',
+        fix: 'The mould matters far less than the reps. Throw yours until you know its flight before changing anything.',
+      },
+    ],
+    drill: {
+      name: 'Three discs, one month',
+      reps: 'every round for 1 month with exactly 3 discs',
+      body:
+        'Play a month of rounds carrying nothing but the three. You will be forced to shape shots rather than reach for a different disc, which is the skill that transfers. Almost everybody scores the same or better while learning considerably more.',
+    },
+  },
+
+  'when-to-use-midranges': {
+    why:
+      'The midrange is the most accurate disc in most bags and the least used. It holds a line, lands softly, and does not punish a slightly imperfect release the way a driver does. Players who score well throw midranges on holes where players who score badly throw drivers.',
+    how: [
+      'Reach for a midrange on anything inside about 250 feet. For many players that is most of the holes on most courses.',
+      'Use one in the woods regardless of distance. Control is worth more than reach when the penalty for a miss is a tree.',
+      'Use one for approaches where the disc needs to stop. Midranges land flatter and skip less than drivers.',
+      'Learn one midrange properly before owning three. A single well-known mid covers a remarkable range of shots.',
+      'Throw it at full effort. A midrange thrown hard goes much further than most people expect and stays accurate while it does.',
+    ],
+    wrong: [
+      {
+        fault: 'Reaching for a driver on a 250-foot hole because a driver is for driving.',
+        fix: 'Pick the disc by what the shot needs, not by the name of the slot. A midrange that finishes near the basket beats a driver that finishes in trouble.',
+      },
+      {
+        fault: 'Throwing midranges softly because they are the control disc.',
+        fix: 'Throw them hard. They are accurate at full power, which is what makes them so useful.',
+      },
+      {
+        fault: 'Skipping straight from putter to driver in the bag.',
+        fix: 'The gap between them is where most holes live. A midrange fills it better than anything else.',
+      },
+    ],
+    drill: {
+      name: 'Midrange only',
+      reps: '1 full round throwing nothing but a midrange and a putter',
+      body:
+        'Play a whole round with two discs: one midrange and one putter. Compare the score with your usual. Most players lose very little and some improve, and everybody comes away understanding what a midrange can actually do — which is the point and is hard to believe without trying it.',
+    },
+  },
+
+  'choose-first-putter': {
+    why:
+      'Your putter is the disc you will throw more than any other, and the one where feel matters most, because a putting stroke is built around a specific shape in your hand. This is the one purchase where what somebody else recommends is close to irrelevant.',
+    how: [
+      'Hold several before buying. Rim depth, rim width and how stiff the plastic is all change how a putter sits in the hand.',
+      'Choose on feel first and flight second. A putter that feels right gets thrown with confidence, which matters more than its numbers.',
+      'Pick slightly stable rather than very understable, so it doubles as an approach disc.',
+      'Then buy two or three of the same one. Putting with identical discs removes a variable you did not know you had.',
+      'Throw that one putter exclusively for a season. Touch is built from repetition with one object.',
+    ],
+    wrong: [
+      {
+        fault: 'Buying the putter a professional uses.',
+        fix: 'Their hand is not yours and their stroke is not yours. Hold some, pick what fits.',
+      },
+      {
+        fault: 'Switching putters after a bad round.',
+        fix: 'The putter is almost never the problem. Switching resets the touch you were building, which makes the next round worse.',
+      },
+      {
+        fault: 'Putting with a different disc from the one you approach with.',
+        fix: 'One mould for both means every approach is also putting practice. That is a large amount of free repetition.',
+      },
+    ],
+    drill: {
+      name: 'Hold before you buy',
+      reps: 'try at least 5 putters in hand, then 20 putts with your pick',
+      body:
+        'In a shop, hold at least five different putters and notice which one your fingers settle into without you adjusting. Buy that one, then throw twenty putts from fifteen feet. Feel is not a sentimental criterion here — a disc you have to re-grip every time will never putt consistently.',
+    },
+  },
+
+  'advanced-flight-ratings': {
+    why:
+      'The four numbers describe a brand-new disc thrown at full professional speed, which is two assumptions that are false for almost everybody. Understanding what the numbers leave out is the difference between predicting a flight and being surprised by it.',
+    how: [
+      'Assume every disc flies more overstable than its numbers at below-design speed. This is the single biggest correction to make.',
+      'Account for wear. Discs become more understable as they are used, so a well-thrown disc is a different disc from the one you bought.',
+      'Account for plastic. The same mould in base and premium plastic has the same printed numbers and noticeably different flights, and the base one changes much faster.',
+      'Account for weight. A lighter disc of the same mould flies further for less power and is more understable in practice.',
+      'Look at the disc itself: how domed it is, and how high the parting line sits on the rim, both affect stability within the same mould and run.',
+      'Treat numbers as a starting point for a conversation with the disc, not as a prediction.',
+    ],
+    wrong: [
+      {
+        fault: 'Expecting two discs with identical numbers to fly identically.',
+        fix: 'Different brands, plastics, weights, runs and amounts of wear all move the flight. The numbers are a rough bracket.',
+      },
+      {
+        fault: 'Being surprised when a favourite disc starts turning over.',
+        fix: 'That is wear, and it is normal. Buy its replacement before you need it so you have a fresh one broken in behind it.',
+      },
+      {
+        fault: 'Buying a disc on numbers alone without throwing it.',
+        fix: 'Fifteen throws tells you more than any specification. Borrow one first where you can.',
+      },
+    ],
+    drill: {
+      name: 'Same mould, different ages',
+      reps: '10 throws each with a fresh and a worn copy of the same disc',
+      body:
+        'If you have a new and a well-used copy of one mould, throw ten of each at the same target. The difference is usually dramatic and it is the clearest possible demonstration that the printed numbers describe a moment in a disc’s life rather than a permanent property.',
+    },
+  },
+
+  'minimal-travel-bag': {
+    why:
+      'A smaller bag makes better decisions. With four discs you ask what shape the hole needs; with twenty you spend the same moment hunting for the perfect tool and throw whichever you grabbed. Almost every professional throws a small handful of moulds far more than the rest of their bag.',
+    how: [
+      'Cover four slots: putter, midrange, fairway driver, distance driver. One disc in each is a complete bag.',
+      'Add a fifth and sixth only where there is a genuine gap — usually one overstable disc for wind and forehands, and one understable for turnovers and rollers.',
+      'Choose discs with clearly different flights. Two discs that fly almost the same are one disc and a decision you do not need.',
+      'Carry multiples of your putter, which is the one place duplication pays.',
+      'Know each one deeply. The goal is to call the flight before you throw it, every time.',
+    ],
+    wrong: [
+      {
+        fault: 'Filling a bag with discs that fly almost identically.',
+        fix: 'Lay them all out and sort by actual flight, not by name. Most crowded bags have three or four real shapes in twenty discs.',
+      },
+      {
+        fault: 'Carrying a disc you have not thrown in two months.',
+        fix: 'Take it out. A disc you do not trust is weight and a distraction at the moment of choosing.',
+      },
+      {
+        fault: 'Adding a disc to fix a shot you have not practised.',
+        fix: 'Try the shot with what you have first. Most gaps in a bag are gaps in a skill.',
+      },
+    ],
+    drill: {
+      name: 'Cut to four',
+      reps: '3 rounds with exactly 4 discs',
+      body:
+        'Play three rounds with one putter, one midrange, one fairway and one distance driver. Note every shot where you genuinely missed a disc you did not have. That short list — usually one or two entries, not ten — is what your bag actually needs beyond four.',
+    },
+  },
+
+  'seasonal-disc-selection': {
+    why:
+      'The same disc does not fly the same in February and August. Cold air is denser and cold plastic is stiffer, and both push a disc toward behaving more overstable; warm air and softer plastic do the opposite. Players who do not adjust spend half the year wondering why their favourite disc stopped working.',
+    how: [
+      'In cold weather, expect your discs to finish left earlier and go shorter, for a right-handed backhand. Bag slightly understable to compensate.',
+      'In hot weather, expect discs to turn over sooner. Bag slightly more stable than usual.',
+      'Keep discs warm between throws in genuinely cold conditions — a disc straight from a freezing bag is stiffer than one from a pocket.',
+      'Adjust by changing discs rather than changing your throw. Changing your form for the season is how a winter costs you a summer.',
+      'Re-check your assumptions at the start of each season rather than mid-round in a competition.',
+    ],
+    wrong: [
+      {
+        fault: 'Blaming your form when a trusted disc stops behaving in January.',
+        fix: 'Check the temperature before you check your technique. Cold is a large and completely normal effect.',
+      },
+      {
+        fault: 'Changing your release angle to compensate for the season.',
+        fix: 'Change the disc. Compensations learned in winter have to be unlearned in spring.',
+      },
+      {
+        fault: 'Leaving discs in a hot car.',
+        fix: 'Heat warps discs permanently. That is not a seasonal adjustment, it is a ruined disc.',
+      },
+    ],
+    drill: {
+      name: 'Same disc, two seasons',
+      reps: '15 throws with one disc, repeated in cold and warm conditions',
+      body:
+        'Throw fifteen with a familiar disc at a known target on a cold day and note the finish. Repeat on a warm one. Writing the two down means you make the adjustment next winter from evidence rather than from a vague memory of things being harder.',
+    },
+  },
+
+  'discs-hand-sizes-grip-styles': {
+    why:
+      'A disc that does not fit your hand cannot be gripped consistently, and a grip that changes on every throw makes everything downstream of it unfixable. This is a particular problem for players with smaller hands, who are often sold wide-rimmed drivers that they physically cannot hold properly.',
+    how: [
+      'Try the rim width. A wide rim on a small hand means the fingers cannot wrap properly, which costs grip strength and spin.',
+      'Try the rim depth. Deeper rims suit a power grip; shallower ones suit a fan grip and feel better for putting and approaches.',
+      'Notice whether you have to adjust your fingers after picking the disc up. If you do, it does not fit.',
+      'Match the disc to your grip rather than changing your grip to the disc.',
+      'Lower-speed discs have narrower rims, which is another reason they suit players still building power — the fit is better as well as the speed.',
+    ],
+    wrong: [
+      {
+        fault: 'Assuming a poor grip is a technique problem when the disc is simply too big.',
+        fix: 'Borrow a narrower-rimmed disc and see whether the problem disappears. If it does, it was the disc.',
+      },
+      {
+        fault: 'Buying online by numbers without ever holding the mould.',
+        fix: 'Hold it where you can. Fit is not something a specification sheet describes.',
+      },
+      {
+        fault: 'Changing grip style to accommodate a disc you like the look of.',
+        fix: 'The grip is the foundation. Change the disc.',
+      },
+    ],
+    drill: {
+      name: 'Pick it up ten times',
+      reps: 'pick up each candidate disc 10 times with your eyes closed',
+      body:
+        'Pick a disc up ten times without looking and notice whether your fingers land in the same place each time. A disc that fits settles identically; one that does not needs adjusting, and that adjustment is a variable you will carry into every throw.',
+    },
+  },
+
+  'plastic-types': {
+    why:
+      'The same mould in two plastics is two different discs over time. Base plastic grips better and wears in quickly; premium plastic holds its flight for years. Choosing deliberately means your discs change when you want them to rather than on their own schedule.',
+    how: [
+      'Base plastic — names vary by brand — is cheaper, grippier in the hand and wears in fast. It is excellent for putters and for discs you want to season deliberately.',
+      'Premium plastic is more durable and keeps its stability for a long time. It is what you want for a disc whose flight you rely on.',
+      'Use base plastic where grip matters most: putters, and approach discs in wet weather.',
+      'Use premium where consistency matters most: the drivers and midranges you have built your shots around.',
+      'Accept that base plastic in a driver is a disc with a shelf life. That is not a flaw, it is the trade you chose.',
+    ],
+    wrong: [
+      {
+        fault: 'Buying a key driver in base plastic and being surprised when it turns over after a season.',
+        fix: 'That is exactly what base plastic does. Premium for the discs you depend on.',
+      },
+      {
+        fault: 'Dismissing base plastic as cheap.',
+        fix: 'It grips better than anything in the rain, and it is the right choice for putters for exactly that reason.',
+      },
+      {
+        fault: 'Expecting two plastics of the same mould to fly the same out of the box.',
+        fix: 'They usually do not, even when new. Treat them as separate discs and learn each.',
+      },
+    ],
+    drill: {
+      name: 'Two plastics, one mould',
+      reps: '10 throws each with the same mould in base and premium',
+      body:
+        'If you can borrow both, throw ten of each at one target. The difference when new is usually modest and the difference after a season is large. Knowing which of your discs will change under you is what stops a favourite quietly becoming something else.',
+    },
+  },
+
+  'beat-in-seasoning': {
+    why:
+      'Discs get more understable as they wear, which means a disc you have thrown for two years is a genuinely different tool from the one you bought. Most players experience this as a favourite disc betraying them. Used deliberately it is the cheapest way to add a turnover shot and a roller to your bag.',
+    how: [
+      'Understand what wear does: scuffs and softened edges make a disc turn more and fade less, so it flies straighter for less power and eventually turns over.',
+      'Season a disc by simply throwing it a lot, particularly in base plastic, which wears fastest.',
+      'Keep one well-worn copy of a mould as your dedicated turnover and roller disc.',
+      'Buy the replacement before the old one is finished, so you always have a fresh one coming through behind it.',
+      'Label or mark them so you can tell your three stages of the same mould apart at a glance.',
+    ],
+    wrong: [
+      {
+        fault: 'Deliberately damaging discs against trees or concrete to speed up the process.',
+        fix: 'It wears unevenly and can crack the rim, which makes the flight unpredictable rather than understable. Throw it instead.',
+      },
+      {
+        fault: 'Keeping one copy of a favourite mould and being left with nothing when it goes.',
+        fix: 'Keep a fresh, a mid-life and a worn copy. This is the one place in a bag where duplication genuinely earns its space.',
+      },
+      {
+        fault: 'Not noticing a disc has changed and blaming your form for new turnovers.',
+        fix: 'If a disc has started turning over, check the rim. Wear is gradual and easy to miss until it is obvious.',
+      },
+    ],
+    drill: {
+      name: 'Three stages',
+      reps: '10 throws each with a fresh, a used and a worn copy of one mould',
+      body:
+        'Throw ten of each at one target and mark where the three groups finish. Those are three different shots available to you from one mould you already know how to throw — which is a much cheaper way to widen your bag than buying three new discs.',
+    },
+  },
+
+  'disc-weight': {
+    why:
+      'Weight changes a disc’s flight as much as stability does, and it is the easiest adjustment for a developing arm. A lighter disc gets up to its design speed with less effort, which means a beginner actually sees the flight the disc was designed to produce rather than a truncated version of it.',
+    how: [
+      'Lighter discs — roughly 150 to 165 grams — fly further for less power and feel more understable. This is what most new players should be throwing.',
+      'Heavier discs — around 170 to 175 grams — hold their line better in wind and resist being pushed around.',
+      'Carry something heavier for genuinely windy days if you play an exposed course.',
+      'Change weight before you change mould when a disc does not suit you. It is a smaller, cheaper and more predictable adjustment.',
+      'Match putter weight to feel rather than to theory. Putting weight is personal and short throws are barely affected by wind.',
+    ],
+    wrong: [
+      {
+        fault: 'Buying everything at maximum weight because that is what is on the shelf.',
+        fix: 'Ask for lighter. Most shops stock a range and the heavy ones are simply the most common.',
+      },
+      {
+        fault: 'Throwing light discs on a very windy day and wondering why nothing holds.',
+        fix: 'Light discs are at the wind’s mercy. This is the one condition where heavier is clearly better.',
+      },
+      {
+        fault: 'Assuming heavier means more distance.',
+        fix: 'For most amateur arms the opposite is true. Heavier means more stable, which at low speed means shorter.',
+      },
+    ],
+    drill: {
+      name: 'Light against heavy',
+      reps: '10 throws each with a light and a heavy copy of one mould',
+      body:
+        'Same mould, two weights, ten throws each on a calm day — then repeat on a windy one if you can. The calm-day comparison usually surprises people with how much further the lighter one goes; the windy-day one shows exactly why you still want the heavy one in the bag.',
+    },
+  },
+
+  'disc-care': {
+    why:
+      'Discs are cheap individually and expensive in aggregate, and a disc that is dirty, warped or lost is costing you strokes before you throw it. Nearly all of this is avoidable with habits that take seconds.',
+    how: [
+      'Wipe each disc before you throw it. Mud and water on the flight plate change the grip and the release more than people expect.',
+      'Carry a small towel, and in wet weather a second dry one kept inside the bag.',
+      'Store discs flat or on edge in a bag, never stacked under heavy objects, and never in a hot car — heat warps them permanently.',
+      'Wash them in cool water with a little soap when they get properly dirty. Hot water can soften plastic.',
+      'Write your name and phone number on every disc. This is the single highest-return thing in this lesson.',
+    ],
+    wrong: [
+      {
+        fault: 'Leaving a bag in a car boot through a hot summer day.',
+        fix: 'Bring it inside. A warped disc cannot be straightened and will never fly properly again.',
+      },
+      {
+        fault: 'Throwing a wet, muddy disc and blaming the release.',
+        fix: 'Wipe it. A slipped release from a dirty plate looks exactly like a grip fault and is not one.',
+      },
+      {
+        fault: 'Not marking discs, then losing a favourite permanently.',
+        fix: 'Name and number, on every disc, today. Most of the disc golf community genuinely does return them.',
+      },
+    ],
+    drill: {
+      name: 'Mark the bag',
+      reps: '20 minutes, once: every disc marked and checked flat',
+      body:
+        'Sit down with a marker and put your name and phone number on every disc you own, then check each one for warping by resting it on a flat surface. Twenty minutes, once, and it is the difference between losing a disc and having it handed back to you a week later.',
+    },
+  },
+
+  // ───────────────────────────── PRACTICE ─────────────────────────────
+  'practice-plan': {
+    why:
+      'Practice time divides badly by default: people throw drivers because it is fun and putt because they feel they should. The strokes are in the opposite place. A plan is just a decision made in advance so the hour is spent where it pays rather than where it entertains.',
+    how: [
+      'Weight the time toward where the strokes are. Putting and approaches inside 150 feet deserve more of your hour than driving does.',
+      'A workable split for an hour: 25 minutes putting, 20 minutes approaches, 15 minutes field work.',
+      'Give each session one goal. "Nose angle" or "putting from 25 feet" — not "get better".',
+      'Keep sessions short and frequent rather than long and occasional. Three thirty-minute sessions beat one ninety-minute one.',
+      'Write down one number per session so you can tell whether anything is changing.',
+    ],
+    wrong: [
+      {
+        fault: 'Spending most of the time on drivers because it is the enjoyable part.',
+        fix: 'Keep some of it — practice you dislike does not happen. But put the majority where the scoring is.',
+      },
+      {
+        fault: 'Practising everything a little in every session.',
+        fix: 'One goal per session. Spreading attention across five things means improving at none of them measurably.',
+      },
+      {
+        fault: 'Long sessions that end in fatigue.',
+        fix: 'Tired reps teach a tired motion. Stop when the quality drops, not when the time runs out.',
+      },
+    ],
+    drill: {
+      name: 'The hour',
+      reps: '25 min putting, 20 min approaches, 15 min field work',
+      body:
+        'Run exactly that hour, with one stated goal, three times in a fortnight. Record one number each time — putts made from 20 feet, approaches inside 15 feet, whatever matches the goal. Three data points is enough to tell whether the plan is working, which is more than most practice ever produces.',
+    },
+  },
+
+  'field-work': {
+    why:
+      'Field work is the only place you can throw a disc fifty times and watch what it does. On a course you get one throw and a result confounded by trees, slopes and nerves. In a field the feedback is clean, which is the entire reason it is worth doing.',
+    how: [
+      'Take the whole bag and a lot of discs so you are not walking after every throw.',
+      'Pick ONE form cue per session and hold it for the whole hour. Changing cues mid-session means learning nothing.',
+      'Throw each disc enough times to see a pattern — ten or more. One throw is an anecdote.',
+      'Walk out and look at the group, not the best throw. The spread is what you take to a course.',
+      'Throw at a target, not into space. Aimless distance throwing builds a motion with no accuracy attached.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing for maximum distance the whole session.',
+        fix: 'Max effort hides form faults and builds fatigue. Work at 80% where you can actually feel what you are doing.',
+      },
+      {
+        fault: 'Changing the cue every few throws when it does not immediately work.',
+        fix: 'Give one change a whole session. Most form changes feel worse before they feel better.',
+      },
+      {
+        fault: 'Judging by the single best throw.',
+        fix: 'Your best throw is not your game. Pace the middle of the group — that is the number that shows up on a scorecard.',
+      },
+    ],
+    drill: {
+      name: 'One cue, one hour',
+      reps: '60 throws, one form cue, one target',
+      body:
+        'Sixty throws at one target with one cue held the whole way through, at about eighty percent effort. Pace out the middle of your group at the start and the end. That comparison is the only honest measure of whether an hour of field work did anything.',
+    },
+  },
+
+  'form-drills': {
+    why:
+      'Changing a motion you have thrown thousands of times takes deliberate, slow repetition — at full speed your body simply does what it already knows. Drills exist to put the new position into the motion at a speed where you can actually feel it.',
+    how: [
+      'Work slowly. Half speed or less is where a new position can be felt and therefore learned.',
+      'Use a mirror or a window to check positions you cannot feel, particularly the reach back and the power pocket.',
+      'Try a towel drill: throw a towel with your normal motion. It only cracks when the sequence and the snap are right, so it gives instant feedback with no disc flight to distract you.',
+      'Do one-step and standstill throws to isolate the upper body from the footwork.',
+      'Finish each drill session with a few full-speed throws to see whether any of it survived.',
+    ],
+    wrong: [
+      {
+        fault: 'Doing drills at full speed, where the old motion simply takes over.',
+        fix: 'Slow down until you can feel each position. Speed is the last thing added, not the first.',
+      },
+      {
+        fault: 'Doing a drill without knowing which fault it addresses.',
+        fix: 'Name the fault first. A drill chosen at random is exercise, not practice.',
+      },
+      {
+        fault: 'Expecting a drill to transfer immediately.',
+        fix: 'A motion changed in drills takes weeks to appear under pressure. Keep doing it after it starts working.',
+      },
+    ],
+    drill: {
+      name: 'Slow reps then real ones',
+      reps: '30 slow reps, then 10 full-speed throws',
+      body:
+        'Thirty deliberate half-speed repetitions of one position, then ten throws at full effort. Watch whether the position survives the speed. When it does not — and it will not, at first — that tells you the drill is not finished rather than that it failed.',
+    },
+  },
+
+  'filming-your-form': {
+    why:
+      'What your throw feels like and what it looks like are different things, and the gap is usually large. Thirty seconds of video answers questions that months of guessing will not, which makes a phone the cheapest coaching available.',
+    how: [
+      'Film from directly behind, down your target line. This shows rounding, the swing plane and the release angle.',
+      'Film from the side, level with your hips. This shows the brace, whether you stand up, and the weight transfer.',
+      'Film at the highest frame rate your phone offers, and use slow motion to step through the release.',
+      'Compare against a professional at the SAME moment of the throw — plant, pocket, release — rather than against a general impression.',
+      'Film again after a few weeks of work on one fault, from the same two angles, so the comparison is fair.',
+    ],
+    wrong: [
+      {
+        fault: 'Filming from an angle that shows nothing, usually from in front or far away.',
+        fix: 'Behind and side-on, close. Those two angles answer nearly every question worth asking.',
+      },
+      {
+        fault: 'Watching the whole throw at normal speed and concluding it looks fine.',
+        fix: 'Step through it frame by frame around the release. Everything interesting happens in about a fifth of a second.',
+      },
+      {
+        fault: 'Trying to fix everything the video reveals.',
+        fix: 'Pick the one furthest back in the chain — usually footwork or reach back — and fix only that. The ones downstream often resolve themselves.',
+      },
+    ],
+    drill: {
+      name: 'Two angles, one fault',
+      reps: '5 throws filmed from behind and 5 from the side',
+      body:
+        'Ten throws, two angles, then watch them once through and pick a single fault. Write it down. Work on nothing else for three sessions, then film again from the same two positions. That is a complete improvement cycle and it takes about three weeks.',
+    },
+  },
+
+  'tracking-your-practice': {
+    why:
+      'Without numbers, practice is a feeling — and the feeling is usually that you are improving when you are not, or that you are stuck when you are not. Tracking also does the less obvious job of showing you how much you are throwing, which is what stands between a keen player and an injured one.',
+    how: [
+      'Track putting by distance: makes out of ten at 15, 20, 25 and 30 feet. Four numbers, once a week.',
+      'Track approaches by result: how many from 100 feet finish inside 15 feet.',
+      'Count full-power throws per session. Most overuse injuries come from volume, not from one bad throw.',
+      'Review monthly rather than per session. Session to session is noise; a month is a trend.',
+      'Let the numbers pick the next thing to practise, rather than your preference.',
+    ],
+    wrong: [
+      {
+        fault: 'Tracking everything until the admin outlasts the enthusiasm.',
+        fix: 'Four or five numbers a week. A system you abandon measures nothing.',
+      },
+      {
+        fault: 'Reading too much into a single bad session.',
+        fix: 'Look at the month. One session is weather, sleep and mood as much as skill.',
+      },
+      {
+        fault: 'Ignoring throwing volume until something hurts.',
+        fix: 'Count the full-power throws and build up gradually. If something does hurt, stop and get it looked at properly rather than throwing through it.',
+      },
+    ],
+    drill: {
+      name: 'Four numbers a week',
+      reps: '10 putts each at 15, 20, 25 and 30 ft, weekly',
+      body:
+        'Forty putts, four numbers, written down, once a week. After a month you will know precisely which distance is your weakest — and that is where the next month of practice should go. It takes fifteen minutes and it is the most useful record most players never keep.',
+    },
+  },
+
+  'pressure-practice': {
+    why:
+      'Practice putts and tournament putts are different shots, and only one of them is being practised in an empty field on a Tuesday. The gap between them is nerves, and nerves can be rehearsed — but only if practice has something at stake.',
+    how: [
+      'Add a consequence. A set you must restart on a miss, a small wager, press-ups, anything that makes a miss cost something.',
+      'Use must-make sets: five in a row from 20 feet, back to zero on a miss.',
+      'Practise with other people watching. An audience is most of what tournament pressure actually is.',
+      'Deliberately practise the shots you fear rather than the ones you enjoy.',
+      'Do pressure work at the END of a session, when you are tired, because that is the state a closing hole finds you in.',
+    ],
+    wrong: [
+      {
+        fault: 'Practising only in comfortable conditions and expecting it to transfer.',
+        fix: 'Comfortable practice builds a comfortable game. Add stakes deliberately, every session.',
+      },
+      {
+        fault: 'Avoiding the shots that make you nervous.',
+        fix: 'Those are the ones costing you strokes. Spend the practice time there, where it is cheap to fail.',
+      },
+      {
+        fault: 'Making the stakes so high that practice becomes miserable.',
+        fix: 'Enough to feel it, not enough to dread it. The aim is a slightly raised heart rate, not a bad afternoon.',
+      },
+    ],
+    drill: {
+      name: 'Five in a row, with a cost',
+      reps: '5 consecutive makes from 20 ft, restarting on every miss',
+      body:
+        'Five in a row from twenty feet, back to zero on a miss, and you are not finished until it is done. Do it at the end of a session with somebody watching. The fourth putt feels completely different from the first, and that feeling is exactly the thing you came to practise.',
+    },
+  },
+
+  'driving-practice-routine': {
+    why:
+      'Most driving practice is a bag of discs thrown as far as possible until the arm tires, which builds fatigue and a max-effort motion you will never use on a course. A routine turns the same hour into distance you can repeat and control you can rely on.',
+    how: [
+      'Warm up first: ten minutes of easy throws at 50 to 60 percent before anything at full effort. This matters for your shoulder as much as your form.',
+      'Throw at targets, not into open space. Every throw should have a specific intent.',
+      'Work at 80% for most of the session. That is the effort you actually use on a course and it is where form is learnable.',
+      'Include distance control, not just maximum distance — throws aimed at 200 and 250 feet as well as as far as possible.',
+      'Finish on good repetitions. Stop while the throws are still clean rather than when you are too tired to make one.',
+    ],
+    wrong: [
+      {
+        fault: 'Starting at full power with no warm-up.',
+        fix: 'Ten minutes easy first, every time. This is where shoulder and elbow problems begin.',
+      },
+      {
+        fault: 'Throwing until the arm is finished.',
+        fix: 'Stop while the quality is high. The last ten tired throws teach a tired motion and cost you the next session too.',
+      },
+      {
+        fault: 'Maximum effort on every throw.',
+        fix: 'Mostly 80%. Max effort is a small part of a session and never the whole of one.',
+      },
+      {
+        fault: 'Throwing with no target.',
+        fix: 'Pick one for every throw. Distance without a direction does not show up on a scorecard.',
+      },
+    ],
+    drill: {
+      name: 'Warm, work, finish clean',
+      reps: '10 min warm-up, 40 throws at 80% to targets, stop on 3 good ones',
+      body:
+        'Ten minutes easy, then forty purposeful throws at about eighty percent with a target for each, then stop as soon as you have strung three clean ones together. Ending on quality rather than exhaustion is what makes the next session start where this one finished.',
+    },
+  },
+
 };
 
 /** True when a lesson has a written body, so callers can fall back to tips. */
