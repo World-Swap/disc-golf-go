@@ -19,6 +19,13 @@
     .purse__l { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#fc6414; font-weight:700; }
     .purse__n { font-family:var(--font-display,system-ui); font-weight:800; font-size:30px; margin:4px 0 2px; }
     .purse__sub { font-size:12px; color:rgba(247,244,239,.66); line-height:1.45; }
+    /* The count on its own read as a balance being spent -- the bar ties it to
+       the threshold it is counting toward. */
+    .purse__bar { height:6px; border-radius:999px; background:rgba(247,244,239,.16); margin:10px 0 7px; overflow:hidden; }
+    .purse__fill { height:100%; background:#fc6414; border-radius:999px; }
+    .purse__goal { font-size:12px; color:rgba(247,244,239,.82); font-weight:600; }
+    .purse__goal b { color:#f7f4ef; }
+    .purse__ready { font-size:12px; color:#8ce0b0; font-weight:700; }
     .offer { border:1px solid var(--hair,#e4dfd6); border-radius:4px; background:#fff; padding:14px; }
     .offer + .offer { margin-top:10px; }
     .offer__top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
@@ -85,6 +92,7 @@
         var html = '';
         html += '<div class="purse"><p class="purse__l">Lessons completed</p>' +
                 '<p class="purse__n">' + (state.prog ? state.prog.lessons_completed : 0) + '</p>' +
+                progress() +
                 '<p class="purse__sub">Every ' + (state.prog ? state.prog.lessons_per_coupon : 33) +
                 ' lessons earns a coupon. Finishing a lesson is what counts — ' +
                 'nothing else does, and your lessons are never used up.</p></div>';
@@ -128,6 +136,41 @@
         content.className = 'screen stack';
         content.innerHTML = html;
         wire();
+      }
+
+      /**
+       * Where this player stands against the NEXT threshold.
+       *
+       * The bare count on its own was read as a balance being spent: claim a
+       * coupon, watch the number stay at 33, and it looks like nothing happened.
+       * Lessons are an entitlement -- they only ever go up -- so what actually
+       * moved is the threshold, from 33 to 66. This says so.
+       *
+       * `next_at` comes from the server and is computed from coupons EARNED
+       * rather than issued, so it never names a threshold already passed.
+       */
+      function progress() {
+        var p = state.prog;
+        if (!p) return '';
+
+        // Something claimable outranks any progress toward the next one.
+        if (p.available > 0) {
+          return '<p class="purse__ready">' + p.available +
+            (p.available === 1 ? ' coupon' : ' coupons') + ' ready to claim</p>';
+        }
+
+        var left = Math.max(p.next_at - p.lessons_completed, 0);
+        // Fill the whole segment between the last threshold and the next, not
+        // the distance from zero -- at 40 of 66 the honest reading is "7 into
+        // this stretch of 33", and a bar measured from zero would sit at 61%
+        // the moment a coupon is claimed, which looks like unearned progress.
+        var seg = p.lessons_per_coupon;
+        var done = Math.max(seg - left, 0);
+        var pct = seg > 0 ? Math.min(100, Math.round((done / seg) * 100)) : 0;
+
+        return '<div class="purse__bar"><div class="purse__fill" style="width:' + pct + '%"></div></div>' +
+          '<p class="purse__goal"><b>' + p.lessons_completed + ' / ' + p.next_at + '</b> — ' +
+          left + ' more ' + (left === 1 ? 'lesson' : 'lessons') + ' to your next coupon</p>';
       }
 
       function offer(c) {
