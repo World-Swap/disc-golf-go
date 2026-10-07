@@ -21,6 +21,37 @@
 /** Nothing is awarded or issued while this is false. */
 export const REWARDS_ENABLED = process.env.REWARDS_ENABLED === 'true';
 
+/**
+ * Player ids the rewards path is open for even while REWARDS_ENABLED is false.
+ *
+ * This exists because "turn it on so I can test with my account" and "turn it on
+ * for everybody" are different acts, and the global flag only does the second.
+ * Flipping REWARDS_ENABLED opens coupon claiming to every account that has the
+ * lessons, AND ungates level-up gold -- which is SELF-HEALING, so on their next
+ * XP award every existing player is back-paid for every level they ever reached.
+ * That is a one-way change across the whole player base, which is not what a
+ * test wants to be.
+ *
+ * Set REWARDS_TEST_PLAYER_IDS to a comma-separated list of ids instead, and the
+ * whole path runs for exactly those accounts while everyone else stays refused.
+ * A non-numeric entry is dropped rather than guessed at -- a typo must not widen
+ * who can take real money out.
+ *
+ * It is a TEST hatch, not a tier: when the programme opens for real, set
+ * REWARDS_ENABLED and clear this.
+ */
+export const REWARDS_TEST_PLAYER_IDS: ReadonlySet<number> = new Set(
+  String(process.env.REWARDS_TEST_PLAYER_IDS ?? '')
+    .split(',')
+    .map((x) => Number(x.trim()))
+    .filter((n) => Number.isInteger(n) && n > 0)
+);
+
+/** Is the rewards path open for this player? */
+export function rewardsEnabledFor(playerId: number): boolean {
+  return REWARDS_ENABLED || REWARDS_TEST_PLAYER_IDS.has(playerId);
+}
+
 /** Gold for reaching a level, on top of the flat per-level award. */
 export const LEVEL_MILESTONE_BONUS: Record<number, number> = {
   5: 100,

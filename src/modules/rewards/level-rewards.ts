@@ -19,7 +19,7 @@
 // their next XP award instead of silently missing gold forever.
 
 import { applyGold } from '../progression/grants';
-import { LEVEL_UP_GOLD, LEVEL_MILESTONE_BONUS, REWARDS_ENABLED } from './rewards.catalog';
+import { LEVEL_UP_GOLD, LEVEL_MILESTONE_BONUS, rewardsEnabledFor } from './rewards.catalog';
 
 interface Queryable {
   query(sql: string, params?: unknown[]): Promise<{ rows: any[] }>;
@@ -38,7 +38,9 @@ export async function grantLevelRewards(
   playerId: number,
   level: number
 ): Promise<{ gold: number; levels: number[] }> {
-  if (!REWARDS_ENABLED || level < 2) return { gold: 0, levels: [] };
+  // Per-player, so a test account exercises the real level-gold path (including
+  // the retroactive settle above) without back-paying all 141 accounts.
+  if (!rewardsEnabledFor(playerId) || level < 2) return { gold: 0, levels: [] };
 
   // One query to find what is owed, rather than a round trip per level. At
   // level 15 the naive loop would be 14 queries on EVERY xp award, and a

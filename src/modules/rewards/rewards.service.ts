@@ -5,7 +5,7 @@ import { withTransaction } from '../../db/pool';
 import { AppError, badRequest, notFound } from '../../http/errors';
 import { sendEmail as defaultSendEmail, type SendEmail } from '../../lib/email';
 import { createRewardsRepo, type RewardsRepo, type CouponRow } from './rewards.repo';
-import { COUPON_TYPES, couponTypeByKey, REWARDS_ENABLED, LESSONS_PER_COUPON } from './rewards.catalog';
+import { COUPON_TYPES, couponTypeByKey, REWARDS_ENABLED, REWARDS_TEST_PLAYER_IDS, LESSONS_PER_COUPON } from './rewards.catalog';
 import { generateCouponCode, normaliseCouponCode, couponExpiryFrom, COUPON_VALID_MONTHS } from './coupon-code';
 import { couponEmail } from './coupon-email';
 
@@ -57,11 +57,15 @@ export function createRewardsService({
   // exercise the money paths without an environment variable, and so the flag
   // is read in exactly one place.
   enabled = REWARDS_ENABLED,
+  // Accounts the path is open for while `enabled` is false, so the programme can
+  // be exercised end to end on one real account without opening it to everyone.
+  testPlayerIds = REWARDS_TEST_PLAYER_IDS,
 }: {
   db: Database;
   repo?: RewardsRepo;
   sendEmail?: SendEmail;
   enabled?: boolean;
+  testPlayerIds?: ReadonlySet<number>;
 }) {
   return {
     catalogue() {
@@ -109,7 +113,7 @@ export function createRewardsService({
 
     /** Spend gold for a coupon. The whole thing is one transaction. */
     async redeem(playerId: number, typeKey: string) {
-      if (!enabled) throw new AppError(503, 'Coupon redemption is not open yet');
+      if (!enabled && !testPlayerIds.has(playerId)) throw new AppError(503, 'Coupon redemption is not open yet');
       const type = couponTypeByKey(String(typeKey));
       if (!type) throw badRequest('Unknown coupon');
 
@@ -301,6 +305,8 @@ export function createRewardsService({
       const count = (st: string) => coupons.filter((c) => c.status === st).length;
       return {
         enabled,
+        // Admin-only: catalogue() is unauthenticated and must never carry this.
+        test_player_ids: [...testPlayerIds],
         lessons_per_coupon: LESSONS_PER_COUPON,
         max_per_window: MAX_COUPONS_PER_WINDOW,
         window_days: COUPON_WINDOW_DAYS,

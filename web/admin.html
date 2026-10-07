@@ -711,10 +711,17 @@
   function renderCoupons() {
     var d = cData, s = d.summary;
     $('cStackN').textContent = String(d.max_per_visit);
+    // Three states, not two: a test hatch looks nothing like "open" and the
+    // console must not report the programme live when it is open to two accounts.
+    var ids = d.test_player_ids || [];
     $('cRules').innerHTML =
       (d.enabled
-        ? 'Redemption is <b>open</b>. '
-        : '<b>Redemption is switched off</b> (<code>REWARDS_ENABLED</code>), so no new coupon can be claimed. Codes already issued still look up and can still be marked used. ') +
+        ? 'Redemption is <b>open to everyone</b>. '
+        : ids.length
+          ? '<b>Test mode.</b> Redemption is open for player ' + (ids.length === 1 ? '' : 'ids ') +
+            ids.map(esc).join(', ') + ' only (<code>REWARDS_TEST_PLAYER_IDS</code>); everyone else is refused. ' +
+            'Level-up gold is gated the same way, so no other account is back-paid. '
+          : '<b>Redemption is switched off</b> (<code>REWARDS_ENABLED</code>), so no new coupon can be claimed. Codes already issued still look up and can still be marked used. ') +
       'One coupon earned per <b>' + d.lessons_per_coupon + ' lessons</b>, at most <b>' +
       d.max_per_window + ' issued every ' + d.window_days + ' days</b>, and up to <b>' +
       d.max_per_visit + '</b> presented together on one purchase.';

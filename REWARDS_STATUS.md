@@ -176,6 +176,28 @@ use it. That last check is the one carrying the anti-sharing claim.
 Ideally with **one event as a pilot** rather than opening it to all 141 players
 at once.
 
+**To test it on one account first, do NOT use this flag.** It is global and does
+two things: it opens coupon claiming to every account with the lessons, and it
+ungates level-up gold — which is *self-healing*, so on their next XP award every
+existing player is back-paid for every level they ever reached. That is a
+one-way change across the whole player base.
+
+Set **`REWARDS_TEST_PLAYER_IDS`** to a comma-separated list of player ids
+instead (Render → the web service → Environment). The whole path — claiming and
+level gold — runs for exactly those accounts and everyone else is refused with
+a 503. The Coupons tab says *"Test mode"* and names the ids, so the console
+cannot look live when it is not. A non-numeric entry is dropped rather than
+guessed at, so a typo narrows the list instead of widening it, and the public
+`/rewards/catalogue` never carries the ids.
+
+Clear it when the programme opens for real.
+
+**One thing to know before testing: a coupon needs 33 completed lessons**, and
+the engagement gate is 20 completions an hour with 45 seconds between opening a
+lesson and finishing it — so 33 honestly is a couple of hours spread over days.
+For a test, insert the completions directly for the test account rather than
+clicking through them.
+
 ---
 
 ## Also open, unrelated to rewards
