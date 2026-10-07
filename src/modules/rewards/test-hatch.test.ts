@@ -123,3 +123,34 @@ test('the hatch is additive: a true global flag still opens it for everyone', as
   assert.equal(rewardsEnabledFor(1), REWARDS_ENABLED,
     'with no env hatch set, the helper is exactly the global flag');
 });
+
+test('the PLAYER page is told the per-player answer, not the global flag', async () => {
+  // The bug this pins: web/rewards.html gated its whole UI on the catalogue's
+  // `enabled`, which is global. A test account on the hatch would open /rewards,
+  // read "Coupons are not open yet", and never reach the claim button -- while
+  // the server would have issued it a coupon on request. The test would have
+  // looked broken when it was not.
+  const mine = await svc([ME]).mine(ME);
+  assert.equal(mine.enabled, true, 'the hatched player is told it is open for them');
+
+  const theirs = await svc([ME]).mine(SOMEONE_ELSE);
+  assert.equal(theirs.enabled, false, 'everyone else is told the truth too');
+
+  // And the page must read that field rather than the catalogue's.
+  const page = await import('node:fs').then((fs) =>
+    fs.readFileSync('web/rewards.html', 'utf8'));
+  assert.ok(!/!state\.cat\.enabled/.test(page),
+    'the page must not gate on the catalogue (global) flag');
+  assert.match(page, /res\[1\][\s\S]{0,80}\.enabled/,
+    'the page must read enabled from /rewards/mine');
+});
+
+test('the page still works signed out, where there is no per-player answer', async () => {
+  // mine() 401s when signed out and the page catches it, so the gate falls back
+  // to the global flag. Without the fallback a signed-out visitor would see the
+  // "not open yet" copy even after the programme opens for everyone.
+  const page = await import('node:fs').then((fs) =>
+    fs.readFileSync('web/rewards.html', 'utf8'));
+  assert.match(page, /res\[0\] && res\[0\]\.enabled/,
+    'a signed-out load must fall back to the catalogue flag');
+});

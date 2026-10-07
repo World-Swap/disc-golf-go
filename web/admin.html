@@ -336,11 +336,38 @@
   var lastSearch = '';
   var lastPayload = { users: [], total: 0 };
   var shown = [];
+  // The API caps a page at 100 and has always returned page/pages/total, but
+  // this console only ever asked for the first page -- so with 142 players the
+  // list simply stopped at 100 with nothing to press. It now walks every page.
+  //
+  // Walking them all rather than adding Prev/Next is deliberate: the filters and
+  // "Delete all shown" run over whatever is loaded, so paging would quietly
+  // scope the bot sweep to one page while the button still said "all shown".
+  // Loading everything keeps that button honest.
+  var PAGE_SIZE = 100;
+  var MAX_PAGES = 20;          // 2,000 players; a bound so a huge table cannot hang the console
+
   async function loadUsers(search) {
     lastSearch = search;
     $('userRows').innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
     try {
-      lastPayload = await api('/admin/users?limit=100&search=' + encodeURIComponent(search));
+      var q = '&search=' + encodeURIComponent(search);
+      var first = await api('/admin/users?limit=' + PAGE_SIZE + '&page=1' + q);
+      var users = (first.users || []).slice();
+      var total = first.total || users.length;
+      var pages = first.pages || 1;
+      var capped = false;
+
+      for (var pg = 2; pg <= pages; pg++) {
+        if (pg > MAX_PAGES) { capped = true; break; }
+        $('userRows').innerHTML = '<tr><td colspan="6" class="muted">Loading ' +
+          users.length + ' of ' + total + '…</td></tr>';
+        var next = await api('/admin/users?limit=' + PAGE_SIZE + '&page=' + pg + q);
+        if (!next.users || !next.users.length) break;   // defensive: never loop forever
+        users = users.concat(next.users);
+      }
+
+      lastPayload = { users: users, total: total, capped: capped };
       render(lastPayload);
     } catch (err) {
       $('userRows').innerHTML = '<tr><td colspan="6" class="muted">' + esc(err.message) + '</td></tr>';
@@ -405,7 +432,10 @@
       '</tr>';
     }).join('');
     $('userCount').textContent = users.length + ' shown' +
-      (filter === 'all' ? ' of ' + d.total + ' total' : ' (' + filter + ', from ' + all.length + ' loaded of ' + d.total + ')');
+      (filter === 'all' ? ' of ' + d.total + ' total' : ' (' + filter + ', from ' + all.length + ' loaded of ' + d.total + ')') +
+      (d.capped
+        ? ' — stopped at ' + all.length + '; search to narrow the list.'
+        : '');
   }
 
   $('searchForm').addEventListener('submit', function (e) { e.preventDefault(); loadUsers($('q').value.trim()); });

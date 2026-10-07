@@ -108,7 +108,13 @@ export function createRewardsService({
           next_at: (earned + 1) * LESSONS_PER_COUPON,
         };
       });
-      return { coupons: rows.map(view), progress: prog };
+      // Whether the path is open FOR THIS PLAYER, which the public catalogue
+      // cannot answer: it reports the global flag, so a test account on the
+      // hatch would be shown "not open yet" while the server would happily
+      // issue it a coupon. This endpoint knows who is asking, so it is the only
+      // honest place for the answer.
+      const openForMe = enabled || testPlayerIds.has(playerId);
+      return { enabled: openForMe, coupons: rows.map(view), progress: prog };
     },
 
     /** Spend gold for a coupon. The whole thing is one transaction. */

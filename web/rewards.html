@@ -78,17 +78,18 @@
         catch (e) { return String(d).slice(0, 10); }
       }
 
-      var state = { prog: null, cat: null, mine: [] };
+      var state = { prog: null, cat: null, mine: [], open: false };
       var justIssued = null;
 
       function render() {
         var html = '';
         html += '<div class="purse"><p class="purse__l">Lessons completed</p>' +
                 '<p class="purse__n">' + (state.prog ? state.prog.lessons_completed : 0) + '</p>' +
-                '<p class="purse__sub">Earned by levelling up, finishing lessons and playing. ' +
-                'Spend it on a coupon below.</p></div>';
+                '<p class="purse__sub">Every ' + (state.prog ? state.prog.lessons_per_coupon : 33) +
+                ' lessons earns a coupon. Finishing a lesson is what counts — ' +
+                'nothing else does, and your lessons are never used up.</p></div>';
 
-        if (!state.cat || !state.cat.enabled) {
+        if (!state.open) {
           html += '<p class="note">Coupons are not open yet. Keep training — your lessons count and ' +
                   'will still be here.</p>';
           content.className = 'screen stack';
@@ -198,6 +199,11 @@
           API.get('/rewards/mine')['catch'](function () { return { coupons: [] }; }),
         ]).then(function (res) {
           state.cat = res[0];
+          // `enabled` from /rewards/mine is the per-player answer; the
+          // catalogue's is the global one and is only the signed-out fallback.
+          state.open = res[1] && typeof res[1].enabled === 'boolean'
+            ? res[1].enabled
+            : !!(res[0] && res[0].enabled);
           state.prog = (res[1] && res[1].progress) || null;
           state.mine = (res[1] && res[1].coupons) || [];
           progPill.textContent = state.prog
