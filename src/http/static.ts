@@ -141,6 +141,7 @@ const PAGES: Record<string, string> = {
   '/scorecard': 'scorecard.html',
   '/courses': 'courses.html',
   '/stats': 'stats.html',
+  '/rewards': 'rewards.html',
   '/feedback': 'feedback.html',
   '/delete-account': 'delete-account.html',
   '/privacy': 'privacy.html',

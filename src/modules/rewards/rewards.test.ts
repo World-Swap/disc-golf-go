@@ -89,3 +89,34 @@ test('every coupon states its terms in words, not just a number', () => {
     assert.ok(['tournament_entry', 'merch'].includes(c.kind), `${c.key} has an unknown kind`);
   }
 });
+
+test('finishing the whole library is worth exactly $20, as specified', async () => {
+  // The brief: all coupons are $5, and completing the library pays $20. Both
+  // sides of that drift independently -- lesson XP, the level curve, the
+  // milestone gold, the coupon price -- so the RELATIONSHIP is pinned here
+  // rather than any one number. If a rebalance moves any of them, this fails
+  // and someone decides deliberately instead of finding out from a player.
+  const { LESSONS } = await import('../../db/data/lessons');
+  const { getLevelFromXp } = await import('../progression/level');
+  const { MILESTONE_DEFS } = await import('../training/training.service');
+
+  const lessonXp = (LESSONS as Array<{ xp_reward: number }>).reduce((s, l) => s + Number(l.xp_reward), 0);
+  const categories = new Set((LESSONS as Array<{ category_slug: string }>).map((l) => l.category_slug)).size;
+  const libraryXp = lessonXp + categories * 500 + 50; // + one streak bonus
+  const milestoneGold = (MILESTONE_DEFS as readonly { gold?: number }[]).reduce((s, m) => s + (m.gold ?? 0), 0);
+  const libraryGold = goldOwedForLevel(getLevelFromXp(libraryXp)) + milestoneGold;
+
+  for (const c of COUPON_TYPES) {
+    assert.equal(c.faceValueUsd, 5, `${c.key} must be a $5 coupon`);
+    assert.equal(c.goldCost, COUPON_TYPES[0]!.goldCost, 'every coupon costs the same');
+  }
+
+  const coupons = Math.floor(libraryGold / COUPON_TYPES[0]!.goldCost);
+  assert.equal(coupons, 4, `the library buys ${coupons} coupons, not 4 (gold: ${libraryGold})`);
+  assert.equal(coupons * 5, 20, 'the library must be worth $20');
+
+  // And it must not be able to drift upward with a bit of extra play.
+  const leftover = libraryGold - coupons * COUPON_TYPES[0]!.goldCost;
+  assert.ok(leftover < COUPON_TYPES[0]!.goldCost / 2,
+    `${leftover} gold spare is most of another coupon — ordinary play would tip this past $20`);
+});

@@ -33,6 +33,27 @@ export const LEVEL_MILESTONE_BONUS: Record<number, number> = {
 /** Flat gold for every level gained. Reuses the existing GOLD_EVENTS entry. */
 export const LEVEL_UP_GOLD = 50;
 
+/**
+ * Every coupon is $5, and the price is derived rather than chosen.
+ *
+ * The brief was that finishing the whole library should be worth $20. Measured:
+ * the 134 lessons are 19,200 XP, the thirteen category bonuses add 6,500, which
+ * lands a completionist on LEVEL 14 -- 1,000 gold of level rewards plus 425
+ * from training milestones, so 1,425 gold.
+ *
+ *   1,425 / 4 coupons = 356.25, rounded down to 350.
+ *
+ * 350 is picked over 300 deliberately. Both give exactly four coupons, but 300
+ * leaves 225 gold spare -- most of a fifth -- so a little ordinary play would
+ * tip a completionist to $25. 350 leaves 25, which cannot drift anywhere.
+ *
+ * Note the redemption cap interacts with this: at 3 coupons per 30 days, taking
+ * all four out takes two months. That is intended -- it is a reward for a
+ * season of training, not a checkout.
+ */
+export const COUPON_VALUE_USD = 5;
+export const COUPON_GOLD_COST = 350;
+
 export type CouponKind = 'tournament_entry' | 'merch';
 
 export interface CouponType {
@@ -54,32 +75,16 @@ export const COUPON_TYPES: CouponType[] = [
     kind: 'merch',
     title: '$5 off merchandise',
     terms: '$5 off any merchandise purchase, online or at a Disc Golf Go event.',
-    goldCost: 300,
-    faceValueUsd: 5,
+    goldCost: COUPON_GOLD_COST,
+    faceValueUsd: COUPON_VALUE_USD,
   },
   {
-    key: 'merch_10',
-    kind: 'merch',
-    title: '$10 off merchandise',
-    terms: '$10 off a merchandise purchase of $25 or more, online or at an event.',
-    goldCost: 550,
-    faceValueUsd: 10,
-  },
-  {
-    key: 'entry_10',
+    key: 'entry_5',
     kind: 'tournament_entry',
-    title: '$10 off a tournament entry',
-    terms: '$10 off the entry fee for any Disc Golf Go listed event. Does not cover greens, PDGA or TD fees.',
-    goldCost: 550,
-    faceValueUsd: 10,
-  },
-  {
-    key: 'entry_am',
-    kind: 'tournament_entry',
-    title: 'Amateur tournament entry',
-    terms: 'Covers one amateur entry fee at a Disc Golf Go listed event. Does not cover greens, PDGA or TD fees.',
-    goldCost: 2000,
-    faceValueUsd: 50,
+    title: '$5 off a tournament entry',
+    terms: '$5 off the entry fee for any Disc Golf Go listed event. Does not cover greens, PDGA or TD fees.',
+    goldCost: COUPON_GOLD_COST,
+    faceValueUsd: COUPON_VALUE_USD,
   },
 ];
 
