@@ -2567,6 +2567,528 @@ export const LESSON_BODIES: Record<string, LessonBody> = {
     },
   },
 
+  // ────────────────────────── COURSE STRATEGY ──────────────────────────
+  'know-your-lines': {
+    why:
+      'Players who score well see the whole flight before they throw; players who do not aim at the basket and hope. The difference is not vision, it is a habit — and it costs nothing to build. Picking a line also forces the honest question of whether you can actually throw it, which is where most strokes are saved.',
+    how: [
+      'Stand behind the tee and trace the entire flight with your eyes: where it leaves, where it peaks, where it bends, where it lands.',
+      'Pick the line you hit most often, not the best one available. Those are different lines and the gap between them is where bogeys come from.',
+      'Name the shot before you step on the pad — disc, angle, power, landing spot.',
+      'If you cannot see a line, the answer is a shorter, safer shot rather than a hopeful one.',
+      'Commit completely once chosen. A line thrown at 80% conviction becomes a different line in the air.',
+    ],
+    wrong: [
+      {
+        fault: 'Aiming at the basket rather than at a line.',
+        fix: 'The basket is where the line ends, not what you aim at. Aim at the gap, the peak or the landing spot.',
+      },
+      {
+        fault: 'Choosing the hero line because it is the one that would look best.',
+        fix: 'Ask how often you hit it. Below about half the time it is costing you strokes over a season, however good it feels when it works.',
+      },
+      {
+        fault: 'Deciding on the pad, with the disc already in hand.',
+        fix: 'Decide behind the tee. Once you are standing on the pad there should be nothing left to work out.',
+      },
+    ],
+    drill: {
+      name: 'Say the line',
+      reps: '1 full round naming the line out loud before every tee shot',
+      body:
+        'For one round, say the whole plan aloud before each drive: disc, angle, where it lands. It feels absurd for three holes and then becomes genuinely useful — mostly because saying a bad plan out loud is how you notice it is a bad plan.',
+    },
+  },
+
+  'reading-landing-zone': {
+    why:
+      'A disc is not finished when it lands. On hard ground it skips, on a slope it runs, in wet grass it stops dead — and the difference between those outcomes is routinely thirty or forty feet. Players who plan only the flight are planning two thirds of the shot.',
+    how: [
+      'Look at the ground where the disc will land before choosing the shot: hard-packed, wet, sloped, leaf-covered.',
+      'Plan the skip. A disc arriving flat and fast on hard ground will travel a long way further than it landed.',
+      'Favour the safe side of any trouble, so that a miss finishes somewhere you can play from.',
+      'Choose the landing zone that leaves the next shot you want, which usually means straight and uphill rather than short and sidehill.',
+      'On downhill landings, expect considerably more run-out than you think and aim shorter.',
+    ],
+    wrong: [
+      {
+        fault: 'Planning the flight and ignoring what happens after it lands.',
+        fix: 'Walk up and look at the ground, particularly on an unfamiliar hole. The landing is a third of the shot.',
+      },
+      {
+        fault: 'Landing on the trouble side of the basket because the line was marginally better.',
+        fix: 'Pick the side where a miss is survivable. The cost of a miss should drive the choice, not the quality of the best case.',
+      },
+      {
+        fault: 'Treating all ground as equal.',
+        fix: 'The same throw finishes 40 feet apart on baked dirt and wet grass. Check the surface, then choose.',
+      },
+    ],
+    drill: {
+      name: 'Predict the finish',
+      reps: '18 holes predicting where each drive will STOP',
+      body:
+        'Before every drive, say where you think the disc will come to rest — not where it will land. Then check. You will be wrong a lot at first, mostly by underestimating skip and roll, and the habit of looking at the ground is worth several strokes once it is built.',
+    },
+  },
+
+  'three-shot-types': {
+    why:
+      'Hyzer, flat and anhyzer cover the overwhelming majority of holes you will ever play. Having all three reliably is worth far more than another thirty feet of distance, because distance only helps on the holes that already suit your one shape.',
+    how: [
+      'Hyzer: the disc tilted with its top edge toward you, finishing left for a right-handed backhand. The most reliable shape in the game, and the one to default to under pressure.',
+      'Flat: level release, straightest flight. Needs a disc whose stability matches your power or it becomes one of the other two.',
+      'Anhyzer: top edge away from you, finishing right for a right-handed backhand. Opens up holes that bend the other way.',
+      'Pick the shape from the hole, then the disc that produces it at your arm speed.',
+      'When unsure, throw the hyzer. Its miss is predictable, which is what makes it the safe choice.',
+      'Reverse left and right throughout for a left-handed backhand or a right-handed forehand.',
+    ],
+    wrong: [
+      {
+        fault: 'Owning one shape and bending every hole to fit it.',
+        fix: 'Learn the other two in a field. One shape means every hole that does not suit it costs you something.',
+      },
+      {
+        fault: 'Reaching for an anhyzer whenever a hole bends right.',
+        fix: 'Consider a hyzer aimed well right first. Anhyzer is the least repeatable of the three and should be chosen, not defaulted to.',
+      },
+      {
+        fault: 'Attempting a shape under pressure that you have not thrown in practice.',
+        fix: 'Pressure is where your most reliable shape earns its place. Save experiments for the field.',
+      },
+    ],
+    drill: {
+      name: 'All three, one target',
+      reps: '10 of each shape at one target (30 total)',
+      body:
+        'One disc, one target, ten hyzer, ten flat, ten anhyzer. Mark the three groups. Those clusters are your real shot shapes, and the gaps between them tell you which hole shapes you currently cannot cover.',
+    },
+  },
+
+  'position-play': {
+    why:
+      'Distance is only useful where it leaves you a shot you can play. Throwing as far as possible every time means regularly finishing in positions you did not choose, and a drive that ends 40 feet further down the fairway and behind a tree has lost you a stroke, not gained one.',
+    how: [
+      'Decide where you want to be standing for your next shot before you choose this one.',
+      'Pick the landing zone that leaves the approach you are best at — for most people straight and open rather than angled or blocked.',
+      'Accept a shorter throw when it buys a cleaner next one. This is a gain, not a compromise.',
+      'Think one shot ahead on every hole, and two on par 4s and 5s.',
+      'On a hole you cannot reach, work backwards: where do you want to putt from, where does that mean the approach comes from, and therefore where should the drive finish?',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing maximum distance on every hole by reflex.',
+        fix: 'Ask what the next shot looks like from there. Sometimes the answer makes a shorter drive obviously correct.',
+      },
+      {
+        fault: 'Thinking about the current shot only.',
+        fix: 'Plan the hole, not the throw. Working backwards from the putt is the single best habit in course management.',
+      },
+      {
+        fault: 'Treating a lay-up as a failure of nerve.',
+        fix: 'It is a shot selection. The card records the number, not the ambition.',
+      },
+    ],
+    drill: {
+      name: 'Work backwards',
+      reps: '9 holes planned from the basket outwards',
+      body:
+        'On each of nine holes, before teeing off, decide where you want to putt from, then what approach gets you there, then what drive sets up that approach. Play that plan. It is slower and it usually produces a better score, which is the point.',
+    },
+  },
+
+  'risk-reward-decision-making': {
+    why:
+      'Most strokes lost by competent players are lost to decisions, not to technique. The arithmetic is simple and almost nobody does it: what you gain when the aggressive shot works, against what you lose when it does not, multiplied by how often each actually happens.',
+    how: [
+      'Estimate honestly how often you hit the aggressive shot. Use your practice numbers, not your memory of the best one.',
+      'Work out what a miss costs — not a near miss, the typical miss. OB, a drop zone, a blocked lie.',
+      'Compare the two. If the aggressive line gains one stroke half the time and costs two a quarter of the time, it is losing money.',
+      'Treat OB and water as roughly a two-stroke swing, because that is usually what they are once the re-throw is counted.',
+      'Take the aggressive line when the miss is cheap, and only then. A safe miss is what makes aggression correct.',
+    ],
+    wrong: [
+      {
+        fault: 'Judging the decision by the best case.',
+        fix: 'The best case happens occasionally. Decide on the average outcome, which is what your score is made of.',
+      },
+      {
+        fault: 'Overestimating your own success rate.',
+        fix: 'Most players think they hit a given line far more often than they do. Count it in practice once and use that number.',
+      },
+      {
+        fault: 'Taking the aggressive line to make up for an earlier bad hole.',
+        fix: 'The previous hole is over and the odds have not changed. Chasing is the single most expensive habit in the sport.',
+      },
+      {
+        fault: 'Being equally cautious on every hole.',
+        fix: 'Where the miss is genuinely cheap, be aggressive. Blanket caution leaves strokes behind too.',
+      },
+    ],
+    drill: {
+      name: 'Do the arithmetic',
+      reps: '1 round writing down the sum before each risky shot',
+      body:
+        'On every hole where you are tempted, write two numbers before you throw: how often you make it, and what the miss costs. Then throw whichever the numbers favour. After eighteen holes you will have a page that argues with your instincts, and the page is usually right.',
+    },
+  },
+
+  'wind-adjusting-your-lines': {
+    why:
+      'Wind does not just move a disc sideways, it changes which disc you should be holding. Trying to fight it with the same disc and a different throw is how a windy round turns into a bad one — the adjustment that works is in the bag, not in the motion.',
+    how: [
+      'Into a headwind, go more overstable than usual. The extra airspeed makes everything behave understable, so you need a disc that resists it.',
+      'With a tailwind, go more understable and add a little height. There is less lift available, so discs drop and fade earlier.',
+      'In a crosswind, choose the disc that finishes INTO the wind, so the wind pushes it back toward your target rather than away.',
+      'Lower the whole line in strong wind. Height is exposure.',
+      'Change the disc first and the angle second. Changing your throw is the last resort because it has to be unlearned afterwards.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing the same disc harder into a headwind.',
+        fix: 'More power is more airspeed, which makes it turn over further. Change the disc, keep the effort normal.',
+      },
+      {
+        fault: 'Treating a tailwind as free distance.',
+        fix: 'It removes lift. Discs come down early and fade hard, which costs as often as it gives.',
+      },
+      {
+        fault: 'Picking the disc that will be pushed toward the basket in a crosswind.',
+        fix: 'Pick the one finishing into the wind. A disc working against the wind is controlled; one working with it is not.',
+      },
+    ],
+    drill: {
+      name: 'Pick the disc, not the throw',
+      reps: '9 holes on a windy day changing only the disc',
+      body:
+        'Play nine holes in real wind with one rule: you may change discs and angles as much as you like, but your throwing motion stays exactly as it is in calm conditions. This forces the adjustment into the bag where it belongs, and it is usually a revelation about how much the disc choice was doing.',
+    },
+  },
+
+  'tournament-course-management': {
+    why:
+      'A tournament round is won by avoiding the big numbers, not by collecting birdies. Over eighteen holes the player who shoots level with no disasters almost always beats the one with four birdies and two doubles. Course management is the discipline of playing for that first scorecard.',
+    how: [
+      'Identify before the round which holes are birdie opportunities and which are par-save holes, and play each as what it is.',
+      'On the par-save holes, take the safe route every time. The stroke you do not lose counts exactly as much as the one you gain.',
+      'Avoid the double bogey above everything. One double undoes two birdies.',
+      'Play your own game rather than matching your card-mates. Their distance is not available to you and attempting it is how rounds unravel.',
+      'Keep the same decision process on hole 18 as on hole 1. Pressure changes the stakes, not the odds.',
+    ],
+    wrong: [
+      {
+        fault: 'Trying to birdie every hole.',
+        fix: 'Half of most courses are not birdie holes for most players. Playing them as such converts pars into bogeys.',
+      },
+      {
+        fault: 'Chasing a card-mate who outdrives you.',
+        fix: 'Play the shot you have. Reaching for distance you do not own is the fastest way to a double bogey.',
+      },
+      {
+        fault: 'Taking more risk late because the score is not what you wanted.',
+        fix: 'The odds are the same on hole 17 as on hole 3. Chasing turns a mediocre round into a bad one.',
+      },
+    ],
+    drill: {
+      name: 'Mark the card first',
+      reps: '1 round with every hole pre-labelled birdie or par-save',
+      body:
+        'Before teeing off, go down the card and mark each hole as a realistic birdie chance or a par-save. Play accordingly for all eighteen. Compare the total with your usual. Most players shoot better while feeling as though they tried less, which is the entire lesson of this category.',
+    },
+  },
+
+  'scrambling-get-out-of-trouble': {
+    why:
+      'Everybody throws into trouble. What separates scores is the decision made from inside it, and the expensive instinct is to try to win the stroke back immediately. One bad throw is a bogey; one bad throw plus a hopeful recovery is a double or worse.',
+    how: [
+      'Accept the stroke that is already gone before you choose anything. It is not recoverable and trying to recover it is what costs the second one.',
+      'Find the widest, safest route back to a clean lie, even if it is sideways or backwards.',
+      'Take the lowest line available. Low shots hit fewer things.',
+      'Use a disc you can control from an awkward stance — a putter or midrange, almost never a driver.',
+      'Decide what score you will accept on this hole, then play the shots that guarantee it.',
+    ],
+    wrong: [
+      {
+        fault: 'Attempting the narrow gap that saves par.',
+        fix: 'Count how often you would hit it. At one in four, three times out of four you are now in worse trouble a stroke down.',
+      },
+      {
+        fault: 'Throwing hard from a bad lie.',
+        fix: 'Power magnifies whatever the awkward stance does to your form. Smooth and short.',
+      },
+      {
+        fault: 'Refusing to throw backwards or sideways on principle.',
+        fix: 'A clean lie is worth more than direction. The card has no column for style.',
+      },
+      {
+        fault: 'Deciding the escape route while standing in the trouble.',
+        fix: 'Step out, look from a few angles, and pick. The view from inside a bush is not a good basis for a decision.',
+      },
+    ],
+    drill: {
+      name: 'Take your medicine',
+      reps: '9 holes, always taking the safest escape',
+      body:
+        'Play nine holes with one rule: from any trouble, you must take the safest available route back to a clean lie, with no exceptions and no heroics. Compare the score. Almost everybody shoots better, and the number is the argument the instinct will not accept on its own.',
+    },
+  },
+
+  'playoff-strategy-pressure': {
+    why:
+      'A playoff hole is one shot where everything you have practised either shows up or does not. The mistake people make is treating it as special and therefore playing it differently — reaching for a bigger shot than they own, on the one hole where a mistake cannot be absorbed.',
+    how: [
+      'Play to your strengths. If your reliable shot is a hyzer with a midrange, throw that, even if a driver would be closer when it works.',
+      'Give yourself a putt. The goal is a look at the basket, not a hole-in-one.',
+      'Use exactly the routine you have used all day. Changing it under pressure is changing the one thing that was working.',
+      'Pick the shot you have actually thrown in practice, not the one you have imagined.',
+      'Accept that your opponent might simply play it better. You control your shot and nothing else.',
+    ],
+    wrong: [
+      {
+        fault: 'Reaching for a bigger shot because the moment is bigger.',
+        fix: 'The hole has not changed. Throw what you throw, which is the shot that got you to the playoff.',
+      },
+      {
+        fault: 'Speeding up because of nerves.',
+        fix: 'Deliberately slow the routine down. Nerves compress everything and the first casualty is tempo.',
+      },
+      {
+        fault: 'Playing to what you think your opponent will do.',
+        fix: 'Play your own best percentage shot. Reacting to somebody else puts you on a shot you did not choose.',
+      },
+    ],
+    drill: {
+      name: 'One shot, cold',
+      reps: '10 single shots with a full routine and 5 minutes between each',
+      body:
+        'Throw one shot, walk away, wait five minutes, throw another. Ten of them. This is far harder than throwing ten in a row and it is exactly what a playoff asks — one cold shot with a full routine and no rhythm to lean on.',
+    },
+  },
+
+  'using-course-maps': {
+    why:
+      'A course map tells you the distance, the par and where the trouble is before you have thrown anything. Thirty seconds reading one is the cheapest stroke saving in the game, and on an unfamiliar course it is the difference between playing the hole and discovering it.',
+    how: [
+      'Read the distance and par first, then decide what the hole actually asks of you.',
+      'Find the trouble before you find the basket. OB lines, water, steep ground — those determine the shot more than the target does.',
+      'Identify the safe miss: which side can you be on and still play from?',
+      'Pick a target landing zone from the map before you walk to the tee.',
+      'Check whether the basket position shown is the one in use. Many courses move pins and the map may show a different placement.',
+    ],
+    wrong: [
+      {
+        fault: 'Looking at the map only to find out how long the hole is.',
+        fix: 'The length is the least useful thing on it. The OB lines and the shape are what change your decision.',
+      },
+      {
+        fault: 'Trusting the map over what you can see.',
+        fix: 'Maps go out of date, pins move and trees grow. Use the map to form a plan and your eyes to check it.',
+      },
+      {
+        fault: 'Reading it on the tee pad with the group waiting.',
+        fix: 'Read it while walking to the hole. Decisions made with people waiting are rushed decisions.',
+      },
+    ],
+    drill: {
+      name: 'Map before tee',
+      reps: '18 holes reading the map before arriving at each tee',
+      body:
+        'For a whole round, read each hole’s map while walking to it and form a plan before you can see the hole. Then check the plan against the reality. You will find the map tells you most of what you needed, and the habit transfers directly to playing somewhere new.',
+    },
+  },
+
+  'reading-elevation-changes': {
+    why:
+      'Elevation is the most commonly misjudged thing on a course. Uphill holes play significantly longer than their stated distance and downhill ones considerably shorter, and discs behave differently in both. Getting it wrong is how a well-thrown shot finishes forty feet from where it was aimed.',
+    how: [
+      'Uphill: the hole plays longer than the number on the sign. Take more disc or more power, and give the shot extra height.',
+      'Uphill: expect the disc to fade earlier, because it reaches its slow phase sooner against the slope.',
+      'Downhill: the hole plays shorter. The disc stays in the air longer, fades harder at the end and skips further when it lands.',
+      'Downhill: throw a more understable disc or a flatter angle, because the extra airtime gives the fade more time to work.',
+      'Elevated baskets need height and power together. A shot that arrives at basket height from below has already stopped climbing and will drop short.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing the signed distance on an uphill hole.',
+        fix: 'Add to it. A 250-foot uphill hole plays like 290 or more depending on the slope.',
+      },
+      {
+        fault: 'Forgetting that a downhill disc fades harder.',
+        fix: 'Extra airtime means extra fade. Aim further right for a right-handed backhand, or throw something more understable.',
+      },
+      {
+        fault: 'Ignoring the skip on a downhill landing.',
+        fix: 'A disc landing on a downslope runs a long way. Plan to land it short of where you want it to stop.',
+      },
+    ],
+    drill: {
+      name: 'Pace the slope',
+      reps: '10 throws each on an uphill and a downhill hole',
+      body:
+        'Find one uphill and one downhill hole and throw ten on each with the disc you would normally use. Pace out how far short or long you finish against the signed distance. Those two numbers are your personal elevation adjustment and they are worth more than any general rule.',
+    },
+  },
+
+  'playing-in-rain': {
+    why:
+      'Rain changes grip, flight and ground all at once, and the players who score well in it are the ones who simplified rather than the ones who threw well. A wet round rewards preparation and conservatism far more than it rewards skill.',
+    how: [
+      'Keep towels dry. Carry at least two, keep the spare sealed in a bag, and dry the disc immediately before every throw.',
+      'Use grippier plastic. Base plastic putters hold far better in the wet than premium ones.',
+      'Throw more hyzer and simplify your shot selection. Wet discs slip and release early, which turns over anhyzers and flat shots.',
+      'Expect no skip. Wet ground stops a disc roughly where it lands, which actually makes approach distance easier to judge.',
+      'Keep your grip pressure slightly firmer than usual and accept a little less distance for a lot more control.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing with a wet flight plate.',
+        fix: 'Dry it every single throw. A slipped release in the rain looks exactly like a form fault and is not one.',
+      },
+      {
+        fault: 'Using one towel until it is soaked.',
+        fix: 'Two towels, the spare kept dry inside a bag or under an umbrella. A wet towel does nothing.',
+      },
+      {
+        fault: 'Playing the same aggressive lines as in the dry.',
+        fix: 'Simplify. Rain is a round for safe, stable shots and accepting pars.',
+      },
+    ],
+    drill: {
+      name: 'Play one wet round on purpose',
+      reps: '9 holes in the rain, drying the disc before all 9 tee shots',
+      body:
+        'Go out deliberately in light rain and play nine holes with a strict towel routine on every throw. You are rehearsing the handling as much as the shots, and the first time you do it in a competition should not be the first time you have done it.',
+    },
+  },
+
+  'playing-into-wind-all-angles': {
+    why:
+      'Each wind direction does something different and the effects are not symmetrical. Knowing which is which turns wind from a source of random results into another variable you plan around — and since most players never practise in it, it is one of the largest edges available.',
+    how: [
+      'Headwind: the extra airspeed gives more lift and makes a disc behave understable, so it wants to turn over and get knocked down. Throw overstable, keep it low, keep the nose down.',
+      'Tailwind: less airspeed means less lift, so the disc behaves overstable, drops sooner and fades harder. Throw understable, add height, expect less distance than it feels like you should get.',
+      'Crosswind from your throwing side: it will push the disc away and tend to lift that edge. Aim into it and choose a disc that finishes into it.',
+      'Crosswind from the other side: it pushes the disc the other way and can flatten a hyzer out. Allow for drift in that direction.',
+      'In all four, keep the line lower than usual. Height is the single biggest multiplier on everything wind does.',
+    ],
+    wrong: [
+      {
+        fault: 'Assuming a tailwind helps.',
+        fix: 'It removes lift and brings the fade forward. It is as likely to cost distance as to add it.',
+      },
+      {
+        fault: 'Throwing high in wind to get more distance.',
+        fix: 'Height is exposure. In strong wind the lower line almost always finishes further and far more predictably.',
+      },
+      {
+        fault: 'Making one adjustment and applying it to every wind direction.',
+        fix: 'They are genuinely different. Overstable into a headwind is right; overstable in a tailwind makes it worse.',
+      },
+    ],
+    drill: {
+      name: 'All four directions',
+      reps: '10 throws in each of 4 directions (40 total), one disc',
+      body:
+        'One disc, one windy day, ten throws into the wind, ten with it, and ten across it from each side. Note the finish of each group against your aim. This produces a personal reference table that is more use than any general advice, because it is measured with your arm and your disc.',
+    },
+  },
+
+  'position-play-not-basket': {
+    why:
+      'On a hole you cannot reach, going for it anyway is a decision that looks ambitious and plays badly. A planned lay-up to your best putting distance converts a long hole into a routine par; an unplanned one leaves you somewhere awkward with the same number of throws gone.',
+    how: [
+      'Decide early in the hole whether it is reachable for you. Be honest — reachable means reachable most of the time, not on your best throw.',
+      'If it is not, pick the distance you putt best from and lay up to exactly that.',
+      'Lay up to the side that leaves a straight, uphill putt rather than a sidehill or downhill one.',
+      'Take the guaranteed par-save spot when the hole offers one. A certain 3 beats a possible 2 and a likely 4.',
+      'Never attempt a shot in this situation that you have not practised. A long hole is the worst place to try something new.',
+    ],
+    wrong: [
+      {
+        fault: 'Going for a basket you reach one time in five.',
+        fix: 'The other four times you are scrambling. Lay up and take the par that was always available.',
+      },
+      {
+        fault: 'Laying up to a vague distance rather than your best one.',
+        fix: 'A lay-up should finish where you practise from. Otherwise you have swapped one difficult shot for another.',
+      },
+      {
+        fault: 'Deciding to lay up only after the drive went badly.',
+        fix: 'Decide on the tee. A plan made mid-hole in disappointment is not a plan.',
+      },
+    ],
+    drill: {
+      name: 'Lay up on purpose',
+      reps: '9 long holes laying up to your best putting distance every time',
+      body:
+        'Play nine holes you cannot reach and lay up deliberately to your favourite putting distance on every one. Count the pars. For most players the number is higher than when they go for it, and seeing that written down is what makes the habit stick.',
+    },
+  },
+
+  'managing-double-bogey-hole': {
+    why:
+      'Big numbers come from sequences, not from single shots. One throw into trouble is a bogey at worst; it becomes a double or a triple when the next decision is made in frustration rather than in arithmetic. Breaking that sequence is probably the largest single scoring gain available to an average player.',
+    how: [
+      'Recognise the moment. The throw after a bad one is the dangerous one, and knowing that is most of the defence.',
+      'Stop and take a breath before choosing anything. Thirty seconds is enough to get the decision out of the emotion.',
+      'Decide what score you will accept on this hole now, and play the shots that guarantee it.',
+      'Take the safest route back to a clean lie, however unambitious.',
+      'Treat the next throw as its own shot with its own plan, rather than as part of a rescue.',
+    ],
+    wrong: [
+      {
+        fault: 'Throwing immediately after the bad shot while still annoyed.',
+        fix: 'Wait. The urge to put it right at once is exactly what turns one mistake into three.',
+      },
+      {
+        fault: 'Trying to get the stroke back on this hole.',
+        fix: 'It is gone. The only question left is whether you lose one more or three more.',
+      },
+      {
+        fault: 'Escalating the risk as the hole gets worse.',
+        fix: 'Each throw should be the SAFEST sensible one, and more so as the number climbs. The usual instinct runs the opposite way.',
+      },
+    ],
+    drill: {
+      name: 'The next shot rule',
+      reps: '1 round pausing 30 seconds after every bad shot',
+      body:
+        'For one round, after any throw you are unhappy with, stop and count thirty seconds before you even choose a disc. Note at the end how many holes could have become big numbers and did not. The pause is the whole technique and it costs nothing but the time.',
+    },
+  },
+
+  'playing-unfamiliar-courses': {
+    why:
+      'Playing somewhere new is where good players lose strokes to bad information rather than to bad throws. Everything on an unknown hole is uncertain — the length, the trouble, where a miss finishes — and the right response to uncertainty is conservatism and a few minutes of looking.',
+    how: [
+      'Read the map or the sign on every hole before you tee, and walk up the fairway when the hole is blind.',
+      'Find the OB and the trouble first. Knowing where you cannot be matters more than knowing where the basket is.',
+      'Identify the safe miss on each hole and aim so that a miss goes there.',
+      'Favour control discs. On an unknown hole the predictable shot is worth far more than the long one.',
+      'Accept pars. A first round somewhere new is reconnaissance; the score comes the second time.',
+    ],
+    wrong: [
+      {
+        fault: 'Teeing off on a blind hole without looking.',
+        fix: 'Walk up. Two minutes of looking is cheaper than the stroke you are about to guess away.',
+      },
+      {
+        fault: 'Throwing your longest disc because the hole looks open from the pad.',
+        fix: 'Open from the tee tells you nothing about the last hundred feet. Control disc until you have seen the hole.',
+      },
+      {
+        fault: 'Expecting to score your usual number.',
+        fix: 'Play it as information gathering. The familiar-course score comes from knowing the course, which you do not yet.',
+      },
+    ],
+    drill: {
+      name: 'Walk the blind ones',
+      reps: '1 new course, walking every blind hole before throwing',
+      body:
+        'Play a course you do not know and walk up every hole where you cannot see the landing zone. Note how many times what you found differed from what you would have assumed. That count is the argument for doing it every time, and it is usually higher than people expect.',
+    },
+  },
+
 };
 
 /** True when a lesson has a written body, so callers can fall back to tips. */
