@@ -285,6 +285,8 @@
         loadResources(id);
         wireVideo();
         wireShare();
+        engage(id, 'opened');
+        wireEngagement(id);
         var cta = document.getElementById('cta');
         if (l.is_completed) {
           cta.innerHTML = '<div class="pill pill--done" style="width:100%;justify-content:center;padding:12px">Completed ✓</div>' +
@@ -299,7 +301,21 @@
               b.className = 'pill pill--done'; b.style.width = '100%'; b.style.justifyContent = 'center'; b.style.padding = '12px';
               b.textContent = '+' + (r.xp_awarded || 0) + ' XP' + bonus + ' · Done ✓';
               if (l.next_lesson) cta.insertAdjacentHTML('beforeend', '<a class="btn btn--ghost btn--block" style="margin-top:12px" href="/training?cat=' + esc(slug) + '&lesson=' + l.next_lesson.id + '">Next lesson →</a>');
-            } catch (ex) { b.disabled = false; b.textContent = 'Retry'; }
+            } catch (ex) {
+              b.disabled = false;
+              b.textContent = 'Mark Complete · +' + (l.xp_reward || 0) + ' XP';
+              // The server says WHY and, when it is only a matter of waiting,
+              // how long. Showing that beats a bare "Retry" the player cannot act on.
+              var msg = (ex && ex.data && ex.data.error) || (ex && ex.message) || 'Could not save that.';
+              var note = document.getElementById('gate-note');
+              if (!note) {
+                note = document.createElement('p');
+                note.id = 'gate-note';
+                note.style.cssText = 'margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--color-ash)';
+                cta.appendChild(note);
+              }
+              note.textContent = msg;
+            }
           });
         }
       }
@@ -372,6 +388,32 @@
       }
 
       function resIcon(t) { return t === 'video' ? '▷' : (t === 'report' || t === 'study' || t === 'article' ? '▤' : '◆'); }
+
+      // ── Engagement ──────────────────────────────────────────────────────
+      // Completing a lesson requires having actually opened it and touched the
+      // video or one of the links. These calls are what tell the server that
+      // happened; the server keeps the clock, so nothing here claims a duration.
+      // Fire-and-forget on purpose: a failed signal must never block the page.
+      function engage(id, event, detail) {
+        try {
+          API.post('/training/lessons/' + encodeURIComponent(id) + '/engagement',
+                   { event: event, detail: detail || null })['catch'](function () {});
+        } catch (e) { /* never let a signal break the lesson */ }
+      }
+
+      // One delegated listener rather than per-element handlers, so links added
+      // later by loadResources() are covered without re-wiring anything.
+      function wireEngagement(id) {
+        content.addEventListener('click', function (ev) {
+          var a = ev.target && ev.target.closest && ev.target.closest('a[href],button');
+          if (!a) return;
+          var href = a.getAttribute('href') || '';
+          var isVideo = a.id === 'playvid' || /youtube\.com|youtu\.be/.test(href);
+          var isResource = a.classList && a.classList.contains('row') && a.target === '_blank';
+          if (isVideo) engage(id, 'resource_opened', 'video');
+          else if (isResource) engage(id, 'resource_opened', href.slice(0, 200));
+        });
+      }
 
       // Blogs / reports / research from pros & companies for the lesson.
       async function loadResources(id) {

@@ -3,10 +3,11 @@
 // a transaction. Story-mission triggers are an injected optional hook (no-op
 // until the story module exists).
 
-import { notFound, badRequest, forbidden } from '../../http/errors';
+import { notFound, badRequest, forbidden, AppError } from '../../http/errors';
 import { withTransaction } from '../../db/pool';
 import type { Database } from '../../db/types';
 import { getLevelFromXp, totalXpForLevel, getSkillTier, getSkillTierProgress } from '../progression';
+import { checkEngagement, MAX_COMPLETIONS_PER_HOUR } from './engagement';
 import { createTrainingRepo, type TrainingRepo, type SkillLevel } from './training.repo';
 
 const TIER_MESSAGES: Record<string, Array<{ type: string; title: string; body: string }>> = {
@@ -66,7 +67,15 @@ import { buildPath, DEFAULT_ANSWERS } from './path';
 import { nextEvent } from '../../db/data/events';
 import { LESSONS } from '../../db/data/lessons';
 
-export function createTrainingService({ db, repo = createTrainingRepo(db), onLessonCompleted }: TrainingServiceDeps) {
+export function createTrainingService({
+  db,
+  repo = createTrainingRepo(db),
+  onLessonCompleted,
+  // Injectable so unit tests can exercise completion without staging
+  // engagement rows. Production never passes it, so the gate is on by default
+  // -- a flag that defaults to "off" is a gate that never gets turned on.
+  gated = true,
+}: TrainingServiceDeps & { gated?: boolean }) {
   function levelParam(raw: unknown): SkillLevel | null {
     return typeof raw === 'string' && VALID_LEVELS.includes(raw as SkillLevel) ? (raw as SkillLevel) : null;
   }
@@ -194,6 +203,18 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
       return repo.lessonResources(lessonId);
     },
 
+    /**
+     * Record that a lesson was opened, or that a video/article link was
+     * clicked. The SERVER timestamps it; a dwell time sent by the caller would
+     * just be a number the caller chose.
+     */
+    async recordEngagement(playerId: number, lessonId: number, event: string, detail: string | null) {
+      if (!Number.isInteger(lessonId) || lessonId <= 0) throw badRequest('lesson_id required');
+      if (event !== 'opened' && event !== 'resource_opened') throw badRequest('Unknown event');
+      await repo.recordEngagement(playerId, lessonId, event, detail ? String(detail).slice(0, 300) : null);
+      return { success: true };
+    },
+
     async completeLesson(playerId: number, lessonId: number) {
       const result = await withTransaction(db, async (client) => {
         const lesson = await repo.loadLessonForCompletion(client, lessonId);
@@ -201,6 +222,25 @@ export function createTrainingService({ db, repo = createTrainingRepo(db), onLes
 
         const xpReward = Number(lesson.xp_reward);
         const alreadyCompleted = await repo.completionExists(client, playerId, lessonId);
+
+        // The engagement gate. Only on a FIRST completion: re-opening a lesson
+        // already finished must never be refused, and re-completion is
+        // idempotent anyway, so there is nothing to farm there.
+        if (!alreadyCompleted && gated) {
+          const inLastHour = await repo.completionsInLastHour(client, playerId);
+          if (inLastHour >= MAX_COMPLETIONS_PER_HOUR) {
+            throw new AppError(429, 'That is a lot of lessons in one hour. Take a break and come back.', {
+              completed_this_hour: inLastHour,
+            });
+          }
+          const state = await repo.engagementState(client, playerId, lessonId);
+          const gate = checkEngagement(state);
+          if (!gate.ok) {
+            throw new AppError(409, gate.reason ?? 'Spend a little longer with this lesson.', {
+              wait_seconds: gate.waitSeconds ?? null,
+            });
+          }
+        }
 
         let awardedXp = 0;
         let bonusXp = 0;

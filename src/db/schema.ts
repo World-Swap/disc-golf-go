@@ -878,4 +878,28 @@ CREATE TABLE IF NOT EXISTS coupons (
 );
 CREATE INDEX IF NOT EXISTS idx_coupons_player ON coupons(player_id, issued_at DESC);
 CREATE INDEX IF NOT EXISTS idx_coupons_status ON coupons(status, expires_at);
+
+-- ── Lesson engagement: evidence that a lesson was actually opened ──
+-- (No backticks in this file: SCHEMA_SQL is a JS template literal.)
+--
+-- completeLesson had no gate at all: an authenticated POST marked a lesson done
+-- and paid full XP, so the whole 134-lesson library -- 25,750 XP, level 14,
+-- 1,000 gold, and now real coupons -- was reachable by clicking through, or by
+-- a script in seconds.
+--
+-- These rows are CLIENT-REPORTED and therefore not proof of anything. They are
+-- not meant to be: the point is to make clicking through cost roughly what
+-- engaging costs, so the cheap attack stops being cheap. The timestamps are the
+-- SERVER's, never the client's, because a self-reported dwell time is just a
+-- number the caller chose.
+CREATE TABLE IF NOT EXISTS lesson_engagement (
+  id SERIAL PRIMARY KEY,
+  player_id INTEGER NOT NULL,
+  lesson_id INTEGER NOT NULL,
+  event TEXT NOT NULL,
+  detail TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_lesson_engagement_lookup
+  ON lesson_engagement(player_id, lesson_id, event, created_at);
 `;

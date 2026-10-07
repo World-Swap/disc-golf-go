@@ -24,6 +24,10 @@ function handler(sqlRaw: string): { rows: unknown[] } {
   if (/l.xp_reward, l.title, c.slug AS category_slug/.test(s)) return { rows: [{ id: 5, category_id: 1, xp_reward: 40, title: 'Backhand', category_slug: 'form' }] };
   if (/SELECT id FROM training_completions WHERE player_id = \$1 AND lesson_id/.test(s)) return { rows: [] };
   if (/INSERT INTO training_completions/.test(s)) return { rows: [] };
+  // Engagement gate: this player opened the lesson two minutes ago and clicked
+  // a resource, which is what an honest completion looks like.
+  if (/FROM lesson_engagement/.test(s)) return { rows: [{ opened_seconds_ago: '120', resources_opened: '1' }] };
+  if (/COUNT\(\*\) AS n FROM training_completions WHERE player_id = \$1 AND completed_at/.test(s)) return { rows: [{ n: '0' }] };
   if (/streak_days, last_date FROM training_streaks WHERE player_id = \$1 FOR UPDATE/.test(s)) return { rows: [] };
   if (/INSERT INTO training_streaks/.test(s)) return { rows: [] };
   if (/UPDATE players SET training_streak_days/.test(s)) return { rows: [] };

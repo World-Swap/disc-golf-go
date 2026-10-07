@@ -63,6 +63,17 @@ export function createTrainingRouter(service: TrainingService, resolve: RequestH
     res.json(await service.getResources(id));
   }));
 
+  // Engagement signals. Separate from completion on purpose: the client reports
+  // these AS THEY HAPPEN, so the server owns the clock and the ordering.
+  router.post('/training/lessons/:id/engagement', resolve, asyncHandler(async (req, res) => {
+    res.json(await service.recordEngagement(
+      requirePlayerId(req),
+      parseInt(String(req.params.id), 10),
+      String(req.body?.event ?? ''),
+      req.body?.detail ?? null
+    ));
+  }));
+
   router.post('/training/completions', resolve, asyncHandler(async (req, res) => {
     const playerId = requirePlayerId(req);
     const lessonId = Number((req.body as { lesson_id?: unknown })?.lesson_id);

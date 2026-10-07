@@ -238,6 +238,43 @@ export function createTrainingRepo(db: Database) {
       return r.rows[0] ?? null;
     },
 
+    /** Record that a lesson was opened, or a video/article link clicked. */
+    async recordEngagement(playerId: number, lessonId: number, event: string, detail: string | null) {
+      await db.query(
+        'INSERT INTO lesson_engagement (player_id, lesson_id, event, detail) VALUES ($1, $2, $3, $4)',
+        [playerId, lessonId, event, detail]
+      );
+    },
+
+    /**
+     * The state the completion gate reads. Both numbers come from the SERVER's
+     * own timestamps -- a dwell time reported by the caller is just a number the
+     * caller chose.
+     */
+    async engagementState(client: PoolClient, playerId: number, lessonId: number) {
+      const r = await client.query<{ opened_seconds_ago: string | null; resources_opened: string }>(
+        `SELECT EXTRACT(EPOCH FROM (NOW() - MAX(created_at) FILTER (WHERE event = 'opened')))::numeric AS opened_seconds_ago,
+                COUNT(*) FILTER (WHERE event = 'resource_opened') AS resources_opened
+           FROM lesson_engagement
+          WHERE player_id = $1 AND lesson_id = $2`,
+        [playerId, lessonId]
+      );
+      const row = r.rows[0];
+      return {
+        openedSecondsAgo: row?.opened_seconds_ago == null ? null : Number(row.opened_seconds_ago),
+        resourcesOpened: Number(row?.resources_opened ?? 0),
+      };
+    },
+
+    /** Completions in the trailing hour, for the anti-script cap. */
+    async completionsInLastHour(client: PoolClient, playerId: number): Promise<number> {
+      const r = await client.query<{ n: string }>(
+        "SELECT COUNT(*) AS n FROM training_completions WHERE player_id = $1 AND completed_at > NOW() - INTERVAL '1 hour'",
+        [playerId]
+      );
+      return parseInt(r.rows[0]?.n ?? '0', 10);
+    },
+
     async addGold(client: PoolClient, playerId: number, amount: number, reason = 'training_milestone') {
       await applyGold(client, playerId, amount, reason, { via: 'training' });
     },
