@@ -5,7 +5,7 @@
 import express, { type Express } from 'express';
 import { securityHeaders } from '../middleware/security';
 import { errorHandler } from './error-handler';
-import { healthRouter } from '../modules/health/health.routes';
+import { createHealthRouter } from '../modules/health/health.routes';
 import { createApiRouter } from '../modules';
 import { mountFrontend, comHostSplit, robotsTxt, PROMO_HOSTS } from './static';
 import { learnPages } from './learn';
@@ -52,7 +52,7 @@ export function createApp(db: Database, opts: AppOptions = {}): Express {
 
   app.use(express.json({ limit: '1mb' }));
 
-  app.use('/health', healthRouter);
+  app.use('/health', createHealthRouter(db));
 
   app.use('/api', createApiRouter(db));
 
