@@ -35,6 +35,36 @@ const TIER_MESSAGES: Record<string, Array<{ type: string; title: string; body: s
 };
 
 const VALID_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced', 'all_levels'];
+
+/**
+ * NOTIFICATIONS WRITTEN BY A COMPLETION.
+ *
+ * Two kinds, and the difference is the badge rather than the row.
+ *
+ * A lesson completion is something the player just did in the foreground,
+ * with "+100 XP · Done ✓" on screen as they did it. Writing that UNREAD means
+ * someone who finishes five lessons gets a badge of five for things they have
+ * already seen and acknowledged, which is how a bell stops being worth
+ * looking at. It is written `read`, so it forms the history in the list
+ * without inflating the count.
+ *
+ * An achievement -- a milestone, a finished category, a streak threshold --
+ * is a reward that arrives WITH the completion and is easy to miss in the
+ * same moment. Those are written unread, and those are what the badge counts.
+ *
+ * The streak bonus fires every day from day 3 onward, so notifying on each
+ * would be a daily "well done" for the same fact; only these thresholds get
+ * one.
+ */
+const STREAK_NOTIFY_AT = [3, 7, 14, 30, 50, 100];
+
+interface NotificationDraft {
+  type: string;
+  title: string;
+  message: string;
+  lessonId: number | null;
+  isRead: boolean;
+}
 const STREAK_BONUS_XP = 50;
 const CATEGORY_COMPLETE_BONUS_XP = 500;
 const SHARE_BONUS_XP = 10;
@@ -270,9 +300,23 @@ export function createTrainingService({
         let streakDays = 0;
         let categoryCompleteBonus = 0;
 
+        // Collected as the rewards are decided, written once at the end. They
+        // are NOT written as they are found: the milestone and category blocks
+        // below are savepoint-guarded so a failure there cannot cost the
+        // player their completion, and a notification -- the least important
+        // thing here -- must never be what rolls a milestone back.
+        const notes: NotificationDraft[] = [];
+
         if (!alreadyCompleted) {
           await repo.insertCompletion(client, playerId, lessonId);
           awardedXp = xpReward;
+          notes.push({
+            type: 'lesson_complete',
+            title: lesson.title,
+            message: `Lesson complete · +${xpReward} XP`,
+            lessonId,
+            isRead: true,
+          });
 
           // Streak update (savepoint-guarded so a failure can't abort the completion).
           const today = dayStr(Date.now());
@@ -302,6 +346,15 @@ export function createTrainingService({
             bonusXp += STREAK_BONUS_XP;
             bonusReason = (bonusReason ? bonusReason + ', ' : '') + 'streak_' + streakDays;
             await repo.addXp(client, playerId, STREAK_BONUS_XP, 'training_streak_' + streakDays, { streak_days: streakDays }, 'training_streak');
+            if (STREAK_NOTIFY_AT.includes(streakDays)) {
+              notes.push({
+                type: 'achievement',
+                title: `${streakDays}-day training streak`,
+                message: `You have trained ${streakDays} days running. +${STREAK_BONUS_XP} XP.`,
+                lessonId: null,
+                isRead: false,
+              });
+            }
           }
 
           // Base lesson XP (credited to players.xp).
@@ -329,19 +382,61 @@ export function createTrainingService({
             const total = await repo.totalCompleted(client, playerId);
             for (const def of MILESTONE_DEFS) {
               if (total === def.trigger) {
+                // insertMilestone is ON CONFLICT DO NOTHING RETURNING, so a row
+                // comes back only the first time. That is the exactly-once
+                // signal for the notification too -- counting completions
+                // again here could fire a second one.
                 const inserted = await repo.insertMilestone(client, playerId, def.key, def.gold);
-                if (inserted && def.gold > 0) await repo.addGold(client, playerId, def.gold);
+                if (inserted) {
+                  if (def.gold > 0) await repo.addGold(client, playerId, def.gold);
+                  notes.push({
+                    type: 'achievement',
+                    title: def.title,
+                    message: def.gold > 0 ? `${def.desc} · +${def.gold} gold` : def.desc,
+                    lessonId: null,
+                    isRead: false,
+                  });
+                }
               }
             }
             for (const c of await repo.categoryCompletionRows(client, playerId)) {
               if (parseInt(c.completed, 10) === parseInt(c.total_lessons, 10) && parseInt(c.total_lessons, 10) > 0) {
                 const inserted = await repo.insertMilestone(client, playerId, 'cat_complete_' + c.slug, 50);
-                if (inserted) await repo.addGold(client, playerId, 50);
+                if (inserted) {
+                  await repo.addGold(client, playerId, 50);
+                  // The 500 XP category bonus is awarded separately above, for
+                  // THIS lesson's category. Name it only when it was actually
+                  // paid on this completion, so a category finished by some
+                  // other path does not claim XP nobody received.
+                  const xpPart = categoryCompleteBonus > 0 && c.id === lesson.category_id
+                    ? ` · +${categoryCompleteBonus} XP`
+                    : '';
+                  notes.push({
+                    type: 'achievement',
+                    title: `${c.name} complete`,
+                    message: `Every lesson in ${c.name} is done · +50 gold${xpPart}`,
+                    lessonId: null,
+                    isRead: false,
+                  });
+                }
               }
             }
             await client.query('RELEASE SAVEPOINT milestone_check');
           } catch {
             await client.query('ROLLBACK TO SAVEPOINT milestone_check');
+          }
+
+          // Written inside the transaction so a notification can never survive
+          // a reward that rolled back, but in its own savepoint so the reverse
+          // cannot happen either: if this fails, the completion, the XP, the
+          // gold and the milestones all still commit.
+          await client.query('SAVEPOINT notify');
+          try {
+            const wanted = (await repo.achievementAlertsEnabled(client, playerId)) ? notes : [];
+            if (wanted.length) await repo.insertNotifications(client, playerId, wanted);
+            await client.query('RELEASE SAVEPOINT notify');
+          } catch {
+            await client.query('ROLLBACK TO SAVEPOINT notify');
           }
         }
 

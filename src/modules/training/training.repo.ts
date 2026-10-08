@@ -263,6 +263,44 @@ export function createTrainingRepo(db: Database) {
       return parseInt(r.rows[0]!.cnt, 10);
     },
 
+    /**
+     * Does this player want achievement notifications?
+     *
+     * A settings row is written ONLY when someone explicitly saves the
+     * notification form -- `settings()` is a plain SELECT with no auto-create --
+     * so most accounts have no row at all. The column DEFAULTS TO TRUE, so a
+     * missing row is treated as enabled: reading it as "off" would silently
+     * withhold achievements from almost everybody and make the bell look broken.
+     */
+    async achievementAlertsEnabled(client: PoolClient, playerId: number): Promise<boolean> {
+      const r = await client.query<{ achievement_alerts_enabled: boolean }>(
+        'SELECT achievement_alerts_enabled FROM player_training_notification_settings WHERE player_id = $1',
+        [playerId]
+      );
+      return r.rows[0]?.achievement_alerts_enabled ?? true;
+    },
+
+    /** Write a batch of notifications in one statement. */
+    async insertNotifications(
+      client: PoolClient,
+      playerId: number,
+      rows: Array<{ type: string; title: string; message: string; lessonId: number | null; isRead: boolean }>
+    ): Promise<number> {
+      if (!rows.length) return 0;
+      const vals: unknown[] = [playerId];
+      const tuples = rows.map((n) => {
+        const i = vals.length;
+        vals.push(n.type, n.title, n.message, n.lessonId, n.isRead);
+        return `($1, $${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5})`;
+      });
+      const r = await client.query(
+        `INSERT INTO training_notifications (player_id, type, title, message, lesson_id, is_read)
+         VALUES ${tuples.join(', ')}`,
+        vals
+      );
+      return r.rowCount ?? 0;
+    },
+
     async insertMilestone(client: PoolClient, playerId: number, key: string, gold: number) {
       const r = await client.query<{ milestone_key: string; reward_gold: number; earned_at: Date }>(
         `INSERT INTO training_milestones (player_id, milestone_key, reward_gold) VALUES ($1, $2, $3)
