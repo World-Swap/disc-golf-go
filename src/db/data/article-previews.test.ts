@@ -121,6 +121,11 @@ test('the card\'s stacked lines are block, not inline', () => {
   const page = readFileSync('web/training.html', 'utf8');
   assert.match(page, /\.lprev__site,\s*\.lprev__title,\s*\.lprev__desc,\s*\.lprev__go\s*\{\s*display:\s*block;?\s*\}/,
     'the preview card\'s lines must be display:block or they run together');
+  // Widened after making the identical mistake one commit later on the upload
+  // row: flex blockifies its CHILDREN, not its grandchildren, so spans nested
+  // one level inside a flex item are still inline.
+  assert.match(page, /\.uprow__title,\s*\.uprow__sub\s*\{\s*display:\s*block;?\s*\}/,
+    'the upload row\'s title and channel must be display:block');
 });
 
 test('the card\'s mark comes from the domain, not the site name', () => {

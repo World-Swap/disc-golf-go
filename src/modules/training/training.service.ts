@@ -175,7 +175,12 @@ export function createTrainingService({
       const rows = await repo.categories(level);
       const completions = playerId ? await repo.categoryCompletionCounts(playerId) : new Map<number, number>();
       return {
-        categories: rows.map((c) => ({ ...c, lesson_count: parseInt(c.lesson_count, 10), completed_count: completions.get(c.id) ?? 0 })),
+        categories: rows.map((c) => ({
+          ...c,
+          lesson_count: parseInt(c.lesson_count, 10),
+          video_count: parseInt(String(c.video_count ?? '0'), 10),
+          completed_count: completions.get(c.id) ?? 0,
+        })),
       };
     },
 

@@ -37,7 +37,11 @@ export interface GeneratedLesson {
  * filters show it in every tab rather than hiding it in the wrong one.
  */
 const GENERATED_XP = 100;
-const GENERATED_DIFFICULTY = 'beginner';
+// NOT 'beginner'. Nothing has graded these, and 'beginner' is a claim shown
+// as a badge beside lessons whose difficulty a person actually chose. It
+// also let an unwatched upload win topRecommendedLesson, whose filter is
+// `difficulty IN ('beginner','intermediate')`.
+const GENERATED_DIFFICULTY = 'unrated';
 const GENERATED_SKILL_LEVEL = 'all_levels';
 
 /** Trailing " | Channel Name" / " - Channel" promo tails, and leading emoji. */
@@ -111,15 +115,66 @@ function lessonSlug(title: string, videoId: string): string {
 }
 
 /** An honest body for a video nobody here has watched. */
-function bodyFor(channel: string) {
+/**
+ * WHAT A GENERATED ROW IS ALLOWED TO SAY ABOUT ITSELF.
+ *
+ * The old copy read "Coaching from <channel>. This lesson is the video
+ * itself…" -- which claims coaching twice and calls itself a lesson, next to
+ * 134 hand-written lessons that really are coached. Nothing here has watched
+ * the video, graded it, or written a word about what it teaches, so none of
+ * those words are ours to use.
+ *
+ * It says instead what is actually true: a recent upload from a channel the
+ * library already draws on, filed by what its title names. That is genuinely
+ * useful and it is not a lesson.
+ */
+export function descriptionFor(channel: string): string {
+  return `New upload from ${channel}.`;
+}
+
+export function bodyFor(channel: string) {
   return {
     body:
-      `Coaching from ${channel}. This lesson is the video itself — watch it ` +
-      `through, then take one thing from it out to a field or a practice basket.`,
+      `A recent upload from ${channel}, filed here by what its title says it ` +
+      `covers. Nobody at Disc Golf Go has watched it, so there are no notes or ` +
+      `drills with it — it is the video, and the channel's own work.`,
     // Marked in the content as well as the column, so a row dumped on its own
     // still says where it came from.
     generated: true,
   };
+}
+
+/**
+ * Bring every existing generated row to the current copy.
+ *
+ * `INSERT … ON CONFLICT DO NOTHING` is what makes the job idempotent, and it
+ * also means a row written months ago keeps whatever wording it was created
+ * with. Without this, changing the copy above would only affect uploads that
+ * had not happened yet, and the rows already claiming to be coaching would
+ * stay that way forever. Runs on every pass and is a no-op once settled.
+ */
+export async function relabelGeneratedLessons(pool: Pool): Promise<number> {
+  const r = await pool.query(
+    `UPDATE training_lessons l
+        SET description = $1 || l.youtube_channel || $2,
+            content_body = jsonb_build_object(
+              'body', $3 || l.youtube_channel || $4,
+              'generated', true
+            ),
+            difficulty = $5
+      WHERE l.generated_from_video IS NOT NULL
+        AND l.youtube_channel IS NOT NULL
+        AND (l.description IS DISTINCT FROM $1 || l.youtube_channel || $2
+             OR l.content_body->>'body' IS DISTINCT FROM $3 || l.youtube_channel || $4
+             OR l.difficulty IS DISTINCT FROM $5)`,
+    [
+      'New upload from ', '.',
+      'A recent upload from ',
+      ", filed here by what its title says it covers. Nobody at Disc Golf Go has watched it, so there are no notes or drills with it — it is the video, and the channel's own work.",
+      GENERATED_DIFFICULTY,
+    ]
+  );
+  return r.rowCount ?? 0;
 }
 
 /**
@@ -205,9 +260,9 @@ export async function generateLessonsFromVideos(
           title,
           slug,
           // Not the title again: the description renders directly under the
-          // title on every lesson row, so repeating it wastes the only line
-          // there is to say something the player does not already see.
-          `Coaching from ${v.channel_name}.`,
+          // title on every row, so repeating it wastes the only line there is
+          // to say something the player does not already see.
+          descriptionFor(v.channel_name),
           GENERATED_DIFFICULTY,
           JSON.stringify(bodyFor(v.channel_name)),
           GENERATED_XP,

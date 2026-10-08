@@ -51,6 +51,33 @@
     .lfault__f { margin: 4px 0 0; font-size: 14px; line-height: 1.55;
                  color: var(--color-ash); }
     .ldrill { border: 1px solid var(--color-orange); }
+    /* Uploads from the channels, kept visually apart from coached lessons.
+       Lighter, flatter and without the XP/difficulty line a lesson row carries:
+       the point is that it does not read as one. */
+    .upnote { margin: 0 0 10px; font-size: 13px; line-height: 1.55; color: var(--color-ash); }
+    .uprow { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0;
+             border-top: 1px solid var(--color-hairline); text-decoration: none; }
+    .uprow:first-of-type { border-top: 0; }
+    .uprow__glyph { flex: none; width: 22px; font-size: 15px; line-height: 1.4;
+                    color: var(--color-ash); }
+    .uprow__body { min-width: 0; flex: 1; }
+    /* The same inline-span trap as the article preview card, walked into again
+       one commit later: .uprow__body is a flex ITEM, not a flex container, so
+       the title and channel inside it stay inline and run together as
+       "…In Disc GolfLatitude 64". Flex blockifies children, not grandchildren. */
+    .uprow__title, .uprow__sub { display: block; }
+    .uprow__title { margin: 0 0 2px; font-size: 15px; line-height: 1.35;
+                    color: var(--color-ink); overflow-wrap: anywhere; }
+    .uprow__sub { margin: 0; font-size: 12px; line-height: 1.45; color: var(--color-ash); }
+    .uprow__meta { flex: none; color: var(--color-ash); }
+
+    /* The banner at the top of an upload's own page. */
+    .upbanner { margin: 0 0 4px; padding: 12px 14px; border-radius: 10px;
+                background: var(--color-peach); }
+    .upbanner__t { margin: 0 0 4px; font-size: 13px; font-weight: 700;
+                   color: var(--color-ink); }
+    .upbanner__d { margin: 0; font-size: 13px; line-height: 1.55; color: var(--color-ash); }
+
     .ldrill__reps { display: inline-block; margin: 0 0 10px; padding: 4px 10px;
                     border-radius: 999px; background: var(--color-orange); color: #fff;
                     font-size: 12px; font-weight: 700; line-height: 1.4; }
@@ -140,7 +167,11 @@
               '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
               '<span class="artcard__body">' +
                 '<span class="artcard__eyebrow">' +
-                  (c.completed_count || 0) + ' / ' + (c.lesson_count || 0) + ' lessons</span>' +
+                  (c.completed_count || 0) + ' / ' + (c.lesson_count || 0) + ' lessons' +
+                  // Counted and named separately. Rolled into the lesson total
+                  // this overstated the library and left every category looking
+                  // permanently unfinished, because uploads keep arriving.
+                  (c.video_count ? ' \u00b7 ' + c.video_count + ' videos' : '') + '</span>' +
                 '<span class="artcard__title">' + esc(c.name) + '\u00a0\u2192</span>' +
               '</span>' +
               '<span class="artcard__meta">' + pct + '%</span></a>' +
@@ -289,18 +320,46 @@
       async function renderCategory(slug) {
         var data = await API.get('/training/categories/' + encodeURIComponent(slug) + '/lessons');
         crumb.textContent = data.category.name; hubLink.hidden = false;
-        var rows = (data.lessons || []).map(function (l) {
+        var all = data.lessons || [];
+        // A generated row is a channel's recent upload, filed by what its title
+        // names. Nobody has watched it and nothing is written about it, so it
+        // goes in its own block rather than in the lesson list -- in the same
+        // list it reads as a coached lesson, which is the thing it is not.
+        var lessons = all.filter(function (l) { return !l.is_generated; });
+        var uploads = all.filter(function (l) { return l.is_generated; });
+
+        var rows = lessons.map(function (l) {
           return '<a class="row" href="/training?cat=' + esc(slug) + '&lesson=' + l.id + '">' +
             '<span class="row__glyph">' + (l.completed ? '✓' : '▷') + '</span>' +
             '<div class="row__body"><div class="row__title">' + esc(l.title) + '</div>' +
             '<div class="row__sub">' + esc(l.difficulty || '') + ' · +' + (l.xp_reward || 0) + ' XP</div></div>' +
             (l.completed ? '<span class="pill pill--done">Done</span>' : '<span class="row__meta">›</span>') + '</a>';
         }).join('');
+
+        // No difficulty and no XP on these rows: a difficulty nothing graded is
+        // a false badge, and leading with the reward frames an upload as a
+        // thing to tick off. The channel is the useful fact, so it leads.
+        var ups = uploads.map(function (l) {
+          return '<a class="uprow" href="/training?cat=' + esc(slug) + '&lesson=' + l.id + '">' +
+            '<span class="uprow__glyph" aria-hidden="true">▶</span>' +
+            '<span class="uprow__body">' +
+              '<span class="uprow__title">' + esc(l.title) + '</span>' +
+              '<span class="uprow__sub">' + esc(l.youtube_channel || 'Channel upload') +
+              (l.completed ? ' · watched' : '') + '</span>' +
+            '</span><span class="uprow__meta">›</span></a>';
+        }).join('');
+
         content.className = 'screen stack';
         content.innerHTML =
           '<div><p class="section-label">' + esc(data.category.skill_level || 'Category') + '</p>' +
           '<h1 class="h-title">' + esc(data.category.name) + '</h1></div>' +
           '<div class="rows">' + rows + '</div>' +
+          (uploads.length
+            ? '<div><p class="section-label">From the channels</p>' +
+              '<p class="upnote">Recent uploads from the channels this library draws on, filed by topic. ' +
+              'Nobody here has watched them, so they come with no notes or drills \u2014 they are not coached lessons.</p>' +
+              '<div class="card">' + ups + '</div></div>'
+            : '') +
           shareRow('Share these lessons', slug, null);
         wireShare();
       }
@@ -333,10 +392,22 @@
         var l = await API.get('/training/lessons/' + encodeURIComponent(id));
         crumb.textContent = l.category_name || 'Lesson'; hubLink.hidden = false;
         content.className = 'screen stack';
+        // An upload reached directly -- from a search, a share, or the block at
+        // the foot of a category -- has to say what it is on its own page too.
+        // Separating them in the list is no use if the page they lead to is
+        // dressed as a lesson.
+        var gen = !!l.generated_from_video;
         content.innerHTML =
-          '<div><p class="section-label">' + esc(l.category_name || '') + ' · +' + (l.xp_reward || 0) + ' XP</p>' +
+          '<div><p class="section-label">' + esc(l.category_name || '') +
+            (gen ? ' · from the channels' : ' · +' + (l.xp_reward || 0) + ' XP') + '</p>' +
           '<h1 class="h-title">' + esc(l.title) + '</h1></div>' +
-          (l.description ? '<p style="font-size:14px;line-height:1.55;color:var(--color-ash)">' + esc(l.description) + '</p>' : '') +
+          (gen
+            ? '<div class="upbanner"><p class="upbanner__t">A channel upload, not a coached lesson</p>' +
+              '<p class="upbanner__d">' +
+              esc(l.youtube_channel ? 'Posted by ' + l.youtube_channel + '. ' : '') +
+              'We file recent uploads from the channels this library draws on by what their titles cover. ' +
+              'Nobody here has watched this one, so there are no notes or drills with it.</p></div>'
+            : (l.description ? '<p style="font-size:14px;line-height:1.55;color:var(--color-ash)">' + esc(l.description) + '</p>' : '')) +
           videoPane(l) +
           renderContent(l) +
           '<div id="resources"></div>' +

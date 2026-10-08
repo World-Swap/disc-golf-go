@@ -19,7 +19,7 @@ const { VIDEO_CHANNELS } = require('./video-channels.json');
 // second copy of the patterns that could drift from the first.
 require('ts-node/register/transpile-only');
 const { teaches } = require('../src/modules/videos/teaches');
-const { generateLessonsFromVideos } = require('../src/modules/videos/lesson-generator');
+const { generateLessonsFromVideos, relabelGeneratedLessons } = require('../src/modules/videos/lesson-generator');
 
 const FEED = 'https://www.youtube.com/feeds/videos.xml?channel_id=';
 const TIMEOUT_MS = 15000;
@@ -171,6 +171,14 @@ async function run() {
     // generated row is marked by training_lessons.generated_from_video, which is
     // also the unique key that makes this safe to run on every boot.
     try {
+      // Bring older generated rows to the current wording FIRST. They were
+      // written with "Coaching from <channel>. This lesson is the video
+      // itself…", which claims coaching twice and calls itself a lesson beside
+      // 134 that really are coached. The insert is ON CONFLICT DO NOTHING, so
+      // without this pass those rows would keep that copy forever.
+      const relabelled = await relabelGeneratedLessons(pool);
+      if (relabelled) console.log('[videos] relabelled ' + relabelled + ' generated lesson(s) to current wording');
+
       const gen = await generateLessonsFromVideos(pool);
       console.log('[videos] lessons: +' + gen.created.length + ' published from ' +
                   gen.considered + ' candidate(s), ' + gen.refused +

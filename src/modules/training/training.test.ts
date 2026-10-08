@@ -44,7 +44,7 @@ function handler(sqlRaw: string): { rows: unknown[] } {
   if (/pct_complete ASC NULLS FIRST/.test(s)) return { rows: [{ id: 1, name: 'Form', slug: 'form', icon: '🥏', description: null, total_lessons: '10', completed_lessons: '4', pct_complete: 40 }] };
   if (/difficulty IN \('beginner', 'intermediate'\)/.test(s)) return { rows: [{ id: 5, title: 'Backhand', slug: 'backhand', difficulty: 'beginner', xp_reward: 40, category_name: 'Form', category_slug: 'form', category_icon: '🥏' }] };
   if (/difficulty = 'advanced'/.test(s)) return { rows: [] };
-  if (/l.category_id = \$1 AND l.is_active = true AND l.id NOT IN/.test(s)) return { rows: [{ id: 6, title: 'Forehand', slug: 'forehand', difficulty: 'beginner', xp_reward: 40 }] };
+  if (/l.category_id = \$1 AND l.is_active = true AND l.generated_from_video IS NULL/.test(s)) return { rows: [{ id: 6, title: 'Forehand', slug: 'forehand', difficulty: 'beginner', xp_reward: 40 }] };
 
   // home/state
   if (/id, username, xp, level, experience_level/.test(s)) return { rows: [{ id: 42, username: 'bob', xp: 600, level: 2, experience_level: 'experienced', total_distance_m: '1000', total_rounds: '5', total_courses_visited: '3', gold_balance: '50', total_checkins: '12', total_birdies: '4', total_aces: '0' }] };

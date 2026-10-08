@@ -22,11 +22,20 @@ export function createTrainingRepo(db: Database) {
     // ── categories / lessons (read) ──
     async categories(level: SkillLevel | null) {
       const sql = level
-        ? `SELECT c.id, c.name, c.slug, c.description, c.icon, c.skill_level, COUNT(l.id) AS lesson_count, c.sort_order
+        // lesson_count counts COACHED lessons only. It is what the card's
+        // "3 / 10 lessons" reads from and what the progress meter divides by,
+        // and counting uploads in it both overstates the library and makes a
+        // category look permanently unfinished. video_count is reported beside
+        // it so the uploads are still visible rather than hidden.
+        ? `SELECT c.id, c.name, c.slug, c.description, c.icon, c.skill_level, c.sort_order,
+                  COUNT(l.id) FILTER (WHERE l.generated_from_video IS NULL) AS lesson_count,
+                  COUNT(l.id) FILTER (WHERE l.generated_from_video IS NOT NULL) AS video_count
            FROM training_categories c
            LEFT JOIN training_lessons l ON l.category_id = c.id AND l.is_active = true AND l.skill_level = $1
            WHERE c.is_active = true GROUP BY c.id HAVING COUNT(l.id) > 0 ORDER BY c.sort_order ASC`
-        : `SELECT c.id, c.name, c.slug, c.description, c.icon, c.skill_level, COUNT(l.id) AS lesson_count, c.sort_order
+        : `SELECT c.id, c.name, c.slug, c.description, c.icon, c.skill_level, c.sort_order,
+                  COUNT(l.id) FILTER (WHERE l.generated_from_video IS NULL) AS lesson_count,
+                  COUNT(l.id) FILTER (WHERE l.generated_from_video IS NOT NULL) AS video_count
            FROM training_categories c
            LEFT JOIN training_lessons l ON l.category_id = c.id AND l.is_active = true
            WHERE c.is_active = true GROUP BY c.id ORDER BY c.sort_order ASC`;
@@ -36,9 +45,13 @@ export function createTrainingRepo(db: Database) {
 
     async categoryCompletionCounts(playerId: number): Promise<Map<number, number>> {
       const r = await db.query<{ category_id: number; completed_count: string }>(
+        // Coached lessons only, to match lesson_count: this is the numerator
+        // over that denominator, and counting a watched upload here can print
+        // "12 / 10 lessons" and drive the meter past 100%.
         `SELECT tl.category_id, COUNT(*) AS completed_count
          FROM training_completions tc JOIN training_lessons tl ON tl.id = tc.lesson_id
-         WHERE tc.player_id = $1 AND tl.is_active = true GROUP BY tl.category_id`,
+         WHERE tc.player_id = $1 AND tl.is_active = true AND tl.generated_from_video IS NULL
+         GROUP BY tl.category_id`,
         [playerId]
       );
       return new Map(r.rows.map((row) => [row.category_id, parseInt(row.completed_count, 10)]));
@@ -52,11 +65,21 @@ export function createTrainingRepo(db: Database) {
       return r.rows[0] ?? null;
     },
 
+    /**
+     * `is_generated` is the whole reason the page can keep the two apart. A
+     * generated row is a trusted channel's upload filed by topic -- nobody has
+     * watched it, nothing graded it, and it carries no written body -- so
+     * rendering it in the same list as a coached lesson claims something that
+     * is not true. The column itself is not sent: the client needs the fact,
+     * not the video id.
+     */
     async lessonsInCategory(categoryId: number, level: SkillLevel | null) {
       const sql = level
-        ? `SELECT l.id, l.title, l.slug, l.description, l.difficulty, l.xp_reward, l.sort_order, l.content_type, l.skill_level
+        ? `SELECT l.id, l.title, l.slug, l.description, l.difficulty, l.xp_reward, l.sort_order, l.content_type, l.skill_level,
+                  l.youtube_channel, (l.generated_from_video IS NOT NULL) AS is_generated
            FROM training_lessons l WHERE l.category_id = $1 AND l.is_active = true AND l.skill_level = $2 ORDER BY l.sort_order ASC`
-        : `SELECT l.id, l.title, l.slug, l.description, l.difficulty, l.xp_reward, l.sort_order, l.content_type, l.skill_level
+        : `SELECT l.id, l.title, l.slug, l.description, l.difficulty, l.xp_reward, l.sort_order, l.content_type, l.skill_level,
+                  l.youtube_channel, (l.generated_from_video IS NOT NULL) AS is_generated
            FROM training_lessons l WHERE l.category_id = $1 AND l.is_active = true ORDER BY l.sort_order ASC`;
       const r = await db.query<{ id: number }>(sql, level ? [categoryId, level] : [categoryId]);
       return r.rows;
@@ -85,8 +108,12 @@ export function createTrainingRepo(db: Database) {
 
     async nextLesson(categoryId: number, sortOrder: number) {
       const r = await db.query(
+        // Coached only: "Next lesson →" must not walk a player off the end of
+        // the written library and into the uploads.
         `SELECT id, title, slug, difficulty, xp_reward FROM training_lessons
-         WHERE category_id = $1 AND sort_order > $2 AND is_active = true ORDER BY sort_order ASC LIMIT 1`,
+         WHERE category_id = $1 AND sort_order > $2 AND is_active = true
+           AND generated_from_video IS NULL
+         ORDER BY sort_order ASC LIMIT 1`,
         [categoryId, sortOrder]
       );
       return r.rows[0] ?? null;
@@ -119,7 +146,14 @@ export function createTrainingRepo(db: Database) {
 
     async progressTotals(playerId: number) {
       const r = await db.query<{ total_lessons: string; completed_lessons: string; total_xp_earned: string }>(
-        `SELECT COUNT(l.id) AS total_lessons, COUNT(tc.id) AS completed_lessons,
+        // total/completed count the COACHED library, so "41 of 134" measures
+        // a finite thing a player can finish rather than a denominator that
+        // grows every time a channel uploads. The XP sum deliberately still
+        // covers everything completed -- that is XP the player really earned,
+        // and under-reporting it would be a different lie from the one being
+        // fixed here.
+        `SELECT COUNT(l.id) FILTER (WHERE l.generated_from_video IS NULL) AS total_lessons,
+                COUNT(tc.id) FILTER (WHERE l.generated_from_video IS NULL) AS completed_lessons,
                 COALESCE(SUM(l.xp_reward) FILTER (WHERE tc.id IS NOT NULL), 0) AS total_xp_earned
          FROM training_lessons l LEFT JOIN training_completions tc ON tc.lesson_id = l.id AND tc.player_id = $1
          WHERE l.is_active = true`,
@@ -309,7 +343,7 @@ export function createTrainingRepo(db: Database) {
       const r = await db.query(
         `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, l.description, l.content_type
          FROM training_lessons l
-         WHERE l.category_id = $1 AND l.is_active = true
+         WHERE l.category_id = $1 AND l.is_active = true AND l.generated_from_video IS NULL
            AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $2)
          ORDER BY l.sort_order ASC LIMIT 1`,
         [categoryId, playerId]
@@ -389,7 +423,8 @@ export function createTrainingRepo(db: Database) {
         `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, l.description, l.content_type,
                 c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon
          FROM training_lessons l JOIN training_categories c ON c.id = l.category_id
-         WHERE l.is_active = true AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
+         WHERE l.is_active = true AND l.generated_from_video IS NULL
+           AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
            AND l.difficulty IN ('beginner', 'intermediate')
          ORDER BY CASE l.difficulty WHEN 'beginner' THEN 1 WHEN 'intermediate' THEN 2 ELSE 3 END, l.sort_order ASC LIMIT 1`,
         [playerId]
@@ -402,7 +437,7 @@ export function createTrainingRepo(db: Database) {
         `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, l.description, l.content_type,
                 c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon
          FROM training_lessons l JOIN training_categories c ON c.id = l.category_id
-         WHERE l.is_active = true AND l.difficulty = 'advanced'
+         WHERE l.is_active = true AND l.difficulty = 'advanced' AND l.generated_from_video IS NULL
            AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
          ORDER BY l.sort_order ASC LIMIT 1`,
         [playerId]
@@ -428,7 +463,8 @@ export function createTrainingRepo(db: Database) {
       const r = await db.query(
         `SELECT l.id, l.title, l.slug, l.difficulty, l.xp_reward, c.name AS category_name, c.slug AS category_slug
          FROM training_lessons l JOIN training_categories c ON c.id = l.category_id
-         WHERE l.is_active = true AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
+         WHERE l.is_active = true AND l.generated_from_video IS NULL
+           AND l.id NOT IN (SELECT lesson_id FROM training_completions WHERE player_id = $1)
          ORDER BY l.sort_order ASC LIMIT 1`,
         [playerId]
       );
@@ -460,7 +496,7 @@ export function createTrainingRepo(db: Database) {
                 c.name AS category_name, c.slug AS category_slug
          FROM training_lessons l
          JOIN training_categories c ON c.id = l.category_id
-         WHERE l.is_active = true
+         WHERE l.is_active = true AND l.generated_from_video IS NULL
            AND l.youtube_url IS NOT NULL AND l.youtube_url <> ''
            AND l.youtube_channel IS NOT NULL AND l.youtube_channel <> ''
          ORDER BY l.youtube_channel, l.sort_order, l.id

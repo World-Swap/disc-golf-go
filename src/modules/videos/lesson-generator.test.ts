@@ -61,11 +61,22 @@ test('every curated lesson slug stays reachable', async () => {
   }
 });
 
-test('the generator only ever INSERTs, and always marks what it wrote', () => {
+test('the generator never writes a curated lesson', () => {
   // The whole safety argument is that a curated row (generated_from_video NULL)
-  // is never written. An UPDATE or DELETE against training_lessons here would
-  // break it silently, so the shape of the file is the guard.
-  assert.doesNotMatch(SRC, /UPDATE\s+training_lessons/i, 'must never update a lesson');
+  // is never written.
+  //
+  // This used to be enforced as "no UPDATE against training_lessons at all",
+  // which was a proxy for the real invariant and did its job until a genuine
+  // need for one arrived: rows published before the copy changed kept
+  // describing themselves as "Coaching from <channel>", because the insert is
+  // ON CONFLICT DO NOTHING and would never revisit them. Rather than loosen
+  // the guard, it now checks the condition it was always standing in for --
+  // EVERY update must be scoped to rows that are already generated.
+  const updates = [...SRC.matchAll(/UPDATE\s+training_lessons[\s\S]*?(?=`\s*,|\n\s*\);)/gi)];
+  for (const u of updates) {
+    assert.match(u[0], /generated_from_video IS NOT NULL/,
+      'an UPDATE against training_lessons is not scoped to generated rows — it can rewrite a curated lesson');
+  }
   assert.doesNotMatch(SRC, /DELETE\s+FROM\s+training_lessons/i, 'must never delete a lesson');
   assert.match(SRC, /INSERT INTO training_lessons/);
   assert.match(SRC, /generated_from_video/, 'every inserted row must be marked');
