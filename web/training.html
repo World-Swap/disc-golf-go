@@ -71,13 +71,6 @@
     .uprow__sub { margin: 0; font-size: 12px; line-height: 1.45; color: var(--color-ash); }
     .uprow__meta { flex: none; color: var(--color-ash); }
 
-    /* The banner at the top of an upload's own page. */
-    .upbanner { margin: 0 0 4px; padding: 12px 14px; border-radius: 10px;
-                background: var(--color-peach); }
-    .upbanner__t { margin: 0 0 4px; font-size: 13px; font-weight: 700;
-                   color: var(--color-ink); }
-    .upbanner__d { margin: 0; font-size: 13px; line-height: 1.55; color: var(--color-ash); }
-
     .ldrill__reps { display: inline-block; margin: 0 0 10px; padding: 4px 10px;
                     border-radius: 999px; background: var(--color-orange); color: #fff;
                     font-size: 12px; font-weight: 700; line-height: 1.4; }
@@ -356,8 +349,7 @@
           '<div class="rows">' + rows + '</div>' +
           (uploads.length
             ? '<div><p class="section-label">From the channels</p>' +
-              '<p class="upnote">Recent uploads from the channels this library draws on, filed by topic. ' +
-              'Nobody here has watched them, so they come with no notes or drills \u2014 they are not coached lessons.</p>' +
+              '<p class="upnote">Recent uploads from the channels this library draws on.</p>' +
               '<div class="card">' + ups + '</div></div>'
             : '') +
           shareRow('Share these lessons', slug, null);
@@ -393,21 +385,17 @@
         crumb.textContent = l.category_name || 'Lesson'; hubLink.hidden = false;
         content.className = 'screen stack';
         // An upload reached directly -- from a search, a share, or the block at
-        // the foot of a category -- has to say what it is on its own page too.
-        // Separating them in the list is no use if the page they lead to is
-        // dressed as a lesson.
+        // the foot of a category -- still has to read as an upload, so it shows
+        // no XP here and the eyebrow says where it came from. That label, plus
+        // the lesson furniture that is missing, is the whole signal: a banner
+        // spelling it out in prose said the same thing twice over and read as
+        // an apology for the video existing.
         var gen = !!l.generated_from_video;
         content.innerHTML =
           '<div><p class="section-label">' + esc(l.category_name || '') +
             (gen ? ' · from the channels' : ' · +' + (l.xp_reward || 0) + ' XP') + '</p>' +
           '<h1 class="h-title">' + esc(l.title) + '</h1></div>' +
-          (gen
-            ? '<div class="upbanner"><p class="upbanner__t">A channel upload, not a coached lesson</p>' +
-              '<p class="upbanner__d">' +
-              esc(l.youtube_channel ? 'Posted by ' + l.youtube_channel + '. ' : '') +
-              'We file recent uploads from the channels this library draws on by what their titles cover. ' +
-              'Nobody here has watched this one, so there are no notes or drills with it.</p></div>'
-            : (l.description ? '<p style="font-size:14px;line-height:1.55;color:var(--color-ash)">' + esc(l.description) + '</p>' : '')) +
+          (l.description ? '<p style="font-size:14px;line-height:1.55;color:var(--color-ash)">' + esc(l.description) + '</p>' : '') +
           videoPane(l) +
           renderContent(l) +
           '<div id="resources"></div>' +
@@ -516,15 +504,33 @@
       }
 
       // Inline video PREVIEW PANE — thumbnail + play button; taps to the player.
+      // Is the pane about to reprint the heading? A generated row's lesson
+      // title is derived FROM its video title, so the two are usually the same
+      // string -- but not always: the generator truncates, appends a "Part N"
+      // marker, and title-cases SHOUTED words, so compare them loosely and
+      // show both whenever they really differ.
+      function norm(t) {
+        return String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      }
+
       function videoPane(l) {
         if (!l.youtube_url) return '';
         var id = ytId(l.youtube_url);
-        var title = esc(l.youtube_title || l.title);
+        var raw = l.youtube_title || l.title || '';
+        var title = esc(raw);
         var chan = esc(l.youtube_channel || 'YouTube');
+        // Two things a generated row must not do. It must not be credited as
+        // "pro instruction" -- the curated 134 each had a video chosen FOR the
+        // lesson, where this one was filed by its own title. And because its
+        // lesson title IS the video title, printing it again under the
+        // thumbnail says the same words twice on a four-block page.
+        var gen = !!l.generated_from_video;
+        var eyebrow = gen ? 'Watch' : 'Pro instruction';
+        var dupe = norm(raw) === norm(l.title || '');
         if (!id) {
           // No embeddable id (e.g. a channel link) — fall back to an open card.
           return '<a class="card card--tap" href="' + esc(l.youtube_url) + '" target="_blank" rel="noopener" style="display:block">' +
-            '<p class="card__eyebrow">▶ Watch — pro instruction</p>' +
+            '<p class="card__eyebrow">▶ ' + (gen ? 'Watch' : 'Watch — pro instruction') + '</p>' +
             '<div class="h-title" style="margin-top:8px">' + title + '</div>' +
             '<p class="row__sub" style="margin-top:8px;text-transform:none;letter-spacing:0">' + chan + ' ↗</p></a>';
         }
@@ -534,8 +540,8 @@
               '<span class="vpane__play" aria-hidden="true">▶</span>' +
             '</div>' +
             '<div class="vpane__meta">' +
-              '<div class="vpane__eyebrow">Pro instruction</div>' +
-              '<div class="vpane__title">' + title + '</div>' +
+              '<div class="vpane__eyebrow">' + eyebrow + '</div>' +
+              (dupe ? '' : '<div class="vpane__title">' + title + '</div>') +
               '<div class="vpane__chan">' + chan + '</div>' +
             '</div>' +
           '</div>';

@@ -23,21 +23,58 @@ const REPO_SRC = readFileSync('src/modules/training/training.repo.ts', 'utf8');
 const PAGE = readFileSync('web/training.html', 'utf8');
 
 test('a generated row never calls itself coaching or a lesson', () => {
-  const texts = [descriptionFor('Latitude 64'), bodyFor('Latitude 64').body];
-  for (const t of texts) {
-    const low = t.toLowerCase();
-    for (const claim of ['coaching', 'coached', 'this lesson', 'lesson is']) {
-      assert.ok(!low.includes(claim), `generated copy claims "${claim}": ${t}`);
-    }
+  const desc = descriptionFor('Latitude 64');
+  const low = desc.toLowerCase();
+  for (const claim of ['coaching', 'coached', 'this lesson', 'lesson is']) {
+    assert.ok(!low.includes(claim), `generated copy claims "${claim}": ${desc}`);
+  }
+  assert.ok(low.includes('latitude 64'), 'the channel must be credited');
+});
+
+test('a generated row states what it is instead of confessing what it is not', () => {
+  // This guard replaces its own opposite, and the reversal is the point.
+  //
+  // The first version of this copy claimed coaching. The correction over-shot
+  // into an apology -- a banner plus a paragraph saying nobody here had
+  // watched the video and that it had been filed by what its title covers --
+  // and a test was written REQUIRING the word "watched", which locked the
+  // cheesiness in. Reported by the owner looking at the live page: "why are
+  // you blatantly saying we haven't watched the videos".
+  //
+  // What keeps an upload from reading as a coached lesson is structural (its
+  // own block, no XP, no difficulty, no body, `generated` on the row), so the
+  // prose does not have to carry it. These words are now forbidden rather
+  // than required.
+  const desc = descriptionFor('Latitude 64').toLowerCase();
+  for (const word of ['watched', 'nobody', 'no notes', 'no drills', 'title']) {
+    assert.ok(!desc.includes(word),
+      `generated copy apologises with "${word}": ${desc}`);
+  }
+  // Short enough to sit on one line under the heading.
+  assert.ok(descriptionFor('Latitude 64').length <= 60,
+    'the generated description has grown back into a paragraph');
+});
+
+test('a generated row carries no written body at all', () => {
+  // The generator has not watched the video, so the honest amount of prose is
+  // none. renderContent() draws no card for a body with no text key, so this
+  // is what removes the second copy of the message from the page.
+  const b = bodyFor('Latitude 64') as Record<string, unknown>;
+  assert.equal(b.generated, true, 'the row must still mark itself generated');
+  for (const key of ['body', 'text', 'sections', 'tips', 'points', 'why', 'how', 'drill']) {
+    assert.ok(!(key in b), `generated content_body carries prose in "${key}"`);
   }
 });
 
-test('the generated body says plainly that nobody watched it', () => {
-  // The honest fact is the one most worth printing, and it is what stops the
-  // row being mistaken for the written library beside it.
-  const body = bodyFor('Latitude 64').body.toLowerCase();
-  assert.ok(body.includes('watched'), 'the body must say nobody has watched it');
-  assert.ok(body.includes('latitude 64'), 'the channel must be credited');
+test('the lesson page shows no disclaimer banner and no pro-instruction credit', () => {
+  assert.ok(!PAGE.includes('upbanner'),
+    'the apology banner is back on the upload page');
+  // The video pane credited every lesson as "Pro instruction", so a generated
+  // row said "not a coached lesson" and "Pro instruction" in the same view.
+  assert.ok(!/vpane__eyebrow">Pro instruction/.test(PAGE),
+    'the video pane hardcodes "Pro instruction" again, which an upload is not');
+  assert.ok(/eyebrow = gen \? /.test(PAGE),
+    'the video pane no longer picks its credit by lesson kind');
 });
 
 test('generated rows carry no difficulty grade', () => {
@@ -101,9 +138,10 @@ test('completed counts match the denominator they are shown over', () => {
 test('the category page keeps uploads out of the lesson list', () => {
   assert.match(PAGE, /var lessons = all\.filter\(function \(l\) \{ return !l\.is_generated; \}\);/);
   assert.match(PAGE, /var uploads = all\.filter\(function \(l\) \{ return l\.is_generated; \}\);/);
-  // Its own heading and an explanation, not a silent reshuffle.
+  // Its own heading, not a silent reshuffle. The heading is the label; the
+  // paragraph under it that used to spell out "they are not coached lessons"
+  // is gone on purpose, so this asserts the separation rather than the wording.
   assert.match(PAGE, /From the channels/);
-  assert.match(PAGE, /not coached lessons/);
 });
 
 test('an upload row shows no XP and no difficulty', () => {
@@ -117,11 +155,14 @@ test('an upload row shows no XP and no difficulty', () => {
   assert.ok(fn.includes('youtube_channel'), 'the upload row must credit the channel');
 });
 
-test('an upload opened directly still says what it is', () => {
+test('an upload opened directly still reads as an upload', () => {
   // Separating them in the list is no use if the page they lead to is dressed
-  // as a lesson -- these are reachable from a share or a search.
+  // as a lesson -- these are reachable from a share or a search. What says so
+  // is the eyebrow and the missing XP, not a paragraph.
   assert.match(PAGE, /var gen = !!l\.generated_from_video;/);
-  assert.match(PAGE, /A channel upload, not a coached lesson/);
+  assert.match(PAGE, /gen \? ' \u00b7 from the channels'/);
+  // The XP figure is in the branch a coached lesson takes, never both.
+  assert.match(PAGE, /gen \? ' \u00b7 from the channels' : ' \u00b7 \+' \+ \(l\.xp_reward/);
 });
 
 test('older generated rows are brought to the current wording', () => {

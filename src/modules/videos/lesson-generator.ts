@@ -114,34 +114,37 @@ function lessonSlug(title: string, videoId: string): string {
   return `${base || 'lesson'}-${id}`;
 }
 
-/** An honest body for a video nobody here has watched. */
 /**
- * WHAT A GENERATED ROW IS ALLOWED TO SAY ABOUT ITSELF.
+ * WHAT A GENERATED ROW SAYS ABOUT ITSELF.
  *
- * The old copy read "Coaching from <channel>. This lesson is the video
- * itself…" -- which claims coaching twice and calls itself a lesson, next to
- * 134 hand-written lessons that really are coached. Nothing here has watched
- * the video, graded it, or written a word about what it teaches, so none of
- * those words are ours to use.
+ * Twice now this copy has been wrong in opposite directions. It first read
+ * "Coaching from <channel>. This lesson is the video itself…", which claims
+ * coaching twice and calls itself a lesson, beside 134 that really are. The
+ * correction over-steered into a confession -- a peach banner and a paragraph
+ * explaining that nobody here had watched it and that it had been filed by
+ * what its title covers -- which says the same thing twice on one short page,
+ * explains our filing to someone who did not ask, and reads as an apology for
+ * the video existing.
  *
- * It says instead what is actually true: a recent upload from a channel the
- * library already draws on, filed by what its title names. That is genuinely
- * useful and it is not a lesson.
+ * The fix is neither. A recent upload from a channel this library already
+ * draws on is a genuinely good thing to be, so the row states that in one
+ * line and stops. What keeps it from reading as a coached lesson is structural
+ * rather than verbal: its own block under "From the channels", no XP, no
+ * difficulty, no body, and `generated` on the row -- so nothing has to be
+ * confessed in prose.
  */
 export function descriptionFor(channel: string): string {
   return `New upload from ${channel}.`;
 }
 
+/**
+ * No prose at all. The generator has not watched the video, so the honest
+ * amount to write about it is nothing, and `renderContent` draws no card for a
+ * body with no text in it. `generated` is kept because a row read straight off
+ * the API should still say which kind it is.
+ */
 export function bodyFor(channel: string) {
-  return {
-    body:
-      `A recent upload from ${channel}, filed here by what its title says it ` +
-      `covers. Nobody at Disc Golf Go has watched it, so there are no notes or ` +
-      `drills with it — it is the video, and the channel's own work.`,
-    // Marked in the content as well as the column, so a row dumped on its own
-    // still says where it came from.
-    generated: true,
-  };
+  return { generated: true, channel };
 }
 
 /**
@@ -158,21 +161,17 @@ export async function relabelGeneratedLessons(pool: Pool): Promise<number> {
     `UPDATE training_lessons l
         SET description = $1 || l.youtube_channel || $2,
             content_body = jsonb_build_object(
-              'body', $3 || l.youtube_channel || $4,
-              'generated', true
+              'generated', true,
+              'channel', l.youtube_channel
             ),
-            difficulty = $5
+            difficulty = $3
       WHERE l.generated_from_video IS NOT NULL
         AND l.youtube_channel IS NOT NULL
         AND (l.description IS DISTINCT FROM $1 || l.youtube_channel || $2
-             OR l.content_body->>'body' IS DISTINCT FROM $3 || l.youtube_channel || $4
-             OR l.difficulty IS DISTINCT FROM $5)`,
-    [
-      'New upload from ', '.',
-      'A recent upload from ',
-      ", filed here by what its title says it covers. Nobody at Disc Golf Go has watched it, so there are no notes or drills with it — it is the video, and the channel's own work.",
-      GENERATED_DIFFICULTY,
-    ]
+             OR l.content_body ? 'body'
+             OR l.content_body->>'channel' IS DISTINCT FROM l.youtube_channel
+             OR l.difficulty IS DISTINCT FROM $3)`,
+    ['New upload from ', '.', GENERATED_DIFFICULTY]
   );
   return r.rowCount ?? 0;
 }
