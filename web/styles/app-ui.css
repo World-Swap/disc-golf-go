@@ -322,3 +322,80 @@
 /* Centered auth layout */
 .auth { display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: calc(40px + var(--sat)) var(--edge-pad) 40px; }
 .loading { font-family: var(--font-display); font-size: 13px; font-weight: var(--weight-medium); letter-spacing: 0.02em; color: var(--color-ash); padding: 24px var(--edge-pad); }
+
+/* ── Notifications bell ───────────────────────────────────────────────────
+   Injected into .topbar by app.js (see bell()). Every topbar carries
+   different right-hand content, so the bell is appended as the last flex
+   child; .topbar is justify-content:space-between, which with three children
+   would strand the existing pill in the middle. Pushing the FIRST child with
+   margin-right:auto groups everything else on the right instead. A class set
+   from JS rather than :has(), so the rule needs no selector support in the
+   Capacitor WebView. */
+.topbar--bell > :first-child { margin-right: auto; }
+
+.bell {
+  position: relative; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0;
+  border: 1px solid var(--hair); border-radius: 999px;
+  background: #fff; color: var(--color-ash);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.bell__glyph { width: 17px; height: 17px; display: block; }
+.bell--unread { color: var(--color-orange); border-color: var(--color-orange); }
+.bell__badge {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 999px; background: var(--color-orange); color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 17px; text-align: center;
+}
+.bell__badge[hidden] { display: none; }
+
+/* The sheet hangs below the topbar rather than floating over it, so the bell
+   that opened it stays visible and tappable to close again. */
+.nsheet { position: fixed; inset: 0; z-index: 70; background: rgba(20, 20, 20, 0.28); }
+.nsheet[hidden] { display: none; }
+.nsheet__panel {
+  position: absolute; top: calc(62px + var(--sat)); right: var(--edge-pad); left: var(--edge-pad);
+  max-height: calc(100vh - 80px - var(--sat) - var(--sab));
+  display: flex; flex-direction: column;
+  background: #fff; border: 1px solid var(--hair); border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18); overflow: hidden;
+}
+@media (min-width: 640px) {
+  .nsheet__panel { left: auto; width: 380px; }
+}
+.nsheet__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 13px 16px; border-bottom: 1px solid var(--hair);
+}
+.nsheet__title {
+  font-family: var(--font-display); font-size: 12px; font-weight: var(--weight-bold);
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-orange);
+}
+.nsheet__act {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-size: 12px; color: var(--color-ash); text-decoration: underline;
+}
+.nsheet__act[hidden] { display: none; }
+.nsheet__body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.nsheet__empty { margin: 0; padding: 22px 16px; font-size: 14px; line-height: 1.55; color: var(--color-ash); }
+
+.nrow {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 13px 16px; border-top: 1px solid var(--hair);
+  text-decoration: none; color: inherit;
+}
+.nrow:first-child { border-top: 0; }
+.nrow__dot { flex: none; width: 7px; height: 7px; margin-top: 6px; border-radius: 999px; background: transparent; }
+.nrow--unread .nrow__dot { background: var(--color-orange); }
+.nrow__body { min-width: 0; flex: 1; }
+/* .nrow__body is a flex ITEM, not a flex container, so these spans stay
+   inline and run together as "Keep your streak goingYour 5-day streak…".
+   Flex blockifies its children, not its grandchildren -- the same trap as
+   .lprev__*, .uprow__* and the admin .stat span. */
+.nrow__title, .nrow__msg, .nrow__time { display: block; }
+.nrow__title { font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--color-ink); overflow-wrap: anywhere; }
+.nrow--unread .nrow__title { font-weight: 700; }
+.nrow__msg { margin-top: 2px; font-size: 13px; line-height: 1.5; color: var(--color-ash); overflow-wrap: anywhere; }
+.nrow__time { margin-top: 4px; font-size: 11px; color: var(--color-frost); }

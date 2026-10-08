@@ -221,5 +221,171 @@
     return 'prompted';
   }
 
-  window.DGG = { API: API, requireAuth: requireAuth, signedIn: signedIn, logout: logout, esc: esc, tabbar: tabbar, loungeSub: loungeSub, share: share, learnUrl: learnUrl };
+  // ── Notifications bell ────────────────────────────────────────────────
+  //
+  // The three scheduled jobs have been writing training_notifications rows,
+  // and until now NOTHING in web/ read them back: the list and unread-count
+  // endpoints had no caller, so Settings offered toggles for notifications
+  // that could never be seen. This is that missing surface.
+  //
+  // It lives here rather than in 17 page templates because every topbar
+  // carries different right-hand content (an XP pill, a logout button, a
+  // period pill), so there is no single place to paste markup into. One copy,
+  // appended to whatever .topbar the page has -- the same reasoning as
+  // tabbar() and loungeSub().
+
+  function timeAgo(iso) {
+    var secs = Math.floor((Date.now() - Date.parse(iso)) / 1000);
+    if (!isFinite(secs) || secs < 0) secs = 0;
+    if (secs < 60) return 'just now';
+    var mins = Math.floor(secs / 60);
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    var days = Math.floor(hrs / 24);
+    if (days < 7) return days + 'd ago';
+    return Math.floor(days / 7) + 'w ago';
+  }
+
+  // Where a notification points. A row with no lesson (a streak reminder) is
+  // not a link at all -- it must not pretend to lead somewhere.
+  function notifHref(n) {
+    if (!n.lesson_id || !n.category_slug) return '';
+    return '/training?cat=' + encodeURIComponent(n.category_slug) + '&lesson=' + encodeURIComponent(n.lesson_id);
+  }
+
+  function bell() {
+    var bar = document.querySelector('.topbar');
+    // Signed-out visitors get no bell: unread-count answers 0 for them, so it
+    // would be a control that can never do anything.
+    if (!bar || document.getElementById('dggBell') || (!API.token() && !API.guestUuid())) return;
+
+    bar.classList.add('topbar--bell');
+    var btn = document.createElement('button');
+    btn.id = 'dggBell';
+    btn.className = 'bell';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Notifications');
+    btn.setAttribute('aria-expanded', 'false');
+    // Inline SVG rather than an emoji or a geometric character: it inherits
+    // currentColor, so bell--unread turns it orange; it renders identically on
+    // every platform; and it looks like a bell. The first pass used U+25C9,
+    // which reads as a target or a record button.
+    btn.innerHTML =
+      '<svg class="bell__glyph" viewBox="0 0 24 24" aria-hidden="true" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+        '<path d="M13.7 21a2 2 0 0 1-3.4 0"/>' +
+      '</svg>' +
+      '<span class="bell__badge" id="dggBellBadge" hidden></span>';
+    bar.appendChild(btn);
+
+    var sheet = document.createElement('div');
+    sheet.className = 'nsheet';
+    sheet.id = 'dggSheet';
+    sheet.hidden = true;
+    sheet.innerHTML =
+      '<div class="nsheet__panel" role="dialog" aria-label="Notifications">' +
+        '<div class="nsheet__head">' +
+          '<span class="nsheet__title">Notifications</span>' +
+          '<button class="nsheet__act" id="dggReadAll" type="button" hidden>Mark all read</button>' +
+        '</div>' +
+        '<div class="nsheet__body" id="dggList"><p class="nsheet__empty">Loading…</p></div>' +
+      '</div>';
+    document.body.appendChild(sheet);
+
+    var badge = document.getElementById('dggBellBadge');
+    var list = document.getElementById('dggList');
+    var readAll = document.getElementById('dggReadAll');
+
+    function setCount(n) {
+      n = Number(n) || 0;
+      badge.hidden = n === 0;
+      // A three-digit badge breaks the bell's circle, and the exact number
+      // stops being useful long before that.
+      badge.textContent = n > 99 ? '99+' : String(n);
+      btn.classList.toggle('bell--unread', n > 0);
+      readAll.hidden = n === 0;
+    }
+
+    function render(d) {
+      var rows = d.notifications || [];
+      setCount(d.unread_count);
+      if (!rows.length) {
+        list.innerHTML = '<p class="nsheet__empty">Nothing yet. Training tips and streak reminders land here.</p>';
+        return;
+      }
+      list.innerHTML = rows.map(function (n) {
+        var href = notifHref(n);
+        var tag = href ? 'a' : 'div';
+        var attrs = href ? ' href="' + esc(href) + '"' : '';
+        return '<' + tag + ' class="nrow' + (n.is_read ? '' : ' nrow--unread') + '"' + attrs +
+            ' data-id="' + esc(String(n.id)) + '">' +
+          '<span class="nrow__dot" aria-hidden="true"></span>' +
+          '<span class="nrow__body">' +
+            '<span class="nrow__title">' + esc(n.title || '') + '</span>' +
+            '<span class="nrow__msg">' + esc(n.message || '') + '</span>' +
+            '<span class="nrow__time">' + esc(timeAgo(n.created_at)) + '</span>' +
+          '</span>' +
+        '</' + tag + '>';
+      }).join('');
+    }
+
+    function load() {
+      list.innerHTML = '<p class="nsheet__empty">Loading…</p>';
+      API.get('/training/notifications?limit=20')
+        .then(render)
+        .catch(function () {
+          list.innerHTML = '<p class="nsheet__empty">Could not load notifications.</p>';
+        });
+    }
+
+    function open() {
+      sheet.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+      load();
+    }
+    function close() {
+      sheet.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', function () { sheet.hidden ? open() : close(); });
+    // Tapping the backdrop closes; tapping inside the panel must not.
+    sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.hidden) close(); });
+
+    readAll.addEventListener('click', function () {
+      API.post('/training/notifications/read-all', {}).then(function () { load(); }).catch(function () {});
+    });
+
+    // Delegated, because the rows are re-rendered on every load.
+    list.addEventListener('click', function (e) {
+      var row = e.target.closest && e.target.closest('.nrow');
+      if (!row) return;
+      var id = row.getAttribute('data-id');
+      if (!id || !row.classList.contains('nrow--unread')) return;
+      // Mark read optimistically. A row that navigates away must not wait on
+      // this request, and a failure here is not worth blocking the tap over.
+      row.classList.remove('nrow--unread');
+      setCount(Math.max(0, (parseInt(badge.textContent, 10) || 0) - 1));
+      API.post('/training/notifications/' + encodeURIComponent(id) + '/read', {}).catch(function () {});
+    });
+
+    // The count is the only thing fetched on page load; the list waits until
+    // the bell is actually opened.
+    API.get('/training/notifications/unread-count')
+      .then(function (d) { setCount(d && d.unread_count); })
+      .catch(function () {});
+  }
+
+  // Auto-init: every app page that has a topbar gets the bell without having
+  // to call anything, so a new page cannot ship without it by omission.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bell);
+  } else {
+    bell();
+  }
+
+  window.DGG = { API: API, requireAuth: requireAuth, signedIn: signedIn, logout: logout, esc: esc, tabbar: tabbar, loungeSub: loungeSub, share: share, learnUrl: learnUrl, bell: bell };
 })();

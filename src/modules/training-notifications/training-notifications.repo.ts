@@ -55,10 +55,15 @@ export function createTrainingNotificationsRepo(db: Queryable) {
 
     async list(playerId: number, limit: number, offset: number) {
       const r = await db.query(
+        // category_slug is here because the lesson page is addressed as
+        // /training?cat=<category>&lesson=<id> -- the lesson slug alone cannot
+        // open it, so without this join a notification about a lesson could
+        // only ever dump the reader on the training hub.
         `SELECT tn.id, tn.type, tn.title, tn.message, tn.lesson_id, tn.is_read, tn.created_at,
-                l.slug AS lesson_slug, l.title AS lesson_title
+                l.slug AS lesson_slug, l.title AS lesson_title, c.slug AS category_slug
          FROM training_notifications tn
          LEFT JOIN training_lessons l ON l.id = tn.lesson_id
+         LEFT JOIN training_categories c ON c.id = l.category_id
          WHERE tn.player_id = $1 ORDER BY tn.created_at DESC LIMIT $2 OFFSET $3`,
         [playerId, limit, offset]
       );
