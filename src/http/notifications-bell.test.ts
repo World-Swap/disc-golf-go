@@ -62,8 +62,32 @@ test('the notification row stacks its lines instead of running them together', (
   // inline and render as "Keep your streak goingYour 5-day streak...". Flex
   // blockifies its children, not its grandchildren. This exact bug has now
   // shipped in .lprev__*, .uprow__* and the admin .stat span.
-  assert.match(APP_CSS, /\.nrow__title,\s*\.nrow__msg,\s*\.nrow__time\s*\{[^}]*display:\s*block/,
+  assert.match(
+    APP_CSS,
+    /\.nrow__kind,\s*\.nrow__title,\s*\.nrow__msg,\s*\.nrow__time\s*\{[^}]*display:\s*block/,
     'the notification row spans are not forced to display:block');
+});
+
+test('an achievement row is told apart by its type, not by whether it is read', () => {
+  // Every notification is now written unread, so the orange dot is on every
+  // row and cannot also mean "this is an achievement". The distinction has to
+  // come from the type the server sends.
+  const achv = /var achv = n\.type === 'achievement'/.exec(APP_JS);
+  assert.ok(achv, 'the bell no longer derives the achievement row from n.type');
+
+  const cls = /class="nrow'([\s\S]{0,200}?)'" \+ attrs/.exec(APP_JS)
+    || /class="nrow'([\s\S]{0,200}?)\+ attrs/.exec(APP_JS);
+  assert.ok(cls, 'could not find the row class expression');
+  assert.match(cls[1], /achv \? ' nrow--achv'/,
+    'the achievement modifier is not driven by the type');
+  assert.ok(!/is_read[^?]*\?\s*' nrow--achv'/.test(cls[1]),
+    'the achievement modifier is driven by read state, which is on every row');
+
+  // And the class has to actually look like something.
+  assert.match(APP_CSS, /\.nrow--achv\s*\{[^}]*background:/,
+    '.nrow--achv has no visual treatment of its own');
+  assert.match(APP_CSS, /\.nrow__kind\s*\{[^}]*color:\s*var\(--color-orange\)/,
+    'the achievement eyebrow is not in the house accent');
 });
 
 test('every page agrees on the version of each shared asset', () => {

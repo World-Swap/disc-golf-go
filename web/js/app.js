@@ -319,10 +319,17 @@
         var href = notifHref(n);
         var tag = href ? 'a' : 'div';
         var attrs = href ? ' href="' + esc(href) + '"' : '';
-        return '<' + tag + ' class="nrow' + (n.is_read ? '' : ' nrow--unread') + '"' + attrs +
+        // Achievements are a different kind of thing from the lesson you just
+        // ticked off, so they are marked by TYPE -- never by read state. The
+        // dot means unread and nothing else, and now that every notification
+        // is written unread it is on every row, so it cannot carry this too.
+        var achv = n.type === 'achievement';
+        return '<' + tag + ' class="nrow' + (achv ? ' nrow--achv' : '') +
+            (n.is_read ? '' : ' nrow--unread') + '"' + attrs +
             ' data-id="' + esc(String(n.id)) + '">' +
           '<span class="nrow__dot" aria-hidden="true"></span>' +
           '<span class="nrow__body">' +
+            (achv ? '<span class="nrow__kind">Achievement</span>' : '') +
             '<span class="nrow__title">' + esc(n.title || '') + '</span>' +
             '<span class="nrow__msg">' + esc(n.message || '') + '</span>' +
             '<span class="nrow__time">' + esc(timeAgo(n.created_at)) + '</span>' +

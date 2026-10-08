@@ -394,8 +394,20 @@
    inline and run together as "Keep your streak goingYour 5-day streak…".
    Flex blockifies its children, not its grandchildren -- the same trap as
    .lprev__*, .uprow__* and the admin .stat span. */
-.nrow__title, .nrow__msg, .nrow__time { display: block; }
+.nrow__kind, .nrow__title, .nrow__msg, .nrow__time { display: block; }
 .nrow__title { font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--color-ink); overflow-wrap: anywhere; }
 .nrow--unread .nrow__title { font-weight: 700; }
 .nrow__msg { margin-top: 2px; font-size: 13px; line-height: 1.5; color: var(--color-ash); overflow-wrap: anywhere; }
 .nrow__time { margin-top: 4px; font-size: 11px; color: var(--color-frost); }
+
+/* An achievement is a reward the player earned, not a lesson they ticked off,
+   so it gets the house eyebrow over a tinted band -- the same vocabulary as
+   .nsheet__title and .artcard__eyebrow rather than a new one. The band is
+   deliberately quiet (peach, not orange): three loud rows in a list of ten is
+   noise, and the uppercase orange label is already the scannable cue. */
+.nrow--achv { background: var(--color-peach); }
+.nrow__kind {
+  font-family: var(--font-display); font-size: 10px; font-weight: var(--weight-bold);
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-orange);
+}
+.nrow__kind + .nrow__title { margin-top: 1px; }
