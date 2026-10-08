@@ -8,13 +8,13 @@
   <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-  <meta name="description" content="Disc Golf Go: learn from touring pros and the top disc golf channels across 134 video lessons, play the built-in Throw Lab disc golf game, enter a new tournament every week, and check in at 1,500+ real courses. Free to start." />
+  <meta name="description" content="134 coached disc golf lessons across 13 skill paths. Every one is written out: why it matters, how to do it, the faults that cost you strokes, and a drill with a number to hit — on top of a video from a touring pro. Free to start." />
   <link rel="canonical" href="https://discgolfgo.com/" />
 
   <!-- Open Graph (Facebook, iMessage, Slack, LinkedIn) -->
   <meta property="og:site_name" content="Disc Golf Go" />
   <meta property="og:title" content="Disc Golf Go — Coached by the pros" />
-  <meta property="og:description" content="Pros and top channels. 134 video lessons. 199 videos. Train like a pro and lower your score — free on iOS &amp; Android." />
+  <meta property="og:description" content="134 coached lessons. Each one: a pro video, the method, the faults to avoid, and a drill with a rep count. Free on iOS &amp; Android." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://discgolfgo.com/" />
   <meta property="og:image" content="https://discgolfgo.com/img/og-cover.png?v=3" />
@@ -25,7 +25,7 @@
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Disc Golf Go — Coached by the pros" />
-  <meta name="twitter:description" content="Pros and top channels. 134 video lessons. Train like a pro and lower your score — free on iOS &amp; Android." />
+  <meta name="twitter:description" content="134 coached lessons. Each one: a pro video, the method, the faults to avoid, and a drill with a rep count. Free on iOS &amp; Android." />
   <meta name="twitter:image" content="https://discgolfgo.com/img/og-cover.png?v=3" />
 
   <!-- Structured data -->
@@ -38,7 +38,7 @@
         "@id": "https://discgolfgo.com/#website",
         "url": "https://discgolfgo.com/",
         "name": "Disc Golf Go",
-        "description": "Learn disc golf from touring pros and the top coaching channels across 134 video lessons."
+        "description": "Learn disc golf from touring pros and the top coaching channels across 134 written lessons, each with a method, the common faults, and a drill with a rep count."
       },
       {
         "@type": "Organization",
@@ -59,7 +59,7 @@
         "name": "Disc Golf Go",
         "operatingSystem": "iOS, Android",
         "applicationCategory": "SportsApplication",
-        "description": "A disc golf training app: 134 video lessons coached by touring pros and the top disc golf channels, the Throw Lab throwing game, a weekly tournament, leaderboards and a career record, the Players Lounge video feed, XP progression, a daily challenge, and check-ins at 1,500+ real courses.",
+        "description": "A disc golf training app: 134 written lessons coached by touring pros and the top disc golf channels — each with why it matters, the method step by step, the faults that cost strokes, and a drill with a rep count — plus the Throw Lab throwing game, a weekly tournament, leaderboards and a career record, the Players Lounge video feed, XP progression, a daily challenge, and check-ins at 1,500+ real courses.",
         "url": "https://discgolfgo.com/",
         "downloadUrl": [
           "https://apps.apple.com/us/app/disc-golf-go/id6768128686",
@@ -89,6 +89,18 @@
       padding:7px 14px;font-family:var(--font-display);font-weight:700;font-size:14px;
       color:var(--color-ink,#2b2622);display:inline-flex;align-items:baseline;gap:7px;}
     .path-chip b{color:var(--color-orange,#fa5e0f);font-size:13px;font-variant-numeric:tabular-nums;}
+    /* The anatomy of a lesson. Four parts with a real example from the real
+       library, because "each with the key takeaways" was the old claim and
+       nobody can tell from a sentence whether the new one is any better. */
+    .anat{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:26px;}
+    .anat__c{background:#fff;border:1px solid var(--hair,#eadfce);border-radius:12px;padding:16px 18px;}
+    .anat__k{margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:.06em;
+             text-transform:uppercase;color:var(--color-orange,#fa5e0f);}
+    .anat__d{margin:0 0 8px;font-size:14px;line-height:1.5;color:var(--color-ink,#202020);}
+    .anat__e{margin:0;font-size:13px;line-height:1.5;color:var(--color-ash,#6b6560);}
+    .anat__e b{color:var(--color-ink,#202020);font-weight:700;}
+    .anat__note{margin:14px 0 0;font-size:13px;line-height:1.6;color:var(--color-ash,#6b6560);}
+    @media (max-width:640px){ .anat{grid-template-columns:1fr;gap:10px;} }
     /* On a narrow phone the long names ("Tournament & Competition") make a chip
        nearly full width, so thirteen of them are thirteen lines and nothing is
        gained over the list they replaced. Smaller type and tighter padding gets
@@ -248,9 +260,9 @@
 
         <ul class="bullets">
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">★</span><div><b>Learn from pros and top channels</b> — <span>Gannon Buhr, Scott Stokely, Paul McBeth, Ricky Wysocki, Overthrow, Foundation, the PDGA &amp; more</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>134 coached lessons</b> — <span>199 videos across 13 skill paths, each with the key takeaways</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">▶</span><div><b>134 coached lessons</b> — <span>a pro video, the method, the faults to avoid and a drill with a rep count</span></div></li>
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">▲</span><div><b>Level up your game</b> — <span>earn XP, complete daily missions, climb the ranks</span></div></li>
-          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Play for real</b> — <span>check in at 1,500+ courses and apply your training</span></div></li>
+          <li class="bullet"><span class="bullet__ic" aria-hidden="true">◎</span><div><b>Know what to work on</b> — <span>four questions build your path through the library, weakness first</span></div></li>
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">◉</span><div><b>Throw Lab</b> — <span>a disc golf game built in — play a quick round anywhere</span></div></li>
           <li class="bullet"><span class="bullet__ic" aria-hidden="true">△</span><div><b>A tournament every week</b> — <span>one course, everyone, two attempts — then see where you placed</span></div></li>
         </ul>
@@ -298,8 +310,8 @@
           <figcaption class="shot__cap"><b>Home</b> — pick up where you left off</figcaption>
         </figure>
         <figure class="shot">
-          <img src="/img/shot-lesson.webp" width="520" height="1125" loading="lazy" alt="A lesson screen playing a pro coaching video with the key takeaways listed below it" />
-          <figcaption class="shot__cap"><b>Lessons</b> — a pro video plus the key takeaways</figcaption>
+          <img src="/img/shot-lesson.webp" width="520" height="1125" loading="lazy" alt="The Putting Fundamentals lesson: a Gannon Buhr coaching video, then Why it matters written out in full, then How to do it as numbered steps" />
+          <figcaption class="shot__cap"><b>Lessons</b> — the video, then the method written out</figcaption>
         </figure>
         <figure class="shot">
           <img src="/img/shot-lounge.webp" width="520" height="1125" loading="lazy" alt="The Players Lounge: the newest videos from the disc golf channels, each with a thumbnail, the channel name and how long ago it was posted" />
@@ -359,7 +371,7 @@
       <div class="sect__head">
         <p class="sect__eyebrow">The curriculum</p>
         <h2 class="sect__title">13 skill paths. 134 coached lessons.</h2>
-        <p class="sect__lede">Every lesson pairs a pro video with the key takeaways and a companion guide — from your first grip to tournament nerves.</p>
+        <p class="sect__lede">Every lesson is written out in full — around 330 words on top of the video — from your first grip to tournament nerves.</p>
       </div>
       <!-- The thirteen paths as a chip run, not a list of rows. Two passes at
            making the rows denser did not fix it, because the problem was never
@@ -386,6 +398,35 @@
         <span class="path-chip" title="Prep, formats, nerves, bag setup">Tournament &amp; Competition<b>10</b></span>
         <span class="path-chip" title="Field work, drills, filming, pressure">Practice &amp; Drills<b>7</b></span>
       </div>
+
+      <!-- What a lesson actually contains. The old claim was "a pro video plus
+           the key takeaways", which described three one-line tips; every lesson
+           is now written out to about 330 words. A sentence saying so is not
+           worth much, so the four parts are shown with a real example taken
+           from the real Putting Fundamentals lesson. -->
+      <div class="anat">
+        <div class="anat__c">
+          <p class="anat__k">Why it matters</p>
+          <p class="anat__d">What it costs you, in strokes.</p>
+          <p class="anat__e">&ldquo;A putt is the shortest throw in the game and the most expensive one to miss: a 20-foot putt that slides past costs exactly the same stroke as a drive into the woods.&rdquo;</p>
+        </div>
+        <div class="anat__c">
+          <p class="anat__k">How to do it</p>
+          <p class="anat__d">The method, one step at a time.</p>
+          <p class="anat__e">&ldquo;Reach back level with your shoulder. Pull the disc past your sternum, close enough to brush your shirt.&rdquo;</p>
+        </div>
+        <div class="anat__c">
+          <p class="anat__k">What goes wrong</p>
+          <p class="anat__d">The faults that actually happen, each with its fix.</p>
+          <p class="anat__e"><b>Slowing down just before release.</b> Commit to the aim point before you step in, then accelerate through it.</p>
+        </div>
+        <div class="anat__c">
+          <p class="anat__k">A drill</p>
+          <p class="anat__d">With a number to hit, never &ldquo;practise regularly&rdquo;.</p>
+          <p class="anat__e"><b>20 putts from 15 ft, then 20 from 20 ft.</b> You are looking for 18 out of 20 before you move back.</p>
+        </div>
+      </div>
+      <p class="anat__note">All 134 lessons are written this way — and all 134 drills name a distance and a count.</p>
       </div>
     </div>
   </section>
@@ -531,7 +572,7 @@
         <a class="gcard" href="/learn">
           <span class="gk">Training library</span>
           <h3>All 134 Coached Lessons</h3>
-          <p>Thirteen skill paths — putting, driving, forehand, course strategy and more — each taught with video from touring pros and the channels that coach them.</p>
+          <p>Thirteen skill paths — putting, driving, forehand, course strategy and more — each lesson written out in full, with video from touring pros and the channels that coach them.</p>
           <span class="go">Browse the library →</span>
         </a>
       </div>
@@ -601,6 +642,7 @@
       </div>
       <div class="faqlist">
         <details class="faq"><summary>Is Disc Golf Go free?</summary><p>Yes. Disc Golf Go is free to start on iOS, Android, and the web — all 134 training lessons and the pro coaching videos are included. Create an account to save your progress and XP.</p></details>
+        <details class="faq"><summary>What is actually in a lesson?</summary><p>Four things, on top of the video. <b>Why it matters</b> — explained in strokes, not encouragement. <b>How to do it</b> — the method as numbered steps. <b>What goes wrong</b> — the faults that actually happen, each paired with its fix. And <b>a drill</b> with a number to hit, like &ldquo;20 putts from 15 ft&rdquo; or &ldquo;10 throws from 45 ft&rdquo; — never &ldquo;practise regularly&rdquo;. That runs to around 330 words a lesson, and all 134 are written this way.</p></details>
         <details class="faq"><summary>How do I get better at disc golf?</summary><p>Improvement comes from structured practice, not just more rounds. Disc Golf Go organizes the game into 13 skill paths — putting, driving, forehand, course strategy, mental game and more — with short video lessons from touring pros and the top coaching channels so you always know what to work on next.</p></details>
         <details class="faq"><summary>Which pros are featured in the lessons?</summary><p>Lessons draw on 62 creators — touring pros plus the channels that do the most disc golf teaching. Pros include Gannon Buhr, Scott Stokely, Paul McBeth, Ricky Wysocki, Simon Lizotte, Eagle McMahon, Kristin Tattar, Paige Pierce, Nate Sexton, Calvin Heimburg, Paul Ulibarri, Isaac Robinson, Chris Dickerson, Eric Oakley and Ezra Aderhold; channels include Dynamic Discs, Latitude 64, JustDisc, Overthrow Disc Golf, Robbie C, Gladiator and the PDGA.</p></details>
         <details class="faq"><summary>What disc should a beginner throw?</summary><p>Start with a putter and a lightweight, understable midrange or fairway driver. Lighter, understable plastic is easier to throw straight and flies farther for a new player than a fast, overstable distance driver. See our beginner disc guide for specifics.</p></details>
@@ -619,6 +661,7 @@
     "@type": "FAQPage",
     "mainEntity": [
       {"@type":"Question","name":"Is Disc Golf Go free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Disc Golf Go is free to start on iOS, Android, and the web — all 134 training lessons and the pro coaching videos are included. Create an account to save your progress and XP."}},
+      {"@type":"Question","name":"What is actually in a lesson?","acceptedAnswer":{"@type":"Answer","text":"Four things, on top of the video. Why it matters, explained in strokes. How to do it, as numbered steps. What goes wrong, with each fault paired with its fix. And a drill with a number to hit, like 20 putts from 15 ft. That runs to around 330 words a lesson, and all 134 lessons are written this way."}},
       {"@type":"Question","name":"How do I get better at disc golf?","acceptedAnswer":{"@type":"Answer","text":"Improvement comes from structured practice, not just more rounds. Disc Golf Go organizes the game into 13 skill paths with short video lessons from touring pros and the top coaching channels so you always know what to work on next."}},
       {"@type":"Question","name":"Which pros are featured in the lessons?","acceptedAnswer":{"@type":"Answer","text":"Lessons draw on 62 creators: touring pros plus the channels that do the most disc golf teaching. Pros include Gannon Buhr, Scott Stokely, Paul McBeth, Ricky Wysocki, Simon Lizotte, Eagle McMahon, Kristin Tattar and Paige Pierce; channels include Dynamic Discs, Latitude 64, JustDisc, Overthrow Disc Golf and the PDGA."}},
       {"@type":"Question","name":"What disc should a beginner throw?","acceptedAnswer":{"@type":"Answer","text":"Start with a putter and a lightweight, understable midrange or fairway driver. Lighter, understable plastic is easier to throw straight and flies farther for a new player than a fast, overstable distance driver."}},

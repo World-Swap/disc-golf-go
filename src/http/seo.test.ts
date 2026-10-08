@@ -245,6 +245,54 @@ test('search indexing', async (t) => {
   // to park them at the end and nobody renumbered. A "start here" category at
   // the bottom of the page is the opposite of what its name promises, and two
   // hand-maintained orders cannot be kept in step by intention alone.
+  await t.test('the written-lesson claim on the promo page is true', () => {
+    const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
+    // The page now claims every lesson is written out and every drill names a
+    // number. That is a far stronger claim than "a pro video plus the key
+    // takeaways" was, so it is pinned to the data the same way the chip counts
+    // are -- a claim this specific is exactly the kind that rots silently.
+    const m = html.match(/All (\d+) lessons are written this way[^<]*?all (\d+) drills name a distance and a count/);
+    assert.ok(m, 'the anatomy note is missing or reworded past recognition');
+
+    const written = LESSONS.filter((l) => l.content_body.why).length;
+    assert.equal(Number(m![1]), written, 'the page claims a different number of written lessons');
+    assert.equal(Number(m![1]), LESSONS.length, 'not every lesson is written, so the page must not say so');
+
+    const withCount = LESSONS.filter((l) => /\d/.test(l.content_body.drill?.reps ?? '')).length;
+    assert.equal(Number(m![2]), withCount, 'the page claims a different number of counted drills');
+  });
+
+  await t.test('the promo page does not describe a lesson as just takeaways', () => {
+    // What a lesson contains is the single biggest thing the page sells, and
+    // "the key takeaways" described three one-line tips. Reinstating it would
+    // undersell the library by a factor of about fifteen.
+    const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
+    // VISIBLE copy only: strip comments AND the style/script blocks. The first
+    // version of this guard stripped only <!-- --> and then failed on a CSS
+    // comment explaining why the phrase was retired, which is the rule
+    // catching the sentence that documents the rule.
+    const visible = html
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '');
+    assert.doesNotMatch(visible, /key takeaways/i,
+      'promo.html describes a lesson as "the key takeaways" again');
+  });
+
+  await t.test('check-in is not sold as a reason to download', () => {
+    // Positioning rule 3: every disc golf app has a course list, so leading
+    // with ours invites a comparison we gain nothing from winning. Check-in is
+    // mentioned further down the page, where somebody already interested meets
+    // it -- a HERO BULLET is a reason to download, which is what it must not be.
+    const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
+    const bullets = [...html.matchAll(/<li class="bullet">([\s\S]*?)<\/li>/g)].map((x) => x[1]);
+    assert.ok(bullets.length > 0, 'no hero bullets found');
+    for (const b of bullets) {
+      assert.doesNotMatch(b, /check in at|check-in|scorecard/i,
+        'a hero bullet sells check-in or scorecards');
+    }
+  });
+
   await t.test('the library order matches the one the promo page advertises', () => {
     const html = fs.readFileSync(path.join(WEB, 'promo.html'), 'utf8');
     // Reads the chip run. The paths were a list of .numrow cards until the
