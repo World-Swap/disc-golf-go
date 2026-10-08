@@ -1,10 +1,15 @@
 // scripts/training-daily-tip.js
-// Daily training tip cron job — sends one tip card to each opted-in player.
+// Daily training tip cron job — sends one lesson tip to each opted-in player.
 // Runs: daily at 8am. Records each tip in training_notifications table.
 'use strict';
 
 try { require('dotenv').config({ path: require('path').join(__dirname, '../.env') }); } catch { /* dotenv optional — Render injects env directly */ }
 const { Pool } = require('pg');
+
+// --dry-run reports who WOULD be notified and writes nothing. The jobs below
+// had been dead long enough that nobody knows the real audience any more, so
+// the count has to be obtainable from production without sending anything.
+const DRY_RUN = process.argv.includes('--dry-run');
 
 const { dbSsl } = require('./lib/db-ssl');
 const pool = new Pool({
@@ -15,20 +20,33 @@ const pool = new Pool({
 async function run() {
   const client = await pool.connect();
   try {
-    // Pick one random tip_card lesson (or every_2_days / weekly based on last tip date)
-    // For simplicity: pick one random tip card not yet sent today to players who want it
+    // Pick one lesson to tip about.
+    //
+    // This used to require content_type = 'tip_card', which is a leftover from
+    // the June-era library. Every one of the 134 curated lessons is
+    // 'video_embed' now, so the filter matched NOTHING and this job logged
+    // "No tip cards found — skipping" and exited 0 every morning. A filter that
+    // silently selects nothing looks exactly like a job with no work to do.
+    //
+    // generated_from_video IS NULL is the other half: a generated row is a
+    // channel upload nobody here has watched, so it must never be pushed to a
+    // player as today's coached tip. Same rule as the seven recommendation
+    // queries in training.repo.ts.
     const tipRows = await client.query(`
       SELECT l.id, l.title, l.description, l.slug, c.slug AS category_slug
       FROM training_lessons l
       JOIN training_categories c ON c.id = l.category_id
-      WHERE l.content_type = 'tip_card'
-        AND l.is_active = true
+      WHERE l.is_active = true
+        AND l.generated_from_video IS NULL
+        AND l.description IS NOT NULL AND l.description <> ''
       ORDER BY RANDOM()
       LIMIT 1
     `);
 
     if (!tipRows.rows.length) {
-      console.log('[daily-tip] No tip cards found — skipping');
+      // The curated library is seeded, so this means something is wrong rather
+      // than that there is nothing to say. Never substitute filler.
+      console.log('[daily-tip] No curated lesson available — skipping');
       return;
     }
 
@@ -46,7 +64,11 @@ async function run() {
       FROM player_training_notification_settings s
       JOIN players p ON p.id = s.player_id
       WHERE s.tips_enabled = true
-        AND (p.deleted_at IS NULL OR p.deleted_at > NOW())
+        -- players.deleted_at does not exist: account deletion is a HARD delete
+        -- (delete-account.repo.ts runs DELETE FROM players), and deletion_requests
+        -- only logs an email. The clause that stood here referenced that phantom
+        -- column, so every one of these jobs would still have failed after the
+        -- column fix above. JOIN players already guarantees a live account.
     `);
 
     const now = new Date();
@@ -63,16 +85,22 @@ async function run() {
         continue;
       }
 
+      if (DRY_RUN) { sent.push(row.player_id); continue; }
+
       // Create notification record
       await client.query(`
         INSERT INTO training_notifications (player_id, type, title, message, lesson_id)
         VALUES ($1, 'daily_tip', $2, $3, $4)
-      `, [row.player_id, 'Daily Training Tip', tip.description, tip.id]);
+      `, [row.player_id, tip.title, tip.description, tip.id]);
 
       sent.push(row.player_id);
     }
 
-    console.log('[daily-tip] Tip:', tip.title, '| Sent to:', sent.length, '| Skipped (too recent):', skipped.length);
+    console.log(
+      (DRY_RUN ? '[daily-tip] DRY RUN — nothing written. Tip:' : '[daily-tip] Tip:'),
+      tip.title, '|', (DRY_RUN ? 'Would send to:' : 'Sent to:'), sent.length,
+      '| Skipped (too recent):', skipped.length
+    );
     console.log('[daily-tip] Player IDs:', sent.slice(0, 20).join(', ') + (sent.length > 20 ? '...' : ''));
   } catch (err) {
     console.error('[daily-tip] Error:', err.message);
