@@ -66,24 +66,29 @@ test('a milestone notification fires only when the milestone row was really inse
     'the milestone notification is not inside `if (inserted)`, so it can fire twice');
 });
 
-test('a completion is written read; an achievement is written unread', () => {
-  // A completion is something the player just did in the foreground with
-  // "+100 XP · Done ✓" on screen. Badging it means five lessons produce a
-  // badge of five for things already acknowledged, which is how a bell stops
-  // being worth opening. The badge is for rewards that arrive alongside.
+test('every notification is written unread, so the badge counts them all', () => {
+  // This guard replaces its own opposite. Completions were first written
+  // `read` -- the argument being that a completion is something the player
+  // just did in the foreground with "+100 XP · Done ✓" on screen, so five
+  // lessons would badge five things already seen. The owner saw that shipped
+  // and chose the other way: the bell reflects everything that happened, and
+  // the player clears the count themselves.
+  //
+  // Pinned because the flip is a single word and could be undone by accident
+  // while editing the drafts around it.
+  const drafts = [...SVC.matchAll(/notes\.push\(\{[\s\S]{0,520}?isRead: (true|false)/g)];
+  assert.ok(drafts.length >= 4,
+    `expected the completion plus three achievement drafts, found ${drafts.length}`);
+  for (const d of drafts) {
+    assert.equal(d[1], 'false', `a notification is written pre-read: ${d[0].slice(0, 80)}`);
+  }
+
+  // The completion draft specifically, since it is the one that was flipped.
   const at = SVC.indexOf("type: 'lesson_complete'");
   assert.ok(at > 0, 'the lesson_complete draft is gone');
-  assert.match(SVC.slice(at, at + 400), /isRead: true/,
-    'the lesson completion notification badges the bell');
-
-  let seen = 0;
-  for (const m of SVC.matchAll(/type: 'achievement',[\s\S]{0,420}?isRead: (true|false)/g)) {
-    assert.equal(m[1], 'false', 'an achievement is written pre-read, so it can never badge');
-    seen++;
-  }
-  assert.ok(seen >= 3, `expected milestone, category and streak achievements, found ${seen}`);
+  assert.match(SVC.slice(at, at + 400), /isRead: false/,
+    'the lesson completion no longer badges the bell');
 });
-
 test('the streak notification fires at thresholds, not every day past three', () => {
   // The streak BONUS is paid every day from day 3 onward. Notifying on each
   // would be a daily "well done" for the same fact.

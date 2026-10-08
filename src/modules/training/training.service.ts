@@ -39,18 +39,18 @@ const VALID_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced', 'all
 /**
  * NOTIFICATIONS WRITTEN BY A COMPLETION.
  *
- * Two kinds, and the difference is the badge rather than the row.
+ * EVERYTHING here is written unread, so the badge counts completions as well
+ * as achievements. That is the owner's decision, made after seeing the other
+ * way shipped, and it is recorded because the argument against it is real and
+ * someone will raise it again: a completion is something the player just did
+ * in the foreground with "+100 XP · Done ✓" on screen, so five lessons give a
+ * badge of five for things already seen. Completions were briefly written
+ * `read` for exactly that reason. The call is that the bell should reflect
+ * everything that happened, and an unread count the player clears themselves
+ * is the honest version of that.
  *
- * A lesson completion is something the player just did in the foreground,
- * with "+100 XP · Done ✓" on screen as they did it. Writing that UNREAD means
- * someone who finishes five lessons gets a badge of five for things they have
- * already seen and acknowledged, which is how a bell stops being worth
- * looking at. It is written `read`, so it forms the history in the list
- * without inflating the count.
- *
- * An achievement -- a milestone, a finished category, a streak threshold --
- * is a reward that arrives WITH the completion and is easy to miss in the
- * same moment. Those are written unread, and those are what the badge counts.
+ * The badge caps its label at 99+, which matters more now that the common
+ * case grows by one per lesson rather than one per milestone.
  *
  * The streak bonus fires every day from day 3 onward, so notifying on each
  * would be a daily "well done" for the same fact; only these thresholds get
@@ -315,7 +315,7 @@ export function createTrainingService({
             title: lesson.title,
             message: `Lesson complete · +${xpReward} XP`,
             lessonId,
-            isRead: true,
+            isRead: false,
           });
 
           // Streak update (savepoint-guarded so a failure can't abort the completion).
