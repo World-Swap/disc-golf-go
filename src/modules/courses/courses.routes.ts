@@ -42,6 +42,28 @@ export function createCoursesRouter(service: CoursesService, optionalAuth: Reque
     })
   );
 
+  /**
+   * Live nearby: the map servers first, our table underneath. Separate from
+   * /courses/nearby rather than replacing it, because check-in still gates on
+   * our own rows (a course we have no id for cannot be checked in to) and
+   * quietly changing what that endpoint returns would break it.
+   */
+  router.get(
+    '/courses/live',
+    asyncHandler(async (req, res) => {
+      const lat = parseFloat(String(req.query.lat));
+      const lng = parseFloat(String(req.query.lng));
+      if (Number.isNaN(lat) || Number.isNaN(lng)) throw badRequest('lat and lng query params required');
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw badRequest('lat or lng out of range');
+      const asked = parseInt(String(req.query.radius ?? '40000'), 10);
+      // Clamped rather than trusted: the radius sizes a bounding box sent to
+      // a shared public map server, and an unbounded one is a query that
+      // asks it for a continent.
+      const radius = Math.min(80_000, Math.max(1_000, Number.isFinite(asked) ? asked : 40_000));
+      res.json(await service.nearbyLive(lat, lng, radius));
+    })
+  );
+
   router.get(
     '/courses/nearby',
     asyncHandler(async (req, res) => {

@@ -3,6 +3,7 @@
 
 import { notFound } from '../../http/errors';
 import { haversineMeters } from '../../lib/geo';
+import { createLiveCourses, type LiveCourse } from './live';
 import { createCoursesRepo, type CoursesRepo, type CourseListRow } from './courses.repo';
 import type { Queryable } from '../../db/types';
 
@@ -18,6 +19,30 @@ export interface NearbyQuery {
 }
 
 export function createCoursesService(db: Queryable, repo: CoursesRepo = createCoursesRepo(db)) {
+  const live = createLiveCourses({
+    // The local table, shaped like a live result so the merge treats all
+    // three sources identically.
+    localNearby: async (lat, lng, radiusM): Promise<LiveCourse[]> => {
+      const latBuffer = radiusM / 1000 / KM_PER_DEG;
+      const lngBuffer = radiusM / 1000 / (KM_PER_DEG * Math.cos((lat * Math.PI) / 180) || KM_PER_DEG);
+      const rows = await repo.withinBox(lat - latBuffer, lat + latBuffer, lng - lngBuffer, lng + lngBuffer);
+      return rows
+        .filter((c) => c.lat && c.lng && c.name)
+        .map((c) => ({
+          id: `db:${c.id}`,
+          name: c.name!,
+          lat: parseFloat(c.lat!),
+          lon: parseFloat(c.lng!),
+          distanceM: null,
+          holes: c.holes ? parseInt(String(c.holes), 10) : null,
+          city: c.city ?? null,
+          state: c.state ?? null,
+          source: 'local' as const,
+          osmUrl: null,
+        }));
+    },
+  });
+
   return {
     async search(search: string | null, limit: number) {
       const safeLimit = Math.min(5000, Math.max(1, limit || 5000));
@@ -50,6 +75,15 @@ export function createCoursesService(db: Queryable, repo: CoursesRepo = createCo
         .filter((c) => c.distance_meters <= radiusMeters)
         .sort((a, b) => a.distance_meters - b.distance_meters)
         .slice(0, checkinOnly ? 5 : 20);
+    },
+
+    /**
+     * "What can I play near me" asked of the live map rather than our table.
+     * The local rows are passed in as the floor so an unreachable map server
+     * degrades to the old behaviour instead of to an error.
+     */
+    async nearbyLive(lat: number, lng: number, radiusM: number) {
+      return live.nearby(lat, lng, radiusM);
     },
 
     async mapPins(playerId: number | null) {

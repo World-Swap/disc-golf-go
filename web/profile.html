@@ -29,11 +29,11 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w13"></script>
+  <script src="/js/app.js?v=w14"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
-      DGG.tabbar('profile');
+      DGG.tabbar('vault');
       var esc = DGG.esc, API = DGG.API;
       var content = document.getElementById('content');
       document.getElementById('logout').addEventListener('click', function () { DGG.logout(); });

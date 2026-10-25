@@ -5,7 +5,8 @@ import type { Queryable } from '../../db/types';
 
 export interface ScorecardRow {
   id: number;
-  course_id: number;
+  /** Null on a blank card: see the scorecards migration in schema.ts. */
+  course_id: number | null;
   course_name?: string;
   holes: number;
   par: number;
@@ -37,14 +38,39 @@ export function createScorecardsRepo(db: Queryable) {
       return r.rows.length > 0;
     },
 
-    async create(playerId: number, courseId: number, holes: number, par: number) {
+    async create(
+      playerId: number,
+      courseId: number | null,
+      courseName: string | null,
+      holes: number,
+      par: number
+    ) {
       const r = await db.query<ScorecardRow>(
-        `INSERT INTO scorecards (player_id, course_id, holes, par)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, course_id, holes, par, strokes, completed, started_at, completed_at`,
-        [playerId, courseId, holes, par]
+        `INSERT INTO scorecards (player_id, course_id, course_name, holes, par)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, course_id, course_name, holes, par, strokes, completed, started_at, completed_at`,
+        [playerId, courseId, courseName, holes, par]
       );
       return r.rows[0]!;
+    },
+
+    /**
+     * Change one hole's par mid-round, and re-total the card's par from the
+     * holes themselves rather than adjusting it by a delta -- a delta drifts
+     * the moment anything else writes a par, and the holes are the truth.
+     */
+    async setPar(scorecardId: number, holeNumber: number, par: number) {
+      await db.query(
+        'UPDATE scorecard_holes SET par = $3 WHERE scorecard_id = $1 AND hole_number = $2',
+        [scorecardId, holeNumber, par]
+      );
+      const r = await db.query<{ par: number }>(
+        `UPDATE scorecards SET par =
+           (SELECT COALESCE(SUM(h.par), 0) FROM scorecard_holes h WHERE h.scorecard_id = $1)
+         WHERE id = $1 RETURNING par`,
+        [scorecardId]
+      );
+      return r.rows[0]?.par ?? 0;
     },
 
     async addHoles(scorecardId: number, holes: Array<{ hole_number: number; par: number }>) {
@@ -59,7 +85,7 @@ export function createScorecardsRepo(db: Queryable) {
 
     async owned(playerId: number, scorecardId: number): Promise<ScorecardRow | null> {
       const r = await db.query<ScorecardRow>(
-        `SELECT s.id, s.course_id, c.name AS course_name, s.holes, s.par, s.strokes,
+        `SELECT s.id, s.course_id, COALESCE(c.name, s.course_name) AS course_name, s.holes, s.par, s.strokes,
                 s.completed, s.started_at, s.completed_at
          FROM scorecards s LEFT JOIN courses c ON c.id = s.course_id
          WHERE s.id = $1 AND s.player_id = $2`,
@@ -94,7 +120,7 @@ export function createScorecardsRepo(db: Queryable) {
     async finish(scorecardId: number) {
       const r = await db.query<ScorecardRow>(
         `UPDATE scorecards SET completed = TRUE, completed_at = NOW()
-         WHERE id = $1 RETURNING id, course_id, holes, par, strokes, completed, started_at, completed_at`,
+         WHERE id = $1 RETURNING id, course_id, course_name, holes, par, strokes, completed, started_at, completed_at`,
         [scorecardId]
       );
       return r.rows[0]!;
@@ -110,7 +136,7 @@ export function createScorecardsRepo(db: Queryable) {
 
     async listForPlayer(playerId: number, limit: number) {
       const r = await db.query<ScorecardRow>(
-        `SELECT s.id, s.course_id, c.name AS course_name, s.holes, s.par, s.strokes,
+        `SELECT s.id, s.course_id, COALESCE(c.name, s.course_name) AS course_name, s.holes, s.par, s.strokes,
                 s.completed, s.started_at, s.completed_at,
                 ${PLAYED_HOLES} AS holes_played,
                 ${PLAYED_PAR} AS par_played

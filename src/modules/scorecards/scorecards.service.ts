@@ -8,10 +8,16 @@ export const MAX_HOLES = 36;
 export const MAX_STROKES = 20;   // a generous ceiling; beyond this it's a typo
 
 export interface StartInput {
-  courseId: number;
+  /** Omitted on a blank card, or when the course came from the live map. */
+  courseId?: number | null;
+  /** What the player calls the place. Free text; we do not own this list. */
+  courseName?: string | null;
   holes: number;
   pars?: number[] | null;
 }
+
+/** The longest course name we will store. A name, not an essay. */
+export const MAX_COURSE_NAME = 80;
 
 export function createScorecardsService(deps: { repo: ScorecardsRepo }) {
   const { repo } = deps;
@@ -35,10 +41,30 @@ export function createScorecardsService(deps: { repo: ScorecardsRepo }) {
       if (!Number.isFinite(holes) || holes < 1 || holes > MAX_HOLES) {
         throw badRequest('holes must be between 1 and ' + MAX_HOLES);
       }
-      if (!(await repo.courseExists(input.courseId))) throw notFound('Course not found');
+
+      // A course is OPTIONAL now. The card is a blank card you fill in on the
+      // first tee: you may be at a course we have never heard of, at one the
+      // live map found but our table has no id for, or in a field. A course id
+      // is still honoured when it is given and real, because check-in and
+      // "your best round here" are keyed on it.
+      let courseId: number | null = null;
+      if (input.courseId !== null && input.courseId !== undefined && String(input.courseId) !== '') {
+        const id = Math.round(Number(input.courseId));
+        if (!Number.isFinite(id)) throw badRequest('courseId must be a number');
+        // An id we do not have is still a REFUSAL rather than a silent blank
+        // card: it means the caller believes it is scoring a specific course,
+        // and quietly dropping that would file the round against nothing.
+        if (!(await repo.courseExists(id))) throw notFound('Course not found');
+        courseId = id;
+      }
+
+      const courseName =
+        typeof input.courseName === 'string' && input.courseName.trim()
+          ? input.courseName.trim().slice(0, MAX_COURSE_NAME)
+          : null;
 
       const pars = parsFor(holes, input.pars);
-      const card = await repo.create(playerId, input.courseId, holes, pars.reduce((a, b) => a + b, 0));
+      const card = await repo.create(playerId, courseId, courseName, holes, pars.reduce((a, b) => a + b, 0));
       await repo.addHoles(
         card.id,
         pars.map((par, i) => ({ hole_number: i + 1, par }))
@@ -70,6 +96,27 @@ export function createScorecardsService(deps: { repo: ScorecardsRepo }) {
       }
       const total = await repo.setHole(scorecardId, hole, value);
       return { id: scorecardId, hole_number: hole, strokes: value, total_strokes: total };
+    },
+
+    /**
+     * Change a hole's par while the round is going. Every hole starts at 3 --
+     * which is what most disc golf holes are -- and the player bumps the odd
+     * 4 or 5 as they reach it, which is the only way a blank card can be
+     * accurate at a course nobody has surveyed for us.
+     */
+    async setPar(playerId: number, scorecardId: number, holeNumber: number, par: number) {
+      const card = await repo.owned(playerId, scorecardId);
+      if (!card) throw notFound('Scorecard not found');
+      if (card.completed) throw badRequest('That round is already finished');
+
+      const hole = Math.round(Number(holeNumber));
+      if (!Number.isFinite(hole) || hole < 1 || hole > card.holes) throw badRequest('No such hole on this card');
+
+      const value = Math.round(Number(par));
+      if (!Number.isFinite(value) || value < 2 || value > 6) throw badRequest('Par must be between 2 and 6');
+
+      const total = await repo.setPar(scorecardId, hole, value);
+      return { id: scorecardId, hole_number: hole, par: value, total_par: total };
     },
 
     async finish(playerId: number, scorecardId: number) {

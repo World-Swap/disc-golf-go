@@ -55,7 +55,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w13"></script>
+  <script src="/js/app.js?v=w14"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
@@ -134,17 +134,30 @@
             '</span>' +
           '</a>' +
 
+          // The Market, directly under the events card and ABOVE Play. The
+          // order on this page is the order of the pivot: learn what you are
+          // missing, get the kit, then go and play. Throw Lab is not on Home
+          // at all any more -- it is a row at the foot of the Play tab.
+          '<a class="artcard" href="/market" style="--art:url(\'/img/cards/market.webp\')">' +
+            '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
+            '<span class="artcard__body">' +
+              '<span class="artcard__eyebrow">Market</span>' +
+              '<span class="artcard__title">Price every shop at once →</span>' +
+              '<span class="artcard__sub">Live prices and live stock from 11 disc golf shops, searched together.</span>' +
+            '</span>' +
+          '</a>' +
+
           // Play sits where the daily challenge used to, directly under the
           // lesson card: it is a link, and the two links belong together. It
           // opens the Play tab rather than dropping straight into a round,
           // because Play is now the way in to all of it — the weekly
           // tournament, the game and real courses.
-          '<a class="artcard" href="/checkin" style="--art:url(\'/img/cards/throw-lab.webp\')">' +
+          '<a class="artcard" href="/checkin" style="--art:url(\'/img/cards/course.webp\')">' +
             '<span class="artcard__art"></span><span class="artcard__scrim"></span>' +
             '<span class="artcard__body">' +
               '<span class="artcard__eyebrow">Play</span>' +
-              '<span class="artcard__title">Play a round →</span>' +
-              '<span class="artcard__sub">The weekly tournament, the Throw Lab game, or a scorecard at any real course.</span>' +
+              '<span class="artcard__title">Find a course →</span>' +
+              '<span class="artcard__sub">Courses near you from the live map, a blank scorecard for the round, and this week\'s tournament.</span>' +
             '</span>' +
           '</a>' +
 

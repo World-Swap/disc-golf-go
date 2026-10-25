@@ -664,6 +664,19 @@ CREATE TABLE IF NOT EXISTS scorecards (
 CREATE INDEX IF NOT EXISTS idx_scorecards_player ON scorecards(player_id, started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_scorecards_course ON scorecards(player_id, course_id);
 
+-- A scorecard no longer requires a course row of ours. The pivot made the
+-- scorecard a BLANK CARD you fill in standing on the first tee: most rounds
+-- are played at a course our table has never heard of, and the live map search
+-- returns courses that have no id here at all. Requiring course_id meant the
+-- scorecard could only be used at the 1,532 places we happen to know, which is
+-- the thin-database problem the pivot exists to get away from.
+--
+-- course_name is denormalised beside it for the same reason tournaments.course_name
+-- is: the name the player typed, or the name the map gave, is what belongs on
+-- their card, and it must survive whatever happens to our courses table.
+ALTER TABLE scorecards ALTER COLUMN course_id DROP NOT NULL;
+ALTER TABLE scorecards ADD COLUMN IF NOT EXISTS course_name TEXT;
+
 -- Throw Lab rounds. Per-round aggregates are stored so challenge progress and
 -- the game leaderboard are plain aggregate queries over this one table.
 CREATE TABLE IF NOT EXISTS game_rounds (

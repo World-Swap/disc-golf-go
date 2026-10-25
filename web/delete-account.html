@@ -35,11 +35,11 @@
     </div>
     <nav id="tabbar"></nav>
   </main>
-  <script src="/js/app.js?v=w13"></script>
+  <script src="/js/app.js?v=w14"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
-      DGG.tabbar('profile');
+      DGG.tabbar('vault');
       var API = DGG.API, err = document.getElementById('err');
       document.getElementById('del').addEventListener('click', async function () {
         err.textContent = '';

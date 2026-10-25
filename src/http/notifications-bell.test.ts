@@ -121,3 +121,28 @@ test('shared assets are always requested with a version', () => {
     }
   }
 });
+
+
+test('the bottom nav is the five the pivot settled on, with Market in the centre', () => {
+  // The centre slot is the easiest on a phone to reach with a thumb, so what
+  // sits there is a claim about what the app is for. Pinned because it is one
+  // line in a table and nothing else would fail if it changed.
+  const block = /var TABS = \[([\s\S]*?)\];/.exec(APP_JS);
+  assert.ok(block, 'the TABS table moved or was renamed');
+  const keys = [...block[1].matchAll(/key: '([a-z]+)'/g)].map((m) => m[1]);
+  assert.deepEqual(keys, ['home', 'training', 'market', 'play', 'vault'],
+    'the nav order changed; Market must hold the centre slot');
+  assert.equal(keys[2], 'market');
+  // Profile folded into the Vault and must not quietly reappear as a tab.
+  assert.ok(!keys.includes('profile'), 'Profile took a tab slot again');
+  // Every tab needs a page behind it.
+  const routes = readFileSync('src/http/static.ts', 'utf8');
+  for (const href of [...block[1].matchAll(/href: '([^']+)'/g)].map((m) => m[1])) {
+    assert.ok(routes.includes(`'${href}'`), `${href} is in the nav but not registered in static.ts`);
+  }
+});
+
+test('Profile is still reachable now that it is not a tab', () => {
+  const vault = readFileSync('web/vault.html', 'utf8');
+  assert.match(vault, /href="\/profile"/, 'Profile lost its tab and gained no way in');
+});

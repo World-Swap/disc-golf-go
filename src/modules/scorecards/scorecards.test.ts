@@ -44,7 +44,9 @@ test('scorecards endpoints', async (t) => {
     let insertedPars: unknown[] = [];
     handler = (sql, params) => {
       if (/SELECT id FROM courses/.test(sql)) return { rows: [{ id: 7 }] };
-      if (/INSERT INTO scorecards/.test(sql)) return { rows: [{ id: 5, course_id: 7, holes: 9, par: params?.[3], strokes: 0, completed: false }] };
+      // (player_id, course_id, course_name, holes, par) -- course_name was added
+      // when the card stopped requiring a course, so par is params[4].
+      if (/INSERT INTO scorecards/.test(sql)) return { rows: [{ id: 5, course_id: 7, holes: 9, par: params?.[4], strokes: 0, completed: false }] };
       if (/INSERT INTO scorecard_holes/.test(sql)) { insertedPars = params?.[2] as unknown[]; return { rows: [] }; }
       if (/SELECT hole_number, par, strokes/.test(sql)) return { rows: [] };
       return { rows: [] };
@@ -193,4 +195,73 @@ test('scorecards endpoints', async (t) => {
   });
 
   server.close();
+});
+
+// ── The blank card ────────────────────────────────────────────────────────
+// The pivot made a course OPTIONAL. These pin the three things that would
+// otherwise regress quietly: that a card can exist with no course at all,
+// that a course id which IS given is still checked, and that par stays
+// editable while the round is open.
+
+import { readFileSync as _readFileSync } from 'node:fs';
+const SC_SERVICE = _readFileSync('src/modules/scorecards/scorecards.service.ts', 'utf8');
+const SC_SCHEMA = _readFileSync('src/db/schema.ts', 'utf8');
+const SC_PAGE = _readFileSync('web/scorecard.html', 'utf8');
+
+test('a scorecard no longer requires a course', () => {
+  // The column has to be nullable or the blank card cannot be written at all.
+  assert.match(
+    SC_SCHEMA,
+    /ALTER TABLE scorecards ALTER COLUMN course_id DROP NOT NULL/,
+    'course_id is still NOT NULL, so a blank card cannot be saved'
+  );
+  assert.match(
+    SC_SCHEMA,
+    /ALTER TABLE scorecards ADD COLUMN IF NOT EXISTS course_name TEXT/,
+    'there is nowhere to keep the name of a course we have no row for'
+  );
+  // And the service must not demand one back.
+  assert.ok(
+    !/if \(!\(await repo\.courseExists\(input\.courseId\)\)\)/.test(SC_SERVICE),
+    'start() went back to requiring a course id'
+  );
+});
+
+test('a course id that IS given is still verified', () => {
+  // Optional must not mean unchecked: a caller naming a specific course and
+  // getting a blank card instead has filed the round against nothing.
+  assert.match(SC_SERVICE, /courseExists\(id\)/, 'a supplied course id is no longer checked');
+  assert.match(SC_SERVICE, /notFound\('Course not found'\)/, 'an unknown course id is silently accepted');
+});
+
+test('every hole starts at par 3 and par stays editable while playing', () => {
+  assert.match(
+    SC_SERVICE,
+    /Array\.from\(\{ length: holes \}, \(\) => 3\)/,
+    'holes no longer default to par 3'
+  );
+  assert.match(SC_SERVICE, /async setPar\(/, 'par cannot be changed once the card exists');
+  assert.match(SC_SERVICE, /value < 2 \|\| value > 6/, 'par is no longer range-checked');
+  assert.match(SC_SERVICE, /already finished/, 'par can be edited on a finished round');
+});
+
+test("the card's par is re-summed from its holes, never adjusted by a delta", () => {
+  // A delta drifts the moment anything else writes a par; the holes are the
+  // truth, so the total is recomputed from them.
+  const repo = _readFileSync('src/modules/scorecards/scorecards.repo.ts', 'utf8');
+  assert.match(
+    repo,
+    /SET par =\s*\n?\s*\(SELECT COALESCE\(SUM\(h\.par\), 0\) FROM scorecard_holes/,
+    'the card par is no longer recomputed from the holes'
+  );
+});
+
+test('the blank card page carries the logo and asks for nothing it does not need', () => {
+  assert.match(SC_PAGE, /sc-blank/, 'the blank masthead is gone');
+  assert.match(SC_PAGE, /img\/logo-mark\.png/, 'the logo is gone from the blank card');
+  // The course name must be optional on the page too, or the page re-imposes
+  // what the server stopped requiring.
+  assert.match(SC_PAGE, /placeholder="Course name \(optional\)"/, 'the course name became mandatory again');
+  // And the hole count must accept a number the buttons do not offer.
+  assert.match(SC_PAGE, /id="custom"/, 'a custom hole count is no longer offered');
 });

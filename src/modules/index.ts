@@ -58,6 +58,8 @@ import { createDeleteAccountRouter } from './delete-account/delete-account.route
 import { createReferralsService } from './referrals/referrals.service';
 import { createReferralsRouter } from './referrals/referrals.routes';
 import { createNotificationsRouter } from './notifications/notifications.routes';
+import { createMarketService } from './market/market.service';
+import { createMarketRouter } from './market/market.routes';
 import { createAdminService } from './admin/admin.service';
 import { createAdminRouter } from './admin/admin.routes';
 
@@ -168,6 +170,9 @@ export function createApiRouter(db: Database): Router {
   api.use(createDeleteAccountRouter(createDeleteAccountService({ db }), auth));
   api.use(createReferralsRouter(createReferralsService(db), auth));
   api.use(createNotificationsRouter(db, auth));
+  // Public: the Market reads shops' own public storefronts, and it is a reason
+  // to open the app before signing up rather than after.
+  api.use(createMarketRouter(createMarketService()));
   api.use(createAdminRouter(createAdminService({ db })));
 
   return api;

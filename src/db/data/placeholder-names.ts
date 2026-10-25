@@ -69,6 +69,19 @@ const PLACEHOLDER_PATTERNS: RegExp[] = [
   // is a real destination and is kept.
   /\b(practice|putting)\s+(area|basket|green|range)s?\s*$/i,
   /^(unnamed|unknown|untitled|tbd|n\/?a|none|null|test|temp)\b/i,
+  // Added when live map search started feeding this rule as well as the seed.
+  // Free-text search returns things NEAR a course and things ABOUT one, not
+  // only courses: "Disc Golf Mural" is a real OSM feature in Charlotte and is
+  // a painting on a wall. Anchored at the end so a course legitimately called
+  // "Mural Park DGC" survives.
+  /\b(mural|sculpture|statue|sign|signboard|kiosk|bulletin\s*board)s?\s*$/i,
+  // Parking and toilets mapped beside a course and named after it.
+  /\b(parking|car\s*park|restrooms?|toilets?|bathrooms?|picnic\s*(area|shelter))\s*$/i,
+  // A league or association is an organisation you join, not a course you can
+  // play. "Club" is deliberately NOT here: "Boulder Creek Golf and Country
+  // Club" is a real venue that hosts a real event on our own events page, and
+  // a bare "Disc Golf Club" is already caught by the category pattern above.
+  /\b(league|association|society)\s*$/i,
 ];
 
 /** True when `name` is a hole/tee designation or bare category, not a course. */

@@ -123,12 +123,19 @@
     });
   }
 
-  // Bottom nav, left to right. Ranks lives in Profile → Training instead of
-  // taking a tab slot, which keeps this to five and widens each target.
+  // Bottom nav, left to right. Five slots, and what sits in them is the
+  // product's own claim about what this app is for -- so Market takes the
+  // CENTRE, the easiest slot on a phone to reach with a thumb.
+  //
+  // Profile is not here any more. It was a tab for one player looking at
+  // their own numbers, which is the least compelling thing the app does and
+  // a tab nobody opens twice; it is now a row at the top of the Vault, which
+  // is already the "yours" section (your library, your creators). Ranks got
+  // the same treatment earlier for the same reason.
   var TABS = [
     { key: 'home', href: '/home', label: 'Home', glyph: '🏠' },
-    { key: 'profile', href: '/profile', label: 'Profile', glyph: '👤' },
     { key: 'training', href: '/training', label: 'Train', glyph: '🎯' },
+    { key: 'market', href: '/market', label: 'Market', glyph: '🛒' },
     { key: 'play', href: '/checkin', label: 'Play', glyph: '🥏' },
     { key: 'vault', href: '/vault', label: 'Vault', glyph: '🎬' },
   ];

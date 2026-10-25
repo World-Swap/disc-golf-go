@@ -72,18 +72,37 @@
     <div class="screen stack">
       <div><p class="section-label">Tournament · game · courses</p><h1 class="h-display">PLAY<span class="mark" style="width:30%"></span></h1></div>
 
-      <!-- Two different things live on this page and players kept confusing
-           them, so each one says what it actually is up front: Throw Lab is a
-           game on the phone, a scorecard is a real round at a real course. -->
-      <p class="play-intro">Two ways to play — a <b>throwing game</b> you play here on
-        your phone, or a <b>scorecard</b> for a round you're playing for real.</p>
+      <!-- The pivot reordered this whole page. It used to open on the two
+           in-app tournaments with Throw Lab above the fold and real courses
+           third, behind a "course selector" that read from our own thin
+           table. What a player standing in a car park wants is the course in
+           front of them, so that is what opens the page now, and it is asked
+           of the live map rather than of our 1,532 rows. Throw Lab is last
+           and is a row rather than an artcard: it is a game for when you
+           cannot get to a course, which is the smallest claim on this page. -->
+      <p class="play-intro">Find a course near you, keep a scorecard for the round,
+        and see what is on at your club.</p>
+
+      <div id="near"></div>
+
+      <!-- A blank card is the fallback for every course the map does not know,
+           which after the pivot is the expected case rather than the odd one. -->
+      <a class="artcard" href="/scorecard" style="--art:url('/img/cards/course.webp')">
+        <span class="artcard__art"></span><span class="artcard__scrim"></span>
+        <span class="artcard__body">
+          <span class="artcard__eyebrow">Scorecard</span>
+          <span class="artcard__title">Start a blank card&nbsp;&rarr;</span>
+          <span class="artcard__sub">Any course, any number of holes. Every hole starts at
+            par 3 &mdash; change the 4s and 5s as you reach them.</span>
+        </span>
+      </a>
 
       <div class="trn-pair">
         <div id="tournament-daily"></div>
         <div id="tournament"></div>
       </div>
       <p class="trn__note" id="trn-note" hidden>An entry is used the moment a round
-        starts — leave part-way and it still counts.</p>
+        starts &mdash; leave part-way and it still counts.</p>
 
       <!-- Directly under the two in-app tournaments, because that is the moment
            a player is thinking about competing and the obvious next question is
@@ -96,29 +115,9 @@
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
         <span class="artcard__body">
           <span class="artcard__eyebrow">In person</span>
-          <span class="artcard__title">A real tournament&nbsp;→</span>
-          <span class="artcard__sub">Events hosted by Disc Golf Go — a real course, a real card,
+          <span class="artcard__title">A real tournament&nbsp;&rarr;</span>
+          <span class="artcard__sub">Events hosted by Disc Golf Go &mdash; a real course, a real card,
             PDGA sanctioned.</span>
-        </span>
-      </a>
-
-      <a class="artcard" href="/game" style="--art:url('/img/cards/throw-lab.webp')">
-        <span class="artcard__art"></span><span class="artcard__scrim"></span>
-        <span class="artcard__body">
-          <span class="artcard__eyebrow">Throw Lab · game</span>
-          <span class="artcard__title">Play a quick round&nbsp;→</span>
-          <span class="artcard__sub">Tap for power, tap for your angle. 3, 6 or 9 holes,
-            no course needed — earns XP.</span>
-        </span>
-      </a>
-
-      <a class="artcard" href="/courses" style="--art:url('/img/cards/course.webp')">
-        <span class="artcard__art"></span><span class="artcard__scrim"></span>
-        <span class="artcard__body">
-          <span class="artcard__eyebrow">Course selector</span>
-          <span class="artcard__title">Scorecard or Throw&nbsp;Lab&nbsp;→</span>
-          <span class="artcard__sub">Pick a course near you, by state, or by name — then keep a
-            scorecard or play it in the game. Check in here too.</span>
         </span>
       </a>
 
@@ -142,6 +141,18 @@
         </div>
       </a>
 
+      <!-- Last on the page, and a row rather than an artcard. Throw Lab is a
+           game you play when you cannot get to a course; it does not practise
+           the shots the lessons teach and we do not claim it does, so it gets
+           the smallest block here rather than the biggest. -->
+      <a class="row" href="/game" style="border:1px solid var(--hair,#e4dfd6);border-radius:4px;background:#fff">
+        <span class="row__glyph">🥏</span>
+        <div class="row__body">
+          <div class="row__title">Throw Lab &rarr;</div>
+          <div class="row__sub" style="text-transform:none;letter-spacing:0">A throwing game for when you are rained off. 3, 6 or 9 holes.</div>
+        </div>
+      </a>
+
       <div id="challenges"></div>
       <div id="rounds"></div>
 
@@ -149,7 +160,7 @@
       <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w13"></script>
+  <script src="/js/app.js?v=w14"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
@@ -312,6 +323,86 @@
             }).join('') + '</div>';
         } catch (e) { /* signed-out or offline — the course list still works */ }
       }
+
+      // ---------------------------------------------------- courses near you
+      // Asked of the live map (OpenStreetMap, via /courses/live) with our own
+      // table underneath as the floor. The old page read our table alone,
+      // which is 1,532 rows that were imported once and have been drifting
+      // since -- whole states went missing to an old reseed bug, and nothing
+      // adds a course that opened last month.
+      var near = document.getElementById('near');
+
+      function courseRow(c) {
+        var km = c.distanceM != null ? (c.distanceM / 1000) : null;
+        // Miles for a US-centric player base, with the number rounded to the
+        // precision a phone's GPS actually justifies.
+        var mi = km != null ? (km * 0.621371) : null;
+        var dist = mi == null ? '' : (mi < 10 ? mi.toFixed(1) : Math.round(mi)) + ' mi';
+        var bits = [dist, c.holes ? c.holes + ' holes' : '', c.city || ''].filter(Boolean);
+        // A live-map course has no id in our table, so the scorecard carries
+        // its NAME instead -- which is exactly what the blank card is for.
+        var href = String(c.id).indexOf('db:') === 0
+          ? '/scorecard?course=' + encodeURIComponent(String(c.id).slice(3))
+          : '/scorecard?name=' + encodeURIComponent(c.name);
+        return '<a class="row" href="' + href + '">' +
+          '<span class="row__glyph">\u26F3</span>' +
+          '<div class="row__body">' +
+            '<div class="row__title">' + esc(c.name) + '</div>' +
+            '<div class="row__sub" style="text-transform:none;letter-spacing:0">' + esc(bits.join(' \u00b7 ')) + '</div>' +
+          '</div>' +
+          '<span class="row__meta">Card \u203A</span></a>';
+      }
+
+      function nearHtml(body) {
+        return '<p class="section-label">Courses near you</p>' + body;
+      }
+
+      function loadNear() {
+        if (!navigator.geolocation) {
+          near.innerHTML = nearHtml('<p class="play-intro">Turn on location to see courses near you, ' +
+            'or start a blank card below.</p>');
+          return;
+        }
+        near.innerHTML = nearHtml('<div class="loading">Looking for courses near you…</div>');
+
+        // getCurrentPosition's own timeout does not start until permission is
+        // granted, so an unanswered prompt would otherwise sit on "Looking…"
+        // for good -- the same fix the old courses page needed.
+        var settled = false;
+        var giveUp = setTimeout(function () {
+          if (settled) return;
+          settled = true;
+          near.innerHTML = nearHtml('<p class="play-intro">Still waiting on location. ' +
+            'Start a blank card below, or <a href="/courses">browse by state</a>.</p>');
+        }, 12000);
+
+        navigator.geolocation.getCurrentPosition(async function (pos) {
+          if (settled) return;
+          settled = true; clearTimeout(giveUp);
+          try {
+            var d = await API.get('/courses/live?lat=' + pos.coords.latitude + '&lng=' + pos.coords.longitude);
+            var list = (d.courses || []).slice(0, 8);
+            if (!list.length) {
+              near.innerHTML = nearHtml('<p class="play-intro">No courses on the map within 25 miles. ' +
+                'Start a blank card below and name it yourself.</p>');
+              return;
+            }
+            near.innerHTML = nearHtml('<div class="rows">' + list.map(courseRow).join('') + '</div>' +
+              '<p class="play-intro" style="margin-top:8px">From OpenStreetMap, live. ' +
+              'Missing one? <a href="/courses">Browse by state</a>.</p>');
+          } catch (e) {
+            near.innerHTML = nearHtml('<p class="play-intro">Could not reach the course map. ' +
+              'Start a blank card below, or <a href="/courses">browse by state</a>.</p>');
+          }
+        }, function () {
+          if (settled) return;
+          settled = true; clearTimeout(giveUp);
+          near.innerHTML = nearHtml('<p class="play-intro">Location is off, so we cannot see what is near you. ' +
+            'Start a blank card below, or <a href="/courses">browse by state</a>.</p>');
+        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
+      }
+
+      loadNear();
     })();
   </script>
 </body>

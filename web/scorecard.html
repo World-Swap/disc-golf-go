@@ -23,8 +23,28 @@
     .sc-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
               border-top: 1px solid var(--hair, #eee); }
     .sc-row:first-child { border-top: 0; }
+    /* The blank card's masthead: the logo and the words, and nothing that
+       claims to know where you are. */
+    .sc-blank { text-align: center; padding: 18px 0 2px; }
+    .sc-logo { display: block; margin: 0 auto 10px; border-radius: 12px; }
+    .sc-blank__name { margin: 0; font-family: var(--font-display, system-ui); font-weight: 800;
+                      font-size: 20px; letter-spacing: .01em; color: var(--color-ink, #202020); }
+    .sc-blank__sub { margin: 2px 0 0; font-size: 11px; letter-spacing: .14em;
+                     text-transform: uppercase; color: #8a8279; }
+    .sc-where { width: 100%; font: inherit; font-size: 16px; /* 16px stops iOS
+                  zooming the page when the field takes focus */
+                padding: 11px 13px; margin-top: 10px; border: 1px solid #ddd5c9;
+                border-radius: 11px; background: #fff; color: var(--color-ink, #202020); }
+    .sc-counts { display: flex; gap: 8px; margin-top: 10px; }
+    .sc-counts .btn { flex: 1; }
+    .sc-custom { display: flex; gap: 8px; align-items: stretch; margin-top: 10px; }
+    .sc-custom .sc-where { margin-top: 0; }
+    .sc-custom .btn { flex: none; }
     .sc-hole { width: 34px; font-family: var(--font-display, system-ui); font-weight: 800; font-size: 17px; }
-    .sc-par { flex: 1; font-size: 12px; color: #8a8279; }
+    .sc-par { flex: 1; font-size: 12px; color: #8a8279; text-align: left;
+               border: 0; background: none; font-family: inherit; cursor: pointer;
+               padding: 6px 0; /* a real tap target without moving the row */ }
+    .sc-par b { font-weight: 700; color: var(--color-ink, #202020); }
     .sc-step { display: flex; align-items: center; gap: 6px; }
     .sc-btn { width: 44px; height: 44px; border-radius: 12px; border: 1px solid #ddd5c9;
               background: #fff; font-size: 20px; font-weight: 700; color: #202020; }
@@ -54,7 +74,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w13"></script>
+  <script src="/js/app.js?v=w14"></script>
   <script>
   (function () {
     'use strict';
@@ -66,48 +86,103 @@
     var courseId = qs.get('course');
     var cardId = qs.get('card');
     var card = null;          // the open scorecard
-    var courseName = '';
+    // ?name= is how a LIVE course arrives: the map knows it, our table has no
+    // id for it, so the name is all there is -- and the name is all a blank
+    // card needs.
+    var courseName = qs.get('name') || '';
 
     function vsPar(strokes, par) { return strokes - par; }
     function fmtVs(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : String(n)); }
 
     // ------------------------------------------------------------ setup view
-    // Pick a hole count before starting. Defaults to what the course record
-    // says, which is right for the overwhelming majority of rounds.
+    // A BLANK CARD. The old version demanded ?course=<id>, looked the course
+    // up in our table and refused if it was not there -- so the scorecard only
+    // worked at the 1,532 places we happen to know about, which is the whole
+    // problem the pivot is fixing. Now it is a card you fill in standing on
+    // the first tee: a name if you want one, however many holes are in front
+    // of you, every hole par 3 until you say otherwise.
+    //
+    // A ?course= is still honoured when it is given, because check-in and
+    // "your best round here" key on that id -- it just is not required.
     async function chooseRound() {
-      var course = null;
-      try { course = await API.get('/courses/' + encodeURIComponent(courseId)); }
-      catch (e) { content.className = 'screen'; content.innerHTML = '<div class="error">Could not load that course.</div>'; return; }
-      courseName = course.name || 'Course';
-      var suggested = parseInt(course.holes, 10) || 18;
+      var suggested = 18;
+      if (courseId) {
+        // Best effort. A course we cannot load is not an error any more; it
+        // just means you get the blank card you would otherwise have had.
+        try {
+          var course = await API.get('/courses/' + encodeURIComponent(courseId));
+          courseName = course.name || '';
+          suggested = parseInt(course.holes, 10) || 18;
+        } catch (e) { courseId = null; }
+      }
+
+      var counts = [9, 18, 21, 24];
+      if (counts.indexOf(suggested) < 0) counts.unshift(suggested);
 
       content.className = 'screen stack';
       content.innerHTML =
-        '<div><p class="section-label">New round</p><h1 class="h-display">' + esc(courseName) + '</h1></div>' +
+        '<div class="sc-blank">' +
+          '<img class="sc-logo" src="/img/logo-mark.png" alt="Disc Golf Go" width="52" height="52" />' +
+          '<p class="sc-blank__name">Disc Golf Go</p>' +
+          '<p class="sc-blank__sub">Scorecard</p>' +
+        '</div>' +
         '<div class="card">' +
-          '<p class="card__eyebrow">How many holes?</p>' +
-          '<div style="display:flex;gap:8px;margin-top:12px">' +
-            [9, 18, suggested].filter(function (v, i, a) { return a.indexOf(v) === i; }).map(function (n) {
-              return '<button class="btn btn--ghost" data-holes="' + n + '" style="flex:1">' + n + '</button>';
+          '<p class="card__eyebrow">Where are you playing?</p>' +
+          '<input class="sc-where" id="where" type="text" maxlength="80" ' +
+            'placeholder="Course name (optional)" value="' + esc(courseName) + '" />' +
+          '<p class="card__eyebrow" style="margin-top:16px">How many holes?</p>' +
+          '<div class="sc-counts">' +
+            counts.map(function (n) {
+              return '<button class="btn btn--ghost" data-holes="' + n + '">' + n + '</button>';
             }).join('') +
           '</div>' +
-          '<p class="row__sub" style="margin-top:12px">Every hole starts at par 3 — change a hole\'s score as you play.</p>' +
+          '<div class="sc-custom">' +
+            '<input class="sc-where" id="custom" type="number" inputmode="numeric" min="1" max="36" ' +
+              'placeholder="or any number up to 36" />' +
+            '<button class="btn btn--ghost" id="customGo">Start</button>' +
+          '</div>' +
+          '<p class="row__sub" style="margin-top:14px;text-transform:none;letter-spacing:0">' +
+            'Every hole starts at par 3. Tap a hole\u2019s par on the card to make it a 4 or a 5.' +
+          '</p>' +
         '</div>';
 
       content.querySelectorAll('[data-holes]').forEach(function (b) {
         b.addEventListener('click', function () { start(Number(this.dataset.holes), b); });
       });
+      var go = document.getElementById('customGo');
+      go.addEventListener('click', function () {
+        var n = parseInt(document.getElementById('custom').value, 10);
+        // Said rather than silently clamped: a player who typed 40 should be
+        // told the limit, not handed a 36-hole card they did not ask for.
+        if (!isFinite(n) || n < 1 || n > 36) {
+          document.getElementById('custom').focus();
+          return say('Pick a number of holes between 1 and 36');
+        }
+        start(n, go);
+      });
+    }
+
+    function say(msg) {
+      var old = document.getElementById('scsay');
+      if (old) old.remove();
+      content.insertAdjacentHTML('afterbegin', '<div class="error" id="scsay">' + esc(msg) + '</div>');
     }
 
     async function start(holes, btn) {
-      btn.disabled = true; btn.textContent = '…';
+      var label = btn.textContent;
+      btn.disabled = true; btn.textContent = '\u2026';
+      var whereEl = document.getElementById('where');
+      var typed = whereEl ? whereEl.value.trim() : '';
       try {
-        card = await API.post('/scorecards', { course_id: Number(courseId), holes: holes });
+        var body = { holes: holes };
+        if (courseId) body.course_id = Number(courseId);
+        if (typed) body.course_name = typed;
+        card = await API.post('/scorecards', body);
         history.replaceState(null, '', '/scorecard?card=' + card.id);
         renderCard();
       } catch (e) {
-        content.insertAdjacentHTML('afterbegin', '<div class="error">' + esc(e.message || 'Could not start the round') + '</div>');
-        btn.disabled = false; btn.textContent = String(holes);
+        say(e.message || 'Could not start the round');
+        btn.disabled = false; btn.textContent = label;
       }
     }
 
@@ -138,6 +213,9 @@
           step(Number(this.dataset.hole), Number(this.dataset.step));
         });
       });
+      content.querySelectorAll('[data-par]').forEach(function (b) {
+        b.addEventListener('click', function () { cyclePar(Number(this.dataset.par)); });
+      });
       document.getElementById('finish').addEventListener('click', finish);
       document.getElementById('discard').addEventListener('click', discard);
       paintTotals();
@@ -146,7 +224,13 @@
     function holeRow(h) {
       return '<div class="sc-row">' +
         '<span class="sc-hole">' + h.hole_number + '</span>' +
-        '<span class="sc-par">Par ' + h.par + '</span>' +
+        // Par is a BUTTON, not a label: nobody has surveyed the course for us,
+        // so the player is the only source for which holes are 4s and 5s.
+        // It cycles 3 -> 4 -> 5 -> 3, because those are the only pars that
+        // occur often enough to be worth a tap each.
+        '<button class="sc-par" data-par="' + h.hole_number + '" ' +
+          'aria-label="Hole ' + h.hole_number + ' par ' + h.par + ', tap to change">Par ' +
+          '<b id="p' + h.hole_number + '">' + h.par + '</b></button>' +
         '<span class="sc-step">' +
           '<button class="sc-btn" data-hole="' + h.hole_number + '" data-step="-1" aria-label="One fewer stroke">−</button>' +
           '<span class="sc-val" id="h' + h.hole_number + '">—</span>' +
@@ -172,6 +256,26 @@
       } catch (e) {
         h.strokes = prev; paintHole(h); paintTotals();   // put it back if the save failed
       }
+    }
+
+    // Same optimistic shape as step(): paint first, save after, put it back
+    // if the save fails. A round must never wait on the network.
+    async function cyclePar(holeNumber) {
+      var h = (card.hole_scores || []).filter(function (x) { return x.hole_number === holeNumber; })[0];
+      if (!h || card.completed) return;
+      var prev = h.par;
+      h.par = h.par >= 5 ? 3 : h.par + 1;
+      paintPar(h); paintHole(h); paintTotals();
+      try {
+        await API.post('/scorecards/' + card.id + '/par', { hole_number: holeNumber, par: h.par });
+      } catch (e) {
+        h.par = prev; paintPar(h); paintHole(h); paintTotals();
+      }
+    }
+
+    function paintPar(h) {
+      var el = document.getElementById('p' + h.hole_number);
+      if (el) el.textContent = h.par;
     }
 
     function paintHole(h) {
@@ -250,10 +354,11 @@
           return;
         } catch (e) { /* fall through to starting a new one */ }
       }
-      if (courseId) return chooseRound();
-      content.className = 'screen';
-      content.innerHTML = '<div class="loading">Pick a course from Play to start a scorecard.</div>' +
-        '<a class="btn btn--block" href="/checkin" style="margin-top:16px">Find a course</a>';
+      // No course and no card is the NORMAL way in now, not a dead end: a
+      // blank card is the thing this page is. The old copy sent the player
+      // back to Play to pick from a list that may not contain where they are
+      // standing.
+      return chooseRound();
     })();
   })();
   </script>

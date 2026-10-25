@@ -32,10 +32,16 @@ export function createScorecardsRouter(service: ScorecardsService, requireAuth: 
     requireAuth,
     asyncHandler(async (req, res) => {
       const body = req.body ?? {};
-      const courseId = Number(body.course_id);
-      if (!Number.isFinite(courseId)) throw badRequest('course_id is required');
+      // course_id is OPTIONAL now: the card is a blank card. See the comment
+      // on service.start -- a round at a course we have no row for is the
+      // normal case after the pivot, not an error.
       res.status(201).json(
-        await service.start(player(req), { courseId, holes: Number(body.holes), pars: body.pars ?? null })
+        await service.start(player(req), {
+          courseId: body.course_id ?? null,
+          courseName: typeof body.course_name === 'string' ? body.course_name : null,
+          holes: Number(body.holes),
+          pars: body.pars ?? null,
+        })
       );
     })
   );
@@ -69,6 +75,24 @@ export function createScorecardsRouter(service: ScorecardsService, requireAuth: 
           id(req.params.id, 'scorecard ID'),
           Number(body.hole_number),
           body.strokes === null || body.strokes === undefined ? null : Number(body.strokes)
+        )
+      );
+    })
+  );
+
+  // Par per hole, editable while the round is going: every hole starts at 3
+  // and the player bumps the 4s and 5s as they meet them.
+  router.post(
+    '/scorecards/:id/par',
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const body = req.body ?? {};
+      res.json(
+        await service.setPar(
+          player(req),
+          id(req.params.id, 'scorecard ID'),
+          Number(body.hole_number),
+          Number(body.par)
         )
       );
     })

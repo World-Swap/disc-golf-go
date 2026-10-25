@@ -29,6 +29,18 @@
     </header>
     <div class="screen stack">
       <div><h1 class="h-display">VAULT<span class="mark" style="width:38%"></span></h1></div>
+      <!-- Profile lost its tab in the Market pivot: a tab that shows you your
+           own numbers is the one nobody opens twice. The Vault is already the
+           "yours" section, so it is the row at the top of it -- one tap from
+           the nav rather than a slot in it. -->
+      <a class="row" href="/profile">
+        <span class="row__glyph" aria-hidden="true">👤</span>
+        <div class="row__body">
+          <div class="row__title">Your profile</div>
+          <div class="row__sub">Level, streak, rankings and settings</div>
+        </div>
+        <span class="row__meta" aria-hidden="true">›</span>
+      </a>
       <!-- The channel feed used to be a third tab here. It is not the vault's
            kind of thing -- the vault holds the lesson videos you have
            unlocked, the lounge is whatever the channels posted this week --
@@ -52,7 +64,7 @@
     <nav id="tabbar"></nav>
   </main>
 
-  <script src="/js/app.js?v=w13"></script>
+  <script src="/js/app.js?v=w14"></script>
   <script>
     (function () {
       if (!DGG.requireAuth()) return;
