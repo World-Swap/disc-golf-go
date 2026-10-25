@@ -172,7 +172,23 @@ export function createApiRouter(db: Database): Router {
   api.use(createNotificationsRouter(db, auth));
   // Public: the Market reads shops' own public storefronts, and it is a reason
   // to open the app before signing up rather than after.
-  api.use(createMarketRouter(createMarketService()));
+  // The Market's search engine is a slot filled by an environment variable.
+  // Set ONE of these in Render and the Market searches the web; set none and
+  // it falls back to asking storefronts directly. See market/providers.ts for
+  // why a key is needed at all -- every keyless route to a search engine is
+  // blocked or serves a server junk.
+  api.use(
+    createMarketRouter(
+      createMarketService({
+        keys: {
+          serpApiKey: process.env.SERPAPI_KEY,
+          braveKey: process.env.BRAVE_SEARCH_KEY,
+          googleKey: process.env.GOOGLE_SEARCH_KEY,
+          googleCx: process.env.GOOGLE_SEARCH_CX,
+        },
+      })
+    )
+  );
   api.use(createAdminRouter(createAdminService({ db })));
 
   return api;

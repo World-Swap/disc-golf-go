@@ -1,245 +1,283 @@
-// src/modules/market/market.test.ts — guards on the Market fan-out.
+// src/modules/market/market.test.ts — guards on the Market search.
 //
-// The Market shows real money on a page that looks like a shop, so the things
-// pinned here are the ones that would be wrong quietly: a price compared
-// against a different currency, a sale that is not happening, a shop that
-// disappears instead of reporting itself down, and a link that does not go
-// where it says.
+// The Market shows real money, so what is pinned here is what would be wrong
+// quietly: a price compared against a different currency, a made-up price
+// scraped off a banner, a source that vanishes instead of reporting itself
+// down, and the page implying it searched the web when no key is set.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import {
-  createMarketService,
-  parsePrice,
-  productUrl,
-  normalise,
-  FAN_OUT_LIMIT,
-} from './market.service';
-import { RETAILERS } from './retailers';
+import { createMarketService, shapeQuery } from './market.service';
+import { extractPrice, toNumber, looksLikeProduct } from './extract';
+import { STOREFRONTS, STOREFRONT_HOSTS } from './retailers';
 import { DEPARTMENTS, featuredDepartment } from './market.catalog';
 
-const SRC = readFileSync('src/modules/market/market.service.ts', 'utf8');
+const SERVICE = readFileSync('src/modules/market/market.service.ts', 'utf8');
+const PROVIDERS = readFileSync('src/modules/market/providers.ts', 'utf8');
+const PAGE = readFileSync('web/market.html', 'utf8');
 
-/** A Shopify suggest payload, in the shape the real endpoint returns. */
-function shopifyBody(products: Array<Record<string, unknown>>) {
-  return { resources: { results: { products } } };
-}
-
-function product(over: Record<string, unknown> = {}) {
-  return {
-    id: 1,
-    title: 'Lucid Truth',
-    url: '/products/lucid-truth?_pos=1&_psq=truth&_ss=e',
-    price: '16.99',
-    price_min: '16.99',
-    price_max: '16.99',
-    compare_at_price_min: '0.00',
-    available: true,
-    featured_image: { url: 'https://cdn.shopify.com/x.jpg' },
-    vendor: 'Dynamic Discs',
-    type: 'Discs',
-    ...over,
-  };
-}
-
-/** A fetch stand-in: route by host substring, so no network is touched. */
+/** A fetch stand-in routed by url substring; no network is touched. */
 function fakeFetch(routes: Record<string, () => unknown>, log?: string[]) {
   return (async (url: string | URL) => {
     const u = String(url);
     log?.push(u);
     const key = Object.keys(routes).find((k) => u.includes(k));
-    if (!key) return { ok: true, json: async () => shopifyBody([]) } as unknown as Response;
-    const out = routes[key]!();
+    const out = key ? routes[key]!() : '';
     if (out instanceof Error) throw out;
-    if (typeof out === 'number') {
-      return { ok: false, status: out, json: async () => ({}) } as unknown as Response;
-    }
-    return { ok: true, json: async () => out } as unknown as Response;
+    if (typeof out === 'number') return { ok: false, status: out, text: async () => '' } as unknown as Response;
+    const body = typeof out === 'string' ? out : JSON.stringify(out);
+    return { ok: true, text: async () => body, json: async () => JSON.parse(body) } as unknown as Response;
   }) as unknown as typeof fetch;
 }
 
-test('a price of zero is a parse failure, not a free disc', () => {
-  assert.equal(parsePrice('0.00'), null);
-  assert.equal(parsePrice(''), null);
-  assert.equal(parsePrice('not a price'), null);
-  assert.equal(parsePrice('16.99'), 16.99);
-  assert.equal(parsePrice(16.99), 16.99);
+function productPage(price: string, currency = 'USD', avail = 'InStock') {
+  return `<html><head><script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: 'Discraft ESP Buzzz',
+    image: 'https://cdn.example/x.jpg',
+    offers: { '@type': 'Offer', price, priceCurrency: currency, availability: `https://schema.org/${avail}` },
+  })}</script></head><body></body></html>`;
+}
+
+/* ── the extractor ──────────────────────────────────────────────────── */
+
+test('a price is read from JSON-LD, OpenGraph or microdata', () => {
+  const ld = extractPrice(productPage('18.99'));
+  assert.equal(ld?.price, 18.99);
+  assert.equal(ld?.how, 'json-ld');
+  assert.equal(ld?.available, true);
+
+  const og = extractPrice('<meta property="og:price:amount" content="24.50"><meta property="og:price:currency" content="GBP">');
+  assert.equal(og?.price, 24.5);
+  assert.equal(og?.currency, 'GBP');
+  assert.equal(og?.how, 'opengraph');
+
+  // Attribute order is reversed on plenty of real pages.
+  const flipped = extractPrice('<meta content="11.00" property="product:price:amount">');
+  assert.equal(flipped?.price, 11);
+
+  const micro = extractPrice('<span itemprop="price" content="7.25"></span>');
+  assert.equal(micro?.price, 7.25);
+  assert.equal(micro?.how, 'microdata');
 });
 
-test('the product link is absolute, on the shop, and carries no search tracking', () => {
-  const url = productUrl('dynamicdiscs.com', '/products/lucid-truth?_pos=1&_psq=truth&_ss=e&variant=7');
-  assert.equal(url, 'https://dynamicdiscs.com/products/lucid-truth?variant=7');
-  // A url that leaves the shop is not that shop's product, whatever it claims.
-  assert.equal(productUrl('dynamicdiscs.com', 'https://evil.example/products/x'), null);
-  assert.equal(productUrl('dynamicdiscs.com', ''), null);
+test('a page with no price markup yields nothing, never a guess', () => {
+  // The banner is exactly what a loose "$\\d+" regex would grab.
+  const page = '<html><body><p>Free shipping on orders over $50!</p><h1>Buzzz</h1></body></html>';
+  assert.equal(extractPrice(page), null, 'a price was invented from body text');
 });
 
-test('a compare-at price at or below the price is not a sale', () => {
-  const shop = RETAILERS[0]!;
-  const noSale = normalise(product({ compare_at_price_min: '16.99' }), shop, 'USD', 'Shop');
-  assert.equal(noSale!.compareAt, null, 'an equal compare-at was shown as a discount');
-  const zeroed = normalise(product({ compare_at_price_min: '0.00' }), shop, 'USD', 'Shop');
-  assert.equal(zeroed!.compareAt, null, "Shopify's empty default was shown as a discount");
-  const real = normalise(product({ compare_at_price_min: '24.99' }), shop, 'USD', 'Shop');
-  assert.equal(real!.compareAt, 24.99);
+test('a European decimal comma is not read as thousands', () => {
+  assert.equal(toNumber('1.299,00'), 1299);
+  assert.equal(toNumber('1,299.00'), 1299);
+  assert.equal(toNumber('18,99'), 18.99);
+  assert.equal(toNumber('0.00'), null, 'zero was treated as a real price');
+  assert.equal(toNumber('free'), null);
 });
 
-test('a product with no usable link is dropped rather than rendered dead', () => {
-  const shop = RETAILERS[0]!;
-  assert.equal(normalise(product({ url: '' }), shop, 'USD', 'S'), null);
-  assert.equal(normalise(product({ title: '  ' }), shop, 'USD', 'S'), null);
+test('malformed JSON-LD does not abandon the rest of the page', () => {
+  const page =
+    '<script type="application/ld+json">{ this is not json </script>' + productPage('9.99');
+  assert.equal(extractPrice(page)?.price, 9.99);
 });
 
-test('one shop failing never costs the search, and is reported as down', async () => {
+test('only product-shaped urls are fetched, and never a reference site', () => {
+  assert.equal(looksLikeProduct('https://shop.example/products/buzzz'), true);
+  assert.equal(looksLikeProduct('https://shop.example/p/123'), true);
+  assert.equal(looksLikeProduct('https://en.wikipedia.org/wiki/Discraft'), false);
+  assert.equal(looksLikeProduct('https://www.reddit.com/r/discgolf/products/x'), false);
+  assert.equal(looksLikeProduct('https://brand.example/about'), false);
+});
+
+/* ── the search ─────────────────────────────────────────────────────── */
+
+test('a bare query is given the sport, so "buzzz" does not find a bee', () => {
+  assert.match(shapeQuery('buzzz'), /disc golf/);
+  // Already said it: do not say it twice.
+  assert.equal(shapeQuery('disc golf bag'), 'disc golf bag');
+  assert.equal(shapeQuery('understable putter'), 'understable putter');
+});
+
+test('with no key the Market says so rather than implying it searched the web', async () => {
+  const svc = createMarketService({ fetchImpl: fakeFetch({}), keys: {}, hosts: [] });
+  assert.equal(svc.status().webSearch, false, 'claimed a web search with no engine configured');
+  const r = await svc.search('buzzz');
+  assert.equal(r.fallbackOnly, true);
+});
+
+test('a configured engine is used and its retailer names are kept', async () => {
   const svc = createMarketService({
+    hosts: [],
+    keys: { serpApiKey: 'k' },
     fetchImpl: fakeFetch({
-      'meta.json': () => ({ name: 'Shop', currency: 'USD' }),
-      'dynamicdiscs.com/search': () => 404,
-      'search/suggest.json': () => shopifyBody([product()]),
+      'serpapi.com': () => ({
+        shopping_results: [
+          { title: 'Discraft Buzzz', extracted_price: 15.99, source: 'Infinite Discs', link: 'https://infinitediscs.com/products/buzzz', thumbnail: 't' },
+          { title: 'Buzzz OS', price: '$21.00', source: 'Marshall Street', link: 'https://marshallstreet.example/products/os' },
+        ],
+      }),
     }),
   });
-  const r = await svc.search('truth');
-  const down = r.shops.filter((s) => !s.ok);
-  assert.equal(down.length, 1, 'the failing shop was not isolated');
-  assert.equal(down[0]!.key, 'dynamic-discs');
-  assert.match(down[0]!.error ?? '', /404/);
-  assert.ok(r.products.length > 0, 'one dead shop emptied the whole page');
-  assert.equal(r.shops.length, RETAILERS.length, 'a dead shop vanished instead of reporting itself');
+  assert.equal(svc.status().webSearch, true);
+  const r = await svc.search('buzzz');
+  assert.equal(r.products.length, 2);
+  assert.equal(r.products[0]!.retailer, 'Infinite Discs', "the engine's retailer name was discarded");
+  assert.equal(r.products[0]!.price, 15.99);
+  assert.equal(r.products[1]!.price, 21, 'a display price string was not parsed');
+  assert.equal(r.fallbackOnly, false);
+});
+
+test('a web engine turns results into prices by reading each page', async () => {
+  const svc = createMarketService({
+    hosts: [],
+    keys: { braveKey: 'k' },
+    fetchImpl: fakeFetch({
+      'api.search.brave.com': () => ({
+        web: {
+          results: [
+            { url: 'https://shopa.example/products/buzzz' },
+            { url: 'https://en.wikipedia.org/wiki/Discraft' }, // must not be fetched
+            { url: 'https://shopb.example/products/buzzz' },
+          ],
+        },
+      }),
+      'shopa.example': () => productPage('14.00'),
+      'shopb.example': () => productPage('19.00'),
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.deepEqual(r.products.map((p) => p.retailer).sort(), ['shopa.example', 'shopb.example']);
+  assert.equal(r.cheapest, 14);
 });
 
 test('prices in different currencies are never compared', async () => {
   const svc = createMarketService({
+    hosts: [],
+    keys: { braveKey: 'k' },
     fetchImpl: fakeFetch({
-      // One shop quotes in SEK; everything else in USD.
-      'kastaplast.se/meta.json': () => ({ name: 'Kastaplast', currency: 'SEK' }),
-      'meta.json': () => ({ name: 'Shop', currency: 'USD' }),
-      'kastaplast.se/search': () => shopifyBody([product({ id: 9, price: '99.00' })]),
-      'search/suggest.json': () => shopifyBody([product({ price: '16.99' })]),
+      'api.search.brave.com': () => ({
+        web: { results: [{ url: 'https://us.example/products/a' }, { url: 'https://uk.example/products/b' }] },
+      }),
+      'us.example': () => productPage('20.00', 'USD'),
+      'uk.example': () => productPage('9.00', 'GBP'),
     }),
   });
-  const r = await svc.search('truth');
-  assert.ok(
-    r.products.some((p) => p.currency === 'SEK') && r.products.some((p) => p.currency === 'USD'),
-    'the fixture did not actually produce two currencies'
-  );
+  const r = await svc.search('buzzz');
+  assert.equal(r.products.length, 2, 'the fixture did not produce two currencies');
   assert.equal(r.cheapest, null, 'a cheapest price was claimed across two currencies');
   assert.equal(r.currency, null);
-  // And the ordering groups by currency rather than interleaving the numbers.
   const codes = r.products.map((p) => p.currency);
-  assert.deepEqual([...codes].sort(), codes, 'two currencies were sorted together by raw price');
+  assert.deepEqual([...codes].sort(), codes, 'two currencies were interleaved by raw price');
 });
 
-test('with one currency the cheapest in-stock price is reported', async () => {
+test('a failing source is reported, never silently dropped', async () => {
   const svc = createMarketService({
-    fetchImpl: fakeFetch({
-      'meta.json': () => ({ name: 'Shop', currency: 'USD' }),
-      'dynamicdiscs.com/search': () => shopifyBody([product({ price: '9.99' })]),
-      'search/suggest.json': () => shopifyBody([product({ price: '16.99' })]),
-    }),
+    hosts: [],
+    keys: { serpApiKey: 'k' },
+    fetchImpl: fakeFetch({ 'serpapi.com': () => 503 }),
   });
-  const r = await svc.search('truth');
-  assert.equal(r.currency, 'USD');
-  assert.equal(r.cheapest, 9.99);
+  const r = await svc.search('buzzz');
+  const bad = r.sources.find((s) => !s.ok);
+  assert.ok(bad, 'the dead engine did not report itself');
+  assert.match(bad!.error ?? '', /503/);
 });
 
-test('a sold-out product is never the cheapest price we advertise', async () => {
+test('the same listing from two sources appears once', async () => {
   const svc = createMarketService({
+    hosts: ['shopa.example'],
+    keys: { serpApiKey: 'k' },
     fetchImpl: fakeFetch({
-      'meta.json': () => ({ name: 'Shop', currency: 'USD' }),
-      'dynamicdiscs.com/search': () => shopifyBody([product({ price: '1.00', available: false })]),
-      'search/suggest.json': () => shopifyBody([product({ price: '16.99' })]),
-    }),
-  });
-  const r = await svc.search('truth');
-  assert.equal(r.cheapest, 16.99, 'a sold-out listing set the headline price');
-});
-
-test('a throttle is retried; a refusal is not', async () => {
-  for (const [status, expectedCalls] of [[503, 2], [429, 2], [404, 1], [403, 1]] as const) {
-    let calls = 0;
-    const svc = createMarketService({
-      fetchImpl: fakeFetch({
-        'meta.json': () => ({ name: 'S', currency: 'USD' }),
-        'dynamicdiscs.com/search': () => {
-          calls++;
-          return status;
-        },
+      'serpapi.com': () => ({
+        shopping_results: [
+          { title: 'Buzzz', extracted_price: 16, source: 'Shop A', link: 'https://shopa.example/products/buzzz' },
+        ],
       }),
-    });
-    await svc.search('truth', { retailer: 'dynamic-discs' });
-    assert.equal(calls, expectedCalls, `HTTP ${status} was retried ${calls} time(s)`);
-  }
+      'meta.json': () => ({ currency: 'USD', name: 'Shop A' }),
+      'suggest.json': () => ({
+        resources: { results: { products: [{ id: 1, title: 'Buzzz', url: '/products/buzzz?_pos=1', price: '16.00', available: true }] } },
+      }),
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.equal(r.products.length, 1, 'one listing was shown twice');
+  // The storefront entry knows the stock state, so it is the one kept.
+  assert.equal(r.products[0]!.available, true, 'the entry that knew stock was discarded');
 });
 
-test('a blank query touches no shop at all', async () => {
+test("a storefront's own currency is read, not assumed", async () => {
+  const svc = createMarketService({
+    hosts: ['discgolfuk.com'],
+    keys: {},
+    fetchImpl: fakeFetch({
+      'meta.json': () => ({ currency: 'GBP', name: 'Disc Golf UK' }),
+      'suggest.json': () => ({
+        resources: { results: { products: [{ id: 2, title: 'Putter', url: '/products/putter', price: '12.00', available: true }] } },
+      }),
+    }),
+  });
+  const r = await svc.search('putter');
+  assert.equal(r.products[0]!.currency, 'GBP', 'a GBP shop was reported in dollars');
+});
+
+test('a blank query touches nothing', async () => {
   const log: string[] = [];
-  const svc = createMarketService({ fetchImpl: fakeFetch({}, log) });
+  const svc = createMarketService({ fetchImpl: fakeFetch({}, log), keys: { serpApiKey: 'k' } });
   const r = await svc.search('   ');
   assert.equal(r.products.length, 0);
-  assert.equal(log.length, 0, 'a blank query still went out to the shops');
+  assert.equal(log.length, 0, 'a blank query still went out');
 });
 
-test('the fan-out stays below the burst that throttles us', () => {
-  // Eleven at once came back with three shops falsely reporting 503. The
-  // number matters, so it is pinned with the reason beside it.
-  assert.ok(FAN_OUT_LIMIT <= 6, 'the fan-out is back at a burst size that self-throttles');
-  assert.match(SRC, /Promise\.all\(workers\)/, 'the pool no longer bounds concurrency');
-});
-
-test('the search is raced against a timeout it cannot exceed', () => {
-  assert.match(SRC, /new AbortController\(\)/, 'a slow shop can hang the whole page');
-  assert.match(SRC, /signal: ctl\.signal/, 'the abort signal is not passed to fetch');
-});
-
-test('every department is a real query, and the featured one is a department', () => {
-  assert.ok(DEPARTMENTS.length >= 6);
-  for (const d of DEPARTMENTS) {
-    assert.ok(d.query.trim().length > 2, `${d.key} has no real query`);
-    assert.ok(d.why.trim().length > 10, `${d.key} has no reason to exist`);
-  }
-  const keys = new Set(DEPARTMENTS.map((d) => d.key));
-  assert.equal(keys.size, DEPARTMENTS.length, 'two departments share a key');
-  // Rotation must land inside the list on every day, including the wrap.
-  for (const day of [0, 1, 9, 10, 365, 20000]) {
-    const f = featuredDepartment(new Date(day * 86_400_000));
-    assert.ok(keys.has(f.key), `day ${day} featured something that is not a department`);
-  }
-});
-
-test('every retailer is distinct and addressed by host only', () => {
-  const keys = new Set(RETAILERS.map((r) => r.key));
-  const hosts = new Set(RETAILERS.map((r) => r.host));
-  assert.equal(keys.size, RETAILERS.length, 'two retailers share a key');
-  assert.equal(hosts.size, RETAILERS.length, 'two retailers share a host');
-  for (const r of RETAILERS) {
-    assert.ok(!r.host.includes('/'), `${r.key} host carries a path`);
-    assert.ok(!r.host.startsWith('http'), `${r.key} host carries a scheme`);
-  }
-});
-
-test("the shop's own name and currency win over the hand-typed fallback", async () => {
-  const svc = createMarketService({
-    fetchImpl: fakeFetch({
-      'meta.json': () => ({ name: 'Sabattus Disc Golf, Inc.', currency: 'USD' }),
-    }),
-  });
-  const shops = await svc.shops();
-  assert.ok(
-    shops.every((s) => s.name === 'Sabattus Disc Golf, Inc.'),
-    'the fallback name was used although the shop published its own'
-  );
-  assert.match(SRC, /meta\.json/, 'the shop identity is no longer read from the shop');
-});
-
-test('a search is cached, so a page does not re-hit eleven shops per keystroke', async () => {
+test('a repeat search is cached rather than re-run', async () => {
   const log: string[] = [];
   const svc = createMarketService({
-    fetchImpl: fakeFetch({ 'meta.json': () => ({ name: 'S', currency: 'USD' }) }, log),
+    hosts: [],
+    keys: { serpApiKey: 'k' },
+    fetchImpl: fakeFetch({ 'serpapi.com': () => ({ shopping_results: [] }) }, log),
   });
-  await svc.search('truth');
+  await svc.search('buzzz');
   const after = log.length;
-  const second = await svc.search('TRUTH  ');
-  assert.equal(second.cached, true, 'the repeat search was not served from cache');
-  assert.equal(log.length, after, 'the repeat search went back out to the shops');
+  const again = await svc.search('BUZZZ ');
+  assert.equal(again.cached, true);
+  assert.equal(log.length, after, 'the repeat search went back out');
+});
+
+/* ── structure ──────────────────────────────────────────────────────── */
+
+test('nothing about a product is stored', () => {
+  // The module has no repo and must not grow one: a cached price is a price
+  // eventually shown wrongly.
+  assert.ok(!/INSERT INTO|UPDATE .* SET|db\.query/i.test(SERVICE), 'the Market started writing to the database');
+  assert.ok(!/INSERT INTO|db\.query/i.test(PROVIDERS), 'a provider started writing to the database');
+});
+
+test('every request is raced against a timeout', () => {
+  assert.match(PROVIDERS, /new AbortController\(\)/, 'a slow retailer can hang the page');
+  assert.match(PROVIDERS, /signal: ctl\.signal/, 'the abort signal is not passed to fetch');
+  assert.match(SERVICE, /Promise\.allSettled/, 'one failing source now fails the whole search');
+});
+
+test('the page never lists shops to browse', () => {
+  // The Market is a search. A fixed shop list in the UI is the thing that was
+  // explicitly not wanted, and a filter row is how it creeps back.
+  assert.ok(!/data-shop=/.test(PAGE), 'a shop filter row came back to the Market page');
+  assert.ok(!/shopcount|All shops/i.test(PAGE), 'the page advertises a shop list again');
+});
+
+test('every department is a real query and the featured one is a department', () => {
+  const keys = new Set(DEPARTMENTS.map((d) => d.key));
+  assert.equal(keys.size, DEPARTMENTS.length, 'two departments share a key');
+  for (const d of DEPARTMENTS) assert.ok(d.query.trim().length > 2, `${d.key} has no query`);
+  for (const day of [0, 1, 9, 365, 20000]) {
+    assert.ok(keys.has(featuredDepartment(new Date(day * 86_400_000)).key), `day ${day} featured a non-department`);
+  }
+});
+
+test('storefront hosts are distinct and bare', () => {
+  assert.equal(new Set(STOREFRONT_HOSTS).size, STOREFRONT_HOSTS.length, 'a host is listed twice');
+  for (const s of STOREFRONTS) {
+    assert.ok(!s.host.includes('/') && !s.host.startsWith('http'), `${s.host} is not a bare host`);
+    assert.match(s.currency, /^[A-Z]{3}$/, `${s.host} has no ISO currency`);
+  }
 });

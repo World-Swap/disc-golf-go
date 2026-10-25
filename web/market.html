@@ -120,15 +120,15 @@
   <main class="app">
     <header class="topbar">
       <span class="topbar__title">Market</span>
-      <span class="pill" id="shopcount">—</span>
+      <span class="pill" id="reach">—</span>
     </header>
     <div class="screen stack">
       <div>
         <p class="section-label">Every shop at once</p>
         <h1 class="h-display">MARKET<span class="mark" style="width:38%"></span></h1>
         <p class="mnote" id="lede">
-          Live prices and live stock from disc golf shops, searched together.
-          We are not a shop — every result opens on the retailer's own page.
+          Search anything disc golf and see what it costs. We are not a shop —
+          every result opens on the retailer's own page.
         </p>
       </div>
 
@@ -157,7 +157,10 @@
       // re-asking the server rather than by hiding cards: a filter that only
       // hides what was already fetched would show "4 shops" while quietly
       // having searched eleven.
-      var state = { shops: [], departments: [], retailer: '', last: null, mode: 'browse' };
+      // No shop list. The Market is a search: you type what you want and each
+      // result names the retailer selling it. A filter row of shops is exactly
+      // the "browse our shops" shape this is not.
+      var state = { departments: [], last: null, mode: 'browse', web: false };
 
       function money(n, ccy) {
         if (n === null || n === undefined) return '';
@@ -171,9 +174,13 @@
       }
 
       function card(p) {
-        var flag = !p.available
+        // available is a TRISTATE: true, false, or null when the source does
+        // not say. Only `false` is "Sold out" -- treating null as sold out
+        // would mark every web-search result out of stock, since Google
+        // Shopping does not report stock at all.
+        var flag = p.available === false
           ? '<span class="card__flag card__flag--out">Sold out</span>'
-          : p.compareAt ? '<span class="card__flag card__flag--sale">Sale</span>' : '';
+          : '';
         var shot = p.image
           ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" />'
           : '<span class="card__none" aria-hidden="true">\u{1F94F}</span>';
@@ -182,29 +189,27 @@
           '<span class="card__body">' +
             '<span class="card__title">' + esc(p.title) + '</span>' +
             '<span class="card__price">' + esc(money(p.price, p.currency)) + '</span>' +
-            (p.compareAt ? '<span class="card__was">' + esc(money(p.compareAt, p.currency)) + '</span>' : '') +
-            '<span class="card__shop">' + esc(p.retailerName) + '</span>' +
+            '<span class="card__shop">' + esc(p.retailer) + '</span>' +
           '</span>' +
         '</a>';
       }
 
-      function filterRow() {
-        var all = '<button class="chip" type="button" data-shop="" aria-pressed="' +
-          (state.retailer ? 'false' : 'true') + '">All shops</button>';
-        return '<div class="filters">' + all + state.shops.map(function (s) {
-          return '<button class="chip" type="button" data-shop="' + esc(s.key) + '" aria-pressed="' +
-            (state.retailer === s.key ? 'true' : 'false') + '">' + esc(s.name) + '</button>';
-        }).join('') + '</div>';
-      }
-
       // Shops that did not answer are NAMED. A marketplace quietly showing
       // nine of eleven looks complete and is not.
-      function downNote(shops) {
-        var down = (shops || []).filter(function (s) { return !s.ok; });
+      function downNote(sources) {
+        var down = (sources || []).filter(function (s) { return !s.ok; });
         if (!down.length) return '';
         return '<p class="mdown">Could not reach ' + down.map(function (d) {
-          return esc(d.name) + (d.error ? ' (' + esc(d.error) + ')' : '');
+          return esc(d.label) + (d.error ? ' (' + esc(d.error) + ')' : '');
         }).join(', ') + '. Everything else is live.</p>';
+      }
+
+      // Said plainly when no search key is configured: the reach is a set of
+      // storefronts, not the web, and the page must not imply otherwise.
+      function reachNote(d) {
+        if (!d.fallbackOnly) return '';
+        return '<p class="mdown">Searching disc golf storefronts directly. ' +
+          'Web search is not switched on, so this reaches fewer shops than it could.</p>';
       }
 
       function resultHead(d) {
@@ -212,10 +217,14 @@
         var cheap = d.cheapest !== null && d.cheapest !== undefined
           ? ' · from ' + money(d.cheapest, d.currency)
           : '';
-        var ok = (d.shops || []).filter(function (s) { return s.ok; }).length;
+        // Count the RETAILERS in the results, not the sources we asked --
+        // "12 shops" means twelve shops sell this, which is the useful fact.
+        var shops = {};
+        (d.products || []).forEach(function (p) { shops[p.retailer] = 1; });
+        var ns = Object.keys(shops).length;
         return '<div class="mhead">' +
             '<p class="section-label" style="margin:0">' + esc(d.department ? d.department.label : d.query) + '</p>' +
-            '<span class="mhead__n">' + n + ' from ' + ok + ' shop' + (ok === 1 ? '' : 's') + esc(cheap) + '</span>' +
+            '<span class="mhead__n">' + n + ' from ' + ns + ' retailer' + (ns === 1 ? '' : 's') + esc(cheap) + '</span>' +
           '</div>';
       }
 
@@ -227,8 +236,8 @@
         view.className = 'stack';
         view.innerHTML =
           resultHead(d) +
-          filterRow() +
-          downNote(d.shops) +
+          reachNote(d) +
+          downNote(d.sources) +
           body +
           '<p class="mnote">Prices and stock read from each shop just now. They set them, and they can change them — check the shop before you buy.</p>' +
           '<div><p class="section-label">Browse</p>' + deptGrid() + '</div>';
@@ -249,24 +258,17 @@
         view.className = 'stack';
         view.innerHTML =
           '<div><p class="section-label">Browse</p>' + deptGrid() + '</div>' +
-          filterRow() +
-          '<p class="mnote">' + state.shops.length + ' shops searched together. ' +
-            'Nothing here is ours — we take no payment and hold no stock; every result opens on the shop’s own page.</p>';
+          '<p class="mnote">Search anything disc golf and see what it costs across retailers. ' +
+            'Nothing here is ours \u2014 we take no payment and hold no stock; every result opens ' +
+            'on the retailer\u2019s own page.</p>' +
+          (state.web ? '' : '<p class="mdown">Web search is not switched on yet, so this currently ' +
+            'reaches a set of disc golf storefronts rather than the whole web.</p>');
         wire();
       }
 
       function wire() {
         [].forEach.call(view.querySelectorAll('[data-dept]'), function (b) {
           b.addEventListener('click', function () { loadDept(b.dataset.dept); });
-        });
-        [].forEach.call(view.querySelectorAll('[data-shop]'), function (b) {
-          b.addEventListener('click', function () {
-            state.retailer = b.dataset.shop;
-            // Re-ask rather than hide: see state.retailer above.
-            if (state.mode === 'dept') loadDept(state.deptKey);
-            else if (state.mode === 'search') search(state.query);
-            else renderBrowse();
-          });
         });
       }
 
@@ -276,14 +278,10 @@
         view.innerHTML = '<div class="error">' + esc((e && e.message) || 'Could not reach the shops') + '</div>';
       }
 
-      function rq(path) {
-        return path + (state.retailer ? (path.indexOf('?') >= 0 ? '&' : '?') + 'retailer=' + encodeURIComponent(state.retailer) : '');
-      }
-
       async function loadDept(key) {
         state.mode = 'dept'; state.deptKey = key;
         busy();
-        try { renderResults(await API.get(rq('/market/department/' + encodeURIComponent(key)))); }
+        try { renderResults(await API.get('/market/department/' + encodeURIComponent(key))); }
         catch (e) { fail(e); }
       }
 
@@ -293,7 +291,7 @@
         state.mode = 'search'; state.query = q;
         qIn.value = q;
         busy();
-        try { renderResults(await API.get(rq('/market/search?q=' + encodeURIComponent(q)))); }
+        try { renderResults(await API.get('/market/search?q=' + encodeURIComponent(q))); }
         catch (e) { fail(e); }
       }
 
@@ -302,9 +300,9 @@
       (async function init() {
         try {
           var d = await API.get('/market');
-          state.shops = d.shops || [];
           state.departments = d.departments || [];
-          document.getElementById('shopcount').textContent = state.shops.length + ' shops';
+          state.web = !!d.webSearch;
+          document.getElementById('reach').textContent = state.web ? 'web search' : 'storefronts';
           // A deep link wins over the front page, so a shared search opens on
           // what was shared rather than on the department of the day.
           var usp = new URLSearchParams(location.search);
