@@ -18,8 +18,12 @@
 //     only claimed when every result shares a currency.
 //   • A provider that fails is reported, never silently dropped.
 //   • We are not the shop: every result leaves to the retailer.
+//   • A COMMISSION CANNOT CHANGE THE RANKING. Affiliate tagging happens in
+//     affiliate.ts, applied to the array AFTER the sort below has finished,
+//     so the comparator cannot see it. See that file for the rest.
 
 import { STOREFRONT_HOSTS } from './retailers';
+import { attachAffiliate, parsePrograms, type AffiliateProgram } from './affiliate';
 import {
   serpApiShopping,
   braveWeb,
@@ -44,9 +48,12 @@ export function shapeQuery(raw: string): string {
   return /disc\s*golf|\bdisc\b|\bputter\b|\bdriver\b|\bmidrange\b/i.test(q) ? q : `${q} disc golf`;
 }
 
+/** A result as served: the hit, plus whether its link earns a commission. */
+export type MarketProduct = ProductHit & { commissioned: boolean };
+
 export type MarketSearch = {
   query: string;
-  products: ProductHit[];
+  products: MarketProduct[];
   /** Which providers ran, so the page can say where this came from. */
   sources: Array<{ key: string; label: string; ok: boolean; count: number; error?: string }>;
   cheapest: number | null;
@@ -69,6 +76,8 @@ export type MarketDeps = {
   now?: () => number;
   keys?: MarketKeys;
   hosts?: readonly string[];
+  /** Raw MARKET_AFFILIATE setting; absent means no programme, which is a no-op. */
+  affiliate?: string | undefined;
 };
 
 /** Two results are the same listing when the same shop sells the same thing. */
@@ -89,6 +98,9 @@ export function createMarketService(deps: MarketDeps = {}) {
   const keys = deps.keys ?? {};
   const hosts = deps.hosts ?? STOREFRONT_HOSTS;
   const cache = new Map<string, { at: number; value: MarketSearch }>();
+  // Parsed once at construction: a malformed entry should be warned about at
+  // boot, not on every search.
+  const programs: AffiliateProgram[] = parsePrograms(deps.affiliate);
 
   // Order matters: the first configured engine is preferred, because one
   // Google Shopping call already carries prices and retailers, where a web
@@ -114,6 +126,9 @@ export function createMarketService(deps: MarketDeps = {}) {
         // Named so the UI can say "searching the web" or admit it cannot.
         webSearch: configured.length > 0,
         shopCount: hosts.length,
+        // So the page can disclose the commission when, and only when, there
+        // is one to disclose.
+        affiliate: programs.length > 0,
       };
     },
 
@@ -193,7 +208,10 @@ export function createMarketService(deps: MarketDeps = {}) {
 
       const value: MarketSearch = {
         query: q,
-        products,
+        // LAST step, deliberately: `products` is already ranked and the
+        // cheapest price already read off it, so tagging cannot influence
+        // either. Only `url` changes.
+        products: attachAffiliate(products, programs),
         sources,
         cheapest: single && priced.length ? Math.min(...priced) : null,
         currency: single,

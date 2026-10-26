@@ -160,7 +160,7 @@
       // No shop list. The Market is a search: you type what you want and each
       // result names the retailer selling it. A filter row of shops is exactly
       // the "browse our shops" shape this is not.
-      var state = { departments: [], last: null, mode: 'browse', web: false };
+      var state = { departments: [], last: null, mode: 'browse', web: false, affiliate: false };
 
       function money(n, ccy) {
         if (n === null || n === undefined) return '';
@@ -240,8 +240,21 @@
           downNote(d.sources) +
           body +
           '<p class="mnote">Prices and stock read from each shop just now. They set them, and they can change them — check the shop before you buy.</p>' +
+          commissionNote() +
           '<div><p class="section-label">Browse</p>' + deptGrid() + '</div>';
         wire();
+      }
+
+      // Disclosed only when a programme is actually configured, because with
+      // none there is no commission to disclose. It states the thing a reader
+      // would reasonably suspect -- that being paid might bend the results --
+      // rather than leaving them to wonder: the ranking is price-ordered and
+      // affiliate tagging happens after it, which market/affiliate.ts enforces.
+      function commissionNote() {
+        if (!state.affiliate) return '';
+        return '<p class="mnote">Some links here earn us a commission if you buy. ' +
+          'It costs you nothing extra, and it never changes which results you see ' +
+          'or the order they are in.</p>';
       }
 
       function deptGrid() {
@@ -261,6 +274,7 @@
           '<p class="mnote">Search anything disc golf and see what it costs across retailers. ' +
             'Nothing here is ours \u2014 we take no payment and hold no stock; every result opens ' +
             'on the retailer\u2019s own page.</p>' +
+          commissionNote() +
           (state.web ? '' : '<p class="mdown">Web search is not switched on yet, so this currently ' +
             'reaches a set of disc golf storefronts rather than the whole web.</p>');
         wire();
@@ -302,6 +316,7 @@
           var d = await API.get('/market');
           state.departments = d.departments || [];
           state.web = !!d.webSearch;
+          state.affiliate = !!d.affiliate;
           document.getElementById('reach').textContent = state.web ? 'web search' : 'storefronts';
           // A deep link wins over the front page, so a shared search opens on
           // what was shared rather than on the department of the day.
