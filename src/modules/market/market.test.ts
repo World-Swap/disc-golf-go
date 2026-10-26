@@ -356,3 +356,62 @@ test('no page pins the Market to a number of shops', () => {
     assert.ok(!/Price every shop at once/i.test(copy), `${f} still carries the shop-list framing`);
   }
 });
+
+/* ── CLAUDE.md's live sections, which seed the next session's copy ────── */
+
+/**
+ * The reference part of CLAUDE.md: everything above "## Recent changes",
+ * with the Positioning block cut out.
+ *
+ * Both exclusions are load-bearing. Dated changelog entries are true-when-
+ * written and this file's own convention is that they are not revised, so
+ * they legitimately contain the wording that was later corrected. The
+ * Positioning rules QUOTE the forbidden phrases in order to forbid them --
+ * exactly the trap where prose explaining a rule trips the rule, which
+ * CLAUDE.md has now recorded four times. A guard that fired on either would
+ * be measuring something other than what it claims.
+ */
+function claudeMdReference(): string {
+  const doc = readFileSync('CLAUDE.md', 'utf8');
+  const head = doc.slice(0, doc.indexOf('\n## Recent changes'));
+  const posFrom = head.indexOf('\n## Positioning');
+  const posTo = head.indexOf('\n## Stack');
+  assert.ok(posFrom > 0 && posTo > posFrom, 'CLAUDE.md headings moved; fix this slice');
+  return head.slice(0, posFrom) + head.slice(posTo);
+}
+
+test('CLAUDE.md does not describe the Market as a set of shops', () => {
+  // The promo site and every page were corrected and CLAUDE.md was not, so
+  // its intro still said "price every disc golf shop at once" and its pivot
+  // note "searches eleven disc golf shops". That is the file a session reads
+  // before writing any copy, so stale wording there re-seeds the mistake.
+  const ref = claudeMdReference();
+  assert.ok(
+    !/\b(\d+|eleven|twelve|sixteen)\s+disc golf shops\b/i.test(ref),
+    'CLAUDE.md pins the Market to a shop count again'
+  );
+  assert.ok(
+    !/price every (disc golf )?shop at once/i.test(ref),
+    'CLAUDE.md carries the shop-list headline again'
+  );
+});
+
+test('CLAUDE.md calls it creating a scorecard, not a blank card', () => {
+  assert.ok(
+    !/blank (card|scorecard)/i.test(claudeMdReference()),
+    'CLAUDE.md describes the feature as a blank card again'
+  );
+});
+
+test('CLAUDE.md records that Throw Lab is on hold', () => {
+  // The owner put Throw Lab on permanent hold on 2026-10-26. Nothing outside
+  // this repo survives a session, so if the note goes the next session will
+  // re-offer the merge -- which is what it was told not to do.
+  const doc = readFileSync('CLAUDE.md', 'utf8');
+  assert.match(doc, /Throw Lab is on permanent hold/i, 'the hold note is gone from CLAUDE.md');
+  assert.match(
+    doc,
+    /claude\/fervent-sagan-msuwy0/,
+    'the hold note no longer names the branch that must not be merged'
+  );
+});
