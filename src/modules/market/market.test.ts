@@ -281,3 +281,78 @@ test('storefront hosts are distinct and bare', () => {
     assert.match(s.currency, /^[A-Z]{3}$/, `${s.host} has no ISO currency`);
   }
 });
+
+/* ── the marketing copy, pinned to what the Market actually is ───────── */
+
+const PROMO = readFileSync('web/promo.html', 'utf8');
+
+/**
+ * Copy a player can read.
+ *
+ * Script blocks are NOT stripped: home.html builds its cards inside an inline
+ * script, so stripping them made the guard below pass vacuously on the one
+ * page that actually had the stale wording -- it was measuring something
+ * other than what it claimed. Comments ARE stripped, in both syntaxes,
+ * because the prose explaining a rule quotes the string the rule forbids;
+ * that trap has already been recorded three times in CLAUDE.md.
+ */
+function visible(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+}
+
+test('the promo site does not describe the Market as a fixed set of shops', () => {
+  // It said "eleven disc golf shops" and named them. That was written for the
+  // version that WAS a shop list, and it went stale the moment the Market
+  // became a search -- a count tied to a config value drifts by itself.
+  const copy = visible(PROMO);
+  assert.ok(
+    !/\b(eleven|ten|twelve|sixteen|\d+)\s+disc golf shops\b/i.test(copy),
+    'the promo page pins the Market to a shop count again'
+  );
+  assert.ok(
+    !/Price every disc golf shop at once/i.test(copy),
+    'the old shop-list headline came back'
+  );
+  // And it still has to say the thing that keeps us honest.
+  assert.match(copy, /not (a|the) shop/i, 'the promo page stopped saying we are not a shop');
+});
+
+test('"blank card" is our word, not the product\'s', () => {
+  // The feature is "create a scorecard". Nothing a player reads should call
+  // it blank.
+  for (const [name, html] of [
+    ['promo.html', PROMO],
+    ['checkin.html', readFileSync('web/checkin.html', 'utf8')],
+    ['home.html', readFileSync('web/home.html', 'utf8')],
+    ['scorecard.html', readFileSync('web/scorecard.html', 'utf8')],
+  ] as const) {
+    assert.ok(
+      !/blank (card|scorecard)/i.test(visible(html)),
+      `${name} still calls it a blank card in copy a player reads`
+    );
+  }
+});
+
+test('the Market page and the promo page agree that it is a search', () => {
+  assert.match(visible(PAGE), /Search anything disc golf/i, 'the app page stopped calling it a search');
+  assert.match(visible(PROMO), /Search anything disc golf/i, 'the promo page stopped calling it a search');
+});
+
+
+test('no page pins the Market to a number of shops', () => {
+  // "11 disc golf shops" sat on the Home card after the promo page had been
+  // corrected -- the same claim, one file over. The count is a config value
+  // and drifts by itself, so no copy anywhere may state it.
+  for (const f of ['web/home.html', 'web/market.html', 'web/checkin.html', 'web/promo.html']) {
+    const copy = visible(readFileSync(f, 'utf8'));
+    assert.ok(
+      !/\b(\d+|eleven|twelve|sixteen)\s+(disc golf )?shops\b/i.test(copy),
+      `${f} states how many shops the Market searches`
+    );
+    assert.ok(!/Price every shop at once/i.test(copy), `${f} still carries the shop-list framing`);
+  }
+});

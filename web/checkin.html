@@ -91,7 +91,7 @@
         <span class="artcard__art"></span><span class="artcard__scrim"></span>
         <span class="artcard__body">
           <span class="artcard__eyebrow">Scorecard</span>
-          <span class="artcard__title">Start a blank card&nbsp;&rarr;</span>
+          <span class="artcard__title">Create a scorecard&nbsp;&rarr;</span>
           <span class="artcard__sub">Any course, any number of holes. Every hole starts at
             par 3 &mdash; change the 4s and 5s as you reach them.</span>
         </span>
@@ -360,7 +360,7 @@
       function loadNear() {
         if (!navigator.geolocation) {
           near.innerHTML = nearHtml('<p class="play-intro">Turn on location to see courses near you, ' +
-            'or start a blank card below.</p>');
+            'or create a scorecard below.</p>');
           return;
         }
         near.innerHTML = nearHtml('<div class="loading">Looking for courses near you…</div>');
@@ -373,7 +373,7 @@
           if (settled) return;
           settled = true;
           near.innerHTML = nearHtml('<p class="play-intro">Still waiting on location. ' +
-            'Start a blank card below, or <a href="/courses">browse by state</a>.</p>');
+            'Create a scorecard below, or <a href="/courses">browse by state</a>.</p>');
         }, 12000);
 
         navigator.geolocation.getCurrentPosition(async function (pos) {
@@ -384,7 +384,7 @@
             var list = (d.courses || []).slice(0, 8);
             if (!list.length) {
               near.innerHTML = nearHtml('<p class="play-intro">No courses on the map within 25 miles. ' +
-                'Start a blank card below and name it yourself.</p>');
+                'Create a scorecard below and name it yourself.</p>');
               return;
             }
             near.innerHTML = nearHtml('<div class="rows">' + list.map(courseRow).join('') + '</div>' +
@@ -392,13 +392,13 @@
               'Missing one? <a href="/courses">Browse by state</a>.</p>');
           } catch (e) {
             near.innerHTML = nearHtml('<p class="play-intro">Could not reach the course map. ' +
-              'Start a blank card below, or <a href="/courses">browse by state</a>.</p>');
+              'Create a scorecard below, or <a href="/courses">browse by state</a>.</p>');
           }
         }, function () {
           if (settled) return;
           settled = true; clearTimeout(giveUp);
           near.innerHTML = nearHtml('<p class="play-intro">Location is off, so we cannot see what is near you. ' +
-            'Start a blank card below, or <a href="/courses">browse by state</a>.</p>');
+            'Create a scorecard below, or <a href="/courses">browse by state</a>.</p>');
         }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
       }
 
