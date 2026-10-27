@@ -214,8 +214,14 @@
 
       function resultHead(d) {
         var n = d.products.length;
+        // "from $4.00" would imply $4.00 is the floor of everything shown, and
+        // it is not when the set holds more than one currency -- the server
+        // reports the minimum WITHIN one currency and never converts. So when
+        // the set is mixed, name the currency the figure belongs to. Same rule
+        // as naming a retailer we could not reach: do not look complete when
+        // you are not.
         var cheap = d.cheapest !== null && d.cheapest !== undefined
-          ? ' · from ' + money(d.cheapest, d.currency)
+          ? ' · from ' + money(d.cheapest, d.currency) + (d.mixedCurrency ? ' in ' + d.currency : '')
           : '';
         // Count the RETAILERS in the results, not the sources we asked --
         // "12 shops" means twelve shops sell this, which is the useful fact.

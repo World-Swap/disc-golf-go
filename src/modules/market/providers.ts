@@ -25,7 +25,7 @@
 // search and would be dishonest to present as one.
 
 import { extractPrice, looksLikeProduct, toNumber } from './extract';
-import { CURRENCY_BY_HOST } from './retailers';
+import { CURRENCY_BY_HOST, PLATFORM_BY_HOST } from './retailers';
 
 export type ProductHit = {
   title: string;
@@ -98,6 +98,55 @@ function hostLabel(urlOrHost: string): string {
     host = urlOrHost.replace(/^https?:\/\//, '').split('/')[0] ?? urlOrHost;
   }
   return host.replace(/^www\./, '').replace(/^store\./, '') || 'shop';
+}
+
+/**
+ * Decode the HTML entities a storefront puts in a product name.
+ *
+ * WooCommerce serves names entity-encoded -- a real one is "Paul McBeth ESP
+ * Buzzz SS &#8211; 6-Claw", where &#8211; is an en dash -- so without this the
+ * card prints the raw entity at the player.
+ */
+export function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_m, d: string) => safeCodePoint(Number(d)))
+    .replace(/&#x([0-9a-f]+);/gi, (_m, h: string) => safeCodePoint(parseInt(h, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    // Ampersand LAST: doing it first would turn "&amp;#38;" into "&#38;" and
+    // then decode that too, which is how a double-decode produces characters
+    // the shop never sent.
+    .replace(/&amp;/g, '&');
+}
+
+function safeCodePoint(n: number): string {
+  if (!Number.isFinite(n) || n < 32 || n > 0x10ffff) return '';
+  try {
+    return String.fromCodePoint(n);
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * A product url made absolute, stripped of tracking parameters, and REJECTED
+ * if it leaves the shop -- a result card names the retailer it sends you to,
+ * so a link going elsewhere makes that name a lie.
+ */
+function sameHostUrl(raw: unknown, host: string): string | null {
+  if (typeof raw !== 'string' || !raw) return null;
+  let abs: URL;
+  try {
+    abs = new URL(raw, `https://${host}`);
+  } catch {
+    return null;
+  }
+  if (abs.host !== host) return null;
+  for (const k of [...abs.searchParams.keys()]) if (k.startsWith('_')) abs.searchParams.delete(k);
+  return abs.toString();
 }
 
 /** Run tasks with a ceiling on how many are in flight. */
@@ -264,14 +313,124 @@ export function googleCse(
    names the retailer that sells it, exactly as an engine-backed result does.
    It exists so the Market is not empty before a search key is configured,
    and it is narrower than the web: it can only ever find what these
-   particular shops stock.
+   particular shops stock, on the two platforms that publish a search.
+
+   There are two platform adapters because the shops that matter most are
+   split across them: the Shopify suggest endpoint could not reach OTB Discs
+   or Marshall Street at all, and those are multi-brand retailers, which are
+   the only shops that return anything for a mould they do not make.
    ──────────────────────────────────────────────────────────────────────── */
+
+/** Minor units -> major. Read, never assumed: JPY has 0, not 2. */
+export function fromMinorUnits(raw: unknown, minorUnit: unknown): number | null {
+  const s = typeof raw === 'number' ? String(raw) : typeof raw === 'string' ? raw.trim() : '';
+  if (!s) return null;
+
+  // The Store API documents an integer in minor units ("2399" is $23.99), so
+  // dividing is the normal path. A shop that deviates and sends "23.99"
+  // anyway must NOT be divided -- that would print $0.24 for a $24 disc.
+  // Detected rather than trusted, because both mistakes are 100x.
+  if (/[.,]/.test(s)) return toNumber(s);
+
+  const n = Number(s);
+  if (!Number.isFinite(n)) return null;
+  const unit = typeof minorUnit === 'number' && Number.isInteger(minorUnit) && minorUnit >= 0 && minorUnit <= 4
+    ? minorUnit
+    : 2;
+  return n / 10 ** unit;
+}
+
+/** Shopify: /search/suggest.json carries price, stock, image and url. */
+async function shopifyProducts(
+  f: Fetcher,
+  host: string,
+  query: string,
+  perShop: number,
+  currency: string
+): Promise<ProductHit[]> {
+  const url =
+    `https://${host}/search/suggest.json?q=${encodeURIComponent(query)}` +
+    `&resources[type]=product&resources[limit]=${perShop}`;
+  const body = await getJson(f, url, SEARCH_TIMEOUT_MS);
+  const rows: any[] = body?.resources?.results?.products ?? [];
+  return rows
+    .map((p): ProductHit | null => {
+      const price = toNumber(p.price ?? p.price_min);
+      const abs = sameHostUrl(p.url, host);
+      if (price === null || !abs) return null;
+      return {
+        title: decodeEntities(String(p.title ?? '').trim()) || abs,
+        price,
+        currency,
+        retailer: hostLabel(host),
+        url: abs,
+        image:
+          (p.featured_image && typeof p.featured_image.url === 'string' && p.featured_image.url) ||
+          (typeof p.image === 'string' ? p.image : null) ||
+          null,
+        available: p.available === true,
+        via: 'storefronts',
+      };
+    })
+    .filter((h): h is ProductHit => h !== null);
+}
+
+/**
+ * WooCommerce: the public Store API.
+ *
+ * Two things here are not like Shopify and both are 100x-wrong if missed.
+ * Prices come as an integer string in MINOR UNITS ("2399"), with the divisor
+ * in `prices.currency_minor_unit` beside them. And the currency is carried
+ * per product in `prices.currency_code`, which is better than a shop-level
+ * guess, so a Woo shop never needs a meta.json read or the hand-typed
+ * fallback at all.
+ */
+async function wooProducts(
+  f: Fetcher,
+  host: string,
+  query: string,
+  perShop: number,
+  fallbackCurrency: string
+): Promise<ProductHit[]> {
+  const url =
+    `https://${host}/wp-json/wc/store/v1/products?search=${encodeURIComponent(query)}` +
+    `&per_page=${perShop}`;
+  const body = await getJson(f, url, SEARCH_TIMEOUT_MS);
+  const rows: any[] = Array.isArray(body) ? body : [];
+  return rows
+    .map((p): ProductHit | null => {
+      const prices = p?.prices ?? {};
+      // For a variable product `price` is already the lowest variant, which
+      // is the "from" price -- the same meaning Shopify's price_min carries.
+      const price = fromMinorUnits(prices.price ?? prices.price_range?.min_amount, prices.currency_minor_unit);
+      const abs = sameHostUrl(p?.permalink, host);
+      if (price === null || !abs) return null;
+      const code = typeof prices.currency_code === 'string' && /^[A-Z]{3}$/.test(prices.currency_code)
+        ? prices.currency_code
+        : fallbackCurrency;
+      const image = Array.isArray(p.images) && p.images[0] && typeof p.images[0].src === 'string'
+        ? p.images[0].src
+        : null;
+      return {
+        title: decodeEntities(String(p.name ?? '').trim()) || abs,
+        price,
+        currency: code,
+        retailer: hostLabel(host),
+        url: abs,
+        image,
+        available: p.is_in_stock === true,
+        via: 'storefronts',
+      };
+    })
+    .filter((h): h is ProductHit => h !== null);
+}
+
 export function storefronts(f: Fetcher, hosts: readonly string[]): SearchProvider {
-  // A shop's own currency, read once per process from its storefront. Cached
-  // because it is identity rather than inventory -- a shop does not change
-  // currency mid-session -- and falling back to the listed value rather than
-  // dropping the shop, since not knowing the label is no reason to hide real
-  // products.
+  // A Shopify shop's own currency, read once per process from its storefront.
+  // Cached because it is identity rather than inventory -- a shop does not
+  // change currency mid-session -- and falling back to the listed value rather
+  // than dropping the shop, since not knowing the label is no reason to hide
+  // real products.
   const currencies = new Map<string, string>();
   async function currencyOf(host: string): Promise<string> {
     const hit = currencies.get(host);
@@ -296,39 +455,13 @@ export function storefronts(f: Fetcher, hosts: readonly string[]): SearchProvide
       const results = await pooled(
         hosts.map((host) => async (): Promise<ProductHit[]> => {
           try {
-            const currency = await currencyOf(host);
-            const url =
-              `https://${host}/search/suggest.json?q=${encodeURIComponent(query)}` +
-              `&resources[type]=product&resources[limit]=${perShop}`;
-            const body = await getJson(f, url, SEARCH_TIMEOUT_MS);
-            const rows: any[] = body?.resources?.results?.products ?? [];
-            return rows
-              .map((p): ProductHit | null => {
-                const price = toNumber(p.price ?? p.price_min);
-                if (price === null || typeof p.url !== 'string') return null;
-                let abs: URL;
-                try {
-                  abs = new URL(p.url, `https://${host}`);
-                } catch {
-                  return null;
-                }
-                if (abs.host !== host) return null;
-                for (const k of [...abs.searchParams.keys()]) if (k.startsWith('_')) abs.searchParams.delete(k);
-                return {
-                  title: String(p.title ?? '').trim() || abs.toString(),
-                  price,
-                  currency,
-                  retailer: hostLabel(host),
-                  url: abs.toString(),
-                  image:
-                    (p.featured_image && typeof p.featured_image.url === 'string' && p.featured_image.url) ||
-                    (typeof p.image === 'string' ? p.image : null) ||
-                    null,
-                  available: p.available === true,
-                  via: 'storefronts',
-                };
-              })
-              .filter((h): h is ProductHit => h !== null);
+            // Declared, not detected: a probe per shop per search would cost a
+            // request to answer a question that never changes.
+            const platform = PLATFORM_BY_HOST.get(host) ?? 'shopify';
+            if (platform === 'woocommerce') {
+              return await wooProducts(f, host, query, perShop, CURRENCY_BY_HOST.get(host) ?? 'USD');
+            }
+            return await shopifyProducts(f, host, query, perShop, await currencyOf(host));
           } catch {
             return [];
           }

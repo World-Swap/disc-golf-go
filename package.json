@@ -34,7 +34,8 @@
     "shots": "node scripts/store-screenshots.js",
     "art:categories": "node scripts/generate-category-art.js",
     "sitemap": "node scripts/generate-sitemap.js",
-    "art:reddit": "node scripts/generate-reddit-banner.js"
+    "art:reddit": "node scripts/generate-reddit-banner.js",
+    "market:check": "node scripts/market-check.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

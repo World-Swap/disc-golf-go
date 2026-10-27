@@ -166,8 +166,24 @@ test('prices in different currencies are never compared', async () => {
   });
   const r = await svc.search('buzzz');
   assert.equal(r.products.length, 2, 'the fixture did not produce two currencies');
-  assert.equal(r.cheapest, null, 'a cheapest price was claimed across two currencies');
-  assert.equal(r.currency, null);
+
+  // This used to assert `cheapest === null` on any mixed set. That was the
+  // IMPLEMENTATION of the rule, not the rule: refusing outright suppressed the
+  // headline on most real searches (one GBP shop was enough), so the service
+  // now reports the minimum WITHIN one currency. The condition the old
+  // assertion stood in for is the one pinned here, and it is strictly stronger
+  // because it holds for a single-currency set too -- a price and a currency
+  // can never be mismatched, and nothing is ever converted.
+  assert.ok(r.currency, 'no currency was named for the price reported');
+  const inNamed = r.products.filter((p) => p.currency === r.currency).map((p) => p.price);
+  assert.equal(r.cheapest, Math.min(...inNamed), 'the headline is not the minimum of its own currency');
+  const others = r.products.filter((p) => p.currency !== r.currency).map((p) => p.price);
+  assert.ok(
+    others.every((v) => v !== r.cheapest) || inNamed.includes(r.cheapest!),
+    'the headline came from a product in a different currency'
+  );
+  assert.equal(r.mixedCurrency, true, 'a two-currency set was not reported as mixed');
+
   const codes = r.products.map((p) => p.currency);
   assert.deepEqual([...codes].sort(), codes, 'two currencies were interleaved by raw price');
 });
@@ -414,4 +430,212 @@ test('CLAUDE.md records that Throw Lab is on hold', () => {
     /claude\/fervent-sagan-msuwy0/,
     'the hold note no longer names the branch that must not be merged'
   );
+});
+
+/* ── the WooCommerce adapter, and the two 100x traps in it ───────────── */
+
+import { fromMinorUnits, decodeEntities } from './providers';
+import { STOREFRONTS as SF, PLATFORM_BY_HOST } from './retailers';
+import { existsSync } from 'node:fs';
+
+/** One product in the shape the Store API actually serves. */
+function wooProduct(over: Record<string, unknown> = {}) {
+  return {
+    name: 'Paul McBeth ESP Buzzz SS &#8211; 6-Claw',
+    permalink: 'https://otbdiscs.com/product/paul-mcbeth-esp-buzzz-ss/',
+    is_in_stock: true,
+    images: [{ src: 'https://otbdiscs.com/wp-content/uploads/x.png' }],
+    prices: { price: '2399', currency_code: 'USD', currency_minor_unit: 2 },
+    ...over,
+  };
+}
+
+test('a WooCommerce price is minor units, so it is divided by the unit it states', () => {
+  // "2399" at minor_unit 2 is $23.99. Read as-is it is $2,399.
+  assert.equal(fromMinorUnits('2399', 2), 23.99);
+  assert.equal(fromMinorUnits(2399, 2), 23.99);
+  // The unit is READ, never assumed: JPY has none.
+  assert.equal(fromMinorUnits('2399', 0), 2399);
+  assert.equal(fromMinorUnits('2399', 3), 2.399);
+  // An absent or absurd unit falls back to 2 rather than to a guess.
+  assert.equal(fromMinorUnits('2399', undefined), 23.99);
+  assert.equal(fromMinorUnits('2399', 99), 23.99);
+  assert.equal(fromMinorUnits('', 2), null);
+  assert.equal(fromMinorUnits(null, 2), null);
+});
+
+test('a shop that sends a decimal anyway is not divided again', () => {
+  // The spec says minor units, but dividing "23.99" by 100 prints $0.24 for a
+  // $24 disc, so the decimal point is detected rather than trusted away.
+  assert.equal(fromMinorUnits('23.99', 2), 23.99);
+  assert.equal(fromMinorUnits('1.299,00', 2), 1299); // European separators
+});
+
+test('a product name is decoded, so no card prints a raw entity', () => {
+  assert.equal(decodeEntities('Buzzz SS &#8211; 6-Claw'), 'Buzzz SS – 6-Claw');
+  assert.equal(decodeEntities('Jay &amp; Sons'), 'Jay & Sons');
+  assert.equal(decodeEntities('&quot;Z&quot; Buzzz'), '"Z" Buzzz');
+  // The ampersand is decoded LAST; decoding it first would turn this into
+  // "&#38;" and then decode that too, inventing a character.
+  assert.equal(decodeEntities('A &amp;#38; B'), 'A &#38; B');
+});
+
+test('a WooCommerce host is asked the Store API, a Shopify host is not', async () => {
+  const log: string[] = [];
+  const svc = createMarketService({
+    hosts: ['otbdiscs.com', 'sabattusdiscgolf.com'],
+    keys: {},
+    fetchImpl: fakeFetch(
+      {
+        'wp-json': () => [wooProduct()],
+        'suggest.json': () => ({
+          resources: { results: { products: [{ title: 'Z Buzzz', price: '18.99', url: '/products/z-buzzz', available: true }] } },
+        }),
+        'meta.json': () => ({ currency: 'USD', name: 'Sabattus' }),
+      },
+      log
+    ),
+  });
+  const r = await svc.search('buzzz');
+  const asked = log.join(' ');
+  assert.ok(/otbdiscs\.com\/wp-json/.test(asked), 'the woo shop was not asked the Store API');
+  assert.ok(!/otbdiscs\.com\/search\/suggest/.test(asked), 'the woo shop was asked the Shopify endpoint');
+  assert.ok(/sabattusdiscgolf\.com\/search\/suggest/.test(asked), 'the shopify shop was not asked suggest.json');
+  assert.ok(!/otbdiscs\.com\/meta\.json/.test(asked), 'a woo shop was charged a meta.json read it never needs');
+  assert.equal(r.products.length, 2);
+  const woo = r.products.find((p) => p.retailer === 'otbdiscs.com')!;
+  assert.equal(woo.price, 23.99, 'the woo price was not converted from minor units');
+  assert.equal(woo.title, 'Paul McBeth ESP Buzzz SS – 6-Claw');
+  assert.equal(woo.available, true);
+});
+
+test('a WooCommerce product carries its own currency', async () => {
+  const svc = createMarketService({
+    hosts: ['otbdiscs.com'],
+    keys: {},
+    fetchImpl: fakeFetch({
+      'wp-json': () => [wooProduct({ prices: { price: '1850', currency_code: 'CAD', currency_minor_unit: 2 } })],
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.equal(r.products[0]!.currency, 'CAD', 'the product currency was overridden by a shop-level guess');
+});
+
+test('a WooCommerce link that leaves the shop is rejected', async () => {
+  const svc = createMarketService({
+    hosts: ['otbdiscs.com'],
+    keys: {},
+    fetchImpl: fakeFetch({
+      'wp-json': () => [
+        wooProduct({ permalink: 'https://not-otbdiscs.example/product/x' }),
+        wooProduct({ permalink: 'https://otbdiscs.com/product/real/?_wpnonce=abc' }),
+      ],
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.equal(r.products.length, 1, 'an off-host product url was kept');
+  assert.ok(r.products[0]!.url.startsWith('https://otbdiscs.com/'));
+  assert.ok(!r.products[0]!.url.includes('_wpnonce'), 'a tracking parameter survived');
+});
+
+/* ── a price of zero is not a price ─────────────────────────────────── */
+
+test('a listing with no positive price is dropped, not shown as free', async () => {
+  const svc = createMarketService({
+    hosts: ['otbdiscs.com'],
+    keys: {},
+    fetchImpl: fakeFetch({
+      'wp-json': () => [
+        wooProduct({ name: 'Basket Icon Pin', permalink: 'https://otbdiscs.com/product/pin/', prices: { price: '0', currency_code: 'USD', currency_minor_unit: 2 } }),
+        wooProduct(),
+      ],
+    }),
+  });
+  const r = await svc.search('basket');
+  assert.equal(r.products.length, 1, 'a zero-priced listing was kept');
+  assert.equal(r.cheapest, 23.99, 'a zero price set the headline');
+});
+
+/* ── "from $X" stays inside one currency ────────────────────────────── */
+
+test('the cheapest price is the minimum WITHIN the currency it names', async () => {
+  const svc = createMarketService({
+    hosts: [],
+    keys: { braveKey: 'k' },
+    fetchImpl: fakeFetch({
+      'api.search.brave.com': () => ({
+        web: {
+          results: [
+            { url: 'https://us1.example/products/a' },
+            { url: 'https://us2.example/products/b' },
+            { url: 'https://uk1.example/products/c' },
+          ],
+        },
+      }),
+      'us1.example': () => productPage('20.00', 'USD'),
+      'us2.example': () => productPage('30.00', 'USD'),
+      // Numerically the smallest number in the set, and in another currency:
+      // it must never be reported as "from $5".
+      'uk1.example': () => productPage('5.00', 'GBP'),
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.equal(r.products.length, 3, 'the fixture did not produce three results');
+  assert.equal(r.currency, 'USD', 'the majority currency was not chosen');
+  assert.equal(r.cheapest, 20, 'the headline crossed a currency boundary');
+  assert.equal(r.mixedCurrency, true, 'a mixed set was not reported as mixed');
+
+  // Whatever is reported must be the minimum of the products in THAT currency.
+  const inLead = r.products.filter((p) => p.currency === r.currency).map((p) => p.price);
+  assert.equal(r.cheapest, Math.min(...inLead));
+});
+
+test('a single-currency result set is not reported as mixed', async () => {
+  const svc = createMarketService({
+    hosts: [],
+    keys: { braveKey: 'k' },
+    fetchImpl: fakeFetch({
+      'api.search.brave.com': () => ({ web: { results: [{ url: 'https://us1.example/products/a' }] } }),
+      'us1.example': () => productPage('20.00', 'USD'),
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.equal(r.mixedCurrency, false);
+  assert.equal(r.currency, 'USD');
+  assert.equal(r.cheapest, 20);
+});
+
+/* ── the shop list itself ───────────────────────────────────────────── */
+
+test('every storefront declares a platform we can actually ask', () => {
+  for (const s of SF) {
+    assert.ok(
+      s.platform === 'shopify' || s.platform === 'woocommerce',
+      `${s.host} declares an unknown platform: ${s.platform}`
+    );
+    assert.equal(PLATFORM_BY_HOST.get(s.host), s.platform, `${s.host} is missing from PLATFORM_BY_HOST`);
+  }
+  // The point of adding WooCommerce was reaching shops Shopify could not, so
+  // if that set ever empties the adapter is dead code pretending to be reach.
+  assert.ok(SF.some((s) => s.platform === 'woocommerce'), 'no WooCommerce shop is configured');
+});
+
+test('the check script retailers.ts names actually exists', () => {
+  // retailers.ts promised `npm run market:check` by name from the day the
+  // Market shipped, and for two days it did not exist.
+  assert.ok(existsSync('scripts/market-check.js'), 'scripts/market-check.js is gone');
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  assert.ok(pkg.scripts['market:check'], 'the market:check script is not in package.json');
+  const retailers = readFileSync('src/modules/market/retailers.ts', 'utf8');
+  for (const named of retailers.match(/npm run [a-z:-]+/g) ?? []) {
+    const name = named.replace('npm run ', '');
+    assert.ok(pkg.scripts[name], `retailers.ts names "${named}" and it does not exist`);
+  }
+});
+
+test('a mixed-currency headline names the currency it belongs to', () => {
+  // "from $4.00" must not read as the floor of a set that also holds GBP.
+  const head = PAGE.slice(PAGE.indexOf('function resultHead'), PAGE.indexOf('function deptGrid'));
+  assert.ok(/d\.mixedCurrency/.test(head), 'the header ignores whether the set is mixed');
+  assert.ok(/' in ' \+ d\.currency/.test(head), 'a mixed headline no longer names its currency');
 });

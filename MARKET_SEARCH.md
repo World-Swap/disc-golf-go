@@ -23,7 +23,7 @@ Spotlight suggestions as a product search would be dishonest.
 
 A fallback that asks **16 disc golf storefronts** directly through the public
 product-search endpoint their platform exposes. It returns live prices and
-live stock — a search for "buzzz" gives ~51 products across 12 retailers — but
+live stock — a search for "buzzz" gives ~75 products across 14 retailers — but
 it can only ever find what those particular shops stock. The page says so
 rather than implying it searched the web.
 

@@ -104,8 +104,8 @@ on these.
 
 **There is no network aggregating disc golf retail.** AvantLink, ShareASale and
 Impact carry general golf brands; no disc golf retailer was found on any of
-them. So this is per-retailer business development — sixteen separate
-applications rather than one signup. That is the grind, and it is also the
+them. So this is per-retailer business development — one application per
+retailer rather than one signup. That is the grind, and it is also the
 moat: nobody else has done it, and the Market already has the storefronts
 wired.
 
@@ -118,9 +118,10 @@ What it buys is that the layer exists before growth, cannot bend the results,
 and costs nothing to carry. The binding constraint on this line is **not the
 commission rate — it is Market coverage and traffic.** With no search key set
 the Market reaches a set of storefronts rather than the web (see
-`MARKET_SEARCH.md`); a `buzzz` search currently returns ~50 products from 12
-retailers. Switching on a search key widens that, and is the single biggest
-lever on this revenue line.
+`MARKET_SEARCH.md`); a `buzzz` search returns ~75 products from 14 retailers.
+Switching on a search key widens that, and is the single biggest lever on this
+revenue line — see `MARKET_COVERAGE.md` for what the keyless path can and
+cannot reach, and why.
 
 There is one structural nicety worth keeping in view: the coupon programme
 currently costs money out of pocket (~$20 once, then ~$13/yr per engaged

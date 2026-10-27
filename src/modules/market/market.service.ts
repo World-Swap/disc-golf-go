@@ -58,6 +58,8 @@ export type MarketSearch = {
   sources: Array<{ key: string; label: string; ok: boolean; count: number; error?: string }>;
   cheapest: number | null;
   currency: string | null;
+  /** True when the results are not all in `currency`, so copy must not imply it. */
+  mixedCurrency: boolean;
   /** True when no search key is set, so the page can say the reach is narrow. */
   fallbackOnly: boolean;
   fetchedAt: string;
@@ -140,6 +142,7 @@ export function createMarketService(deps: MarketDeps = {}) {
         sources: [],
         cheapest: null,
         currency: null,
+        mixedCurrency: false,
         fallbackOnly: live().length === 0,
         fetchedAt: new Date(now()).toISOString(),
         cached: false,
@@ -180,9 +183,23 @@ export function createMarketService(deps: MarketDeps = {}) {
         }
       });
 
+      // A price of zero is not a cheap price, it is a price the shop never
+      // published -- WooCommerce returns "0" for a call-for-price or an
+      // unpriced variable product, and a real one ("DGA Basket Icon Pin")
+      // became the headline "from $0" on a basket search the moment the
+      // headline started showing on mixed-currency results. The Market's
+      // promise is to say what something costs, so a listing whose cost we do
+      // not know does not belong in it -- the same rule extract.ts already
+      // applies to a page with no price markup.
+      //
+      // Filtered HERE rather than in each adapter because this is the one
+      // place every provider's results funnel through, so a provider added
+      // later cannot reintroduce it.
+      const priced = all.filter((h) => Number.isFinite(h.price) && h.price > 0);
+
       // One listing, once — an engine and a storefront can both return it.
       const byKey = new Map<string, ProductHit>();
-      for (const h of all) {
+      for (const h of priced) {
         const k = dedupeKey(h);
         const prev = byKey.get(k);
         // Prefer the entry that knows the stock state; otherwise the cheaper.
@@ -202,9 +219,34 @@ export function createMarketService(deps: MarketDeps = {}) {
         return a.price - b.price;
       });
 
-      const currencies = new Set(products.map((p) => p.currency));
-      const single = currencies.size === 1 ? [...currencies][0]! : null;
-      const priced = products.filter((p) => p.available !== false).map((p) => p.price);
+      // "From $X" within ONE currency, never across two.
+      //
+      // This used to refuse outright whenever the result set held more than
+      // one currency, which sounds safe and is actually just unhelpful: one
+      // GBP shop in the list suppressed the headline on most real searches
+      // (measured: 3 of 5 common queries), and it gets worse with every shop
+      // added, so coverage would have quietly cost the price a player came for.
+      //
+      // The rule it was standing in for is that a price and a currency must
+      // never be mismatched -- so pick the currency the result set is mostly
+      // in, and report the minimum WITHIN it. The pair is then always
+      // internally consistent, and `mixedCurrency` tells the page the set is
+      // not all in that currency so it cannot imply otherwise. No conversion
+      // happens anywhere: we hold no exchange rate and inventing one would be
+      // the actual sin here.
+      const inStock = products.filter((p) => p.available !== false);
+      const byCurrency = new Map<string, number[]>();
+      for (const p of inStock) {
+        const list = byCurrency.get(p.currency);
+        if (list) list.push(p.price);
+        else byCurrency.set(p.currency, [p.price]);
+      }
+      // Most results wins; ties break on the code so the answer is stable for
+      // the same input rather than depending on Map insertion order.
+      const ranked = [...byCurrency.entries()].sort(
+        (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])
+      );
+      const lead = ranked[0] ?? null;
 
       const value: MarketSearch = {
         query: q,
@@ -213,8 +255,9 @@ export function createMarketService(deps: MarketDeps = {}) {
         // either. Only `url` changes.
         products: attachAffiliate(products, programs),
         sources,
-        cheapest: single && priced.length ? Math.min(...priced) : null,
-        currency: single,
+        cheapest: lead ? Math.min(...lead[1]) : null,
+        currency: lead ? lead[0] : null,
+        mixedCurrency: new Set(products.map((p) => p.currency)).size > 1,
         fallbackOnly: chosen.length === 0,
         fetchedAt: new Date(now()).toISOString(),
         cached: false,
