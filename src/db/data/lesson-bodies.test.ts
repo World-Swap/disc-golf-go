@@ -164,10 +164,26 @@ test('the lesson page prefers the written body over the tips', () => {
   assert.ok(written > 0 && tipsBranch > written, 'renderWritten must be reached before the tips branch');
 });
 
-test('the /learn category pages render the written body', () => {
+test('the indexed /learn pages render the written body, not just the tips', () => {
   const src = readFileSync('src/http/learn.ts', 'utf8');
   // These pages are the indexed ones; leaving them on tips alone would keep
   // the thin-content problem the file's own header is about.
-  assert.match(src, /content_body\.why/);
-  assert.match(src, /content_body\.drill/);
+  //
+  // This used to assert the literal strings `content_body.why` and
+  // `content_body.drill`, which was the implementation of that rule rather
+  // than the rule. Per-lesson pages now render the body through a destructured
+  // `b`, and they carry MORE of it than the category page ever did -- the
+  // method and the fault list as well -- so the condition the old assertion
+  // stood in for holds more strongly, and it is pinned directly here: every
+  // part of a written body must reach a page.
+  for (const field of ['why', 'how', 'wrong', 'tips', 'drill']) {
+    assert.ok(
+      new RegExp(`\\b(?:content_body|b)\\.${field}\\b`).test(src),
+      `learn.ts never renders the "${field}" part of a written lesson`
+    );
+  }
+  // The drill is the most actionable line in a lesson, and it belongs to the
+  // lesson page: on the category hub it was duplicate content across 134 pages.
+  const lesson = src.slice(src.indexOf('function lessonPage'), src.indexOf('function categoryPage'));
+  assert.ok(/\bb\.drill\b/.test(lesson), 'the lesson page does not render the drill');
 });

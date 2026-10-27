@@ -7,7 +7,7 @@ import { securityHeaders } from '../middleware/security';
 import { errorHandler } from './error-handler';
 import { createHealthRouter } from '../modules/health/health.routes';
 import { createApiRouter } from '../modules';
-import { mountFrontend, comHostSplit, robotsTxt, PROMO_HOSTS } from './static';
+import { mountFrontend, comHostSplit, robotsTxt, sitemapXml, PROMO_HOSTS } from './static';
 import { learnPages } from './learn';
 import type { Database } from '../db/types';
 
@@ -40,6 +40,8 @@ export function createApp(db: Database, opts: AppOptions = {}): Express {
   // Before comHostSplit and the static middleware: both would answer /robots.txt
   // first, and it has to differ between the marketing domain and the app.
   app.use(robotsTxt());
+  // Generated from learnUrls(), so it cannot drift from what is served.
+  app.use(sitemapXml());
 
   // discgolfgo.com = promo site; app routes there redirect to discgolfgo.app.
   // Runs before /api and the frontend so it can intercept. No-op on .app.

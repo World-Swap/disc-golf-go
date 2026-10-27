@@ -93,6 +93,75 @@ export function robotsTxt(): RequestHandler {
   };
 }
 
+/**
+ * The sitemap, BUILT rather than committed.
+ *
+ * It was a static file with nineteen hand-written <loc> entries, which was
+ * fine while the training library was thirteen URLs. It is 148 now, and a
+ * hand-maintained list beside a generated one is the drift this repo keeps
+ * catching -- a lesson would be added to the library and silently left out of
+ * the only file that tells Google it exists.
+ *
+ * So the learn URLs come from learnUrls(), the same function that decides what
+ * is actually served, and only the handful of standalone marketing pages are
+ * listed here. A page cannot be in the sitemap and missing from the site, or
+ * served and missing from the sitemap; a test asserts both directions.
+ *
+ * Mounted before comHostSplit and the static middleware, which would otherwise
+ * answer first -- and .com only, because the app domain has no sitemap to
+ * offer and robots.txt does not name one for it.
+ *
+ * It carries NO <lastmod>, deliberately, and that is the one thing here worth
+ * not undoing. The generator this replaced (scripts/generate-sitemap.js, now
+ * deleted) took each page's lastmod from the git commit that last touched its
+ * source file, and its header said why: "Google treats an lastmod it does not
+ * believe as noise, and 'everything changed today, every day' is the fastest
+ * way to earn that." A request-time handler cannot do better than today's
+ * date, which is exactly that lie -- and the git date is not available either,
+ * since a deploy container is a shallow clone whose only commit is the deploy
+ * itself. An absent lastmod is valid and is read as "no claim"; a wrong one
+ * teaches a crawler to distrust the whole file. So we make no claim.
+ */
+const SITEMAP_PAGES: ReadonlyArray<{ path: string; priority: string; changefreq: string }> = [
+  { path: '/', priority: '1.0', changefreq: 'weekly' },
+  { path: '/events', priority: '0.8', changefreq: 'weekly' },
+  { path: '/support', priority: '0.5', changefreq: 'monthly' },
+  { path: '/guides/how-to-putt-disc-golf', priority: '0.7', changefreq: 'monthly' },
+  { path: '/guides/best-beginner-disc-golf-discs', priority: '0.7', changefreq: 'monthly' },
+];
+
+export function sitemapXml(): RequestHandler {
+  return (req, res, next) => {
+    if (req.path !== '/sitemap.xml') return next();
+    if (!PROMO_HOSTS.has((req.hostname || '').toLowerCase())) return next();
+
+    // The hub and the thirteen category pages are the way in, so they are
+    // ranked above the lessons they lead to; a lesson is a leaf.
+    const learn = learnUrls().map((u) => ({
+      path: u,
+      priority: u === '/learn' ? '0.9' : u.split('/').length > 3 ? '0.6' : '0.8',
+      changefreq: 'monthly',
+    }));
+
+    const body = [...SITEMAP_PAGES, ...learn]
+      .map((e) =>
+        '  <url>\n' +
+        `    <loc>https://discgolfgo.com${e.path === '/' ? '/' : e.path}</loc>\n` +
+        `    <changefreq>${e.changefreq}</changefreq>\n` +
+        `    <priority>${e.priority}</priority>\n` +
+        '  </url>'
+      )
+      .join('\n');
+
+    res.type('application/xml').send(
+      '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+      body +
+      '\n</urlset>\n'
+    );
+  };
+}
+
 export function comHostSplit(): RequestHandler {
   const promoFile = path.join(WEB_DIR, 'promo.html');
   return (req, res, next) => {

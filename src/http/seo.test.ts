@@ -151,19 +151,135 @@ test('search indexing', async (t) => {
   });
 
   await t.test('the sitemap lists only .com URLs, and each one resolves there', async () => {
-    const xml = fs.readFileSync(path.join(WEB, 'sitemap.xml'), 'utf8');
+    // Fetched over HTTP rather than read off disk: the sitemap is generated
+    // from learnUrls() now, and what a crawler is served is the thing worth
+    // testing. It was a committed file with nineteen hand-written entries,
+    // which stopped being maintainable at 148.
+    const res = await get('/sitemap.xml', 'discgolfgo.com');
+    assert.equal(res.status, 200, 'the marketing host does not serve a sitemap');
+    const xml = await res.text();
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
-    assert.ok(locs.length > 0, 'the sitemap is empty');
+    assert.ok(locs.length > 100, `the sitemap has only ${locs.length} urls`);
     for (const loc of locs) {
       assert.ok(loc.startsWith('https://discgolfgo.com/'), `${loc} is not on the marketing domain`);
-      const res = await get(new URL(loc).pathname, 'discgolfgo.com');
-      assert.equal(res.status, 200, `${loc} is in the sitemap but returned ${res.status}`);
+    }
+    // Every url resolving is the expensive half; sample the lessons rather
+    // than fetch all 134 twice, since the next test fetches every one anyway.
+    const sample = locs.filter((_, i) => i % 11 === 0);
+    for (const loc of sample) {
+      const r = await get(new URL(loc).pathname, 'discgolfgo.com');
+      assert.equal(r.status, 200, `${loc} is in the sitemap but returned ${r.status}`);
     }
   });
 
-  // These exist because 134 one-page-per-lesson URLs would have been thin
-  // content -- a lesson is a median of 28 words. The bar a category page has to
-  // clear is the guide pages already on the site, which run about 570 words.
+  await t.test('the sitemap and the library agree, in both directions', async () => {
+    // Two lists of the same thing is the drift this repo keeps catching, so
+    // neither side may gain or lose a url quietly: a lesson missing from the
+    // sitemap is a page Google is never told about, and a url in the sitemap
+    // that is not served is a 404 handed to a crawler.
+    const res = await get('/sitemap.xml', 'discgolfgo.com');
+    const xml = await res.text();
+    const inMap = new Set(
+      [...xml.matchAll(/<loc>https:\/\/discgolfgo\.com([^<]*)<\/loc>/g)].map((m) => m[1] || '/')
+    );
+    for (const url of learnUrls()) {
+      assert.ok(inMap.has(url), `${url} is served but missing from the sitemap`);
+    }
+    const served = new Set<string>(learnUrls());
+    for (const url of inMap) {
+      if (url.startsWith('/learn')) {
+        assert.ok(served.has(url), `${url} is in the sitemap but is not a library page`);
+      }
+    }
+    // The sitemap must not be served on the app domain, which is noindex and
+    // whose robots.txt deliberately names no sitemap at all.
+    const onApp = await get('/sitemap.xml', 'discgolfgo.app');
+    assert.notEqual(onApp.status, 200, 'the app domain serves a sitemap it should not');
+  });
+
+  await t.test('the sitemap claims no lastmod it cannot know', async () => {
+    // The generator this replaced derived lastmod from each page's last commit,
+    // and its header recorded the reason: an lastmod a crawler does not believe
+    // is noise, and "everything changed today, every day" is how you earn that.
+    // A request-time handler has only today's date, so it makes no claim at all.
+    // This bit when the handler was first written: it stamped every one of the
+    // 153 urls with new Date(), which is that exact lie.
+    const res = await get('/sitemap.xml', 'discgolfgo.com');
+    assert.equal(res.status, 200);
+    const xml = await res.text();
+    assert.doesNotMatch(xml, /<lastmod>/, 'the sitemap publishes a lastmod');
+    const src = fs.readFileSync('src/http/static.ts', 'utf8');
+    const fn = src.slice(src.indexOf('export function sitemapXml'));
+    assert.doesNotMatch(
+      fn.slice(0, fn.indexOf('\nexport ') + 1 || undefined),
+      /new Date\(/,
+      'sitemapXml dates the sitemap from the clock'
+    );
+  });
+
+  await t.test('every lesson has its own page, under its category', async () => {
+    const urls = new Set(learnUrls());
+    for (const l of LESSONS) {
+      const url = `/learn/${l.category_slug}/${l.slug}`;
+      assert.ok(urls.has(url), `${l.slug} has no page of its own`);
+    }
+    assert.equal(urls.size, 1 + CATEGORIES.length + LESSONS.length,
+      'the library serves a url that is neither the hub, a category nor a lesson');
+  });
+
+  await t.test('a lesson page is the lesson, and says where it sits', async () => {
+    // One lesson from each category, so a category whose pages are broken
+    // cannot hide behind twelve that are not.
+    for (const c of CATEGORIES) {
+      const l = LESSONS.find((x) => x.category_slug === c.slug);
+      if (!l) continue;
+      const url = `/learn/${c.slug}/${l.slug}`;
+      const res = await get(url, 'discgolfgo.com');
+      assert.equal(res.status, 200, `${url} returned ${res.status}`);
+      const html = await res.text();
+
+      assert.ok(
+        html.includes(`<link rel="canonical" href="https://discgolfgo.com${url}" />`),
+        `${url} does not declare itself canonical`
+      );
+      assert.ok(html.includes('"@type": "BreadcrumbList"'), `${url} has no breadcrumb data`);
+      assert.ok(html.includes(`href="/learn/${c.slug}"`), `${url} does not link up to its category`);
+      // The written body is the reason the page exists.
+      assert.ok(/Why it matters/.test(html), `${url} is missing the why`);
+      assert.ok(/How to do it/.test(html), `${url} is missing the method`);
+      assert.ok(/Common mistakes/.test(html), `${url} is missing the faults`);
+      assert.ok(/The drill/.test(html), `${url} is missing the drill`);
+      // And it must not claim markup we cannot back: Google retired HowTo
+      // rich results, and the video is somebody else's.
+      assert.ok(!/"@type": "HowTo"/.test(html), `${url} claims HowTo markup`);
+      assert.ok(!/"@type": "VideoObject"/.test(html), `${url} claims VideoObject for a video we do not own`);
+    }
+  });
+
+  await t.test('a category page links to every lesson it names', async () => {
+    for (const c of CATEGORIES) {
+      const res = await get(`/learn/${c.slug}`, 'discgolfgo.com');
+      const html = await res.text();
+      const mine = LESSONS.filter((l) => l.category_slug === c.slug);
+      for (const l of mine) {
+        assert.ok(
+          html.includes(`href="/learn/${c.slug}/${l.slug}"`),
+          `/learn/${c.slug} names ${l.slug} without linking to it`
+        );
+      }
+      // The hub must not reproduce its children in full -- that is what makes
+      // the two pages compete. The drill is the marker: it belongs to the
+      // lesson page alone.
+      assert.ok(!/Drill &middot;/.test(html), `/learn/${c.slug} still carries the drills`);
+    }
+  });
+
+  // The bar every library page has to clear is the guide pages already on the
+  // site, which run about 570 words. This used to cover thirteen category
+  // pages and the reason there were only thirteen: a lesson was a median of 28
+  // words, so per-lesson URLs would have been thin. Every lesson is written
+  // now -- a median of 328 words and a minimum of 259 -- so this covers all
+  // 148 pages, and it is what stops an unwritten lesson shipping a thin one.
   await t.test('every training-library page is substantial, and only on .com', async () => {
     const thin: string[] = [];
     for (const url of learnUrls()) {
