@@ -43,7 +43,10 @@
       background: #fff; font: inherit; color: inherit; cursor: pointer;
     }
     .dept:hover { border-color: var(--color-orange); }
-    .dept__glyph { font-size: 17px; line-height: 1; }
+    /* A drawing rather than a character: see DEPT_ICON below for why. It
+       inherits currentColor, so a department tile needs no palette of its own. */
+    .dept__glyph { line-height: 0; }
+    .dept__glyph svg { display: block; width: 20px; height: 20px; }
     .dept__label { font-size: 13.5px; font-weight: 700; line-height: 1.25; }
     /* The reason a department exists is the useful half, so it wraps rather
        than ellipsing -- but it is clamped so one long line cannot make a
@@ -263,10 +266,102 @@
           'or the order they are in.</p>';
       }
 
+      // Department glyphs, drawn rather than borrowed.
+      //
+      // These were emoji and two were plainly the wrong object: Baskets had a
+      // BASKETBALL and Accessories a wicker laundry basket, with a bow and
+      // arrow on fairway drivers. No substitution fixes that -- Unicode has
+      // one disc golf character (the disc) and no disc golf basket at all --
+      // so they are drawn here, in the logo's own vocabulary: the basket is
+      // its thick rounded top bar, bold vertical chains, wide trapezoid tray
+      // and post. Same decision the notification bell reached when U+25C9 read
+      // as a record button, and for the same reason.
+      //
+      // The four disc classes are deliberately ONE family -- the same disc
+      // mark with a flight line that grows and bends -- because they are the
+      // same object at different speeds, and the tile carries a label to say
+      // which. Length varies more than curvature, which is what actually
+      // reads at 20px.
+      var DEPT_ICON = {
+        discs:
+          '<ellipse cx="12" cy="7.4" rx="7" ry="2.5"/>' +
+          '<ellipse cx="12" cy="12" rx="7" ry="2.5"/>' +
+          '<ellipse cx="12" cy="16.6" rx="7" ry="2.5"/>',
+
+        // The four disc classes are one family: the same disc, with one motion
+        // line per step up in speed. That maps to the speed rating players
+        // already buy by (a putter is a 2, a distance driver a 13), it is
+        // ordered so the four read as a scale rather than four unrelated
+        // marks, and motion lines are concrete where a curve is not.
+        //
+        // Two earlier passes are worth recording so they are not retried. A
+        // tiny disc with a stub of flight line read as a scratch in the corner
+        // of the box. Drawing the four as full-height FLIGHT PATHS -- the
+        // bottom-to-top convention every flight chart uses -- was better
+        // reasoning and worse in practice: rendered at 20px they read as
+        // punctuation, a comma and an exclamation mark and a bracket, because
+        // a bare curve at that size is indistinguishable from type.
+        putter:
+          '<ellipse cx="14.6" cy="12" rx="5.6" ry="2.4"/>' +
+          '<path d="M4.6 12h2.8"/>',
+        midrange:
+          '<ellipse cx="14.6" cy="12" rx="5.6" ry="2.4"/>' +
+          '<path d="M4.6 9.5h2.8M4.6 14.5h2.8"/>',
+        fairway:
+          '<ellipse cx="14.6" cy="12" rx="5.6" ry="2.4"/>' +
+          '<path d="M4.6 8h2.8M4.6 12h2.8M4.6 16h2.8"/>',
+        distance:
+          '<ellipse cx="14.6" cy="12" rx="5.6" ry="2.4"/>' +
+          '<path d="M3.4 6.8h3.2M3.4 10.3h3.2M3.4 13.7h3.2M3.4 17.2h3.2"/>',
+
+        bag:
+          '<path d="M6.3 9.8a5.7 5.7 0 0 1 11.4 0v8.4a1.9 1.9 0 0 1-1.9 1.9H8.2a1.9 1.9 0 0 1-1.9-1.9z"/>' +
+          '<path d="M9.4 20.1v-4.6h5.2v4.6"/>' +
+          '<path d="M10.2 7.4V5.9a1.8 1.8 0 0 1 3.6 0v1.5"/>',
+        basket:
+          '<rect x="4.6" y="5.6" width="14.8" height="2.4" rx="1.2" fill="currentColor" stroke="none"/>' +
+          '<path d="M7.3 8.6V14M10.4 8.6V14M13.6 8.6V14M16.7 8.6V14"/>' +
+          '<path d="M5.4 14h13.2l-2.4 3.5H7.8z"/>' +
+          '<path d="M12 17.7v3.1M9.2 20.8h5.6"/>',
+        shirt:
+          '<path d="M9.2 4.2 5 6.6l1.7 3.2 1.6-.8v10.8h7.4V9l1.6.8L19 6.6l-4.2-2.4a2.9 2.9 0 0 1-5.6 0z"/>',
+
+        // A mini is a small disc you put down to mark your lie, so it is one
+        // SOLID small disc on a wide ground line -- small against the ground,
+        // which is the whole point of it. An outlined ellipse with anything
+        // inside it renders as a closed EYE at this size; that was the first
+        // version and a ring-within-a-ring was the second.
+        mini:
+          '<ellipse cx="12" cy="13.9" rx="4.1" ry="1.75" fill="currentColor" stroke="none"/>' +
+          '<path d="M3.8 18.2h16.4"/>',
+
+        // A towel hanging on a rail, and the thing that makes it read is the
+        // ASPECT RATIO: a tall narrow cloth under a short rail. Five versions
+        // failed before that was the finding, every one of them furniture or
+        // stationery -- draped over a full-width bar it is a table, with an
+        // arc over the top a padlock, as a striped panel a card, with a wavy
+        // hem a torn receipt, and short-and-wide under a wide rail a stool.
+        // Width is what said "table"; height is what says "cloth".
+        towel:
+          '<path d="M7.4 4.6h9.2"/>' +
+          '<path d="M8.8 4.6v14.8h6.4V4.6"/>' +
+          '<path d="M8.8 8.2h6.4"/>',
+      };
+
+      // Looked up by NAME, never interpolated from the response as markup --
+      // the icon used to be the one unescaped field on the tile. An unknown
+      // name draws the disc rather than an empty box, so a department added
+      // without a drawing is visibly plain instead of invisibly broken.
+      function deptIcon(name) {
+        var body = DEPT_ICON[name] || DEPT_ICON.discs;
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" ' +
+          'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>';
+      }
+
       function deptGrid() {
         return '<div class="depts">' + state.departments.map(function (x) {
           return '<button class="dept" type="button" data-dept="' + esc(x.key) + '">' +
-            '<span class="dept__glyph" aria-hidden="true">' + x.glyph + '</span>' +
+            '<span class="dept__glyph" aria-hidden="true">' + deptIcon(x.icon) + '</span>' +
             '<span class="dept__label">' + esc(x.label) + '</span>' +
             '<span class="dept__why">' + esc(x.why) + '</span>' +
           '</button>';

@@ -18,20 +18,49 @@ export type Department = {
   readonly query: string;
   /** One line, in the player's terms, on who this is for. */
   readonly why: string;
-  readonly glyph: string;
+  /**
+   * The NAME of a drawing, not a character.
+   *
+   * These were emoji and two of them were plainly wrong: Baskets carried
+   * U+1F3C0, a BASKETBALL, and Accessories carried U+1F9FA, a wicker laundry
+   * basket (fairway drivers had a bow and arrow). That is not a matter of
+   * taste and no substitution fixes it: Unicode has exactly one disc golf
+   * character, the disc U+1F94F, and NO disc golf basket at all, so any emoji
+   * for Baskets can only be the wrong object.
+   *
+   * So the glyphs are drawn, in the logo's own vocabulary -- the same decision
+   * the notification bell reached when U+25C9 read as a record button. The
+   * drawing lives in web/market.html keyed by this name, which also means the
+   * API carries data rather than markup: this value used to be interpolated
+   * into the page as raw HTML, the one unescaped field on that tile.
+   */
+  readonly icon: DepartmentIcon;
 };
 
+/** Every name here must have a drawing in web/market.html; a test pins both ways. */
+export type DepartmentIcon =
+  | 'discs'
+  | 'putter'
+  | 'midrange'
+  | 'fairway'
+  | 'distance'
+  | 'bag'
+  | 'basket'
+  | 'shirt'
+  | 'mini'
+  | 'towel';
+
 export const DEPARTMENTS: readonly Department[] = [
-  { key: 'starter',   label: 'Starter sets',     query: 'beginner starter set',  glyph: '\u{1F9F0}', why: 'Three discs and nothing you do not need yet' },
-  { key: 'putters',   label: 'Putters',          query: 'putter',                glyph: '\u{1F3AF}', why: 'The disc that takes the most strokes off a round' },
-  { key: 'midranges', label: 'Midranges',        query: 'midrange',              glyph: '\u{1F94F}', why: 'Straight, predictable, the one to learn lines with' },
-  { key: 'fairway',   label: 'Fairway drivers',  query: 'fairway driver',        glyph: '\u{1F3F9}', why: 'Control first. Most players should be here, not in distance' },
-  { key: 'distance',  label: 'Distance drivers', query: 'distance driver',       glyph: '\u{1F680}', why: 'Only once you can throw a fairway flat' },
-  { key: 'bags',      label: 'Bags',             query: 'disc golf bag',         glyph: '\u{1F392}', why: 'Carries the discs, the water and the scorecard' },
-  { key: 'baskets',   label: 'Baskets',          query: 'practice basket',       glyph: '\u{1F3C0}', why: 'Putting practice at home is the cheapest improvement there is' },
-  { key: 'apparel',   label: 'Apparel',          query: 'disc golf apparel',     glyph: '\u{1F455}', why: 'Pockets, sun and rain' },
-  { key: 'minis',     label: 'Minis & markers',  query: 'mini marker',           glyph: '\u{1FA99}', why: 'You need one to mark your lie. They cost almost nothing' },
-  { key: 'towels',    label: 'Accessories',      query: 'disc golf towel',       glyph: '\u{1F9FA}', why: 'Towels, chalk bags, retrievers' },
+  { key: 'starter',   label: 'Starter sets',     query: 'beginner starter set',  icon: 'discs',    why: 'Three discs and nothing you do not need yet' },
+  { key: 'putters',   label: 'Putters',          query: 'putter',                icon: 'putter',   why: 'The disc that takes the most strokes off a round' },
+  { key: 'midranges', label: 'Midranges',        query: 'midrange',              icon: 'midrange', why: 'Straight, predictable, the one to learn lines with' },
+  { key: 'fairway',   label: 'Fairway drivers',  query: 'fairway driver',        icon: 'fairway',  why: 'Control first. Most players should be here, not in distance' },
+  { key: 'distance',  label: 'Distance drivers', query: 'distance driver',       icon: 'distance', why: 'Only once you can throw a fairway flat' },
+  { key: 'bags',      label: 'Bags',             query: 'disc golf bag',         icon: 'bag',      why: 'Carries the discs, the water and the scorecard' },
+  { key: 'baskets',   label: 'Baskets',          query: 'practice basket',       icon: 'basket',   why: 'Putting practice at home is the cheapest improvement there is' },
+  { key: 'apparel',   label: 'Apparel',          query: 'disc golf apparel',     icon: 'shirt',    why: 'Pockets, sun and rain' },
+  { key: 'minis',     label: 'Minis & markers',  query: 'mini marker',           icon: 'mini',     why: 'You need one to mark your lie. They cost almost nothing' },
+  { key: 'towels',    label: 'Accessories',      query: 'disc golf towel',       icon: 'towel',    why: 'Towels, chalk bags, retrievers' },
 ];
 
 export const DEPARTMENT_BY_KEY: ReadonlyMap<string, Department> = new Map(

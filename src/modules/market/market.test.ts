@@ -639,3 +639,83 @@ test('a mixed-currency headline names the currency it belongs to', () => {
   assert.ok(/d\.mixedCurrency/.test(head), 'the header ignores whether the set is mixed');
   assert.ok(/' in ' \+ d\.currency/.test(head), 'a mixed headline no longer names its currency');
 });
+
+/* ── the department glyphs are the right objects ─────────────────────── */
+
+/** The icon names web/market.html actually has a drawing for. */
+function pageIconNames(): Set<string> {
+  const from = PAGE.indexOf('var DEPT_ICON = {');
+  const to = PAGE.indexOf('function deptIcon(');
+  assert.ok(from > 0 && to > from, 'the DEPT_ICON map moved; fix this slice');
+  const block = PAGE.slice(from, to);
+  return new Set([...block.matchAll(/^\s{8}([a-z]+):$/gm)].map((m) => m[1]!));
+}
+
+test('every department has a drawing, and no drawing is dead', () => {
+  // A department whose icon has no drawing renders an empty tile, and a
+  // drawing no department uses is art nobody sees. Asserted both ways so
+  // neither side can drift.
+  const drawn = pageIconNames();
+  const used = new Set(DEPARTMENTS.map((d) => d.icon));
+  for (const d of DEPARTMENTS) {
+    assert.ok(drawn.has(d.icon), `department "${d.key}" wants icon "${d.icon}" and nothing draws it`);
+  }
+  for (const name of drawn) {
+    assert.ok(used.has(name as never), `icon "${name}" is drawn and no department uses it`);
+  }
+  assert.equal(drawn.size, DEPARTMENTS.length);
+});
+
+test('a department icon is a name, not a character', () => {
+  for (const d of DEPARTMENTS) {
+    assert.match(d.icon, /^[a-z]+$/, `${d.key} icon is not a plain name: ${JSON.stringify(d.icon)}`);
+    // Anything outside ASCII here means an emoji crept back in.
+    assert.ok(
+      !/[^\x20-\x7e]/.test(d.icon),
+      `${d.key} icon carries a non-ASCII character: ${JSON.stringify(d.icon)}`
+    );
+  }
+});
+
+test('the three wrong glyphs cannot come back', () => {
+  // Reported from the live app: a ball on Baskets and a laundry basket on
+  // Accessories. The bow was on fairway drivers. None of the three is the
+  // object its department sells.
+  const wrong: Array<[string, string]> = [
+    ['\u{1F3C0}', 'a basketball'],
+    ['\u{1F9FA}', 'a wicker laundry basket'],
+    ['\u{1F3F9}', 'a bow and arrow'],
+  ];
+  const catalogue = readFileSync('src/modules/market/market.catalog.ts', 'utf8');
+  for (const [ch, what] of wrong) {
+    assert.ok(!catalogue.includes(ch), `the catalogue carries ${what} again`);
+    assert.ok(!PAGE.includes(ch), `the Market page carries ${what} again`);
+  }
+});
+
+test('the page draws the icon by name rather than trusting the response', () => {
+  // `glyph` was interpolated straight into the tile as HTML -- the one
+  // unescaped field there. It is a lookup now, so the response cannot carry
+  // markup into the page at all.
+  assert.ok(/deptIcon\(x\.icon\)/.test(PAGE), 'the tile no longer looks its icon up by name');
+  assert.ok(!/\+ x\.glyph \+/.test(PAGE), 'the response value is interpolated as markup again');
+  assert.ok(
+    /DEPT_ICON\[name\] \|\| DEPT_ICON\.discs/.test(PAGE),
+    'an unknown icon name no longer falls back to a drawing'
+  );
+});
+
+test('the basket glyph is the logo basket, not a round thing', () => {
+  // The brand basket is a thick rounded top bar, bold vertical chains, a wide
+  // trapezoid tray and a post. Pinned loosely -- the parts, not the
+  // coordinates -- so it can be redrawn but not quietly replaced by a circle.
+  const from = PAGE.indexOf('        basket:');
+  const to = PAGE.indexOf('        shirt:');
+  assert.ok(from > 0 && to > from, 'the basket drawing moved');
+  const art = PAGE.slice(from, to);
+  assert.ok(/<rect[^>]*rx=/.test(art), 'the basket lost its rounded top bar');
+  const chains = (art.match(/M[\d.]+ 8\.6V14/g) ?? []).length;
+  assert.ok(chains >= 4, `the basket should have at least four chain bars, found ${chains}`);
+  assert.ok(/h13\.2l-2\.4 3\.5H7\.8z|h[\d.]+l-[\d.]+ [\d.]+H[\d.]+z/.test(art), 'the basket lost its trapezoid tray');
+  assert.ok(!/<circle/.test(art), 'the basket is drawn with a circle');
+});
