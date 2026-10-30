@@ -144,9 +144,20 @@ they are **not** `commissioned`, and the order is still price-ascending.
 
 ## Open questions for the owner
 
-- **Dealer terms.** DGA, Discraft and Innova sell through authorized-dealer
-  agreements, some with minimum-advertised-price rules. Worth reading yours
-  before brand prices are published through a public comparison API.
+- **Pricing is ours to set — corrected 2026-10-30.** An earlier version of this
+  file warned about authorized-dealer agreements and minimum-advertised-price
+  rules. **That does not apply here:** the owner *holds the merchandise*. We
+  bought the stock and own it outright rather than selling under a dealer
+  agreement, so there is no MAP obligation to inherit and no agreement
+  constraining what we publish. Goods you own are yours to price, and the
+  Market publishing our price is the same act as a price sticker.
+
+  The one thing that follows from it is a **copy** rule, and it is the mirror
+  of everything else in this file: selling genuine stock we own is ordinary
+  retail, but **we must never describe ourselves as an authorized, official or
+  licensed dealer of a brand we are not**. Naming what a disc *is* — "Innova
+  Destroyer" — is simply accurate; claiming a relationship with Innova is not.
+  Guarded in `our-store.test.ts`.
 - **The domain.** `shop.discgolfgo.com` as a Shopify custom domain keeps the
   brand on our own name; `discgolfgo.myshopify.com` works and reads worse.
 - **Apple and Google.** Physical goods are explicitly *not* required to use

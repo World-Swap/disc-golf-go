@@ -375,3 +375,34 @@ test('the store row spans are block, not inline', () => {
     'the store row spans will run into each other'
   );
 });
+
+/* ── we sell genuine stock, and claim no relationship we do not have ─── */
+
+test('no page claims we are an authorized or official dealer', () => {
+  // We hold the merchandise: the stock is bought and owned outright rather
+  // than sold under a dealer agreement, so pricing is ours and there is no
+  // MAP obligation (owner, 2026-10-30, correcting an earlier note in this
+  // repo that assumed the opposite).
+  //
+  // What that does NOT buy is a relationship with the brands. Naming what a
+  // disc is -- "Innova Destroyer" -- is accurate and necessary to sell it.
+  // Saying we are an authorized, official or licensed dealer OF Innova is a
+  // claim about Innova, and it is not ours to make.
+  const pages = ['web/market.html', 'web/promo.html'];
+  const forbidden = [
+    /\bauthoriz(?:ed|ed)\s+(?:dealer|retailer|reseller|distributor)/i,
+    /\bauthorised\s+(?:dealer|retailer|reseller|distributor)/i,
+    /\bofficial\s+(?:dealer|retailer|reseller|distributor|partner)/i,
+    /\blicensed\s+(?:dealer|retailer|reseller|distributor)/i,
+    /\bbrand\s+partner\b/i,
+  ];
+  for (const file of pages) {
+    const html = readFileSync(file, 'utf8');
+    // Read what a player actually sees: strip comments so prose explaining
+    // this rule cannot trip it -- the trap CLAUDE.md records four times.
+    const visible = html.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const re of forbidden) {
+      assert.ok(!re.test(visible), `${file} claims a dealer relationship we do not have (${re})`);
+    }
+  }
+});
