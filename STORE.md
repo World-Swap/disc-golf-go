@@ -15,8 +15,14 @@ Owner's call, 2026-10-30, three decisions:
 1. **Shopify-backed**, not a custom build. We do not want to own sales-tax
    nexus across 50 states, shipping rates, fraud, chargebacks, returns or PCI
    scope in order to sell hats. Shopify carries all of it.
-2. **Our products appear inside Market search results**, ranked by the same
-   comparator as every other retailer, with no preference of any kind.
+2. **Our products appear inside Market search results, and they come FIRST.**
+   Revised 2026-10-30, reversing the launch behaviour: *"we are not setup in
+   any affiliate program and have no connections or ties these brands/websites
+   and we dont need to give them privalge — we give them options of ours first
+   and others second."* Verified before building: production reports
+   `affiliate: false`, no programme has been applied for, and there is no
+   agreement with any retailer in the list. They do not pay us and we owe them
+   nothing.
 3. **A row inside Market**, not a sixth tab. Market is already where buying
    happens, and the nav was deliberately cut to five in the pivot.
 
@@ -31,20 +37,33 @@ those brands, so a keyless search reaches them through us.
 
 ## The rule this is all built around
 
-> A price comparison that quietly ranks its owner's shop first is an ad wearing
-> a comparison's clothes. The moment a player suspects the order is ours to
-> set, every result in it is worth nothing — including the honest ones.
+Our own stock first is a choice we **declare**. A retailer buying position
+would be one we **hide**. That distinction is the whole design:
 
-So the integrity rules here are **stricter** than the affiliate ones, because
-the temptation is stronger: a commission is somebody else's margin, and this is
-ours. `src/modules/market/our-store.ts` exists as its own file for that reason.
+> Ordering our own stock first, and saying so on the page, is ordinary
+> commerce. Letting a third party pay to move up, while the page implies the
+> order is neutral, is the thing that makes every result worthless — including
+> the honest ones.
+
+So the ours-first rule is paid for in **copy**, not hidden: the page says our
+store comes first, every listing of ours is badged `Ours`, and **real prices
+are shown throughout**, so a cheaper rival sits on the very next row rather
+than being suppressed. Nothing in this touches a price.
+
+**The headline price still reports the true cheapest across all results**, even
+when that is a rival and not us. So a search reading *"from $9.99"* above a
+first card of $10.99 is correct and deliberate: it tells the reader
+immediately that something cheaper is in the list. Reporting *our* cheapest
+there would be the dishonest version, and it is not done.
 
 Each rule has a guard in `our-store.test.ts`, each proved to bite:
 
 | Rule | How it is held |
 |---|---|
-| **The comparator never sees `ours`** | Source guard on the sort body, plus a behavioural guard driving the real service with our shop as the **dearest** and failing if it is not last |
-| **Winning on price still works** | The mirror guard — our genuinely cheapest listing must rank first, so the rule above cannot be satisfied by always sinking us |
+| **Our stock comes first** | Behavioural guard driving the real service with our shop as the **dearest** and failing if it is not first. This *replaces* a guard asserting the exact opposite; the condition it stood for was never "we must lose" but "the order is what we say it is, and the page says what the order is" |
+| **A third party still cannot buy position** | The half of the old guarantee that survives, and the one that matters to a reader. Among everyone who is not us the order is strictly currency → in-stock → price, proved by paying a commission on the **dearest** third-party shop and asserting it does not move |
+| **The comparator weighs nothing else** | Source guard: no commission, sponsorship, boost or per-retailer weighting may appear in the sort, and it must still order by real price |
+| **The page declares it** | The copy must say our stock comes first and the rest are by price, and must **not** claim we are never ranked higher |
 | **We are never affiliate-tagged** | `attachAffiliate` skips `ours`. On our own sale there is nobody to pay a commission, and a tracking parameter on our own checkout url would at best mean nothing and at worst hand a stranger the attribution |
 | **Our listing is labelled** | `ours` is set server-side by dot-anchored host match, never by a provider and never guessed client-side; the page renders an **Ours** badge |
 | **The badge cannot be hidden** | It is a *sibling* of the shop name, which truncates. Nested inside, a long retailer name would ellipsis it away — and a disclosure that vanishes on some rows is worse than none, because it reads as "this one is not ours" |
@@ -54,16 +73,16 @@ Each rule has a guard in `our-store.test.ts`, each proved to bite:
 ### Proved against real retailers, not fixtures
 
 With a real multi-brand Shopify shop standing in as ours, a live `buzzz`
-search returned **71 products from 14 retailers, 10 of them ours**, and:
+search returned **71 products from 14 retailers, 10 of them ours**: all ten of
+ours first (price-ordered among themselves), then every third party strictly
+by price, with the headline still reporting the real cheapest at **$9.99**.
 
 ```
-   9.99        dynamicdiscs.com      <- a rival, cheaper, ranked FIRST
-  10.99  OURS  discstore.com
-  10.99        otbdiscs.com
+  10.99  OURS  discstore.com     <- ours, first
+  15.99  OURS  discstore.com
+  ...
+   9.99        dynamicdiscs.com  <- cheaper, still shown, at its real price
 ```
-
-Our own shop placed **second, on price**, in our own Market. That is the
-correct outcome and it is what the guards pin.
 
 ## Switching it on
 

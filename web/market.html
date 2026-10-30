@@ -316,22 +316,25 @@
       // of stale copy: a promise of neutrality that the reader can disprove by
       // scrolling. So there are two versions and the configuration picks one.
       //
-      // The second one does not bury the change -- it leads with it, says our
-      // listings are marked, and states the guarantee that replaces "nothing
-      // here is ours": we are ranked by price like everyone else and never
-      // floated. market/our-store.ts enforces it and its tests prove it by
-      // making our own shop the dearest and asserting it comes last.
+      // The second one does not bury the change -- it LEADS with it. We show
+      // our own stock first (owner's call: we are in no affiliate programme
+      // and take no payment from any retailer here, so we owe none of them
+      // equal billing), and the honest price of that is saying so plainly
+      // rather than claiming a neutrality we no longer have.
+      //
+      // What it must keep promising, because this part is still true and is
+      // what makes the page worth reading: the prices are real and a cheaper
+      // rival is visible on the next row rather than suppressed.
       function storeNote() {
         if (!state.ourStore) {
           return '<p class="mnote">Search anything disc golf and see what it costs across ' +
             'retailers. Nothing here is ours \u2014 we take no payment and hold no stock; ' +
             'every result opens on the retailer\u2019s own page.</p>';
         }
-        return '<p class="mnote">Search anything disc golf and see what it costs across ' +
-          'retailers \u2014 including our own store, which is marked ' +
-          '<span class="card__ours">Ours</span>. We never rank ourselves higher: results are ' +
-          'ordered by price, so a cheaper shop beats us. Every result opens on the ' +
-          'seller\u2019s own page.</p>';
+        return '<p class="mnote"><strong>Our own store comes first</strong>, marked ' +
+          '<span class="card__ours">Ours</span> \u2014 then every other retailer, ordered by ' +
+          'price. Real prices throughout, so if someone is cheaper you can see it on the next ' +
+          'row. Every result opens on the seller\u2019s own page.</p>';
       }
 
       // The headline claim, which lives in static markup so it renders with no
@@ -345,8 +348,8 @@
         if (!state.ourStore) return;
         var el = document.getElementById('lede');
         if (!el) return;
-        el.textContent = 'Search anything disc golf and see what it costs. Our own store is ' +
-          'in here too, marked Ours \u2014 and never ranked higher than anyone else.';
+        el.textContent = 'Search anything disc golf and see what it costs. Our own store ' +
+          'comes first, then every other retailer by price.';
       }
 
       // The way in to our own storefront, shown only when there is one.

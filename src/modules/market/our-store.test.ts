@@ -59,42 +59,94 @@ function market(opts: { ourPrice: string; rivalPrice: string; affiliate?: string
   });
 }
 
-/* ── the rule that matters: no preference, ever ──────────────────────── */
+/* ── ours first, and everyone else strictly on price ─────────────────── */
 
-test('our own store ranks LAST when it is the dearest', async () => {
-  // The whole integrity claim in one test. A price comparison that floats its
-  // owner's shop is an ad, and the moment a player suspects the order is ours
-  // to set, every result in it is worthless -- including the honest ones.
+test('our own stock comes first, even when a rival is cheaper', async () => {
+  // Owner's call, 2026-10-30, reversing the launch behaviour. We are in no
+  // affiliate programme and take no payment from any retailer here, so we owe
+  // none of them equal billing inside our own app.
+  //
+  // This REPLACES a guard asserting the opposite ("our own store ranks LAST
+  // when it is the dearest"). The condition that guard stood for was never
+  // "we must lose" -- it was "the order is what we say it is, and the page
+  // says what the order is". That condition still holds; what it asserts has
+  // been inverted to match the declared rule, and the copy guard below is
+  // what keeps the page honest about it.
   const r = await market({ ourPrice: '24.99', rivalPrice: '9.99' }).search('buzzz');
 
   assert.equal(r.products.length, 2, 'both shops should have answered');
-  assert.equal(r.products[0]!.price, 9.99, 'the cheaper rival is not first');
-  assert.equal(r.products[0]!.ours, undefined, 'our own listing was ranked first while dearer');
-  assert.equal(r.products[1]!.ours, true, 'our dearer listing is not last');
-  assert.equal(r.cheapest, 9.99, 'the headline price is not the real cheapest');
+  assert.equal(r.products[0]!.ours, true, 'our own stock is not first');
+  assert.equal(r.products[0]!.price, 24.99);
+  // And the cheaper rival is still RIGHT THERE, at its real price. Ordering
+  // our stock first is a declared choice; hiding or misreporting a price
+  // would be a lie, and nothing in this change touches a price.
+  assert.equal(r.products[1]!.price, 9.99, 'the cheaper rival was dropped or repriced');
+  assert.equal(r.cheapest, 9.99, 'the headline price stopped being the real cheapest');
 });
 
-test('our own store ranks first only by actually being cheaper', async () => {
-  // The mirror of the above: winning on price is legitimate and must still
-  // work, or the guard above could be satisfied by always sinking us.
-  const r = await market({ ourPrice: '8.99', rivalPrice: '19.99' }).search('buzzz');
-  assert.equal(r.products[0]!.ours, true, 'our genuinely cheapest listing was not first');
-  assert.equal(r.cheapest, 8.99);
+test('among everyone who is not us, the order is still strictly by price', async () => {
+  // The half of the old guarantee that survives, and the one that matters to
+  // a reader: we may put ourselves first, but a THIRD PARTY cannot buy
+  // position. Nothing a retailer does moves them up.
+  const svc = createMarketService({
+    hosts: ['cheap.example', 'dear.example', 'mid.example'],
+    ourStore: OURS,
+    keys: {},
+    fetchImpl: fakeFetch({
+      ...shop('cheap.example', '5.00', 'Cheap'),
+      ...shop('dear.example', '30.00', 'Dear'),
+      ...shop('mid.example', '15.00', 'Mid'),
+      ...shop(OURS, '20.00', OUR_STORE_LABEL),
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.equal(r.products[0]!.ours, true, 'our own stock is not first');
+  const rest = r.products.slice(1).map((p) => p.price);
+  assert.deepEqual(rest, [5, 15, 30], 'third-party results are no longer price-ordered');
 });
 
-test('the ranking comparator never sees who owns the shop', async () => {
-  // Structural, because the behavioural guards above can only sample prices.
-  // The sort is currency -> in-stock -> price and that is all it may ever be.
+test('the ranking is ours to declare, but never a commission\'s to bend', async () => {
+  // The distinction the whole design now rests on. Our own store first is a
+  // choice we DECLARE on the page. A retailer paying to move up would be one
+  // we HIDE, and that stays forbidden -- affiliate.ts tags only after this
+  // sort has run, which its own guards pin.
+  //
+  // Here that is proved end to end: a programme paying on the DEAREST
+  // third-party shop must not move it above the cheapest one.
+  const svc = createMarketService({
+    hosts: ['cheap.example', 'dear.example'],
+    ourStore: OURS,
+    affiliate: 'dear.example|aff|PAID',
+    keys: {},
+    fetchImpl: fakeFetch({
+      ...shop('cheap.example', '5.00', 'Cheap'),
+      ...shop('dear.example', '30.00', 'Dear'),
+      ...shop(OURS, '20.00', OUR_STORE_LABEL),
+    }),
+  });
+  const r = await svc.search('buzzz');
+  assert.equal(r.products[0]!.ours, true, 'our own stock is not first');
+  assert.equal(r.products[1]!.price, 5, 'a paying retailer was floated above a cheaper one');
+  assert.equal(r.products[2]!.price, 30);
+  assert.equal(r.products[2]!.commissioned, true, 'the paying retailer stopped being tagged');
+});
+
+test('the comparator ranks on ownership, price and stock -- and nothing else', () => {
+  // Structural. `ours` is now legitimately in the comparator, so this can no
+  // longer assert its absence. What it must still assert is that nothing
+  // ELSE got in: no commission, no sponsorship, no per-retailer weighting.
   const src = readFileSync('src/modules/market/market.service.ts', 'utf8');
   const start = src.indexOf('products.sort(');
   assert.ok(start > 0, 'the sort moved; this guard needs re-pointing');
   const cmp = src.slice(start, src.indexOf('});', start));
-  for (const forbidden of ['ours', 'isOurs', 'ourHost', 'OUR_STORE']) {
+  for (const forbidden of ['commission', 'affiliate', 'sponsor', 'paid', 'boost', 'promoted']) {
     assert.ok(
-      !cmp.includes(forbidden),
-      `the comparator references "${forbidden}" -- our own shop can bend the ranking`
+      !new RegExp(forbidden, 'i').test(cmp),
+      `the comparator references "${forbidden}" -- position can be bought`
     );
   }
+  // And it must still be reading a real price, not a rank we assigned.
+  assert.ok(/a\.price - b\.price/.test(cmp), 'the comparator stopped ordering by price');
 });
 
 /* ── honesty: a player must know one of the sellers is us ────────────── */
@@ -255,15 +307,32 @@ test('"nothing here is ours" is only said when nothing here is ours', () => {
   // The claim the whole comparison was built on, and the most damaging thing
   // to leave stale: a promise of neutrality a reader can disprove by
   // scrolling. Both versions must exist and the store must pick between them.
-  const fn = PAGE.slice(PAGE.indexOf('function storeNote()'), PAGE.indexOf('function storeRow()'));
+  // Long copy is built by concatenating string literals, so a phrase can be
+  // split across `' + '` and a naive regex over the source will not find it --
+  // which is exactly how this guard failed first time, reporting missing copy
+  // that was plainly on the page. Join the literals before matching.
+  const joined = (t: string) => t.replace(/'\s*\+\s*'/g, '');
+  const fn = joined(PAGE.slice(PAGE.indexOf('function storeNote()'), PAGE.indexOf('function storeRow()')));
   assert.ok(/if \(!state\.ourStore\)/.test(fn), 'the copy does not branch on whether we sell here');
   const [noStore, withStore] = fn.split('return').slice(1, 3);
   assert.ok(/Nothing here is ours/i.test(noStore!), 'the neutral claim was dropped entirely');
   assert.ok(!/Nothing here is ours/i.test(withStore!), 'we still claim nothing here is ours while selling');
-  // And the version that admits it must carry the guarantee that replaces it.
+  // And the version that admits it must DECLARE the ordering rather than
+  // leave a reader to infer neutrality. This replaces an assertion that the
+  // copy promised "we never rank ourselves higher" -- which it must no longer
+  // say, because as of 2026-10-30 we do. The condition that guard stood for
+  // was "the page states how results are ordered", and that still holds.
   assert.ok(
-    /never rank ourselves higher/i.test(withStore!) && /ordered by price/i.test(withStore!),
-    'the store copy does not state that we are not ranked higher'
+    /comes first/i.test(withStore!),
+    'the store copy does not say our own stock comes first'
+  );
+  assert.ok(
+    /by price/i.test(withStore!),
+    'the store copy does not say the rest are ordered by price'
+  );
+  assert.ok(
+    !/never rank/i.test(withStore!),
+    'the copy still claims we are not ranked higher, which is no longer true'
   );
 });
 
@@ -278,11 +347,13 @@ test('no copy a player reads claims we are not a shop while we are one', () => {
   // be overridden whenever a store is configured.
   const claims = [...PAGE.matchAll(/not a shop/gi)];
   assert.ok(claims.length > 0, 'the neutral claim vanished entirely; it is true when we sell nothing');
-  const fn = PAGE.slice(PAGE.indexOf('function setLede()'), PAGE.indexOf('// The way in to our own'));
+  const fn = PAGE.slice(PAGE.indexOf('function setLede()'), PAGE.indexOf('// The way in to our own'))
+    .replace(/'\s*\+\s*'/g, '');
   assert.ok(/if \(!state\.ourStore\) return/.test(fn), 'the lede is not conditional on having a store');
   assert.ok(/getElementById\('lede'\)/.test(fn), 'the lede is never rewritten');
   assert.ok(!/not a shop/i.test(fn), 'the rewritten lede still says we are not a shop');
-  assert.ok(/never ranked higher/i.test(fn), 'the rewritten lede drops the guarantee');
+  assert.ok(/comes first/i.test(fn), 'the rewritten lede does not declare that our stock is first');
+  assert.ok(!/never rank/i.test(fn), 'the lede still claims a neutrality we no longer have');
   // And it must actually be called, or it is dead code that guards nothing.
   assert.ok(/setLede\(\);/.test(PAGE), 'setLede is never called');
 });

@@ -251,9 +251,33 @@ export function createMarketService(deps: MarketDeps = {}) {
       }
       const products = [...byKey.values()];
 
-      // Currency first, then in-stock, then price: the branch exists so that
-      // adding a non-USD source cannot start comparing kronor with dollars.
+      // OUR OWN STOCK FIRST, then everyone else by price.
+      //
+      // Owner's call, 2026-10-30, reversing the launch behaviour. The reasoning
+      // is sound and worth keeping so it is not re-litigated: we are in no
+      // affiliate programme, have no agreement with any retailer here and take
+      // no payment from any of them, so there is no obligation to give a rival
+      // equal billing inside our own app. A shop showing its own stock first is
+      // ordinary commerce.
+      //
+      // What this costs is the right to call the Market a neutral price
+      // comparison, and that price is paid in the COPY rather than hidden:
+      // the page says our store comes first, every listing of ours is badged
+      // Ours, and real prices are shown throughout -- so a cheaper rival is
+      // visible on the very next row rather than suppressed. Ordering our own
+      // stock first is a declared editorial choice; misreporting a price would
+      // be a lie, and nothing here touches a price.
+      //
+      // THE RULE THAT SURVIVES UNCHANGED, and the distinction that matters:
+      // a THIRD PARTY still cannot buy position. Among everyone who is not us
+      // the order is exactly what it always was -- currency, then in-stock,
+      // then price -- and affiliate.ts still tags only after this sort has
+      // run, so a commission cannot move a single row. Ours first is a choice
+      // we declare; a retailer paying to jump the queue would be one we hide.
+      // affiliate.ts's guards are untouched and still prove it.
       products.sort((a, b) => {
+        // Declared, not discovered. See the copy in web/market.html.
+        if (Boolean(a.ours) !== Boolean(b.ours)) return a.ours ? -1 : 1;
         if (a.currency !== b.currency) return a.currency.localeCompare(b.currency);
         const aOut = a.available === false;
         const bOut = b.available === false;
