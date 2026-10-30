@@ -96,8 +96,33 @@
     .card__was { font-size: 11px; color: var(--color-ash); text-decoration: line-through; }
     .card__shop {
       margin-top: auto; padding-top: 5px; font-size: 10.5px; color: var(--color-ash);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      display: flex; align-items: center; gap: 4px; min-width: 0;
     }
+    /* The name is what truncates. `min-width: 0` is required for a flex item
+       to be allowed to shrink below its content width at all, without which
+       the ellipsis never engages and the badge is pushed out of the card. */
+    .card__shopname { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* `flex: none` is the whole point: our own listing stays labelled however
+       long the shop name is. */
+    .card__ours {
+      flex: none; font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; padding: 1px 5px; border-radius: 999px;
+      background: var(--color-orange); color: #fff;
+    }
+
+    /* ── Our own store, as a row in Browse ──────────────────────────── */
+    .srow {
+      display: flex; align-items: center; gap: 10px; padding: 13px 14px;
+      background: var(--color-card, #fff); border: 1px solid var(--color-line, #e7e2da);
+      border-radius: 14px; text-decoration: none; color: inherit;
+    }
+    .srow__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    /* .srow__body is a flex ITEM, not a container, and flex blockifies its
+       children but not its grandchildren -- this exact trap has shipped in
+       .lprev__*, .uprow__*, .nrow__* and the admin .stat span. */
+    .srow__title, .srow__sub { display: block; }
+    .srow__title { font-weight: 700; font-size: 15px; }
+    .srow__sub { font-size: 12px; color: var(--color-ash); }
 
     /* ── Filter row ─────────────────────────────────────────────────── */
     .filters { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
@@ -129,6 +154,9 @@
       <div>
         <p class="section-label">Every shop at once</p>
         <h1 class="h-display">MARKET<span class="mark" style="width:38%"></span></h1>
+        <!-- True while we sell nothing here, which is also the no-JS
+             fallback. Rewritten by setLede() when a storefront is configured:
+             "we are not a shop" must never sit above a listing badged Ours. -->
         <p class="mnote" id="lede">
           Search anything disc golf and see what it costs. We are not a shop —
           every result opens on the retailer's own page.
@@ -192,7 +220,20 @@
           '<span class="card__body">' +
             '<span class="card__title">' + esc(p.title) + '</span>' +
             '<span class="card__price">' + esc(money(p.price, p.currency)) + '</span>' +
-            '<span class="card__shop">' + esc(p.retailer) + '</span>' +
+            // Sold by us. A player comparing prices is entitled to know that
+            // one of the sellers is the app showing them the comparison, and
+            // `ours` is set server-side from the url's host, so a retailer
+            // cannot claim it and we cannot quietly drop it.
+            //
+            // The badge is a SIBLING of the shop name rather than inside it:
+            // .card__shopname truncates with an ellipsis, so a nested badge
+            // would disappear on any long retailer name -- a disclosure that
+            // silently vanishes on some rows is worse than none, because it
+            // reads as "this one is not ours".
+            '<span class="card__shop">' +
+              '<span class="card__shopname">' + esc(p.retailer) + '</span>' +
+              (p.ours ? '<span class="card__ours">Ours</span>' : '') +
+            '</span>' +
           '</span>' +
         '</a>';
       }
@@ -264,6 +305,62 @@
         return '<p class="mnote">Some links here earn us a commission if you buy. ' +
           'It costs you nothing extra, and it never changes which results you see ' +
           'or the order they are in.</p>';
+      }
+
+      // What the Market is, said differently depending on whether we sell here.
+      //
+      // This used to read "Nothing here is ours -- we take no payment and hold
+      // no stock", which was true and is the claim the whole comparison was
+      // built on. It stops being true the moment our own storefront is
+      // configured, and a page still saying it would be the most damaging kind
+      // of stale copy: a promise of neutrality that the reader can disprove by
+      // scrolling. So there are two versions and the configuration picks one.
+      //
+      // The second one does not bury the change -- it leads with it, says our
+      // listings are marked, and states the guarantee that replaces "nothing
+      // here is ours": we are ranked by price like everyone else and never
+      // floated. market/our-store.ts enforces it and its tests prove it by
+      // making our own shop the dearest and asserting it comes last.
+      function storeNote() {
+        if (!state.ourStore) {
+          return '<p class="mnote">Search anything disc golf and see what it costs across ' +
+            'retailers. Nothing here is ours \u2014 we take no payment and hold no stock; ' +
+            'every result opens on the retailer\u2019s own page.</p>';
+        }
+        return '<p class="mnote">Search anything disc golf and see what it costs across ' +
+          'retailers \u2014 including our own store, which is marked ' +
+          '<span class="card__ours">Ours</span>. We never rank ourselves higher: results are ' +
+          'ordered by price, so a cheaper shop beats us. Every result opens on the ' +
+          'seller\u2019s own page.</p>';
+      }
+
+      // The headline claim, which lives in static markup so it renders with no
+      // JavaScript. That default says "we are not a shop", which is true only
+      // while we sell nothing here -- and this was caught by rendering the
+      // page and reading it, not by a test: the guard written for this checked
+      // storeNote() and never saw the lede, so the one line carrying the stale
+      // claim was the one line nothing looked at. Exactly the shape of the
+      // home.html miss recorded in CLAUDE.md.
+      function setLede() {
+        if (!state.ourStore) return;
+        var el = document.getElementById('lede');
+        if (!el) return;
+        el.textContent = 'Search anything disc golf and see what it costs. Our own store is ' +
+          'in here too, marked Ours \u2014 and never ranked higher than anyone else.';
+      }
+
+      // The way in to our own storefront, shown only when there is one.
+      // A row rather than a sixth tab: Market is already where buying happens.
+      function storeRow() {
+        if (!state.ourStore) return '';
+        return '<div><p class="section-label">Our store</p>' +
+          '<a class="srow" href="https://' + esc(state.ourStore.host) + '" target="_blank" ' +
+            'rel="noopener noreferrer">' +
+            '<span class="srow__body">' +
+              '<span class="srow__title">' + esc(state.ourStore.label) + ' \u2192</span>' +
+              '<span class="srow__sub">Discs, apparel and accessories, shipped by us</span>' +
+            '</span>' +
+          '</a></div>';
       }
 
       // Department glyphs, drawn rather than borrowed.
@@ -372,9 +469,8 @@
         view.className = 'stack';
         view.innerHTML =
           '<div><p class="section-label">Browse</p>' + deptGrid() + '</div>' +
-          '<p class="mnote">Search anything disc golf and see what it costs across retailers. ' +
-            'Nothing here is ours \u2014 we take no payment and hold no stock; every result opens ' +
-            'on the retailer\u2019s own page.</p>' +
+          storeRow() +
+          storeNote() +
           commissionNote() +
           (state.web ? '' : '<p class="mdown">Web search is not switched on yet, so this currently ' +
             'reaches a set of disc golf storefronts rather than the whole web.</p>');
@@ -418,6 +514,8 @@
           state.departments = d.departments || [];
           state.web = !!d.webSearch;
           state.affiliate = !!d.affiliate;
+          state.ourStore = d.ourStore || null;
+          setLede();
           document.getElementById('reach').textContent = state.web ? 'web search' : 'storefronts';
           // A deep link wins over the front page, so a shared search opens on
           // what was shared rather than on the department of the day.

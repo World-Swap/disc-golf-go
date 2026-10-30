@@ -152,7 +152,7 @@ export function affiliateUrl(url: string, programs: readonly AffiliateProgram[])
 }
 
 /** A result, as far as this module is concerned: it only ever reads `url`. */
-type Linkable = { url: string };
+type Linkable = { url: string; ours?: boolean };
 
 /**
  * Tag an already-ranked list of results.
@@ -169,6 +169,12 @@ export function attachAffiliate<T extends Linkable>(
   programs: readonly AffiliateProgram[]
 ): Array<T & { commissioned: boolean }> {
   return hits.map((hit) => {
+    // Our own store is never tagged. A commission is what a third party pays
+    // us for sending a customer; on our own sale there is nobody to pay it,
+    // and appending a tracking parameter to our own checkout url would at
+    // best mean nothing and at worst hand a stranger the attribution for a
+    // sale that was entirely ours. See our-store.ts.
+    if (hit.ours) return { ...hit, commissioned: false };
     const url = affiliateUrl(hit.url, programs);
     return { ...hit, url, commissioned: url !== hit.url };
   });

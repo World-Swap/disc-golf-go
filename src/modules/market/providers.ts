@@ -38,6 +38,12 @@ export type ProductHit = {
   available: boolean | null;
   /** Which provider produced this, shown nowhere but useful in the API. */
   via: string;
+  /**
+   * Sold by us rather than by another retailer. Set in the service from the
+   * url's host, never by a provider, and read ONLY for labelling -- the
+   * ranking comparator must never see it. See our-store.ts.
+   */
+  ours?: boolean;
 };
 
 export type ProviderResult = {

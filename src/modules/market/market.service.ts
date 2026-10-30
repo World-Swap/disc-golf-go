@@ -24,6 +24,7 @@
 
 import { STOREFRONT_HOSTS } from './retailers';
 import { attachAffiliate, parsePrograms, type AffiliateProgram } from './affiliate';
+import { parseOurStore, isOurs, OUR_STORE_LABEL } from './our-store';
 import {
   serpApiShopping,
   braveWeb,
@@ -62,6 +63,11 @@ export type MarketSearch = {
   mixedCurrency: boolean;
   /** True when no search key is set, so the page can say the reach is narrow. */
   fallbackOnly: boolean;
+  /**
+   * Our own storefront, when configured, so the page can label the listings
+   * that are ours. Null means we sell nothing here and no listing is ours.
+   */
+  ourStore: { host: string; label: string } | null;
   fetchedAt: string;
   cached: boolean;
 };
@@ -80,6 +86,14 @@ export type MarketDeps = {
   hosts?: readonly string[];
   /** Raw MARKET_AFFILIATE setting; absent means no programme, which is a no-op. */
   affiliate?: string | undefined;
+  /**
+   * Raw STORE_SHOPIFY_HOST setting -- our own Shopify storefront. Absent means
+   * we sell nothing in the Market, which is a complete no-op. Injected rather
+   * than read from process.env at import time, which is the bug REWARDS_ENABLED
+   * already had: an import-time read passes in isolation and fails in the full
+   * suite, because imports are hoisted above any test that sets the variable.
+   */
+  ourStore?: string | undefined;
 };
 
 /** Two results are the same listing when the same shop sells the same thing. */
@@ -98,7 +112,18 @@ export function createMarketService(deps: MarketDeps = {}) {
   const f: Fetcher = deps.fetchImpl ?? fetch;
   const now = deps.now ?? Date.now;
   const keys = deps.keys ?? {};
-  const hosts = deps.hosts ?? STOREFRONT_HOSTS;
+  // Our own storefront is one more shop in the fan-out and nothing else: the
+  // keyless Shopify adapter already knows how to ask it (PLATFORM_BY_HOST
+  // defaults to shopify, and its /meta.json supplies the real currency), so
+  // selling our own merchandise needed no new adapter. It is appended rather
+  // than committed to STOREFRONTS because the domain is configured -- and
+  // de-duplicated, so naming it in both places cannot double-ask it.
+  const ourHost = parseOurStore(deps.ourStore);
+  const baseHosts = deps.hosts ?? STOREFRONT_HOSTS;
+  const hosts =
+    ourHost && !baseHosts.some((h) => h.toLowerCase().replace(/^www\./, '') === ourHost)
+      ? [...baseHosts, ourHost]
+      : baseHosts;
   const cache = new Map<string, { at: number; value: MarketSearch }>();
   // Parsed once at construction: a malformed entry should be warned about at
   // boot, not on every search.
@@ -131,6 +156,10 @@ export function createMarketService(deps: MarketDeps = {}) {
         // So the page can disclose the commission when, and only when, there
         // is one to disclose.
         affiliate: programs.length > 0,
+        // Our own storefront, when there is one. The page shows the Store
+        // entry and the "sold by us" label from this and nothing else, so with
+        // no store configured neither can appear.
+        ourStore: ourHost ? { host: ourHost, label: OUR_STORE_LABEL } : null,
       };
     },
 
@@ -140,6 +169,7 @@ export function createMarketService(deps: MarketDeps = {}) {
         query: '',
         products: [],
         sources: [],
+        ourStore: ourHost ? { host: ourHost, label: OUR_STORE_LABEL } : null,
         cheapest: null,
         currency: null,
         mixedCurrency: false,
@@ -195,7 +225,19 @@ export function createMarketService(deps: MarketDeps = {}) {
       // Filtered HERE rather than in each adapter because this is the one
       // place every provider's results funnel through, so a provider added
       // later cannot reintroduce it.
-      const priced = all.filter((h) => Number.isFinite(h.price) && h.price > 0);
+      const pricedRaw = all.filter((h) => Number.isFinite(h.price) && h.price > 0);
+
+      // Mark our own listings, by host, in the one place every provider's
+      // results funnel through -- so a provider added later cannot ship an
+      // unlabelled listing of ours, and a provider cannot claim to be us.
+      //
+      // This is set BEFORE the sort and deliberately not read BY the sort: the
+      // comparator below is currency -> in-stock -> price and a guard asserts
+      // it never references `ours`. Our own shop competing on price inside our
+      // own comparison, and losing when it is dearer, is the whole point.
+      const priced = ourHost
+        ? pricedRaw.map((h) => (isOurs(h.url, ourHost) ? { ...h, ours: true } : h))
+        : pricedRaw;
 
       // One listing, once — an engine and a storefront can both return it.
       const byKey = new Map<string, ProductHit>();
@@ -259,6 +301,7 @@ export function createMarketService(deps: MarketDeps = {}) {
         currency: lead ? lead[0] : null,
         mixedCurrency: new Set(products.map((p) => p.currency)).size > 1,
         fallbackOnly: chosen.length === 0,
+        ourStore: ourHost ? { host: ourHost, label: OUR_STORE_LABEL } : null,
         fetchedAt: new Date(now()).toISOString(),
         cached: false,
       };

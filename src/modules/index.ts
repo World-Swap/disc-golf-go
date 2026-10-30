@@ -191,6 +191,7 @@ export function createApiRouter(db: Database): Router {
         // which is what this ships as. It can never affect ranking -- see
         // market/affiliate.ts. Account ids live in Render, not the repo.
         affiliate: process.env.MARKET_AFFILIATE,
+        ourStore: process.env.STORE_SHOPIFY_HOST,
       })
     )
   );
