@@ -334,7 +334,24 @@ test('the promo site does not describe the Market as a fixed set of shops', () =
     'the old shop-list headline came back'
   );
   // And it still has to say the thing that keeps us honest.
-  assert.match(copy, /not (a|the) shop/i, 'the promo page stopped saying we are not a shop');
+  //
+  // That used to be the literal phrase "we are not a shop", which was the
+  // WORDING of the rule rather than the rule, and was due to become false the
+  // day our own storefront opens -- a promise of neutrality a reader could
+  // disprove by scrolling. The condition it stood for is that the page states
+  // what makes the Market worth opening and does not pretend to be something
+  // it is not. That holds in both states and is asserted directly: the page
+  // must say the Market shows OTHER sellers' prices, and must not claim we
+  // hold no stock, which is a claim with a shelf life.
+  assert.match(
+    copy,
+    /show you (only their own stock|everyone)/i,
+    'the promo page stopped saying the Market shows you other sellers'
+  );
+  assert.ok(
+    !/hold no stock|set no prices/i.test(copy),
+    'the promo page claims we hold no stock, which stops being true when the store opens'
+  );
 });
 
 test('"blank card" is our word, not the product\'s', () => {

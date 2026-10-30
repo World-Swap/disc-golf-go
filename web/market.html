@@ -154,12 +154,15 @@
       <div>
         <p class="section-label">Every shop at once</p>
         <h1 class="h-display">MARKET<span class="mark" style="width:38%"></span></h1>
-        <!-- True while we sell nothing here, which is also the no-JS
-             fallback. Rewritten by setLede() when a storefront is configured:
-             "we are not a shop" must never sit above a listing badged Ours. -->
+        <!-- True in BOTH states, deliberately: most shops really do show only
+             their own stock, and that stays true of us whether or not we
+             stock any. Copy that need not change when the store opens cannot
+             go stale when the store opens. setLede() still swaps it for the
+             ordering declaration once a storefront is configured, because a
+             results page shows this line and no other. -->
         <p class="mnote" id="lede">
-          Search anything disc golf and see what it costs. We are not a shop —
-          every result opens on the retailer's own page.
+          Search anything disc golf and see what it costs. Most shops show you their
+          own stock — this shows you everyone's.
         </p>
       </div>
 
@@ -327,9 +330,9 @@
       // rival is visible on the next row rather than suppressed.
       function storeNote() {
         if (!state.ourStore) {
-          return '<p class="mnote">Search anything disc golf and see what it costs across ' +
-            'retailers. Nothing here is ours \u2014 we take no payment and hold no stock; ' +
-            'every result opens on the retailer\u2019s own page.</p>';
+          return '<p class="mnote">Most shops show you their own stock \u2014 this shows you ' +
+            'everyone\u2019s. Nothing here is ours yet: we take no payment and hold no stock, ' +
+            'and every result opens on the seller\u2019s own page.</p>';
         }
         return '<p class="mnote"><strong>Our own store comes first</strong>, marked ' +
           '<span class="card__ours">Ours</span> \u2014 then every other retailer, ordered by ' +
@@ -337,13 +340,19 @@
           'row. Every result opens on the seller\u2019s own page.</p>';
       }
 
-      // The headline claim, which lives in static markup so it renders with no
-      // JavaScript. That default says "we are not a shop", which is true only
-      // while we sell nothing here -- and this was caught by rendering the
-      // page and reading it, not by a test: the guard written for this checked
-      // storeNote() and never saw the lede, so the one line carrying the stale
-      // claim was the one line nothing looked at. Exactly the shape of the
-      // home.html miss recorded in CLAUDE.md.
+      // The headline claim lives in static markup so it renders with no
+      // JavaScript, and it is now written to be true whether or not we stock
+      // anything -- which is the real fix for what went wrong here. The old
+      // default said "we are not a shop", and that was caught by rendering the
+      // page and reading it rather than by a test: the guard written for it
+      // checked storeNote() and never saw the lede, so the one line carrying
+      // the stale claim was the one line nothing looked at (the shape of the
+      // home.html miss in CLAUDE.md).
+      //
+      // This still swaps the line when a storefront is configured, because a
+      // RESULTS page renders the lede and not storeNote(), so without it the
+      // ours-first ordering would go undeclared on exactly the screen where
+      // the ordering is visible.
       function setLede() {
         if (!state.ourStore) return;
         var el = document.getElementById('lede');
@@ -356,9 +365,11 @@
       // A row rather than a sixth tab: Market is already where buying happens.
       function storeRow() {
         if (!state.ourStore) return '';
+        // Opens the in-app store, not the Shopify site in a new tab: being
+        // shown the door is a poor answer to "what do you have?". Buying
+        // still hands off to our storefront from the product itself.
         return '<div><p class="section-label">Our store</p>' +
-          '<a class="srow" href="https://' + esc(state.ourStore.host) + '" target="_blank" ' +
-            'rel="noopener noreferrer">' +
+          '<a class="srow" href="/store">' +
             '<span class="srow__body">' +
               '<span class="srow__title">' + esc(state.ourStore.label) + ' \u2192</span>' +
               '<span class="srow__sub">Discs, apparel and accessories, shipped by us</span>' +

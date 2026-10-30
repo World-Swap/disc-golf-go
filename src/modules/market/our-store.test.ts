@@ -361,7 +361,14 @@ test('no copy a player reads claims we are not a shop while we are one', () => {
 test('the store row appears only when a store is configured', () => {
   const fn = PAGE.slice(PAGE.indexOf('function storeRow()'), PAGE.indexOf('// Department glyphs'));
   assert.ok(/if \(!state\.ourStore\) return ''/.test(fn), 'the store row can render with no store');
-  assert.ok(/state\.ourStore\.host/.test(fn), 'the row does not link to the configured host');
+  // It links to the IN-APP store page now rather than our Shopify host, so
+  // this can no longer assert it reads `ourStore.host`. The condition that
+  // assertion stood for was "the row never hardcodes a domain", which holds
+  // more strongly when it names no domain at all -- and the new destination
+  // is pinned, because a row opening the external site in a new tab was the
+  // behaviour this replaced.
+  assert.ok(/href="\/store"/.test(fn), 'the store row no longer opens the in-app store');
+  assert.ok(!/target="_blank"/.test(fn), 'the store row shows the player the door again');
   assert.ok(!/discgolfgo/i.test(fn), 'the row hardcodes a domain instead of reading config');
 });
 

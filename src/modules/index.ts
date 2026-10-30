@@ -60,6 +60,8 @@ import { createReferralsRouter } from './referrals/referrals.routes';
 import { createNotificationsRouter } from './notifications/notifications.routes';
 import { createMarketService } from './market/market.service';
 import { createMarketRouter } from './market/market.routes';
+import { createStoreRouter } from './store/store.routes';
+import { createStoreService } from './store/store.service';
 import { createAdminService } from './admin/admin.service';
 import { createAdminRouter } from './admin/admin.routes';
 
@@ -195,6 +197,11 @@ export function createApiRouter(db: Database): Router {
       })
     )
   );
+  // Our own storefront, browsable in the app. Same setting as the Market's
+  // `ourStore`, read in one place each rather than shared, because the two
+  // use it for different things: the Market labels a listing as ours, this
+  // reads our catalogue. Unset means we sell nothing and nothing is fetched.
+  api.use(createStoreRouter(createStoreService({ host: process.env.STORE_SHOPIFY_HOST })));
   api.use(createAdminRouter(createAdminService({ db })));
 
   return api;

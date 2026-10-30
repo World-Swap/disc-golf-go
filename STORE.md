@@ -101,12 +101,16 @@ paste out of a Shopify dashboard. Anything else is ignored with a warning.
 the old flat claim, and two of them are guarded, so they fail loudly — but the
 promo site is the one a stranger reads first:
 
-1. **`web/promo.html`** — *"We are not a shop: we take no payment, hold no
-   stock and set no prices."* Becomes false. `market.test.ts` asserts the promo
-   page keeps saying it (`/not (a|the) shop/i`), so that guard must be
-   **reshaped, not deleted** — the Market is still not a shop, it is a
-   comparison that now contains our shop, labelled and never floated. Say that
-   instead.
+1. **`web/promo.html`** — DONE, 2026-10-30, and done in a way that needs no
+   second pass. The old line was *"We are not a shop: we take no payment, hold
+   no stock and set no prices"*, every clause of which expires the day the
+   store opens. It now reads **"Most shops show you their own stock. We show
+   you everyone's."** — which is true today, true after switch-on, and a
+   better pitch than the disclaimer it replaced. **Copy that need not change
+   when the store opens cannot go stale when the store opens**, which is the
+   general form of the lesson this file keeps recording. The guard was
+   reshaped to the condition it stood for: the page must say the Market shows
+   other sellers' prices, and must NOT claim we hold no stock.
 2. **`web/market.html` lede** — already handled: static text is the
    true-when-unconfigured default and the no-JS fallback, rewritten by
    `setLede()` when a store exists. Nothing to do.
@@ -130,11 +134,38 @@ curl -s https://discgolfgo.app/api/market | grep -o '"ourStore":[^,]*'
 Then search for something you stock and confirm: our listings carry `ours`,
 they are **not** `commissioned`, and the order is still price-ascending.
 
-## What this does not do yet
+## Browsing it in the app
 
-- **No in-app product browsing.** The Store row opens the Shopify storefront in
-  a new tab. A native browse surface is a later step; the value of the row is
-  that it exists the day the store does.
+`/store` (`web/store.html`, `src/modules/store/`) lists our catalogue inside
+the app: images, prices, stock and a collection filter. The Market's Store row
+opens it rather than the Shopify site in a new tab — being shown the door is a
+poor answer to "what do you have?".
+
+**It needs no API token**, which is why it is small. A Shopify storefront
+publishes its catalogue at `/products.json` and its collections at
+`/collections.json`, both unauthenticated, both carrying variants, prices,
+stock and images. Measured against a real shop before any of it was written.
+No token, no webhook, no sync.
+
+**Buying still happens on our Shopify product page**, and that is deliberate:
+that page owns the variant picker, the live stock, the shipping and every byte
+of card data. Reimplementing a cart here would throw away the one thing
+Shopify was chosen for. `/cart/<variant>:<qty>` permalinks were tried first and
+are **not used** — against a real shop they redirected to the site root for a
+sold-out *and* an in-stock variant, so a Buy button built on them would
+silently lose the item.
+
+Rules, each guarded in `store.test.ts`:
+
+| Rule | Why |
+|---|---|
+| **Nothing is stored** | No repo, same as the Market: a cached price is shown wrongly eventually, and a cached stock flag sells what we do not have |
+| **Every link is rebuilt against our host** | The url comes from the handle, not from the response, so a field we do not control cannot send a player elsewhere |
+| **Sold out is shown, never buyable** | Hiding it makes the shop look emptier than it is; claiming stock sells nothing we have |
+| **The grid price is the cheapest you could actually pay** | Read from in-stock variants, so an unbuyable cheaper variant cannot advertise a price that does not exist |
+| **A zero price is not a price** | Same rule the Market applies to a call-for-price listing |
+| **A collection handle is validated, not escaped** | It is interpolated into a path |
+| **Unconfigured is a no-op** | No catalogue, no fetch, and the page says the store is not open rather than showing an empty grid that reads as broken |
 - **No cart or checkout of ours.** Deliberate, and it is the whole reason for
   choosing Shopify: their hosted checkout means card data never touches our
   server and we hold no PCI scope.

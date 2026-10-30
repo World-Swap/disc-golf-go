@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, follow" />
+  <title>Store · Disc Golf Go</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+  <link rel="stylesheet" href="/styles/tokens.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app.css?v=w10" />
+  <link rel="stylesheet" href="/styles/app-ui.css?v=w17" />
+  <style>
+    /* Our own storefront. The grid deliberately reuses the Market's card
+       proportions so the two read as the same kind of object -- a product is
+       a product -- but the CSS is local to this page, like the Market's own,
+       because app-ui.css is shared behind a ?v= buster across every page. */
+
+    .sgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    @media (min-width: 560px) { .sgrid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 860px) { .sgrid { grid-template-columns: repeat(4, 1fr); } }
+
+    .pcard {
+      display: flex; flex-direction: column; text-decoration: none; color: inherit;
+      border: 1px solid var(--hair); border-radius: 12px; overflow: hidden;
+      background: #fff;
+    }
+    .pcard__shot {
+      position: relative; display: block; aspect-ratio: 1 / 1; background: var(--color-peach);
+    }
+    .pcard__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pcard__none {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; height: 100%; font-size: 30px; opacity: 0.45;
+    }
+    .pcard__flag {
+      position: absolute; left: 6px; top: 6px; font-size: 9px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px;
+      border-radius: 999px; background: var(--color-ink, #202020); color: #fff;
+    }
+    .pcard__body { display: flex; flex-direction: column; gap: 2px; padding: 9px 10px 11px; flex: 1; }
+    /* .pcard__body is a flex ITEM, not a container: flex blockifies its
+       children but not its grandchildren, and this exact trap has shipped in
+       .lprev__*, .uprow__*, .nrow__* and the admin .stat span. */
+    .pcard__title, .pcard__price, .pcard__meta { display: block; }
+    .pcard__title {
+      font-size: 12.5px; font-weight: 600; line-height: 1.3;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .pcard__price { font-size: 15px; font-weight: 800; margin-top: 3px; }
+    .pcard__meta { margin-top: auto; padding-top: 5px; font-size: 10.5px; color: var(--color-ash); }
+
+    /* ── Collection filter row ──────────────────────────────────────── */
+    .cols { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .col {
+      flex: none; font-size: 12px; padding: 7px 11px; border-radius: 999px;
+      border: 1px solid var(--hair); background: #fff; color: inherit; cursor: pointer;
+      white-space: nowrap;
+    }
+    .col[aria-pressed="true"] { background: var(--color-ink, #202020); color: #fff; border-color: transparent; }
+
+    .snote {
+      font-size: 11.5px; line-height: 1.5; color: var(--color-ash);
+      padding: 9px 11px; border: 1px solid var(--hair); border-radius: 9px; background: var(--color-peach);
+    }
+    .shead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .shead__n { font-size: 11.5px; color: var(--color-ash); flex: none; }
+    .smore { display: flex; justify-content: center; padding: 4px 0 2px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="topbar__title">Store</span>
+      <span class="pill" id="count">—</span>
+    </header>
+    <div class="screen stack">
+      <div>
+        <p class="section-label">Our own kit</p>
+        <h1 class="h-display">STORE<span class="mark" style="width:30%"></span></h1>
+        <p class="snote" id="lede">Loading…</p>
+      </div>
+
+      <div id="cols"></div>
+      <div id="view" class="loading">Loading…</div>
+    </div>
+    <nav id="tabbar"></nav>
+  </main>
+
+  <script src="/js/app.js?v=w14"></script>
+  <script>
+    (function () {
+      var API = DGG.API;
+      var esc = DGG.esc;
+      DGG.tabbar('market');
+
+      var state = { open: false, host: null, label: null, collection: '', page: 1, items: [], more: false };
+      var view = document.getElementById('cols');
+      var grid = document.getElementById('view');
+
+      function money(n, cur) {
+        if (typeof n !== 'number') return '';
+        try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur || 'USD' }).format(n); }
+        catch (e) { return '$' + n.toFixed(2); }
+      }
+
+      // Every card links to the product page on our own storefront, which is
+      // where buying happens. We deliberately do NOT take the payment here:
+      // Shopify's product page owns the variant picker, the live stock, the
+      // shipping and all card data, which is the whole reason the storefront
+      // is Shopify-backed. See store.service.ts.
+      function card(p) {
+        var flag = p.available ? '' : '<span class="pcard__flag">Sold out</span>';
+        var shot = p.image
+          ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" />'
+          : '<span class="pcard__none" aria-hidden="true">\u{1F94F}</span>';
+        var meta = p.vendor ? esc(p.vendor) : (p.type ? esc(p.type) : '');
+        return '<a class="pcard" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' +
+          '<span class="pcard__shot">' + shot + flag + '</span>' +
+          '<span class="pcard__body">' +
+            '<span class="pcard__title">' + esc(p.title) + '</span>' +
+            '<span class="pcard__price">' + esc(money(p.price, p.currency)) + '</span>' +
+            '<span class="pcard__meta">' + meta + '</span>' +
+          '</span>' +
+        '</a>';
+      }
+
+      function renderCols(cols) {
+        if (!cols.length) { view.innerHTML = ''; return; }
+        var all = '<button class="col" type="button" data-c="" aria-pressed="' +
+          (state.collection ? 'false' : 'true') + '">Everything</button>';
+        view.innerHTML = '<div class="cols">' + all + cols.map(function (c) {
+          return '<button class="col" type="button" data-c="' + esc(c.handle) + '" aria-pressed="' +
+            (state.collection === c.handle ? 'true' : 'false') + '">' + esc(c.title) + '</button>';
+        }).join('') + '</div>';
+      }
+
+      function renderGrid() {
+        if (!state.items.length) {
+          grid.className = '';
+          grid.innerHTML = '<p class="snote">Nothing in here yet. Check back soon.</p>';
+          return;
+        }
+        grid.className = 'stack';
+        grid.innerHTML =
+          '<div class="shead"><p class="section-label">' +
+            (state.collection ? 'In this collection' : 'Everything we stock') +
+          '</p><span class="shead__n">' + state.items.length + ' item' +
+            (state.items.length === 1 ? '' : 's') + '</span></div>' +
+          '<div class="sgrid">' + state.items.map(card).join('') + '</div>' +
+          (state.more ? '<div class="smore"><button class="btn btn--ghost" id="more" type="button">Show more</button></div>' : '');
+        document.getElementById('count').textContent = state.items.length + ' shown';
+      }
+
+      async function load(reset) {
+        if (reset) { state.page = 1; state.items = []; grid.className = 'loading'; grid.textContent = 'Loading…'; }
+        try {
+          var q = '/store/products?page=' + state.page +
+            (state.collection ? '&collection=' + encodeURIComponent(state.collection) : '');
+          var d = await API.get(q);
+          state.items = state.items.concat(d.products || []);
+          state.more = !!d.more;
+          renderGrid();
+        } catch (e) {
+          grid.className = '';
+          grid.innerHTML = '<p class="snote">Could not load the store just now. Try again in a moment.</p>';
+        }
+      }
+
+      view.addEventListener('click', function (ev) {
+        var b = ev.target.closest('.col');
+        if (!b) return;
+        state.collection = b.getAttribute('data-c') || '';
+        [].forEach.call(view.querySelectorAll('.col'), function (x) {
+          x.setAttribute('aria-pressed', (x.getAttribute('data-c') || '') === state.collection ? 'true' : 'false');
+        });
+        load(true);
+      });
+
+      grid.addEventListener('click', function (ev) {
+        if (!ev.target.closest('#more')) return;
+        state.page += 1;
+        load(false);
+      });
+
+      (async function init() {
+        try {
+          var d = await API.get('/store');
+          state.open = !!d.open;
+          state.host = d.host || null;
+          state.label = d.label || null;
+
+          if (!state.open) {
+            // Nothing is configured, so there is nothing to browse and we say
+            // so rather than showing an empty grid that reads as broken.
+            document.getElementById('lede').textContent =
+              'Our store is not open yet. When it is, our discs, apparel and accessories will be right here.';
+            document.getElementById('count').textContent = 'soon';
+            view.innerHTML = '';
+            grid.className = '';
+            grid.innerHTML = '<p class="snote">In the meantime, the Market searches every other disc golf retailer for what you need.</p>';
+            return;
+          }
+
+          document.getElementById('lede').textContent =
+            'Discs, apparel and accessories we stock ourselves. Tap anything to see it on our store, where you can pick a size and check out.';
+          renderCols(d.collections || []);
+          load(true);
+        } catch (e) {
+          document.getElementById('lede').textContent = 'Could not load the store just now.';
+          grid.className = '';
+          grid.innerHTML = '';
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
