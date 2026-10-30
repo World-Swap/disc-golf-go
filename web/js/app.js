@@ -124,8 +124,15 @@
   }
 
   // Bottom nav, left to right. Five slots, and what sits in them is the
-  // product's own claim about what this app is for -- so Market takes the
-  // CENTRE, the easiest slot on a phone to reach with a thumb.
+  // product's own claim about what this app is for -- so the CENTRE, the
+  // easiest slot on a phone to reach with a thumb, holds the thing we say we
+  // lead with.
+  //
+  // That was Market from the 2026-10-25 pivot until 2026-10-30, when Train
+  // and Market swapped. The thumb slot did not change its meaning; what
+  // changed is that it now agrees with positioning rule 1, which has said all
+  // along that the training library is the lead and the Market is second.
+  // Reading order says the same thing: Train before Market, left to right.
   //
   // Profile is not here any more. It was a tab for one player looking at
   // their own numbers, which is the least compelling thing the app does and
@@ -134,8 +141,8 @@
   // the same treatment earlier for the same reason.
   var TABS = [
     { key: 'home', href: '/home', label: 'Home', glyph: '🏠' },
-    { key: 'training', href: '/training', label: 'Train', glyph: '🎯' },
     { key: 'market', href: '/market', label: 'Market', glyph: '🛒' },
+    { key: 'training', href: '/training', label: 'Train', glyph: '🎯' },
     { key: 'play', href: '/checkin', label: 'Play', glyph: '🥏' },
     { key: 'vault', href: '/vault', label: 'Vault', glyph: '🎬' },
   ];

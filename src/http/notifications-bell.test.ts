@@ -123,16 +123,24 @@ test('shared assets are always requested with a version', () => {
 });
 
 
-test('the bottom nav is the five the pivot settled on, with Market in the centre', () => {
+test('the bottom nav is the five the pivot settled on, and Train holds the centre', () => {
   // The centre slot is the easiest on a phone to reach with a thumb, so what
   // sits there is a claim about what the app is for. Pinned because it is one
   // line in a table and nothing else would fail if it changed.
+  //
+  // It held Market from the 2026-10-25 pivot until 2026-10-30, when Train and
+  // Market swapped. This guard is re-pointed rather than loosened: the rule it
+  // stands for was never "Market specifically", it was "the centre holds what
+  // we say we lead with, and that is a deliberate choice rather than drift".
+  // Positioning rule 1 says the training library is the lead, so Train in the
+  // centre is the nav finally agreeing with it -- and the left-to-right order
+  // says the same thing, Train before Market.
   const block = /var TABS = \[([\s\S]*?)\];/.exec(APP_JS);
   assert.ok(block, 'the TABS table moved or was renamed');
   const keys = [...block[1].matchAll(/key: '([a-z]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(keys, ['home', 'training', 'market', 'play', 'vault'],
-    'the nav order changed; Market must hold the centre slot');
-  assert.equal(keys[2], 'market');
+  assert.deepEqual(keys, ['home', 'market', 'training', 'play', 'vault'],
+    'the nav order changed; Train must hold the centre slot');
+  assert.equal(keys[2], 'training', 'the centre slot no longer holds the thing we lead with');
   // Profile folded into the Vault and must not quietly reappear as a tab.
   assert.ok(!keys.includes('profile'), 'Profile took a tab slot again');
   // Every tab needs a page behind it.
